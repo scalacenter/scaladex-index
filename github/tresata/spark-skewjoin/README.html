@@ -1,0 +1,42 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/tresata/spark-skewjoin" target="_blank"><img src="https://camo.githubusercontent.com/2f17e6a1ea4c630051b5a261fe5e99a49b640e62/68747470733a2f2f7472617669732d63692e6f72672f747265736174612f737061726b2d736b65776a6f696e2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/tresata/spark-skewjoin.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-spark-skewjoin" class="anchor" href="https://github.com/tresata/spark-skewjoin#spark-skewjoin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark-skewjoin</h1> 
+  <h2><a id="user-content-functionality" class="anchor" href="https://github.com/tresata/spark-skewjoin#functionality" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Functionality</h2> 
+  <p>This library adds the skewJoin operation to RDD[(K, V)] where possible (certain implicit typeclasses are required for K and V). A skew join is just like a normal join except that keys with large amounts of values are not processed by a single task but instead spread out across many tasks. This is achieved by replicating key-value pairs for one side of the join in such way that they go to multiple tasks, while randomly spreading out key-value pairs for the other side of the join across the same tasks (the actual implementation is symmetrical and can replicate and spread out at the same time for both sides). A skew join is like a bucket/block join except the replication factor is adjusted per key instead of being fixed. To be able to pick how much replication a key needs the skew join first estimates counts for all keys on both sides of the join, using a count-min-sketch (CMS) probabilistic data structure. This means the operation will process the RDDs twice:</p> 
+  <ul> 
+   <li>once for the approximate count of values per key, an immediate action</li> 
+   <li>once for the actual join, a RDD transformation</li> 
+  </ul> 
+  <p>Besides skewJoin this library also adds the blockJoin operation to RDD[(K, V)]. A block join is a skew join with fixed replication factors for both sides of the join. Because the replication factors are fixed no approximate count needs to be done either, avoiding a Spark immediate action for this count.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/tresata/spark-skewjoin#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.tresata.spark.skewjoin.Dsl.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">left</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">right</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">K</span>, <span class="pl-en">W</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">joined1</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">K</span>, (<span class="pl-en">V</span>, <span class="pl-en">W</span>)] <span class="pl-k">=</span> left.skewJoin(right)
+<span class="pl-k">val</span> <span class="pl-en">joined2</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">K</span>, (<span class="pl-en">V</span>, <span class="pl-en">W</span>)] <span class="pl-k">=</span> left.blockJoin(right, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>)</pre>
+  </div> 
+  <h2><a id="user-content-additional-info" class="anchor" href="https://github.com/tresata/spark-skewjoin#additional-info" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Additional info</h2> 
+  <p>The skewJoin method takes in optional arguments:</p> 
+  <ul> 
+   <li>partitioner: Partitioner This is typical spark partitioner to control the partitioning strategy</li> 
+   <li>skewReplication: SkewReplication The skewReplication is used to pick the replication factors per key given the counts. A custom implementation can be provided by user.</li> 
+   <li>cmsParams: CMSParams This is a simple case class with parameters for the count-min-sketch data structure used in the approximate counting of keys. Please see the Algebird documentation for additional info. Besides skewJoin and blockJoin this library also makes available skewLeftOuterJoin, skewRightOuterJoin, blockLeftOuterJoin and blockRightOuterJoin, but be aware that outer joins restrict the ability to replicate keys on one side of the join and therefore should be avoided if possible.</li> 
+  </ul> 
+  <p>Currently this library is alpha stage.</p> 
+  <p>Have fun! Team @ Tresata</p> 
+ </article>
+</div>

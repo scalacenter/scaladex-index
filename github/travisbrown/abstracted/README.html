@@ -1,0 +1,120 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-abstracted" class="anchor" href="https://github.com/travisbrown/abstracted#abstracted" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Abstracted</h1> 
+  <p><a href="http://travis-ci.org/travisbrown/abstracted" target="_blank"><img src="https://camo.githubusercontent.com/966ba69a3eb746837a94594d9a19ce6def478975/68747470733a2f2f696d672e736869656c64732e696f2f7472617669732f74726176697362726f776e2f616273747261637465642f6d61737465722e737667" alt="Build status" data-canonical-src="https://img.shields.io/travis/travisbrown/abstracted/master.svg" style="max-width:100%;"></a> <a href="https://codecov.io/github/travisbrown/abstracted" target="_blank"><img src="https://camo.githubusercontent.com/59b00fd1175937d70b46d4b5681403883f8dd901/68747470733a2f2f696d672e736869656c64732e696f2f636f6465636f762f632f6769746875622f74726176697362726f776e2f69746572617465652f6d61737465722e737667" alt="Coverage status" data-canonical-src="https://img.shields.io/codecov/c/github/travisbrown/iteratee/master.svg" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/io.travisbrown/abstracted_2.11" target="_blank"><img src="https://camo.githubusercontent.com/af6ccaaa8f5ab090958eb0ba1e93f2a16d3d0264/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f696f2e74726176697362726f776e2f616273747261637465645f322e31312e737667" alt="Maven Central" data-canonical-src="https://img.shields.io/maven-central/v/io.travisbrown/abstracted_2.11.svg" style="max-width:100%;"></a></p> 
+  <p>This is a small proof of concept that demonstrates how to implement a Scala macro that allows us to "forget" all of a value's methods and only use enrichment methods (which will usually be provided via a type class).</p> 
+  <p>The idea behind <code>abstracted</code> was originally (as far as I know) suggested by <a href="https://twitter.com/mpilquist" target="_blank">Michael Pilquist</a> in the <a href="https://github.com/non/cats" target="_blank">cats</a> room on <a href="https://gitter.im/non/cats?at=5565ecf27a71f1612c266c8d" target="_blank">Gitter</a>, although the approach he suggests is different from the one I've used here.</p> 
+  <h2><a id="user-content-simple-example" class="anchor" href="https://github.com/travisbrown/abstracted#simple-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Simple example</h2> 
+  <p>As an example, suppose we've got a <code>Box</code> type:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Box</span>[<span class="pl-en">A</span>](<span class="pl-k">val</span> <span class="pl-en">a</span><span class="pl-k">:</span> <span class="pl-en">A</span>) {
+  <span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> {
+    println(<span class="pl-s"><span class="pl-pds">"</span>Box's map<span class="pl-pds">"</span></span>)
+    <span class="pl-en">Box</span>(f(a))
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">flatMap</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> {
+    println(<span class="pl-s"><span class="pl-pds">"</span>Box's flatMap<span class="pl-pds">"</span></span>)
+    f(a)
+  }
+}</pre>
+  </div> 
+  <p>And a monad instance for it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">cats.</span><span class="pl-v">Monad</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">boxMonad</span><span class="pl-k">:</span> <span class="pl-en">Monad</span>[<span class="pl-en">Box</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Monad</span>[<span class="pl-en">Box</span>] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">fa</span>: <span class="pl-en">Box</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> {
+    println(<span class="pl-s"><span class="pl-pds">"</span>Box's functor's map<span class="pl-pds">"</span></span>)
+    <span class="pl-en">Box</span>(f(fa.a))
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">flatMap</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">fa</span>: <span class="pl-en">Box</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Box</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> {
+    println(<span class="pl-s"><span class="pl-pds">"</span>Box's monad's flatMap<span class="pl-pds">"</span></span>)
+    f(fa.a)
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">pure</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Box</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">Box</span>(a)
+}</pre>
+  </div> 
+  <p>Now if we use <code>Box</code> in a <code>for</code>-comprehension, for example, the monad instance won't get used:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.demo.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.demo.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">cats.syntax.all.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">cats.syntax.all.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">for</span> { foo <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Box</span>(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>); howMany <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Box</span>(<span class="pl-c1">3</span>) } <span class="pl-k">yield</span> foo <span class="pl-k">*</span> howMany
+<span class="pl-en">Box</span><span class="pl-en">'s</span> flatMap
+<span class="pl-en">Box</span><span class="pl-en">'s</span> map
+res0<span class="pl-k">:</span> io.travisbrown.abstracted.demo.<span class="pl-en">Box</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Box</span>(foofoofoo)</pre>
+  </div> 
+  <p>Our <code>abstracted</code> macro allows us to change this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">for</span> { foo <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Box</span>(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>).abstracted; howMany <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Box</span>(<span class="pl-c1">3</span>) } <span class="pl-k">yield</span> foo <span class="pl-k">*</span> howMany
+<span class="pl-en">Box</span><span class="pl-en">'s</span> monad<span class="pl-en">'s</span> flatMap
+<span class="pl-en">Box</span><span class="pl-en">'s</span> map
+res1<span class="pl-k">:</span> io.travisbrown.abstracted.demo.<span class="pl-en">Box</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Box</span>(foofoofoo)</pre>
+  </div> 
+  <h2><a id="user-content-finagle-services" class="anchor" href="https://github.com/travisbrown/abstracted#finagle-services" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Finagle services</h2> 
+  <p>I decided to take a stab at implementing <code>abstracted</code> tonight because of <a href="https://github.com/twitter/finagle/issues/385" target="_blank">a conversation about how Finagle services compose</a> this afternoon. Finagle services are morally more or less Kleisli arrows over Twitter futures, but for whatever reason <code>Service</code> extends <code>I =&gt; Future[O]</code>, which means that they have totally useless <code>compose</code> and <code>andThen</code> methods. In another <a href="https://github.com/travisbrown/catbird" target="_blank">project</a> I provide category and profunctor instances for <code>Service</code>, but the <code>compose</code> and <code>andThen</code> enrichment methods provided by cats for things with <code>Compose</code> instances are blocked by the stupid methods that <code>Service</code> inherits from <code>Function1</code>.</p> 
+  <p>For example, if we've got these services:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">cats.syntax.compose.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.util.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.finagle.</span><span class="pl-v">Service</span>
+<span class="pl-k">import</span> <span class="pl-v">io.catbird.finagle.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">is</span> <span class="pl-k">=</span> <span class="pl-en">Service</span>.mk[<span class="pl-k">Int</span>, <span class="pl-k">String</span>](i <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>.value(i.toString))
+<span class="pl-k">val</span> <span class="pl-en">si</span> <span class="pl-k">=</span> <span class="pl-en">Service</span>.mk[<span class="pl-k">String</span>, <span class="pl-k">Int</span>](s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(s.toInt))</pre>
+  </div> 
+  <p>We get an error when we try to compose them:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">ss</span> <span class="pl-k">=</span> si andThen is
+&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">22</span><span class="pl-k">:</span> <span class="pl-v">error</span>: <span class="pl-k">type</span> <span class="pl-en">mismatch</span>;
+ <span class="pl-v">found</span>   : com.twitter.finagle.<span class="pl-en">Service</span>[<span class="pl-k">Int</span>,<span class="pl-k">String</span>]
+ <span class="pl-v">required</span>: com.twitter.util.<span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=&gt;</span> <span class="pl-k">?</span>
+              si andThen is
+                         ^</pre>
+  </div> 
+  <p>Our <code>abstracted</code> macro fixes this problem:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">io.travisbrown.abstracted.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">ss</span> <span class="pl-k">=</span> si.abstracted andThen is
+ss<span class="pl-k">:</span> com.twitter.finagle.<span class="pl-en">Service</span>[<span class="pl-k">String</span>,<span class="pl-k">String</span>] <span class="pl-k">=</span> &lt;<span class="pl-ent">function1</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/travisbrown/abstracted#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>The implementation is pretty straightforward. First we've got an implicit class that provides a <code>def abstracted: Empty[A]</code> method for any <code>A</code>, where our <code>Empty</code> type is a case class that wraps an <code>A</code> and provides access to the wrapped value, but doesn't have any other methods.</p> 
+  <p>We also have a <code>Converter[A, B]</code> type that represents a conversion from <code>Empty[A]</code> to <code>B</code> (I ran into problems trying to use <code>Empty[A] =&gt; B</code> directly), and an implicit method that will apply the conversion automatically to any <code>Empty[A]</code> for any appropriately-typed <code>Converter</code> instance.</p> 
+  <p>The interesting part is how we make <code>Converter</code> instances. We use the Scala macro system's <a href="http://docs.scala-lang.org/overviews/macros/implicits.html" target="_blank">fundep materialization</a>, which allows us to determine in the body of the macro what the output type of the <code>Converter</code> will be. We look at the open implicits and find one that looks like the compiler is fishing for a <code>WhateverOps</code> enrichment class for our <code>Empty[A]</code>. We then ask for a view from <code>A</code> (our real type) to the target of that view. We read the return type off the view from <code>A</code>, and from there the implementation is pretty trivial.</p> 
+  <h2><a id="user-content-status" class="anchor" href="https://github.com/travisbrown/abstracted#status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Status</h2> 
+  <p>It seems like it works. The examples above can be run by opening up a REPL with <code>sbt demo/console</code>. If other people think it looks useful I guess it could end up in cats, although there's nothing cats-specific about the macro itself or the surrounding machinery.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/travisbrown/abstracted#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>abstracted is licensed under the <strong><a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a></strong> (the "License"); you may not use this software except in compliance with the License.</p> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>

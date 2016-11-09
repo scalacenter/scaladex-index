@@ -1,0 +1,170 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-ark" class="anchor" href="https://github.com/verizon/ark#ark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ark</h1> 
+  <p><a href="https://travis-ci.org/Verizon/ark" target="_blank"><img src="https://camo.githubusercontent.com/b6c520cb87ef6327299acb3666faa58a1687162d/68747470733a2f2f7472617669732d63692e6f72672f566572697a6f6e2f61726b2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/Verizon/ark.svg?branch=master" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/io.verizon.ark/core_2.10" target="_blank"><img src="https://camo.githubusercontent.com/d5b5785906eb7af6d71f0ca770a082cc393f5bcd/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f696f2e766572697a6f6e2e61726b2f636f72655f322e31302f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/io.verizon.ark/core_2.10/badge.svg" style="max-width:100%;"></a> <a href="https://codecov.io/gh/Verizon/ark" target="_blank"><img src="https://camo.githubusercontent.com/0602572c0f51ab0a200dc2e4bd0cfd32f34cf49e/68747470733a2f2f636f6465636f762e696f2f67682f566572697a6f6e2f61726b2f6272616e63682f6d61737465722f67726170682f62616467652e737667" alt="codecov" data-canonical-src="https://codecov.io/gh/Verizon/ark/branch/master/graph/badge.svg" style="max-width:100%;"></a></p> 
+  <p>This library provides a functional scala implementation of <code>org.apache.mesos.Scheduler</code> interface provided by <a href="http://mesos.apache.org/api/latest/java/" target="_blank">Mesos java API</a>.</p> 
+  <p>The goal of this library is to ease development of mesos schedulers by providing out-of-the-box implementations of common operational requirements of a framework, allowing developers to focus on domain logic implementation of task state transitions.</p> 
+  <p>Features:</p> 
+  <ul> 
+   <li>Pure functional implementation of mesos scheduler tasks state.</li> 
+   <li>Scalaz stream to queue all messages sent to the framework (from mesos master or custom user defined messages) to be processed one at a time making it completely thread safe.</li> 
+   <li>Recurring reconcialiation based on <a href="http://mesos.apache.org/documentation/latest/reconciliation/" target="_blank">Mesos Reconciliation Algorithm</a>.</li> 
+   <li><em>TODO:</em> Re-registration on mesos master failures.</li> 
+   <li><em>TODO:</em> High-Availability mode and leader election.</li> 
+  </ul> 
+  <p>From the current state of the project there is a clear path to implement missing features above by enhancing <code>oncue.mesos.Scheduler.processMessage</code> function.</p> 
+  <h2><a id="user-content-messages" class="anchor" href="https://github.com/verizon/ark#messages" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Messages</h2> 
+  <p>The core of this Mesos Scheduler implementation is handled by a scalaz async message queue. When Mesos calls any of the functions provided by the <code>Scheduler</code> interface, the scheduler creates one or many <code>oncue.mesos.MesosMessage</code> and enqueues them in the scalaz stream.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">MesosMessage</span> { <span class="pl-k">def</span> <span class="pl-en">driver</span><span class="pl-k">:</span> org.apache.mesos.<span class="pl-en">SchedulerDriver</span> }</pre>
+  </div> 
+  <p>The main scalaz stream is created inside <code>oncue.mesos.Scheduler</code> to handle calls from Mesos to the Scheduler interface. Users can provide any number of <code>scalaz.stream.Process[scalaz.concurrent.Task, CustomMessage]</code> when initializing the <code>Scheduler</code>. These custom streams get merged into the internal scalaz stream. This way the user can trigger any <code>CustomMesssage</code> to the scheduler which is handled by the same <code>processMessage</code> function that handles messages from Mesos.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">CustomMessage</span> <span class="pl-k">extends</span> <span class="pl-e">MesosMessage</span></pre>
+  </div> 
+  <h2><a id="user-content-reconciliation" class="anchor" href="https://github.com/verizon/ark#reconciliation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reconciliation</h2> 
+  <p>Mesos has very good documentation on how to implement the <a href="http://mesos.apache.org/documentation/latest/reconciliation/" target="_blank">Reconciliation Algorithm</a>, since most frameworks need to perform reconciliation this was the first feature to address in a common Mesos scheduler library.</p> 
+  <p>Reconciliation is triggered by sending a <code>ReconcileMessage</code> to the stream:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ReconcileMessage</span>(<span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">driver</span><span class="pl-k">:</span> <span class="pl-en">SchedulerDriver</span>) <span class="pl-k">extends</span> <span class="pl-e">CustomMessage</span></pre>
+  </div> 
+  <p><code>oncue.mesos.Scheduler</code> companion object provides a convenient function to initialize a timed reconciliation stream:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">reconcileProcess</span>(<span class="pl-v">driver</span>: <span class="pl-en">SchedulerDriver</span>, <span class="pl-v">reconcileInterval</span>: <span class="pl-en">FiniteDuration</span>)<span class="pl-k">:</span> <span class="pl-en">Process</span>[<span class="pl-en">Task</span>, <span class="pl-en">ReconcileMessage</span>] <span class="pl-k">=</span> {
+  time.awakeEvery(reconcileInterval)(defaultExecutor, timeOutScheduler)
+    .map(_ <span class="pl-k">=&gt;</span> <span class="pl-en">ReconcileMessage</span>(driver))
+}</pre>
+  </div> 
+  <p>The user can create a reconcile process by calling the function above and passing it to the scheduler <code>init</code> function, this will trigger reconcialiation every <code>reconcileInterval</code> and all offers will be declined until reconciliation is over.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">reconciliationInterval</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> hour
+<span class="pl-k">val</span> <span class="pl-en">customStreams</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>( <span class="pl-en">Scheduler</span>.reconcileProcess(driver, reconciliationInterval) )
+scheduler.init(state, driver, customStreams).run</pre>
+  </div> 
+  <p><em>TODO:</em> The wait time to reconcile all tasks is currently fixed, Mesos recommends to use truncated exponential back off to "avoid a snowball effect in the case of the driver or master being backed up".</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/verizon/ark#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>A full implementation of Mesos Scheduler would be required to implement <code>oncue.mesos.SchedulerState</code> and <code>oncue.mesos.SchedulerStateManager</code> traits and run the scheduler like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-c">// implement state and state manager</span>
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyState</span>( ... ) <span class="pl-k">extends</span> <span class="pl-e">SchedulerState</span>
+  <span class="pl-k">class</span> <span class="pl-en">MyStateManager</span> <span class="pl-k">extends</span> <span class="pl-e">SchedulerState</span>[<span class="pl-en">MyState</span>] { ... }
+
+  <span class="pl-c">// initialize state and state manager</span>
+  <span class="pl-k">val</span> <span class="pl-en">initialState</span> <span class="pl-k">=</span> <span class="pl-en">MyState</span>( ... )
+  <span class="pl-k">val</span> <span class="pl-en">stateManager</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyStateManager</span>( ... )
+
+  <span class="pl-c">// define framework info</span>
+  <span class="pl-k">val</span> <span class="pl-en">frameworkInfo</span> <span class="pl-k">=</span> <span class="pl-en">Protos</span>.<span class="pl-en">FrameworkInfo</span>.newBuilder
+    .setName(<span class="pl-s"><span class="pl-pds">"</span>my-framework<span class="pl-pds">"</span></span>)
+    .setOtherFrameworkattributes( ... )
+    .build
+
+  <span class="pl-c">// initialize scheduler and mesos driver</span>
+  <span class="pl-k">val</span> <span class="pl-en">scheduler</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">oncue.mesos.Scheduler</span>(stateManager)
+  <span class="pl-k">val</span> <span class="pl-en">driver</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">org.apache.mesos.MesosSchedulerDriver</span>(scheduler, frameworkInfo, mesosMaster)
+
+  <span class="pl-c">// shutdown scheduler on exit</span>
+  sys addShutdownHook {
+    scheduler.shutdown(driver)
+  }
+
+  <span class="pl-c">// Seq[Process[Task,CustomMessage]] pass custom state mutation messages</span>
+  <span class="pl-c">// Scheduler.reconcileProcess triggers reconciliation every "reconciliationInterval"</span>
+  <span class="pl-k">val</span> <span class="pl-en">reconciliationInterval</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> hour
+  <span class="pl-k">val</span> <span class="pl-en">customStreams</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-en">Scheduler</span>.reconcileProcess(driver, reconciliationInterval))
+
+  <span class="pl-c">// run scheduler (blocking)</span>
+  scheduler.init(initialState, driver, customStreams).run</pre>
+  </div> 
+  <h3><a id="user-content-example" class="anchor" href="https://github.com/verizon/ark#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h3> 
+  <p>The provided example implementation creates a scheduler that triggers the provided task on every slave in the cluster. This example also uses <a href="http://http4s.org/" target="_blank">http4s</a> to set up REST endpoints to query current scheduler state by sending custom messages to the queue. User can query scheduler info and add or remove slaves from a blacklist.</p> 
+  <p>Running example module on a local mesos cluster with 2 slaves using docker-machine on mac (see <a href="https://github.com/mesosphere/docker-containers/tree/master/mesos" target="_blank">https://github.com/mesosphere/docker-containers/tree/master/mesos</a>):</p> 
+  <ol> 
+   <li><p>Run ZK:</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>docker run -d --net=host netflixoss/exhibitor:1.5.2</pre>
+    </div></li> 
+   <li><p>Run master:</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>docker run -d --net=host \
+  -e LIBPROCESS_IP=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span> \
+  -e HOSTNAME=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span> \
+  -e MESOS_PORT=5050 \
+  -e MESOS_ZK=zk://127.0.0.1:2181/mesos \
+  -e MESOS_QUORUM=1 \
+  -e MESOS_REGISTRY=in_memory \
+  -e MESOS_LOG_DIR=/var/log/mesos \
+  -e MESOS_WORK_DIR=/var/tmp/mesos \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/log/mesos:/var/log/mesos<span class="pl-pds">"</span></span> \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/tmp/mesos:/var/tmp/mesos<span class="pl-pds">"</span></span> \
+  mesosphere/mesos-master:0.25.0-0.2.70.ubuntu1404</pre>
+    </div></li> 
+   <li><p>Run slaves, notice <code>MESOS_PORT</code> and mount points change for <code>/var/log/mesos</code> and <code>/var/tmp/mesos</code>:</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>docker run -d --net=host --privileged \
+  -e LIBPROCESS_IP=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span> \
+  -e HOSTNAME=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span>  \
+  -e MESOS_PORT=5051 \
+  -e MESOS_MASTER=zk://127.0.0.1:2181/mesos \
+  -e MESOS_SWITCH_USER=0 \
+  -e MESOS_CONTAINERIZERS=docker,mesos \
+  -e MESOS_LOG_DIR=/var/log/mesos \
+  -e MESOS_WORK_DIR=/var/tmp/mesos \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/log/mesos1:/var/log/mesos<span class="pl-pds">"</span></span> \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/tmp/mesos1:/var/tmp/mesos<span class="pl-pds">"</span></span> \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /cgroup:/cgroup \
+  -v /sys:/sys \
+  -v /usr/local/bin/docker:/usr/local/bin/docker \
+  mesosphere/mesos-slave:0.25.0-0.2.70.ubuntu1404
+
+docker run -d --net=host --privileged \
+  -e LIBPROCESS_IP=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span> \
+  -e HOSTNAME=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span>  \
+  -e MESOS_PORT=5052 \
+  -e MESOS_MASTER=zk://127.0.0.1:2181/mesos \
+  -e MESOS_SWITCH_USER=0 \
+  -e MESOS_CONTAINERIZERS=docker,mesos \
+  -e MESOS_LOG_DIR=/var/log/mesos \
+  -e MESOS_WORK_DIR=/var/tmp/mesos \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/log/mesos2:/var/log/mesos<span class="pl-pds">"</span></span> \
+  -v <span class="pl-s"><span class="pl-pds">"</span><span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/tmp/mesos2:/var/tmp/mesos<span class="pl-pds">"</span></span> \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /cgroup:/cgroup \
+  -v /sys:/sys \
+  -v /usr/local/bin/docker:/usr/local/bin/docker \
+  mesosphere/mesos-slave:0.25.0-0.2.70.ubuntu1404</pre>
+    </div></li> 
+   <li><p>Build scheduler assembly jar</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>sbt <span class="pl-s"><span class="pl-pds">"</span>project example<span class="pl-pds">"</span></span> assembly</pre>
+    </div></li> 
+   <li><p>Build scheduler container from example/Dockerfile:</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>docker build -t mysched example/</pre>
+    </div></li> 
+   <li><p>Run scheduler container interactively:</p> 
+    <div class="highlight highlight-source-shell">
+     <pre>docker run --rm --net=host -it \
+  -e LIBPROCESS_IP=<span class="pl-s"><span class="pl-pds">$(</span>docker-machine ip<span class="pl-pds">)</span></span> \
+  -v <span class="pl-s"><span class="pl-pds">$(</span><span class="pl-c1">pwd</span><span class="pl-pds">)</span></span>/example/target/scala-2.10:/opt/app \
+  mysched</pre>
+    </div></li> 
+  </ol> 
+ </article>
+</div>

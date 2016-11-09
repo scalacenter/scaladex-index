@@ -1,0 +1,258 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-quartz-scheduler" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#akka-quartz-scheduler" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-quartz-scheduler</h1> 
+  <p><a href="https://travis-ci.org/enragedginger/akka-quartz-scheduler" target="_blank"><img src="https://camo.githubusercontent.com/4e588e790582cc9323532cf03a3425470146df0a/68747470733a2f2f6170692e7472617669732d63692e6f72672f656e726167656467696e6765722f616b6b612d71756172747a2d7363686564756c65722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://api.travis-ci.org/enragedginger/akka-quartz-scheduler.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>Quartz Extension and utilities for true scheduling in Akka 2.4.x.</p> 
+  <p>Current release is built for Scala 2.11.x and Akka 2.4.x and is available on Maven Central. If you would like support for a different combination of Scala and Akka, simply post your request on the issues page (as well as a reason as to why the currently available versions won't work for you. I'm always curious about these things).</p> 
+  <h1><a id="user-content-why-akka-and-quartz" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#why-akka-and-quartz" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why Akka and Quartz?</h1> 
+  <p>Note that this is named and targeted as akka-quartz-scheduler for a reason: it is <em>not</em> a complete port of Quartz. Rather, we utilize the concepts of Quartz' scheduling system to provide a more robust and reliable scheduling component to Akka than the one already available.</p> 
+  <p>The goal here is to provide Akka with a scheduling system that is closer to what one would expect for Cron type jobs – set up long-running ActorSystems that can have certain events kicked off by Quartz.</p> 
+  <p>There aren't currently any plans on having anything to do with the distributed transaction, persistence, clustering or any other nonsense anytime soon. This is for cron-ey type timing and scheduling.</p> 
+  <p>There is the ability in Quartz to pass JobDataMaps around that accrue mutable state across job ticks; we currently do NOT support that to enforce integrity, but may expose a deeper actor structure later that gives some ability to work around that, if need arises.</p> 
+  <h2><a id="user-content-why-not-use-othercomparabletool-instead" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#why-not-use-othercomparabletool-instead" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why Not Use $OtherComparableTool Instead?</h2> 
+  <ol> 
+   <li><p>What's wrong with Akka's existing Scheduler? As Viktor Klang points out, 'Perhaps the name "Scheduler" was unfortunate, "Deferer" is probably more indicative of what it does.'</p> <p>The Akka Scheduler is designed to setup events that happen based on durations from the current moment: You can say "fire this job in 15 minutes, every 30 minutes thereafter" but not "fire a job every day at 3pm".</p> <p>Furthermore, Akka's default scheduler is executed around a <a href="http://docs.jboss.org/netty/3.1/api/org/jboss/netty/util/HashedWheelTimer.html" target="_blank"><code>HashedWheelTimer</code></a> – a potential precision loss for jobs, as it does not provide strong guarantees on the timeliness of execution.</p></li> 
+   <li><p>Why not just use the Quartz component in <a href="http://doc.akka.io/docs/akka/2.1.2/scala/camel.html" target="_blank">Akka's Camel Extension</a>?</p> 
+    <ol> 
+     <li>To begin with, Akka's Camel extension was <em>not</em> available in Akka 2.0.x, only in 2.1+</li> 
+     <li>Camel brings with it a whole architecture change (<code>Consumers</code>, <code>Producers</code>, etc) and is not exactly "lightweight" to plug in if all you want is Quartz support.</li> 
+     <li>We wanted to bring the scheduling concept of Quartz into Akka as cleanly as possible with native configuration integration and a lightweight feel.</li> 
+    </ol></li> 
+   <li><p>What about that other <code>akka-quartz</code> component up on GitHub?</p> <p>The interface to this aforementioned <code>akka-quartz</code> component is via Actors - one creates an instance of an Actor that has its own Quartz Scheduler underneath it, and sends messages to that Actor to schedule jobs. Because it is an Actor which provides no "Singleton"-like guarantee, it becomes too easy for users to accidentally spin up multiple scheduler instances, each of which is backed by its own threadpool. Instead, with <code>akka-quartz-scheduler</code> we use Akka's Extension system which provides a plugin model – we guarantee only one Quartz Scheduler is <em>ever</em> spun up per <code>ActorSystem</code>. This means we will never create anything but one single Thread Pool which you have control over the size of, for any given <code>ActorSystem</code>.</p></li> 
+  </ol> 
+  <p>Finally, a common failure of the above listed alternatives is that configuration of things like a repeating schedule should be separated from code in a configuration file which an operations team (not the developers) can control. Thus, <code>akka-quartz-scheduler</code> only allows specifying the following in code: the name of a job, what actor to send the tick to, and the message to send on a tick. The configuration of how frequently to 'tick' on a schedule is externalised to the Akka configuration file; when a schedule request is made its name is matched up with an entry in the config which specifies the rules the actual scheduling should follow.</p> 
+  <p>Thus, development can outline the skeleton of repeating jobs in their code, specifying only what to do WHEN a 'tick' of the schedule fires. Then, operations has complete control over how often a job runs and what rules it follows to determine the schedule of firing.</p> 
+  <p>This, among other things, prevents accidental mistakes such as changing a schedule in development for testing. A change of that sort is fixable without Operations needing to require a recompilation of source code.</p> 
+  <h3><a id="user-content-todo" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#todo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TODO</h3> 
+  <ul> 
+   <li>investigate supporting listeners, with actor hookarounds.</li> 
+   <li>misfires and recovery model - play nice with supervision, deathwatch, etc [docs page 23 - very close to supervision strategy]</li> 
+  </ul> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Usage of the <code>akka-quartz-scheduler</code> component first requires including the necessary dependency in your SBT project:</p> 
+  <pre><code>// For Akka 2.4.x and Scala 2.11.x
+libraryDependencies += "com.enragedginger" %% "akka-quartz-scheduler" % "1.5.0-akka-2.4.x"
+</code></pre> 
+  <pre><code>//Older versions of the artifact for those that require pre Akka 2.3 or pre Scala 2.11
+//If you would like a current version of the artifact to be published for your required version
+//of Akka and Scala, simply file on issue on the project page.
+resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+
+
+// For Akka 2.0.x
+libraryDependencies += "com.typesafe.akka" %% "akka-quartz-scheduler" % "1.2.0-akka-2.0.x"
+// For Akka 2.1.x
+libraryDependencies += "com.typesafe.akka" %% "akka-quartz-scheduler" % "1.2.0-akka-2.1.x"
+// For Akka 2.2.x
+libraryDependencies += "com.typesafe.akka" %% "akka-quartz-scheduler" % "1.2.0-akka-2.2.x"
+// For Akka 2.3.x and Scala 2.10.4
+libraryDependencies += "com.typesafe.akka" % "akka-quartz-scheduler_2.10" % "1.4.0-akka-2.3.x"
+</code></pre> 
+  <p>Note that the version name includes the Akka revision (Previous releases included the Akka release in the artifact name, which broken Maven).</p> 
+  <p>Then, from within your Akka project you can create and access a Scheduler:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.typesafe.akka.extension.quartz.</span><span class="pl-v">QuartzSchedulerExtension</span>
+
+<span class="pl-k">val</span> <span class="pl-en">scheduler</span> <span class="pl-k">=</span> <span class="pl-en">QuartzSchedulerExtension</span>(system)
+</pre>
+  </div> 
+  <p>Where <code>system</code> represents an instance of an Akka <code>ActorSystem</code> – note that <code>QuartzSchedulerExtension</code> is scoped to that <code>ActorSystem</code> and there will only ever be one instance of it per <code>ActorSystem</code>.</p> 
+  <p>The primary external method on the <code>scheduler</code> instance is <code>schedule</code>, used for scheduling a job:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">schedule</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">receiver</span>: <span class="pl-en">ActorRef</span>, <span class="pl-v">msg</span>: <span class="pl-en">AnyRef</span>, <span class="pl-v">startDate</span>: <span class="pl-en">Option</span>[<span class="pl-en">Date</span>])<span class="pl-k">:</span> java.util.<span class="pl-en">Date</span></pre>
+  </div> 
+  <p>OR</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">schedule</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">receiver</span>: <span class="pl-en">ActorSelection</span>, <span class="pl-v">msg</span>: <span class="pl-en">AnyRef</span>, <span class="pl-v">startDate</span>: <span class="pl-en">Option</span>[<span class="pl-en">Date</span>])<span class="pl-k">:</span> java.util.<span class="pl-en">Date</span></pre>
+  </div> 
+  <p>The arguments to schedule are:</p> 
+  <ul> 
+   <li><code>name</code>: A <code>String</code> identifying the name of this schedule. This <em>must</em> match a schedule present in the configuration</li> 
+   <li><code>receiver</code>: An <code>ActorRef</code> or <code>ActorSelection</code>, who will be sent <code>msg</code> each time the schedule fires</li> 
+   <li><code>msg</code>: An <code>AnyRef</code>, representing a message instance which will be sent to <code>receiver</code> each time the schedule fires</li> 
+   <li><code>startDate</code>: An optional <code>Date</code>, for postponed start of a job. Defaults to now. </li> 
+  </ul> 
+  <p>Invoking <code>schedule</code> returns an instance of <code>java.util.Date</code>, representing the first time the newly setup schedule will fire.</p> 
+  <p>Each time the Quartz schedule trigger fires, Quartz will send a copy of <code>msg</code> to your <code>receiver</code> actor.</p> 
+  <p>Here is an example, using a schedule called <code>Every30Seconds</code>, which sends a <code>Tick</code> message to a <code>CleanupActor</code> (which does hand wavy cleanup things):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Tick</span>
+
+<span class="pl-k">val</span> <span class="pl-en">cleaner</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">CleanupActor</span>])
+
+<span class="pl-en">QuartzSchedulerExtension</span>(system).schedule(<span class="pl-s"><span class="pl-pds">"</span>Every30Seconds<span class="pl-pds">"</span></span>, cleaner, <span class="pl-en">Tick</span>)</pre>
+  </div> 
+  <p>Where the <code>Tick</code> message is handled normally inside the Actor's message loop. If one wanted to ensure that schedule messages were dealt with more immediately than "normal" actor messages, they could utilize <a href="http://doc.akka.io/docs/akka/2.4.1/scala/dispatchers.html" target="_blank">Priority Mailboxes</a>.</p> 
+  <p>The details on the configuration of a job is outlined below in the section '<em>Schedule Configuration</em>'.</p> 
+  <h3><a id="user-content-configuration-of-quartz-scheduler" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#configuration-of-quartz-scheduler" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration of Quartz Scheduler</h3> 
+  <p>All configuration of <code>akka-quartz-scheduler</code> is done inside of the Akka configuration file in an <code>akka.quartz</code> config block. Like Akka's configuration file, this follows the <a href="https://github.com/typesafehub/config/blob/master/HOCON.md" target="_blank">HOCON Configuration Format</a>. Thus, any entries specified as <code>foo.bar.baz = x</code> can also be expressed as <code>foo { bar { baz = x } }</code>.</p> 
+  <p>At the top level of the configuration, optional values may be set which override the defaults for:</p> 
+  <ul> 
+   <li><code>defaultTimezone</code> - <strong>[String]</strong> represents the timezone to configure all jobs to run in. <em>DEFAULTS TO UTC</em> must be parseable by <a href="http://docs.oracle.com/javase/7/docs/api/java/util/TimeZone.html#getTimeZone(java.lang.String)" target="_blank"><code>java.util.TimeZone.getTimeZone()</code></a>,</li> 
+   <li><code>threadPool.threadCount</code> - <strong>[Int]</strong> The number of threads to allocate to the internal Quartz threadpool. <em>DEFAULTS TO 1</em> - you may wish to up this number if you have a large number of schedules being executed. With only 1 thread, each trigger will queue up and you may not get responsive schedule notifications.</li> 
+   <li><code>threadPool.threadPriority</code> - <strong>[Int]</strong> A number, between 1 (Lowest priority) and 10 (Highest priority), specifying the priority to assign to Quartz' threads <em>DEFAULTS TO 5</em></li> 
+   <li><code>threadPool.daemonThreads</code> - <strong>[Boolean]</strong> A boolean indicating whether the threads Quartz creates should execute as <a href="http://stackoverflow.com/a/2213348" target="_blank">Daemon Threads</a> or not. <em>DEFAULTS TO TRUE</em></li> 
+  </ul> 
+  <p>There are two 'primary' sub-blocks of the <code>akka.quartz</code> configuration, which are <code>schedules</code> and <code>calendars</code>.</p> 
+  <h4><a id="user-content-schedule-configuration" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#schedule-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Schedule Configuration</h4> 
+  <p>Schedules are our abstraction over Quartz' Job &amp; Trigger concepts. They allow you to define a named schedule, which will fire a schedule event (sending a message to an actor, as specified in code) each time the Quartz trigger fires.</p> 
+  <p>Currently, you can only specify "Cron" schedules, which follow <a href="http://quartz-scheduler.org/api/2.1.7/org/quartz/CronExpression.html" target="_blank">Quartz' CronExpression Language</a>, which is designed to match the standard Unix cron syntax with a few nice additions.</p> 
+  <p>The schedule name in the configuration will be used to match it up with a requested job when <code>schedule</code> is invoked; case does not matter as the "Is there a matching job?" configuration lookup is case insensitive.</p> 
+  <p>The configuration block for schedules is in <code>akka.quartz.schedules</code>, with sub-entries being specified inside of a named block, such that the configuration for a schedule named <code>Every30Seconds</code> would have its configuration values specified inside the configuration block <code>akka.quartz.schedules.Every30Seconds</code>.</p> 
+  <p>The entries that can be placed inside of a schedule configuration are:</p> 
+  <ul> 
+   <li><code>expression</code> - <strong>[String]</strong> <em>[required]</em> a valid <a href="http://quartz-scheduler.org/api/2.1.7/org/quartz/CronExpression.html" target="_blank">Quartz' CronExpression</a>, which describes when this job should trigger. e.g. <code>expression = "*/30 * * ? * *"</code> would fire every 30 seconds, on every date (however, the firing schedule created by this expression is modified by the <code>calendars</code> variable, defined below)</li> 
+   <li><code>timezone</code> - <strong>[String]</strong> <em>[optional]</em> the timezone in which to execute the schedule, <em>DEFAULTS TO <code>akka.quartz.defaultTimezone</code>, WHICH DEFAULTS TO *</em>UTC*** must be parseable by <a href="http://docs.oracle.com/javase/7/docs/api/java/util/TimeZone.html#getTimeZone(java.lang.String)" target="_blank"><code>java.util.TimeZone.getTimeZone()</code></a></li> 
+   <li><code>description</code> - <strong>[String]</strong> <em>[optional]</em> a description of the job. <em>DEFAULTS TO null</em>. Mostly for human friendliness when they read your configuration aka "what this schedule is for", but set in Quartz as well for if you dump the scheduler contents for debug.</li> 
+   <li><code>calendar</code> - <strong>[String]</strong> <em>[optional]</em> An option String which is the name of a configured Calendar. This Calendar is applied to this schedule as "exemptions" (Any times/dates falling in the Calendar will be excluded from the schedule firing - i.e. a Calendar that excludes all Mondays would keep a schedule configured to trigger every hour, from triggering <em>at all</em> on Mondays. NOTE: In versions 1.3.x and prior, this property was "calendars" and supported a list of Strings. However, Quartz, and by proxy, this library never actually supported multiple calendars for one schedule. Therefore, in versions 1.4.x and beyond this property has been renamed to "calendar" and is an optional String. <em>DEFAULTS TO *</em>None[String]***</li> 
+  </ul> 
+  <p>An example schedule called <code>Every30Seconds</code> which, aptly, fires off every 30 seconds:</p> 
+  <pre><code>akka {
+  quartz {
+    schedules {
+      Every30Seconds {
+        description = "A cron job that fires off every 30 seconds"
+        expression = "*/30 * * ? * *"
+        calendar = "OnlyBusinessHours"
+      }
+    }
+  }
+}
+</code></pre> 
+  <p>This Schedule specifies a Cron Expression which executes every 30 seconds of every day, but is modified by the calendar "OnlyBusinessHours", which excludes triggers from firing outside of between 8am and 6pm (and is detailed below).</p> 
+  <h4><a id="user-content-calendar-configuration" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#calendar-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Calendar Configuration</h4> 
+  <p>Calendars in the <code>akka-quartz-scheduler</code> mirror the concept of <a href="http://quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-04" target="_blank">Quartz' Calendars</a> – most specifically, they allow you to specify <em>exclusions</em> that override a schedule.</p> 
+  <p>Calendars are configured globally, in the <code>akka.quartz.calendars</code> configuration block. The definition of a calendar and what it excludes is made within this block. By default, no Calendars are applied to a Schedule. Instead, you must reference a named Calendar inside the <code>calendars</code> array of a Schedule's configuration, as outlined above.</p> 
+  <p>The configuration block for calendars is in <code>akka.quartz.calendars</code>, with sub-entries being specified inside of a named block, such that the configuration for a calendar named <code>OnlyBusinessHours</code> would have it's configuration values specified inside the configuration block <code>akka.quartz.calendars.OnlyBusinessHours</code>.</p> 
+  <p>There are several types of Calendar, each with its own specific configurations. The configuration values which are common to <em>all</em> types of Calendar are:</p> 
+  <ul> 
+   <li><code>type</code> - <strong>[String]</strong> <em>[required]</em> a valid type of Calendar. Currently either: Annual, Holiday, Daily, Monthly, Weekly, and Cron</li> 
+   <li><code>timezone</code> - <strong>[String]</strong> <em>[optional]</em> the timezone in which to execute the calendar, <em>DEFAULTS TO <code>akka.quartz.defaultTimezone</code>, WHICH DEFAULTS TO *</em>UTC*** must be parseable by <a href="http://docs.oracle.com/javase/7/docs/api/java/util/TimeZone.html#getTimeZone(java.lang.String)" target="_blank"><code>java.util.TimeZone.getTimeZone()</code></a></li> 
+   <li><code>description</code> - <strong>[String]</strong> <em>[optional]</em> a description of the calendar. <em>DEFAULTS TO null</em>. Mostly for human friendliness when they read your configuration aka "what this calendar is for", but set in Quartz as well for if you dump the scheduler contents for debug.</li> 
+  </ul> 
+  <p>Each specific Calendar type and its particular configuration entries are...</p> 
+  <h5><a id="user-content-annual-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#annual-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Annual' Calendar</h5> 
+  <p>An annual calendar excludes specific days of a given year, e.g. bank holidays which fall on the same date every year (Christmas and Gregorian New Year's for example) This calendar <em>does not take year into account</em>, and will apply to all years.</p> 
+  <p>It has only one configuration entry:</p> 
+  <ul> 
+   <li><code>excludeDates</code> - <strong>[Seq[String]]</strong> <em>[required]</em> This is a list of strings which are dates in the MM-DD format, representing which dates to exclude. For example, "Exclude Christmas and New Years" would read as <code>excludeDates = ["12-25", "01-01"]</code></li> 
+  </ul> 
+  <p>An example:</p> 
+  <pre><code>WinterClosings {
+  type = Annual
+  description = "Major holiday dates that occur in the winter time every year, non-moveable (The year doesn't matter)"
+  excludeDates = ["12-25", "01-01"]
+}
+</code></pre> 
+  <h5><a id="user-content-holiday-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#holiday-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Holiday' Calendar</h5> 
+  <p>A holiday calendar excludes specific dates, with a fully month, day, year taken into account. It is mostly useful for moving Bank Holidays (e.g. President's Day) and Moveable Feasts (e.g. Easter, which is based on a Lunar calendar).</p> 
+  <p>It has only one configuration entry:</p> 
+  <ul> 
+   <li><code>excludeDates</code> - <strong>[Seq[String]]</strong> <em>[required]</em> This is a list of strings in the ISO-8601 date format (YYYY-MM-DD), representing which dates (with year taken into account) to exclude. For example, excluding the the next 5 years' Easter holidays would read as <code>excludeDates = ["2013-03-31", "2014-04-20", "2015-04-05", "2016-03-27", "2017-04-16"]</code></li> 
+  </ul> 
+  <p>An example:</p> 
+  <pre><code>Easter {
+  type = Holiday
+  description = "The easter holiday (a moveable feast) for the next five years"
+  excludeDates = ["2013-03-31", "2014-04-20", "2015-04-05", "2016-03-27", "2017-04-16"]
+}
+</code></pre> 
+  <h5><a id="user-content-daily-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#daily-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Daily' Calendar</h5> 
+  <p>A daily calendar excludes a specified time range each day. It <em>may not</em> cross daily boundaries, and Quartz will enforce this. i.e. You cannot specify "11PM to 1AM" – to do that you'll need to specify two separate daily calendars.</p> 
+  <p>Exclusions in a Daily calendar are specified in a <code>exclude</code> with a <code>startTime</code> and <code>endTime</code> entry. Each of these fields follows a time format of <code>HH:MM[:SS[:mmm]]</code> where: - HH is the hour of the specified time using military (24-hour) time, and must be in the range 0-23 - MM is the minute of the specified time, and must be in the range 0-59 - SS is the <strong>optional</strong> second of the specified time, and must be in the range 0-59 - mmm is the <strong>optional</strong> millisecond of the specified time, and must be in the range 0-999</p> 
+  <p>An example, which doesn't allow jobs to run between 3AM and 5AM during the PST Timezone:</p> 
+  <pre><code>HourOfTheWolf {
+  type = Daily
+  description = "A period every day in which cron jobs are quiesced, during night hours"
+  exclude {
+    startTime = "03:00"
+    endTime   = "05:00:00"
+  }
+  timezone = PST
+}
+</code></pre> 
+  <h5><a id="user-content-monthly-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#monthly-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Monthly' Calendar</h5> 
+  <p>A monthly calendar excludes a set of days of the month, i.e. "Don't run a job on the 1st or 15th days of the month"</p> 
+  <p>It has only one configuration entry:</p> 
+  <ul> 
+   <li><code>excludeDays</code> - <strong>[Seq[Int]]</strong> <em>[required]</em> This is a list of Ints, between 1 and 31, representing a day of the month.</li> 
+  </ul> 
+  <p>An example:</p> 
+  <pre><code>FirstAndLastOfMonth {
+  type = Monthly
+  description = "A thinly veiled example to test monthly exclusions"
+  excludeDays = [1, 31]
+}
+</code></pre> 
+  <h5><a id="user-content-weekly-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#weekly-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Weekly' Calendar</h5> 
+  <p>A weekly calendar excludes a set of days of the week. <em>By default, Saturday and Sunday are always excluded</em></p> 
+  <p>The configuration entries:</p> 
+  <ul> 
+   <li><code>excludeDays</code> - <strong>[Seq[Int]]</strong> <em>[required]</em> This is a list of Ints, between 1 and 7 – where 1 is Sunday and 7 is Saturday – representing days of the week to exclude.</li> 
+   <li><code>excludeWeekends</code> - <strong>Boolean</strong> <em>defaults to TRUE</em> Whether weekends should be excluded automatically by this scheduler or not. Note that <code>excludeWeekends</code> is overriden by <code>excludeDays</code> – if you specify <code>excludeWeekends = false</code> but <code>excludeDays</code> includes Sunday (<code>1</code>) or Saturday (<code>7</code>), then a configuration error will be thrown.</li> 
+  </ul> 
+  <p>An example, which excludes jobs from running on any Monday:</p> 
+  <pre><code>MondaysSuck {
+  type = Weekly
+  description = "Everyone, including this calendar, hates mondays as an integer"
+  excludeDays = [2]
+  excludeWeekends = false
+}
+</code></pre> 
+  <p>Note that by default, <code>excludeWeekends</code> would be true and thus <code>excludeDays</code> would implicitly be <code>[1, 2, 7]</code></p> 
+  <h5><a id="user-content-cron-calendar" class="anchor" href="https://github.com/enragedginger/akka-quartz-scheduler#cron-calendar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>'Cron' Calendar</h5> 
+  <p>A cron calendar excludes the set of times expressed by a given <a href="http://quartz-scheduler.org/api/2.1.7/org/quartz/CronExpression.html" target="_blank">Quartz CronExpression</a>.</p> 
+  <p>It has only one configuration entry:</p> 
+  <ul> 
+   <li><code>excludeExpression</code> - <strong>[String]</strong> <em>[required]</em> A valid <a href="http://quartz-scheduler.org/api/2.1.7/org/quartz/CronExpression.html" target="_blank">Quartz CronExpression</a>, which will be used to specify what times a job <em>cannot</em> run in (the opposite of a Cron Schedule).</li> 
+  </ul> 
+  <p>An example Calendar, which specifies an exclusion set of <code>00:00 - 07:59</code> and <code>18:00 - 23:59</code> (thereby only allowing jobs to run from <code>08:00 - 17:59</code>):</p> 
+  <pre><code>CronOnlyBusinessHours {
+  type = Cron
+  excludeExpression = "* * 0-7,18-23 ? *
+}
+</code></pre> 
+ </article>
+</div>

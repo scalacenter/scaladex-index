@@ -1,0 +1,133 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-shapeless-builder" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#shapeless-builder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>shapeless-builder</h1> 
+  <p>shapeless-builder is a <a href="http://www.scala-lang.org" target="_blank">Scala</a> library which takes advantage of <a href="https://github.com/milessabin" target="_blank">Miles Sabin's</a> <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a> library to endow case classes with method-chaining builders (essentially the builder design pattern). These builders are type-safe and purely functional. The Scala type system is used to ensure that code attempting to build incomplete objects will not compile.</p> 
+  <p>This work was inspired by a <a href="http://blog.rafaelferreira.net/2008/07/type-safe-builder-pattern-in-scala.html" target="_blank">blog post</a> by <a href="http://blog.rafaelferreira.net/" target="_blank">Rafael Ferreira</a>. Thanks Rafael!</p> 
+  <p>The isomorphism between case classes and HLists and generous use of implicits are the driving forces behind shapeless-builder.</p> 
+  <p>This library is one part in a trilogy (<a href="https://github.com/harveywi/shapeless-serialization" target="_blank">I. shapeless-serialization</a>, <a href="https://github.com/dmrolfs/shapeless-builder/blob/master" target="_blank">II. shapeless-builder</a>, III. shapeless-commandline (coming soon!)) of shapeless-based libraries that I recently cooked up to both deepen my understanding of Scala and to scratch some technical itches. I hope you find it useful and interesting!</p> 
+  <h2><a id="user-content-example-1" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#example-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example 1</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Define a case class</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">x</span>: <span class="pl-k">Int</span>, <span class="pl-v">y</span>: <span class="pl-k">String</span>, <span class="pl-v">z</span>: <span class="pl-k">Char</span>)
+
+<span class="pl-c">// Mix the HasBuilder trait in with its companion object</span>
+<span class="pl-k">object</span> <span class="pl-en">Foo</span> <span class="pl-k">extends</span> <span class="pl-e">HasBuilder</span>[<span class="pl-en">Foo</span>] {
+  <span class="pl-c">// Establish the case class &lt;=&gt; HList isomorphism</span>
+  <span class="pl-k">val</span> <span class="pl-en">isoContainer</span> <span class="pl-k">=</span> createIsoContainer(apply _, unapply _)
+
+  <span class="pl-c">// Define objects corresponding to the case class constructor parameters:</span>
+  <span class="pl-c">// X is a required parameter of type Int</span>
+  <span class="pl-k">object</span> <span class="pl-en">X</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span>[<span class="pl-k">Int</span>]
+
+  <span class="pl-c">// Y is an optional parameter of type String with default value "5"</span>
+  <span class="pl-k">object</span> <span class="pl-en">Y</span> <span class="pl-k">extends</span> <span class="pl-e">OptParam</span>[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Z is an optional parameter of type Char with default value '5'</span>
+  <span class="pl-k">object</span> <span class="pl-en">Z</span> <span class="pl-k">extends</span> <span class="pl-e">OptParam</span>[<span class="pl-k">Char</span>](<span class="pl-c1">'5'</span>)
+
+  <span class="pl-c">// Define the "fieldsContainer" by passing in an HList of the above objects.  The order of the</span>
+  <span class="pl-c">// objects in the HList must correspond to the order of the case class constructor parameters.</span>
+  <span class="pl-k">val</span> <span class="pl-en">fieldsContainer</span> <span class="pl-k">=</span> createFieldsContainer(<span class="pl-en">X</span> <span class="pl-k">::</span> <span class="pl-en">Y</span> <span class="pl-k">::</span> <span class="pl-en">Z</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>)
+}
+
+<span class="pl-c">// [...]</span>
+
+<span class="pl-c">// Now you can create instances of the case class by using method-chaining builder incantations</span>
+<span class="pl-k">import</span> <span class="pl-v">Foo.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">test</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>.builder.set(<span class="pl-en">X</span>, <span class="pl-c1">42</span>).set(<span class="pl-en">Z</span>, <span class="pl-c1">'#'</span>).build()
+
+<span class="pl-c">// Yessssssss!</span>
+assert(foo <span class="pl-k">==</span> <span class="pl-en">Foo</span>(<span class="pl-c1">42</span>, <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>, <span class="pl-c1">'#'</span>), <span class="pl-s"><span class="pl-pds">"</span>Nooooooooooo!<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-example-2" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#example-2" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example 2</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.harveywi.builder.</span><span class="pl-v">HasBuilder</span>
+<span class="pl-k">import</span> <span class="pl-v">shapeless.</span><span class="pl-v">_</span>
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Example demonstrating the builder pattern for a shot of scotch (see</span>
+<span class="pl-c"> * http://blog.rafaelferreira.net/2008/07/type-safe-builder-pattern-in-scala.html).</span>
+<span class="pl-c"> *</span>
+<span class="pl-c"> * Huge thanks to Rafael Ferreira for providing this use case!</span>
+<span class="pl-c"> *</span>
+<span class="pl-c"> * <span class="pl-k">@author</span> William Harvey</span>
+<span class="pl-c"> */</span>
+<span class="pl-k">object</span> <span class="pl-en">OrderOfScotch</span> {
+
+  <span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Preparation</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Neat</span> <span class="pl-k">extends</span> <span class="pl-e">Preparation</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">OnTheRocks</span> <span class="pl-k">extends</span> <span class="pl-e">Preparation</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">WithWater</span> <span class="pl-k">extends</span> <span class="pl-e">Preparation</span>
+
+  <span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Glass</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Short</span> <span class="pl-k">extends</span> <span class="pl-e">Glass</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Tall</span> <span class="pl-k">extends</span> <span class="pl-e">Glass</span>
+  <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Tulip</span> <span class="pl-k">extends</span> <span class="pl-e">Glass</span>
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">OrderOfScotch</span>(
+    <span class="pl-k">val</span> <span class="pl-en">brand</span><span class="pl-k">:</span> <span class="pl-k">String</span>,
+    <span class="pl-k">val</span> <span class="pl-en">mode</span><span class="pl-k">:</span> <span class="pl-en">Preparation</span>,
+    <span class="pl-k">val</span> <span class="pl-en">isDouble</span><span class="pl-k">:</span> <span class="pl-k">Boolean</span>,
+    <span class="pl-k">val</span> <span class="pl-en">glass</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Glass</span>])
+
+  <span class="pl-k">object</span> <span class="pl-en">OrderOfScotch</span> <span class="pl-k">extends</span> <span class="pl-e">HasBuilder</span>[<span class="pl-en">OrderOfScotch</span>] {
+    <span class="pl-k">object</span> <span class="pl-en">Brand</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span>[<span class="pl-k">String</span>]
+    <span class="pl-k">object</span> <span class="pl-en">Mode</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span>[<span class="pl-en">Preparation</span>]
+    <span class="pl-k">object</span> <span class="pl-en">IsDouble</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span>[<span class="pl-k">Boolean</span>]
+    <span class="pl-k">object</span> <span class="pl-en">Glass</span> <span class="pl-k">extends</span> <span class="pl-e">OptParam</span>[<span class="pl-en">Option</span>[<span class="pl-en">Glass</span>]](<span class="pl-c1">None</span>)
+
+    <span class="pl-c">// Establish HList &lt;=&gt; OrderOfScotch isomorphism</span>
+    <span class="pl-k">val</span> <span class="pl-en">isoContainer</span> <span class="pl-k">=</span> createIsoContainer(apply _, unapply _)
+    <span class="pl-c">// Establish Param[_] &lt;=&gt; constructor parameter correspondence</span>
+    <span class="pl-k">val</span> <span class="pl-en">fieldsContainer</span> <span class="pl-k">=</span> createFieldsContainer(<span class="pl-en">Brand</span> <span class="pl-k">::</span> <span class="pl-en">Mode</span> <span class="pl-k">::</span> <span class="pl-en">IsDouble</span> <span class="pl-k">::</span> <span class="pl-en">Glass</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>)
+    <span class="pl-c">// That's all!</span>
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    <span class="pl-k">import</span> <span class="pl-v">OrderOfScotch.</span><span class="pl-v">_</span>
+
+    <span class="pl-k">val</span> <span class="pl-en">order1</span> <span class="pl-k">=</span> <span class="pl-en">OrderOfScotch</span>.builder.set(<span class="pl-en">Brand</span>, <span class="pl-s"><span class="pl-pds">"</span>Takes<span class="pl-pds">"</span></span>).set(<span class="pl-en">IsDouble</span>, <span class="pl-c1">true</span>).
+      set(<span class="pl-en">Glass</span>, <span class="pl-en">Some</span>(<span class="pl-en">Tall</span>)).set(<span class="pl-en">Mode</span>, <span class="pl-en">OnTheRocks</span>).build()
+
+    <span class="pl-c">// Point-free version of the above</span>
+    <span class="pl-k">val</span> <span class="pl-en">order2</span> <span class="pl-k">=</span> (<span class="pl-en">OrderOfScotch</span>.builder
+      set(<span class="pl-en">Brand</span>, <span class="pl-s"><span class="pl-pds">"</span>Takes<span class="pl-pds">"</span></span>)
+      set(<span class="pl-en">IsDouble</span>, <span class="pl-c1">true</span>)
+      set(<span class="pl-en">Glass</span>, <span class="pl-en">Some</span>(<span class="pl-en">Tall</span>))
+      set(<span class="pl-en">Mode</span>, <span class="pl-en">OnTheRocks</span>)
+      build())
+
+    assert(order1 <span class="pl-k">==</span> <span class="pl-en">OrderOfScotch</span>(<span class="pl-s"><span class="pl-pds">"</span>Takes<span class="pl-pds">"</span></span>, <span class="pl-en">OnTheRocks</span>, <span class="pl-c1">true</span>, <span class="pl-en">Some</span>(<span class="pl-en">Tall</span>)),
+      <span class="pl-s"><span class="pl-pds">"</span>Time to get out the scotch...<span class="pl-pds">"</span></span>)
+
+    assert(order1 <span class="pl-k">==</span> order2, <span class="pl-s"><span class="pl-pds">"</span>Traditional and point-free build results should be identical<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>For more examples, see the test specifications <a href="https://github.com/harveywi/shapeless-builder/tree/master/src/test/com/github/harveywi/builder" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-prerequisites" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#prerequisites" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Prerequisites</h2> 
+  <p>This library requires Scala 2.10 and shapeless 1.2.3.</p> 
+  <h2><a id="user-content-scaladoc" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#scaladoc" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scaladoc</h2> 
+  <p>Scaladoc is available <a href="http://www.aylasoftware.org/shapeless-builder/" target="_blank">here</a>.</p> 
+  <h3><a id="user-content-questions--comments--bugs" class="anchor" href="https://github.com/dmrolfs/shapeless-builder#questions--comments--bugs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Questions? Comments? Bugs?</h3> 
+  <p>Feel free to contact me (harveywi at cse dot ohio-state dot edu). Thanks!</p> 
+ </article>
+</div>

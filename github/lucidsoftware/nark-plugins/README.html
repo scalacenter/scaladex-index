@@ -1,0 +1,36 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-nark-plugins" class="anchor" href="https://github.com/lucidsoftware/nark-plugins#nark-plugins" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>nark-plugins</h1> 
+  <p>Nark allows users to write plugins to take actions when certain events occur in the Nark system. This allows customization of Nark for various use cases.</p> 
+  <p>To create a Nark plugin, add the following dependency to the plugin project:</p> 
+  <pre><code>libraryDependencies ++= Seq(
+  "com.lucidchart" %% "nark-plugin" % "1.0"
+)
+</code></pre> 
+  <h3><a id="user-content-alert-plugins" class="anchor" href="https://github.com/lucidsoftware/nark-plugins#alert-plugins" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Alert Plugins</h3> 
+  <p>Alert plugins are called when an alert in the Nark system changes state (ie, error -&gt; normal, warning -&gt; error, etc.). These plugins can therefore take custom action when an alert is fired or goes back to a normal state.</p> 
+  <p>To create an alert plugin, extend the AlertPlugin trait. This trait requires that the following instance variables be provided:</p> 
+  <ul> 
+   <li><code>name: String</code> - a human readable name for the plugin</li> 
+   <li><code>tags: Set[String]</code> - a set of tags to act upon. The plugin may not want to respond to ALL alerts in the system. Alerts or alerts created by a dynamic alert tagged with any of these strings will be sent to the plugin when their states change.</li> 
+   <li><code>fallbackEmails: List[String]</code> - email addresses to notify when the plugin is unable to succesfully take action upon a state change</li> 
+  </ul> 
+  <p>The class that extends the AlertPlugin trait must also provide definitions for the following methods:</p> 
+  <ul> 
+   <li><code>init(): Unit</code> - a method that will initialize the plugin in anyway it needs</li> 
+   <li><code>alert(alert: AlertEvent): Boolean</code> - take action when an alert changes state. The case class passed in contains necessary data about the alert and the state change. Return true if the action succeeds, false if it does not. If false is returned, the emails in <code>fallbackEmails</code> will be notified.</li> 
+  </ul> 
+  <p>To use a plugin in Nark, include the dependency in Build.scala. Additionally, add the name of the plugin to a list specified by <code>plugins.names</code> in application.conf. Another configuration value will have to be defined for the name of the class that extends AlertPlugin. The key for this value will be "plugins." + pluginName + ".class". For example:</p> 
+  <pre><code>plugins.names = [
+  "PagerDuty"
+]
+plugins.PagerDuty.class = "com.lucidchart.open.nark.pagerduty.PagerDuty"
+</code></pre> 
+ </article>
+</div>

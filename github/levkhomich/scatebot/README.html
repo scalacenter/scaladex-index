@@ -1,0 +1,80 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scatebot" class="anchor" href="https://github.com/levkhomich/scatebot#scatebot" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scatebot</h1> 
+  <p>Spray-inspired DSL for Telegram bot creation.</p> 
+  <p>Key features:</p> 
+  <ul> 
+   <li>strictly typed</li> 
+   <li>fully asynchronous</li> 
+   <li>supports full Telegram API except webhooks</li> 
+   <li>schema code generation right from Telegram's Bot API page</li> 
+   <li>small dependency footprint (json4s-jackson, akka-http are the ones needed)</li> 
+  </ul> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/levkhomich/scatebot#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting started</h1> 
+  <p>One example is better than a thousand words.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">BasicApp</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">_</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">new</span> <span class="pl-en">TelegramBot</span>(<span class="pl-s"><span class="pl-pds">"</span>bot token<span class="pl-pds">"</span></span>) <span class="pl-k">with</span> <span class="pl-e">BotDSL</span> {
+    <span class="pl-c">// this route will handle incoming messages</span>
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">messageRoute</span>(<span class="pl-k">implicit</span> <span class="pl-v">ctx</span>: <span class="pl-en">MessageContext</span>)<span class="pl-k">:</span> <span class="pl-en">MessageRoute</span> <span class="pl-k">=</span> {
+      message(<span class="pl-s"><span class="pl-pds">"</span>/help<span class="pl-pds">"</span></span>) { <span class="pl-c">// simple slash command</span>
+        client.request(<span class="pl-en">SendChatAction</span>(ctx.chatId, <span class="pl-en">ChatAction</span>.<span class="pl-en">Typing</span>)) <span class="pl-c">// side effect</span>
+        <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">1000</span>) <span class="pl-c">// this call will block whole route</span>
+        <span class="pl-en">SendMessage</span>(ctx.chatId, <span class="pl-s"><span class="pl-pds">"</span>I can't help you actually<span class="pl-pds">"</span></span>) <span class="pl-c">// route result</span>
+      } <span class="pl-k">~</span>
+        (message(<span class="pl-s"><span class="pl-pds">"</span>hi, bot<span class="pl-pds">"</span></span>) &amp; fromUser) { user <span class="pl-k">=&gt;</span> <span class="pl-c">// some text with user extractor</span>
+        <span class="pl-en">Future</span> { <span class="pl-c">// async processing</span>
+          <span class="pl-k">if</span> (ctx.message.chat.`type` <span class="pl-k">!=</span> <span class="pl-en">ChatType</span>.<span class="pl-en">Private</span>)
+            <span class="pl-c1">None</span> <span class="pl-c">// do not respond in non-private chats</span>
+          <span class="pl-k">else</span>
+            <span class="pl-en">Some</span>(<span class="pl-en">SendMessage</span>(ctx.chatId, s<span class="pl-s"><span class="pl-pds">"</span>Hi, *${user.firstName}*<span class="pl-pds">"</span></span>, parseMode <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">ParseMode</span>.<span class="pl-en">Markdown</span>)))
+        }
+      } <span class="pl-k">~</span> {  <span class="pl-c">// raw API example</span>
+        <span class="pl-k">if</span> (ctx.message.game.isDefined) {
+          <span class="pl-c">// respond will finish routing, so directives below it won't be evaluated</span>
+          respond(<span class="pl-en">SendChatAction</span>(ctx.chatId, <span class="pl-en">ChatAction</span>.<span class="pl-en">RecordVideo</span>))
+        } <span class="pl-k">else</span> {
+          reject <span class="pl-c">// means, that update was not handled here, so routing will continue</span>
+        }
+      } <span class="pl-k">~</span> {
+        <span class="pl-c">// regex text extractors</span>
+        <span class="pl-k">val</span> <span class="pl-en">doubleRegex</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"""</span>-?\d+\.\d+<span class="pl-pds">"""</span></span>.r
+        message(<span class="pl-s"><span class="pl-pds">"</span>location <span class="pl-pds">"</span></span> <span class="pl-k">/</span> doubleRegex <span class="pl-k">~</span> <span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span> <span class="pl-k">~</span> doubleRegex) { <span class="pl-k">case</span> (latRaw, lonRaw) <span class="pl-k">=&gt;</span>
+          client.request(<span class="pl-en">SendChatAction</span>(ctx.chatId, <span class="pl-en">ChatAction</span>.<span class="pl-en">FindLocation</span>))
+          <span class="pl-c">// it will fail nicely here providing needed stacktrace</span>
+          <span class="pl-c">// if unexpected values will be passed</span>
+          <span class="pl-en">SendLocation</span>(ctx.chatId, latRaw.toFloat, lonRaw.toFloat)
+        }
+      } <span class="pl-k">~</span>
+      messagePrefix(<span class="pl-s"><span class="pl-pds">"</span>route nesting<span class="pl-pds">"</span></span> <span class="pl-k">/</span>) { <span class="pl-c">// textPrefix will match beginning of message</span>
+        message(<span class="pl-s"><span class="pl-pds">"</span>case 1<span class="pl-pds">"</span></span>) { <span class="pl-c">// this will match on "route nesting case 1"</span>
+          <span class="pl-en">SendMessage</span>(ctx.chatId, <span class="pl-s"><span class="pl-pds">"</span>case 1<span class="pl-pds">"</span></span>)
+        } <span class="pl-k">~</span> { <span class="pl-c">// this will match on everything else</span>
+          <span class="pl-en">SendMessage</span>(ctx.chatId, <span class="pl-s"><span class="pl-pds">"</span>and handle unmatched ones<span class="pl-pds">"</span></span>)
+        }
+      }
+    }
+  }.start()
+}</pre>
+  </div> 
+  <p>See more info at <a href="https://github.com/levkhomich/scatebot/tree/master/core/src/main/scala/com/github/levkhomich/scatebot/dsl/directives" target="_blank">directives package</a> while more docs are being written.</p> 
+  <h1><a id="user-content-artifact" class="anchor" href="https://github.com/levkhomich/scatebot#artifact" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Artifact</h1> 
+  <p>Use <code>"com.github.levkhomich" %% "scatebot" % version</code> for DSL,<br> or <code>"com.github.levkhomich" %% "scatebot-api" % version</code> if you only need API wrappers.</p> 
+  <p>Latest stable version:<br> <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.levkhomich%22%20scatebot" target="_blank"><img src="https://camo.githubusercontent.com/6af144fecc968fdd2bb5ec2c45f8c1327b26e227/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f636f6d2e6769746875622e6c65766b686f6d6963682f7363617465626f745f322e31312e7376673f7374796c653d666c61742d737175617265" alt="Maven Central" data-canonical-src="https://img.shields.io/maven-central/v/com.github.levkhomich/scatebot_2.11.svg?style=flat-square" style="max-width:100%;"></a><br> <a href="https://github.com/levkhomich/scatebot/blob/master/project/Build.scala#L13" target="_blank">Latest snapshot</a>.</p> 
+  <h1><a id="user-content-wip-note" class="anchor" href="https://github.com/levkhomich/scatebot#wip-note" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>WIP note</h1> 
+  <p>Please, be aware, that this framework is actively developed, thus, source compatibility between releases is not guaranteed yet. Any feedback is very much appreciated.</p> 
+ </article>
+</div>

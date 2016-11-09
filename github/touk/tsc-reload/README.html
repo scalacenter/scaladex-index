@@ -1,0 +1,72 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-tsc-reload" class="anchor" href="https://github.com/touk/tsc-reload#tsc-reload" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>tsc-reload</h1> 
+  <p><a href="https://travis-ci.org/TouK/tsc-reload" target="_blank"><img src="https://camo.githubusercontent.com/b012caf9b33af791be11253d99ab042de6b5242e/68747470733a2f2f7472617669732d63692e6f72672f546f754b2f7473632d72656c6f61642e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/TouK/tsc-reload.svg" style="max-width:100%;"></a></p> 
+  <p><em>tsc-reload</em> is a TypeSafe config wrapper for automatic reloadable configuration</p> 
+  <h2><a id="user-content-overview" class="anchor" href="https://github.com/touk/tsc-reload#overview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Overview</h2> 
+  <p>When you use plain <em>TypeSafe</em> config, you probably load config on bootstrap phase of your project. When configuration content will change, you need to restart your application. Thanks to <em>tsc-reload</em>, you decide when you want to use current value from configuration.</p> 
+  <p>Sample <em>TypeSafe</em> config usage code:</p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import</span> <span class="pl-smi">com.typesafe.config.*</span>
+
+<span class="pl-smi">Config</span> cfg <span class="pl-k">=</span> <span class="pl-smi">ConfigFactory</span><span class="pl-k">.</span>parseFile(<span class="pl-s"><span class="pl-pds">"</span>config.conf<span class="pl-pds">"</span></span>);
+<span class="pl-k">int</span> configValue <span class="pl-k">=</span> cfg<span class="pl-k">.</span>getInt(<span class="pl-s"><span class="pl-pds">"</span>foo.bar<span class="pl-pds">"</span></span>);</pre>
+  </div> 
+  <p>Then you can pass this value to any place in your application. But this value will change when you change content of <em>config.conf</em>.</p> 
+  <p>When you use <em>tsc-config</em> the same code will look like:</p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import</span> <span class="pl-smi">pl.touk.tscreload.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">com.typesafe.config.Config</span>;
+<span class="pl-k">import</span> <span class="pl-smi">java.time.*</span>;
+
+<span class="pl-k">Reloadable&lt;<span class="pl-smi">Config</span>&gt;</span> cfg <span class="pl-k">=</span> <span class="pl-smi">ReloadableConfigFactory</span><span class="pl-k">.</span>parseFile(<span class="pl-s"><span class="pl-pds">"</span>config.conf<span class="pl-pds">"</span></span>, <span class="pl-smi">Duration</span><span class="pl-k">.</span>ofSeconds(<span class="pl-c1">30</span>));
+<span class="pl-k">Reloadable&lt;<span class="pl-smi">Integer</span>&gt;</span> configValue <span class="pl-k">=</span> cfg<span class="pl-k">.</span>map(c <span class="pl-k">-</span><span class="pl-k">&gt;</span> c<span class="pl-k">.</span>getInt(<span class="pl-s"><span class="pl-pds">"</span>foo.bar<span class="pl-pds">"</span></span>));</pre>
+  </div> 
+  <p>Then you can also pass value to any place in your application. Value is wrapped in reloadable context. You decide when you want to read current value invoking <code>configValue.currentValue()</code>. You can add any transformations to <code>Reloadable&lt;T&gt;</code> using <code>map</code> method e.g. wrap values with own configuration or use other lib which covert <code>Config</code> to something else.</p> 
+  <h2><a id="user-content-interoperability" class="anchor" href="https://github.com/touk/tsc-reload#interoperability" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Interoperability</h2> 
+  <p>This lib is just a thin wrapper for <em>TypeSafe</em> config wirtten in <em>Java</em>. You still can mix it with other libs like e.g. <a href="https://github.com/ceedubs/ficus" target="_blank">Ficus</a>. Example code (please make notice that were used JFunctionConversions available in test sources):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">pl.touk.tscreload.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">java.time.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">net.ceedubs.ficus.Ficus.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">net.ceedubs.ficus.readers.ArbitraryTypeReader.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">JFunctionConversions.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">bar</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">reloadable</span> <span class="pl-k">=</span> <span class="pl-en">ReloadableConfigFactory</span>.parseFile(<span class="pl-s"><span class="pl-pds">"</span>config.conf<span class="pl-pds">"</span></span>, <span class="pl-en">Duration</span>.ofSeconds(<span class="pl-c1">30</span>))
+<span class="pl-k">val</span> <span class="pl-en">reloadableFoo</span><span class="pl-k">:</span> <span class="pl-en">Reloadable</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> reloadable.map((<span class="pl-v">cfg</span>: <span class="pl-en">Config</span>) <span class="pl-k">=&gt;</span> cfg.as[<span class="pl-en">Foo</span>](<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">configValue</span> <span class="pl-k">=</span> reloadableFoo.currentValue().bar</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/touk/tsc-reload#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>With maven:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;pl.touk&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;tsc-reload&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.3.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <p>With sbt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>pl.touk<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>tsc-reload<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/touk/tsc-reload#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>The tsc-reload is released under version 2.0 of the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License</a>.</p> 
+ </article>
+</div>

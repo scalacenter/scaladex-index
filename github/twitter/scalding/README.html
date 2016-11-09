@@ -1,0 +1,154 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scalding" class="anchor" href="https://github.com/twitter/scalding#scalding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scalding</h1> 
+  <p>Scalding is a Scala library that makes it easy to specify Hadoop MapReduce jobs. Scalding is built on top of <a href="http://www.cascading.org/" target="_blank">Cascading</a>, a Java library that abstracts away low-level Hadoop details. Scalding is comparable to <a href="http://pig.apache.org/" target="_blank">Pig</a>, but offers tight integration with Scala, bringing advantages of Scala to your MapReduce jobs.</p> 
+  <p><a href="https://camo.githubusercontent.com/dd137c31e4abf89d794a89f8b8e379130fb06d6f/68747470733a2f2f7261772e6769746875622e636f6d2f747769747465722f7363616c64696e672f646576656c6f702f6c6f676f2f7363616c64696e672e706e67" target="_blank"><img src="https://camo.githubusercontent.com/dd137c31e4abf89d794a89f8b8e379130fb06d6f/68747470733a2f2f7261772e6769746875622e636f6d2f747769747465722f7363616c64696e672f646576656c6f702f6c6f676f2f7363616c64696e672e706e67" alt="Scalding Logo" data-canonical-src="https://raw.github.com/twitter/scalding/develop/logo/scalding.png" style="max-width:100%;"></a></p> 
+  <p>Current version: <code>0.16.0</code></p> 
+  <h2><a id="user-content-word-count" class="anchor" href="https://github.com/twitter/scalding#word-count" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Word Count</h2> 
+  <p>Hadoop is a distributed system for counting words. Here is how it's done in Scalding.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">com.twitter.scalding.examples</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.scalding.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.scalding.source.</span><span class="pl-v">TypedText</span>
+
+<span class="pl-k">class</span> <span class="pl-en">WordCountJob</span>(<span class="pl-v">args</span>: <span class="pl-en">Args</span>) <span class="pl-k">extends</span> <span class="pl-e">Job</span>(args) {
+  <span class="pl-en">TypedPipe</span>.from(<span class="pl-en">TextLine</span>(args(<span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>)))
+    .flatMap { line <span class="pl-k">=&gt;</span> tokenize(line) }
+    .groupBy { word <span class="pl-k">=&gt;</span> word } <span class="pl-c">// use each word for a key</span>
+    .size <span class="pl-c">// in each group, get the size</span>
+    .write(<span class="pl-en">TypedText</span>.tsv[(<span class="pl-k">String</span>, <span class="pl-k">Long</span>)](args(<span class="pl-s"><span class="pl-pds">"</span>output<span class="pl-pds">"</span></span>)))
+
+  <span class="pl-c">// Split a piece of text into individual words.</span>
+  <span class="pl-k">def</span> <span class="pl-en">tokenize</span>(<span class="pl-v">text</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> {
+    <span class="pl-c">// Lowercase each word and remove punctuation.</span>
+    text.toLowerCase.replaceAll(<span class="pl-s"><span class="pl-pds">"</span>[^a-zA-Z0-9<span class="pl-cce">\\</span>s]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>).split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>s+<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>Notice that the <code>tokenize</code> function, which is standard Scala, integrates naturally with the rest of the MapReduce job. This is a very powerful feature of Scalding. (Compare it to the use of UDFs in Pig.)</p> 
+  <p>You can find more example code under <a href="https://github.com/twitter/scalding/tree/master/scalding-commons/src/main/scala/com/twitter/scalding/examples" target="_blank">examples/</a>. If you're interested in comparing Scalding to other languages, see our <a href="https://github.com/twitter/scalding/wiki/Rosetta-Code" target="_blank">Rosetta Code page</a>, which has several MapReduce tasks in Scalding and other frameworks (e.g., Pig and Hadoop Streaming).</p> 
+  <h2><a id="user-content-documentation-and-getting-started" class="anchor" href="https://github.com/twitter/scalding#documentation-and-getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation and Getting Started</h2> 
+  <ul> 
+   <li><a href="https://github.com/twitter/scalding/wiki/Getting-Started" target="_blank"><strong>Getting Started</strong></a> page on the <a href="https://github.com/twitter/scalding/wiki" target="_blank">Scalding Wiki</a></li> 
+   <li><a href="http://twitter.github.com/scalding" target="_blank">Scalding Scaladocs</a> provide details beyond the API References. Prefer using this as it's always up to date.</li> 
+   <li><a href="https://gist.github.com/johnynek/a47699caa62f4f38a3e2" target="_blank"><strong>REPL in Wonderland</strong></a> a hands-on tour of the scalding REPL requiring only git and java installed.</li> 
+   <li><a href="https://github.com/twitter/scalding/tree/master/tutorial" target="_blank"><strong>Runnable tutorials</strong></a> in the source.</li> 
+   <li>The API Reference, including many example Scalding snippets: 
+    <ul> 
+     <li><a href="https://github.com/twitter/scalding/wiki/Type-safe-api-reference" target="_blank">Type-safe API Reference</a></li> 
+     <li><a href="https://github.com/twitter/scalding/wiki/Fields-based-API-Reference" target="_blank">Fields-based API Reference</a></li> 
+    </ul></li> 
+   <li>The Matrix Library provides a way of working with key-attribute-value scalding pipes: 
+    <ul> 
+     <li>The <a href="https://github.com/twitter/scalding/wiki/Introduction-to-Matrix-Library" target="_blank">Introduction to Matrix Library</a> contains an overview and a "getting started" example</li> 
+     <li>The <a href="https://github.com/twitter/scalding/wiki/Matrix-API-Reference" target="_blank">Matrix API Reference</a> contains the Matrix Library API reference with examples</li> 
+    </ul></li> 
+   <li><a href="https://github.com/twitter/scalding/wiki/Calling-Scalding-from-inside-your-application" target="_blank"><strong>Introduction to Scalding Execution</strong></a> contains general rules and examples of calling Scalding from inside another application.</li> 
+  </ul> 
+  <p>Please feel free to use the beautiful <a href="https://drive.google.com/folderview?id=0B3i3pDi3yVgNbm9pMUdDcHFKVEk&amp;usp=sharing" target="_blank">Scalding logo</a> artwork anywhere.</p> 
+  <h2><a id="user-content-contact" class="anchor" href="https://github.com/twitter/scalding#contact" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contact</h2> 
+  <p>For user questions or scalding development (internals, extending, release planning): <a href="https://groups.google.com/forum/#!forum/scalding-dev" target="_blank">https://groups.google.com/forum/#!forum/scalding-dev</a> (Google search also works as a first step)</p> 
+  <p>In the remote possibility that there exist bugs in this code, please report them to: <a href="https://github.com/twitter/scalding/issues" target="_blank">https://github.com/twitter/scalding/issues</a></p> 
+  <p>Follow <a href="http://twitter.com/scalding" target="_blank">@Scalding</a> on Twitter for updates.</p> 
+  <p>Chat: <a href="https://gitter.im/twitter/scalding?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge" target="_blank"><img src="https://camo.githubusercontent.com/919b8a5e4cc3e1412cfc3b49b4768495df27cb41/68747470733a2f2f6261646765732e6769747465722e696d2f747769747465722f7363616c64696e672e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/twitter/scalding.svg" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-get-involved--code-of-conduct" class="anchor" href="https://github.com/twitter/scalding#get-involved--code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Get Involved + Code of Conduct</h2> 
+  <p>Pull requests and bug reports are always welcome!</p> 
+  <p>We use a lightweight form of project governence inspired by the one used by Apache projects. Please see <a href="https://github.com/twitter/analytics-infra-governance#contributing-and-committership" target="_blank">Contributing and Committership</a> for our code of conduct and our pull request review process. The TL;DR is send us a pull request, iterate on the feedback + discussion, and get a +1 from a <a href="https://github.com/twitter/scalding/blob/master/COMMITTERS.md" target="_blank">Committer</a> in order to get your PR accepted.</p> 
+  <p>The current list of active committers (who can +1 a pull request) can be found here: <a href="https://github.com/twitter/scalding/blob/master/COMMITTERS.md" target="_blank">Committers</a></p> 
+  <p>A list of contributors to the project can be found here: <a href="https://github.com/twitter/scalding/graphs/contributors" target="_blank">Contributors</a></p> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/twitter/scalding#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <p>There is a script (called sbt) in the root that loads the correct sbt version to build:</p> 
+  <ol> 
+   <li><code>./sbt update</code> (takes 2 minutes or more)</li> 
+   <li><code>./sbt test</code></li> 
+   <li><code>./sbt assembly</code> (needed to make the jar used by the scald.rb script)</li> 
+  </ol> 
+  <p>The test suite takes a while to run. When you're in sbt, here's a shortcut to run just one test:</p> 
+  <p><code>&gt; test-only com.twitter.scalding.FileSourceTest</code></p> 
+  <p>Please refer to <a href="https://github.com/twitter/scalding/wiki/Frequently-asked-questions#issues-with-sbt" target="_blank">FAQ page</a> if you encounter problems when using sbt.</p> 
+  <p>We use <a href="http://travis-ci.org/" target="_blank">Travis CI</a> to verify the build: <a href="http://travis-ci.org/twitter/scalding" target="_blank"><img src="https://camo.githubusercontent.com/c112b2e8c2c1327a63f13c7a09d21072f208dff6/68747470733a2f2f7472617669732d63692e6f72672f747769747465722f7363616c64696e672e7376673f6272616e63683d646576656c6f70" alt="Build Status" data-canonical-src="https://travis-ci.org/twitter/scalding.svg?branch=develop" style="max-width:100%;"></a></p> 
+  <p>We use <a href="https://coveralls.io/r/twitter/scalding" target="_blank">Coveralls</a> for code coverage results: <a href="https://coveralls.io/r/twitter/scalding?branch=develop" target="_blank"><img src="https://camo.githubusercontent.com/18ba5dd0f269c8b7b25b37436511b292e26e14dc/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f747769747465722f7363616c64696e672f62616467652e706e673f6272616e63683d646576656c6f70" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/twitter/scalding/badge.png?branch=develop" style="max-width:100%;"></a></p> 
+  <p>Scalding modules are available from maven central.</p> 
+  <p>The current groupid and version for all modules is, respectively, <code>"com.twitter"</code> and <code>0.16.0-RC1</code>.</p> 
+  <p>Current published artifacts are</p> 
+  <ul> 
+   <li><code>scalding-core_2.10</code></li> 
+   <li><code>scalding-args_2.10</code></li> 
+   <li><code>scalding-date_2.10</code></li> 
+   <li><code>scalding-commons_2.10</code></li> 
+   <li><code>scalding-avro_2.10</code></li> 
+   <li><code>scalding-parquet_2.10</code></li> 
+   <li><code>scalding-repl_2.10</code></li> 
+  </ul> 
+  <p>The suffix denotes the scala version.</p> 
+  <h2><a id="user-content-adopters" class="anchor" href="https://github.com/twitter/scalding#adopters" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Adopters</h2> 
+  <ul> 
+   <li>Ebay</li> 
+   <li>Etsy</li> 
+   <li>Sharethrough</li> 
+   <li>Snowplow Analytics</li> 
+   <li>Soundcloud</li> 
+   <li>Twitter</li> 
+  </ul> 
+  <p>To see a full list of users or to add yourself, see the <a href="https://github.com/twitter/scalding/wiki/Powered-By" target="_blank">wiki</a></p> 
+  <h2><a id="user-content-authors" class="anchor" href="https://github.com/twitter/scalding#authors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Authors:</h2> 
+  <ul> 
+   <li>Avi Bryant <a href="http://twitter.com/avibryant" target="_blank">http://twitter.com/avibryant</a></li> 
+   <li>Oscar Boykin <a href="http://twitter.com/posco" target="_blank">http://twitter.com/posco</a></li> 
+   <li>Argyris Zymnis <a href="http://twitter.com/argyris" target="_blank">http://twitter.com/argyris</a></li> 
+  </ul> 
+  <p>Thanks for assistance and contributions:</p> 
+  <ul> 
+   <li>Sam Ritchie <a href="http://twitter.com/sritchie" target="_blank">http://twitter.com/sritchie</a></li> 
+   <li>Aaron Siegel: <a href="http://twitter.com/asiegel" target="_blank">http://twitter.com/asiegel</a></li> 
+   <li>Ian O'Connell <a href="http://twitter.com/0x138" target="_blank">http://twitter.com/0x138</a></li> 
+   <li>Alex Levenson <a href="http://twitter.com/THISWILLWORK" target="_blank">http://twitter.com/THISWILLWORK</a></li> 
+   <li>Jonathan Coveney <a href="http://twitter.com/jco" target="_blank">http://twitter.com/jco</a></li> 
+   <li>Kevin Lin <a href="http://twitter.com/reconditesea" target="_blank">http://twitter.com/reconditesea</a></li> 
+   <li>Brad Greenlee: <a href="http://twitter.com/bgreenlee" target="_blank">http://twitter.com/bgreenlee</a></li> 
+   <li>Edwin Chen <a href="http://twitter.com/edchedch" target="_blank">http://twitter.com/edchedch</a></li> 
+   <li>Arkajit Dey: <a href="http://twitter.com/arkajit" target="_blank">http://twitter.com/arkajit</a></li> 
+   <li>Krishnan Raman: <a href="http://twitter.com/dxbydt_jasq" target="_blank">http://twitter.com/dxbydt_jasq</a></li> 
+   <li>Flavian Vasile <a href="http://twitter.com/flavianv" target="_blank">http://twitter.com/flavianv</a></li> 
+   <li>Chris Wensel <a href="http://twitter.com/cwensel" target="_blank">http://twitter.com/cwensel</a></li> 
+   <li>Ning Liang <a href="http://twitter.com/ningliang" target="_blank">http://twitter.com/ningliang</a></li> 
+   <li>Dmitriy Ryaboy <a href="http://twitter.com/squarecog" target="_blank">http://twitter.com/squarecog</a></li> 
+   <li>Dong Wang <a href="http://twitter.com/dongwang218" target="_blank">http://twitter.com/dongwang218</a></li> 
+   <li>Josh Attenberg <a href="http://twitter.com/jattenberg" target="_blank">http://twitter.com/jattenberg</a></li> 
+   <li>Juliet Hougland <a href="https://twitter.com/j_houg" target="_blank">https://twitter.com/j_houg</a></li> 
+   <li>Eddie Xie <a href="https://twitter.com/eddiex" target="_blank">https://twitter.com/eddiex</a></li> 
+  </ul> 
+  <p>A full list of <a href="https://github.com/twitter/scalding/graphs/contributors" target="_blank">contributors</a> can be found on GitHub.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/twitter/scalding#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2013 Twitter, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+ </article>
+</div>

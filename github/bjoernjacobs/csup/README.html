@@ -1,0 +1,35 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-csup" class="anchor" href="https://github.com/bjoernjacobs/csup#csup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>csup</h1> 
+  <p>csup (Cassandra Up) performs initialization of a Cassandra database given a contact-point, optional credentials, a keyspace name to be created and cql scripts for table creation. The initialization is performed async in a Future and completes with the status of the initalization.</p> 
+  <p>The main use-case of this is when you have an application in a Docker container that is linked with a Cassandra container. When you start-up the containers using e.g. docker-compose, the csup-tool will retry to connect to Cassandra until connection succeeds. Then it will perform the initialization procedure. When the initialization completes, your main application will be notified by the completion of the Future and you can start it up with a ready-to-use Cassandra database.</p> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/bjoernjacobs/csup#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use</h2> 
+  <p>Configure your environment using your own <code>application.conf</code> and <code>cassandra_init_statements.conf</code>.</p> 
+  <pre><code>package com.github.bjoernjacobs.csup
+
+import monix.execution.Scheduler.Implicits.global
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
+
+object Test extends App {
+  val init = CsUp().initGetCluster()
+
+  init.onComplete({
+    case Success(cluster) =&gt; println(s"Everything cool, here is your cluster: ${cluster.getClusterName}")
+    case Failure(ex) =&gt; ex.printStackTrace()
+  })
+
+  Await.ready(init, Duration.Inf)
+  sys.exit()
+}
+</code></pre> 
+ </article>
+</div>

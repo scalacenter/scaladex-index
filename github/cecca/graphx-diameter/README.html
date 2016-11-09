@@ -1,0 +1,125 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-graph-diameter-approximation-on-spark" class="anchor" href="https://github.com/cecca/graphx-diameter#graph-diameter-approximation-on-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Graph diameter approximation on Spark</h1> 
+  <p><a href="https://travis-ci.org/Cecca/graphx-diameter" target="_blank"><img src="https://camo.githubusercontent.com/3389cb9fc3178d4325ac0bb40727fa9571bcb137/68747470733a2f2f7472617669732d63692e6f72672f43656363612f6772617068782d6469616d657465722e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/Cecca/graphx-diameter.svg" style="max-width:100%;"></a></p> 
+  <p><code>graphx-diameter</code> is a Spark package that allows to approximate the diameter of (weighted) graphs, that is the longest shortest path.</p> 
+  <p>The algorithm implemented here is derived from the ones described in the following papers</p> 
+  <ul> 
+   <li><p><em>Space and Time Efficient Parallel Graph Decomposition, Clustering, and Diameter Approximation</em> <br> Matteo Ceccarello, Andrea Pietracaprina, Geppino Pucci, and Eli Upfal <br> <a href="http://dx.doi.org/10.1145/2755573.2755591" target="_blank">SPAA 2015</a> · <a href="https://gist.githubusercontent.com/Cecca/0c1cabb1ed9e2bed396b/raw/d84c4177c73d11c110add5f47a57281b8b8259a0/CeccarelloPPU15-unweighted.bib" target="_blank">bibtex file</a></p></li> 
+   <li><p><em>A Practical Parallel Algorithm for Diameter Approximation of Massive Weighted Graphs</em> <br> Matteo Ceccarello, Andrea Pietracaprina, Geppino Pucci, and Eli Upfal <br> <a href="http://arxiv.org/abs/1506.03265" target="_blank">Arxiv preprint</a> · <a href="https://gist.githubusercontent.com/Cecca/1dee801b2ac968cc4809/raw/e99b75bda9b945ef3840524e15af4a3eca3b9f4a/CeccarelloPPU15-weighted.bib" target="_blank">bibtex file</a></p></li> 
+  </ul> 
+  <p>If you use this software in your research, please cite the aforementioned papers.</p> 
+  <p><strong>NOTE</strong>: the implementation contained in this package is <em>not</em> the one used to perform the experiments described in the aforementioned papers. That implementation is available under the GPL license <a href="http://crono.dei.unipd.it/gradias/" target="_blank">here</a>, and was developed on plain Spark. <code>graphx-diameter</code>, instead, provides an equivalent implementation compatible with <code>graphx</code>.</p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/cecca/graphx-diameter#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>The diameter of a graph can be obtained by computing all pairs shortest paths. However, computing APSP is impractical on large graphs, due to the excessive space and time requirements.</p> 
+  <p>To compute an approximation to the diameter using only linear space, one can resort to a simple Single Source Shortest Path (SSSP) computation, that approximates the diameter within a factor of two. The drawback of this approach is that it requires a number of rounds linear in the diameter itself: on a platform such as Spark, where for efficiency we seek to minimize the number of rounds, this is undesirable.</p> 
+  <p>A popular approach to approximate the diameter (and some centrality measures) are algorithms based on probabilistic counters, like <a href="http://dl.acm.org/citation.cfm?doid=1963405.1963493" target="_blank">HyperANF</a> [Boldi, Rosa, Vigna - WWW11]. These algorithms are able to attain a tight estimate of the diameter. However, in a distributed computing setting like Spark, the running time linear in the diameter and the superlinear space requirements limit the applicability of this approach.</p> 
+  <p>Therefore, we developed the algorithm implemented in this library with two goals:</p> 
+  <ul> 
+   <li>performing a number of rounds sublinear in the diameter</li> 
+   <li>using space linear in the size of the graph</li> 
+  </ul> 
+  <p>The algorithm returns an approximation of the diameter in the form of an upper bound, with a provable polylogarithmic bound. In practice, the approximation factor is usually a small constant.</p> 
+  <p>Further details on the algorithm, its efficiency, and the approximation factor are given in the aforementioned papers:</p> 
+  <ul> 
+   <li><p>For the unweighted case: <a href="http://dx.doi.org/10.1145/2755573.2755591" target="_blank"><em>"Space and Time Efficient Parallel Graph Decomposition, Clustering, and Diameter Approximation"</em></a>;</p></li> 
+   <li><p>For the weighted case: <a href="http://arxiv.org/abs/1506.03265" target="_blank"><em>"A Practical Parallel Algorithm for Diameter Approximation of Massive Weighted Graphs"</em></a>.</p></li> 
+  </ul> 
+  <h2><a id="user-content-linking" class="anchor" href="https://github.com/cecca/graphx-diameter#linking" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Linking</h2> 
+  <p><code>graphx-diameter</code> is cross compiled for both Scala 2.10 and 2.11. You can include it in your project in several ways.</p> 
+  <h3><a id="user-content-spark-shell-pyspark-or-spark-submit" class="anchor" href="https://github.com/cecca/graphx-diameter#spark-shell-pyspark-or-spark-submit" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark-shell, pyspark, or spark-submit</h3> 
+  <p>The suffix <code>_2.xx</code> appended to the package name must match the Scala version that is run by the <code>spark-shell</code> command.</p> 
+  <pre><code>$ $SPARK_HOME/bin/spark-shell --packages it.unipd.dei:graphx-diameter_2.10:0.1.0
+</code></pre> 
+  <h3><a id="user-content-sbt" class="anchor" href="https://github.com/cecca/graphx-diameter#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt</h3> 
+  <p>If you use the <a href="http://github.com/databricks/sbt-spark-package" target="_blank">sbt-spark-package</a> plugin then add the following line to your <code>build.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>spDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Cecca/graphx-diameter:0.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Otherwise, you can add <code>graphx-diameter</code> as a normal dependency</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>it.unipd.dei<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>graphx-diameter<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-maven" class="anchor" href="https://github.com/cecca/graphx-diameter#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h3> 
+  <p>Again, be sure that the <code>_2.xx</code> suffix matches the Scala version you already use in your project.</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependencies</span>&gt;
+  <span class="pl-c">&lt;!-- list of dependencies --&gt;</span>
+  &lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;it.unipd.dei&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;graphx-diameter_2.11&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.1.0&lt;/<span class="pl-ent">version</span>&gt;
+  &lt;/<span class="pl-ent">dependency</span>&gt;
+&lt;/<span class="pl-ent">dependencies</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/cecca/graphx-diameter#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>The library works on graphs with <code>Double</code> edge weights assigned to edges. The package <code>it.unipd.dei.graphx.diameter</code> defines a type <code>Distance</code> like the following</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">Distance</span> <span class="pl-k">=</span> <span class="pl-k">Double</span></pre>
+  </div> 
+  <p>The algorithm takes two parameters, namely</p> 
+  <ul> 
+   <li><p><code>target</code>: this is the size of the quotient graph that will be built by the underlying clustering algorithm. It depends on the size of the local memory of the machines. The last step of the algorithm computes the diameter of a graph of size <code>target</code>. Higher values of <code>target</code> can result is shorter running times, whereas smaller ones require less memory. Usually <code>target == 4000</code> provides a good compromise, and this is the default.</p></li> 
+   <li><p><code>delta</code>: this parameter, representing a distance, controls the number of nodes and edges that can be active in each step of the algorithm. Intuitively, higher values will result in fewer but slower rounds; smaller values will perform more shorter rounds. In any case, this parameter is taken as a hint by the algorithm, that then auto-tunes itself. A good initial guess is (empirically) the average edge weight, which is the default.</p></li> 
+  </ul> 
+  <p>For more details on these two parameters, we refer to the companion papers.</p> 
+  <p>Given a <code>org.apache.spark.graphx.Graph[V, Distance]</code> object, you can get an approximation to its diameter as follows, using implicit conversions</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// import implicit conversions</span>
+<span class="pl-k">import</span> <span class="pl-v">it.unipd.dei.graphx.diameter.DiameterApproximation.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">g</span> <span class="pl-k">=</span> <span class="pl-c">// ... build the graph object ...</span>
+
+<span class="pl-c">// Compute the approximation using the default parameters</span>
+g.diameterApprox()
+
+<span class="pl-c">// Specify the target size for the underlying clustering algorithm</span>
+g.diameterApprox(target<span class="pl-k">=</span><span class="pl-c1">5000</span>)
+
+<span class="pl-c">// Control the number of active nodes/edges in each step</span>
+g.diameterApprox(delta<span class="pl-k">=</span><span class="pl-c1">0.5</span>)
+
+<span class="pl-c">// Both parameters can be specified simultaneously</span>
+g.diameterApprox(target<span class="pl-k">=</span><span class="pl-c1">5000</span>, delta<span class="pl-k">=</span><span class="pl-c1">0.5</span>)</pre>
+  </div> 
+  <p>If you prefer to avoid implicit conversions, you can explicitly invoke <code>DiameterApproximation.run</code>, as follows</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">it.unipd.dei.graphx.diameter.</span><span class="pl-v">DiameterApproximation</span>
+
+<span class="pl-k">val</span> <span class="pl-en">g</span> <span class="pl-k">=</span> <span class="pl-c">// ... build the graph object ...</span>
+
+<span class="pl-c">// Compute the approximation using the default parameters</span>
+<span class="pl-en">DiameterApproximation</span>.run(g)
+
+<span class="pl-c">// Specify the target size for the underlying clustering algorithm</span>
+<span class="pl-en">DiameterApproximation</span>.run(g, target<span class="pl-k">=</span><span class="pl-c1">5000</span>)
+
+<span class="pl-c">// Control the number of active nodes/edges in each step</span>
+<span class="pl-en">DiameterApproximation</span>.run(g, delta<span class="pl-k">=</span><span class="pl-c1">0.5</span>)
+
+<span class="pl-c">// Both parameters can be specified simultaneously</span>
+<span class="pl-en">DiameterApproximation</span>.run(g, target<span class="pl-k">=</span><span class="pl-c1">5000</span>, delta<span class="pl-k">=</span><span class="pl-c1">0.5</span>)</pre>
+  </div> 
+ </article>
+</div>

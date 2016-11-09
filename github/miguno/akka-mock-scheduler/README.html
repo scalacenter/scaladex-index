@@ -1,0 +1,310 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-mock-scheduler---" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#akka-mock-scheduler---" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-mock-scheduler <a href="https://travis-ci.org/miguno/akka-mock-scheduler" target="_blank"><img src="https://camo.githubusercontent.com/5f1f9f733edbfb06c30c5fff16c85633d6873fd2/68747470733a2f2f7472617669732d63692e6f72672f6d6967756e6f2f616b6b612d6d6f636b2d7363686564756c65722e7376673f6272616e63683d646576656c6f70" alt="Build Status" data-canonical-src="https://travis-ci.org/miguno/akka-mock-scheduler.svg?branch=develop" style="max-width:100%;"></a> <a href="https://coveralls.io/github/miguno/akka-mock-scheduler?branch=develop" target="_blank"><img src="https://camo.githubusercontent.com/efbb9fe11a3a0ffbf4a96ebf735858ae8853c751/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f6d6967756e6f2f616b6b612d6d6f636b2d7363686564756c65722f62616467652e7376673f6272616e63683d646576656c6f7026736572766963653d676974687562" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/miguno/akka-mock-scheduler/badge.svg?branch=develop&amp;service=github" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/com.miguno.akka/akka-mock-scheduler" target="_blank"><img src="https://camo.githubusercontent.com/043c129044906755b95399c5b85635f469042ca2/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6d6967756e6f2e616b6b612f616b6b612d6d6f636b2d7363686564756c65725f322e31302f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.miguno.akka/akka-mock-scheduler_2.10/badge.svg" style="max-width:100%;"></a></h1> 
+  <p>A mock Akka scheduler to simplify testing scheduler-dependent code.</p> 
+  <hr> 
+  <p>Table of Contents</p> 
+  <ul> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Motivation" target="_blank">Motivation</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Usage" target="_blank">Usage examples</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Design" target="_blank">Design and limitations</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Development" target="_blank">Development</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Changelog" target="_blank">Change log</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#License" target="_blank">License</a></li> 
+   <li><a href="https://github.com/miguno/akka-mock-scheduler#Credits" target="_blank">Credits</a></li> 
+  </ul> 
+  <hr> 
+  <p><a name="user-content-Motivation" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-motivation" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h1> 
+  <p><a href="http://doc.akka.io/docs/akka/snapshot/java/scheduler.html" target="_blank">Akka Scheduler</a> is a convenient tool to make things happen in the future -- for example, "run this function in 5 seconds" or "run that function every 100 milliseconds".</p> 
+  <p>Let's say you want to periodically run the function <code>myFunction()</code> in your code via Akka Scheduler:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">myFunction</span>() <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+<span class="pl-k">val</span> <span class="pl-en">initialDelay</span> <span class="pl-k">=</span> <span class="pl-c1">0.</span>millis
+<span class="pl-k">val</span> <span class="pl-en">interval</span> <span class="pl-k">=</span> <span class="pl-c1">100.</span>millis
+scheduler.schedule(initialDelay, interval)(myFunction())</pre>
+  </div> 
+  <p>Unfortunately, the current Akka implementation apparently does not provide a simple way to test-drive code that relies on Akka Scheduler (see e.g. <a href="http://doc.akka.io/docs/akka/snapshot/scala/testing.html" target="_blank">Testing Actor Systems</a>). This project closes this gap by providing a "mock scheduler" and an accompanying "virtual time" implementation so that your test suite does not degrade into <code>Thread.sleep()</code> hell.</p> 
+  <p>Please note that the scope of this project is not to become a full-fledged testing kit for Akka Scheduler!</p> 
+  <p><a name="user-content-Usage" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <h2><a id="user-content-build-dependency" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#build-dependency" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build dependency</h2> 
+  <p>This project is published to <a href="https://oss.sonatype.org/" target="_blank">Sonatype</a>.</p> 
+  <ul> 
+   <li>Releases are available on <a href="http://search.maven.org/" target="_blank">Maven Central</a>.</li> 
+   <li>Snapshots are available in the <a href="https://oss.sonatype.org/content/repositories/snapshots" target="_blank">Sonatype Snapshot repository</a>.</li> 
+  </ul> 
+  <p>When using a <strong>release</strong>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Scala 2.10</span>
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.miguno.akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-mock-scheduler_2.10<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// Scala 2.11</span>
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.miguno.akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-mock-scheduler_2.11<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>When using a <strong>snapshot</strong>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>sonatype-snapshots<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/repositories/snapshots<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// Scala 2.10</span>
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.miguno.akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-mock-scheduler_2.10<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.1-SNAPSHOT<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// Scala 2.11</span>
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.miguno.akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-mock-scheduler_2.11<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.1-SNAPSHOT<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <h3><a id="user-content-example-1" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#example-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example 1</h3> 
+  <p>In this example we schedule a one-time task to run in 5 milliseconds from "now". We create an instance of <a href="https://github.com/miguno/akka-mock-scheduler/blob/master/src/main/scala/com/miguno/akka/testing/VirtualTime.scala" target="_blank"><code>VirtualTime</code></a>, which contains its own <a href="https://github.com/miguno/akka-mock-scheduler/blob/master/src/main/scala/com/miguno/akka/testing/MockScheduler.scala" target="_blank"><code>MockScheduler</code></a> instance.</p> 
+  <blockquote> 
+   <p>Tip: In practice, you rarely create <code>MockScheduler</code> instances yourself and instead interact with the scheduler through its enclosing <code>VirtualTime</code> instance.</p> 
+  </blockquote> 
+  <p>Here, think of <code>time.advance()</code> as the logical equivalent of <code>Thread.sleep()</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// A time instance has its own mock scheduler associated with it</span>
+<span class="pl-k">val</span> <span class="pl-en">time</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">VirtualTime</span>
+
+<span class="pl-c">// Schedule a one-time task that increments a counter</span>
+<span class="pl-k">val</span> <span class="pl-en">counter</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AtomicInteger</span>(<span class="pl-c1">0</span>)
+time.scheduler.scheduleOnce(<span class="pl-c1">5.</span>millis)(counter.getAndIncrement)
+
+time.advance(<span class="pl-c1">4.</span>millis)
+assert(time.elapsed <span class="pl-k">==</span> <span class="pl-c1">4.</span>millis)
+assert(counter.get <span class="pl-k">==</span> <span class="pl-c1">0</span>) <span class="pl-c">// &lt;&lt;&lt; not yet, still too early</span>
+
+time.advance(<span class="pl-c1">1.</span>millis)
+assert(time.elapsed <span class="pl-k">==</span> <span class="pl-c1">5.</span>millis)
+assert(counter.get <span class="pl-k">==</span> <span class="pl-c1">1</span>) <span class="pl-c">// &lt;&lt;&lt; task was run at the right time!</span></pre>
+  </div> 
+  <h3><a id="user-content-example-2" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#example-2" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example 2</h3> 
+  <p>In your code you may want to make the scheduler configurable. In the following example the class <code>Foo</code> has a field <code>scheduler</code> that defaults to Akka's <code>system.scheduler</code> (cf. <code>akka.actor.ActorSystem#scheduler</code>).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">scheduler</span>: <span class="pl-en">Scheduler</span> <span class="pl-k">=</span> system.scheduler) {
+
+  scheduler.scheduleOnce(<span class="pl-c1">500.</span>millis)(bar())
+
+  <span class="pl-k">def</span> <span class="pl-en">bar</span><span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+}</pre>
+  </div> 
+  <p>During testing you can then plug in the mock scheduler:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">time</span> <span class="pl-k">=</span> <span class="pl-en">VirtualTime</span>
+<span class="pl-k">val</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(time.scheduler)
+
+<span class="pl-c">// ...actual tests follow...</span></pre>
+  </div> 
+  <h3><a id="user-content-further-examples" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#further-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Further examples</h3> 
+  <p>See <a href="https://github.com/miguno/akka-mock-scheduler/blob/develop/src/test/scala/com/miguno/akka/testing/MockSchedulerSpec.scala" target="_blank">MockSchedulerSpec</a> for further details and examples.</p> 
+  <p>You can also run the include test suite, which includes <code>MockSchedulerSpec</code>, to improve your understanding of how the mock scheduler and virtual time work:</p> 
+  <pre><code>$ ./sbt clean test
+</code></pre> 
+  <p>Example output:</p> 
+  <pre><code>[info] MockCancellableSpec:
+[info] MockCancellable
+[info] - should return true when cancelled the first time
+[info]   + Given an instance
+[info]   + When I cancel it the first time
+[info]   + Then it returns true
+[info] - should return false when cancelled the second time
+[info]   + Given an instance
+[info]   + When I cancel it the second time
+[info]   + Then it returns false
+[info] - isCancelled should return false when cancel was not called yet
+[info]   + Given an instance
+[info]   + When I ask whether it has been cancelled
+[info]   + Then it returns false
+[info] - isCancelled should return true when cancel was called already
+[info]   + Given an instance
+[info]   + And the instance was cancelled
+[info]   + When I ask whether it has been cancelled
+[info]   + Then it returns true
+[info] MockSchedulerSpec:
+[info] MockScheduler
+[info] - should run a one-time task once
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a one-time task
+[info]   + Then the task should not run before its delay
+[info]   + And the task should run at the time of its delay
+[info]   + And the task should not run again
+[info] - should run a recurring task multiple times
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a recurring task
+[info]   + Then the task should not run before its initial delay
+[info]   + And it should run at the time of its initial delay (run #1)
+[info]   + And it should not run again before its next interval
+[info]   + And it should run again at its next interval (run #2)
+[info]   + And it should not run again before its next interval
+[info]   + And it should run again at its next interval (run #3)
+[info]   + And it should have run 103 times after the initial delay and 102 intervals
+[info] - should run tasks with different delays in order
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a recurring task A
+[info]   + And I schedule a one-time task B to run when A has already been run a couple of times
+[info]   + Then A should run before B
+[info]   + And A should continue to run after B finished
+[info] - should run tasks that are scheduled for the same time in order of their registration with the scheduler
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a one-time task A
+[info]   + And I then schedule a recurring task B whose initial run is scheduled at the same time as A
+[info]   + And I then schedule a one-time task C to run at the same time as A
+[info]   + Then A should run before B, and B should run before C
+[info] - should support recursive scheduling
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a task A that schedules another task B
+[info]   + And I advance the time so that A was already run (and thus B is now registered with the scheduler)
+[info]   + Then B should be run with the configured delay (which will happen in one of the next ticks of the scheduler)
+[info] - should not run a cancelled task
+[info]   + Given a time with a scheduler
+[info]   + And and an execution context
+[info]   + When I schedule a one-time task
+[info]   + And I cancel the task before its execution time
+[info]   + Then the task should not run
+[info] TaskSpec:
+[info] Task
+[info] - a task is smaller than another task with a larger delay
+[info]   + Given an instance
+[info]   + When compared to a second instance that runs later
+[info]   + Then the first instance is greater than the second
+[info]   + And the second instance is smaller than the first
+[info] - for two tasks with equal delays, the one with the smaller id is less than the other
+[info]   + Given an instance
+[info]   + When compared to second instance with a larger id
+[info]   + Then the first instance is greater than the second
+[info]   + And the second instance is smaller than the first
+[info] - tasks with equal delays and equal ids are equal
+[info]   + Given an instance
+[info]   + When compared to another with the same delay and id
+[info]   + Then it returns true
+[info] VirtualTimeSpec:
+[info] VirtualTime
+[info] - should start at time zero
+[info]   + Given no time
+[info]   + When I create a time
+[info]   + Then its elapsed time should be zero
+[info] - should track elapsed time
+[info]   + Given a time
+[info]   + When I advance the time
+[info]   + Then the elapsed time should be correct
+[info] - should accept a step defined as a Long that represents the number of milliseconds
+[info]   + Given a time
+[info]   + When I advance the time by a Long value of 1234
+[info]   + Then the elapsed time should be 1234 milliseconds
+[info] - should have a meaningful string representation
+[info]   + Given a time
+[info]   + When I request its string representation
+[info]   + Then the representation should include the elapsed time in milliseconds
+[info] - should enforce a minimum advancement of 1 miliseconds
+[info]   + Given a time
+[info]   + Then it will throw an exception if time is advanced by less than 1 millisecond
+[info] Run completed in 410 milliseconds.
+[info] Total number of tests run: 18
+[info] Suites: completed 4, aborted 0
+[info] Tests: succeeded 18, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+</code></pre> 
+  <p><a name="user-content-Design" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-design-and-limitations" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#design-and-limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Design and limitations</h1> 
+  <ul> 
+   <li>If you call <code>time.advance()</code>, then the scheduler will run any tasks that need to be executed in "one big swing": there will be no delay in-between tasks runs, however the execution <em>order</em> of the tasks is honored. Note: If tasks are scheduled to run at the same time, then they will be run in the order of their registration with the scheduler. 
+    <ul> 
+     <li>Example 1: <code>time.elapsed</code> is <code>0 millis</code>. Tasks <code>A</code> and <code>B</code> are scheduled to run with a delay of <code>10 millis</code> and <code>20 millis</code>, respectively. If you now <code>advance()</code> the time straight to <code>50 millis</code>, then A will be executed first and, once A has finished and without any further delay, B will be executed immediately.</li> 
+     <li>Example 2: <code>time.elapsed</code> is <code>0 millis</code>. First, task <code>C</code> is scheduled to run with a delay of <code>300 millis</code>, then task <code>D</code> is scheduled to run with a delay of <code>300 millis</code>, too. If you now <code>advance()</code> the time to <code>300 millis</code> or more, then task <code>C</code> will always be run before task <code>D</code> (because <code>C</code> was registered first).</li> 
+    </ul></li> 
+   <li>Tasks are executed synchronously when the scheduler's <code>tick()</code> method is called.</li> 
+  </ul> 
+  <p><a name="user-content-Development" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-development" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#development" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Development</h1> 
+  <h2><a id="user-content-running-the-test-spec" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#running-the-test-spec" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running the test spec</h2> 
+  <pre><code># Runs the tests for the main Scala version only (currently: 2.10.x)
+$ ./sbt test
+
+# Runs the tests for all configured Scala versions
+$ ./sbt "+ test"
+</code></pre> 
+  <h2><a id="user-content-publishing-to-sonatype" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#publishing-to-sonatype" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing to Sonatype</h2> 
+  <h3><a id="user-content-publishing-a-snaphost" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#publishing-a-snaphost" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing a snaphost</h3> 
+  <ol> 
+   <li>Make sure that the version identifier in <code>version.sbt</code> has a <code>-SNAPSHOT</code> suffix.</li> 
+   <li><p>Publish the snapshot:</p> <pre><code>$ ./sbt "+ test" &amp;&amp; ./sbt "+ publishSigned"
+</code></pre></li> 
+  </ol> 
+  <h3><a id="user-content-publishing-a-release" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#publishing-a-release" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing a release</h3> 
+  <ol> 
+   <li>Make sure that the version identifier in <code>version.sbt</code> DOES NOT have a <code>-SNAPSHOT</code> suffix.</li> 
+   <li><p>Publish the release artifacts into the Sonatype staging repository:</p> <pre><code>$ ./sbt "+ test" &amp;&amp; ./sbt "+ publishSigned"
+</code></pre></li> 
+   <li><p>Follow the Sonatype instructions to <a href="http://central.sonatype.org/pages/releasing-the-deployment.html" target="_blank">release a deployment</a>.</p></li> 
+  </ol> 
+  <p><a name="user-content-Changelog" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-change-log" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#change-log" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change log</h1> 
+  <p>See <a href="https://github.com/miguno/akka-mock-scheduler/blob/master/CHANGELOG.md" target="_blank">CHANGELOG</a>.</p> 
+  <p><a name="user-content-License" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-license" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h1> 
+  <p>Copyright © 2014-2015 Michael G. Noll</p> 
+  <p>See <a href="https://github.com/miguno/akka-mock-scheduler/blob/master/LICENSE" target="_blank">LICENSE</a> for licensing information.</p> 
+  <p><a name="user-content-Credits" target="_blank" href=""></a></p> 
+  <h1><a id="user-content-credits" class="anchor" href="https://github.com/miguno/akka-mock-scheduler#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h1> 
+  <p>The code in this project was inspired by <a href="https://github.com/apache/kafka/blob/trunk/core/src/test/scala/unit/kafka/utils/MockScheduler.scala" target="_blank">MockScheduler</a> and <a href="https://github.com/apache/kafka/blob/trunk/core/src/test/scala/unit/kafka/utils/MockTime.scala" target="_blank">MockTime</a> in the <a href="http://kafka.apache.org/" target="_blank">Apache Kafka</a> project.</p> 
+  <p>See also <a href="https://github.com/miguno/akka-mock-scheduler/blob/master/NOTICE" target="_blank">NOTICE</a>.</p> 
+ </article>
+</div>

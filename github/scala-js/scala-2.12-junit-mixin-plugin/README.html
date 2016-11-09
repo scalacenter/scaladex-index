@@ -1,0 +1,87 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-notice-of-obsolescence" class="anchor" href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin#notice-of-obsolescence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Notice of obsolescence</h1> 
+  <p>As of Scala 2.12.0-RC1, this plugin is obsolete, thanks to <a href="https://github.com/scala/scala/pull/5369" target="_blank">scala/scala#5369</a>.</p> 
+  <h1><a id="user-content-scala-212-junit-mixin-restore-your-junit-test-methods-in-traits" class="anchor" href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin#scala-212-junit-mixin-restore-your-junit-test-methods-in-traits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-2.12-junit-mixin: restore your JUnit <code>@Test</code> methods in traits</h1> 
+  <p><a href="https://travis-ci.org/scala-js/scala-2.12-junit-mixin-plugin" target="_blank"><img src="https://camo.githubusercontent.com/97a2d6762c9b504139c2195fdbb0fd8b8687d968/68747470733a2f2f7472617669732d63692e6f72672f7363616c612d6a732f7363616c612d322e31322d6a756e69742d6d6978696e2d706c7567696e2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/scala-js/scala-2.12-junit-mixin-plugin.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>With Scala 2.12.0-M5 and JUnit 4, you might have encountered warnings such as the following:</p> 
+  <pre><code>[warn] TraitToClassMixinTest.scala:24: JUnit tests in traits that are
+       compiled as default methods are not executed by JUnit 4.
+       JUnit 5 will fix this issue.
+[warn]   @Test def test2(): Unit = {
+[warn]             ^
+</code></pre> 
+  <p>Uh oh! Some of your test suite just doesn't run anymore! As the warning tells you, this will be fixed if you upgrade to JUnit 5 ... except that is not released yet.</p> 
+  <p><code>scala-2.12-junit-mixin</code> solves this issue right now, with Scala 2.12.0-M5 and JUnit 4. Simply add the following to your project settings:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">/* The `test-plugin` configuration adds a plugin only to the `test`</span>
+<span class="pl-c"> * configuration. It is a refinement of the `plugin` configuration which adds</span>
+<span class="pl-c"> * it to both `compile` and `test`.</span>
+<span class="pl-c"> */</span>
+ivyConfigurations <span class="pl-k">+</span><span class="pl-k">=</span> config(<span class="pl-s"><span class="pl-pds">"</span>test-plugin<span class="pl-pds">"</span></span>).hide
+scalacOptions in <span class="pl-en">Test</span> <span class="pl-k">++</span><span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">report</span> <span class="pl-k">=</span> update.value
+  <span class="pl-k">val</span> <span class="pl-en">jars</span> <span class="pl-k">=</span> report.select(configurationFilter(<span class="pl-s"><span class="pl-pds">"</span>test-plugin<span class="pl-pds">"</span></span>))
+  <span class="pl-k">for</span> {
+    jar <span class="pl-k">&lt;</span><span class="pl-k">-</span> jars
+    jarPath <span class="pl-k">=</span> jar.getPath
+    <span class="pl-c">// This is a hack to filter out the dependencies of the plugins</span>
+    <span class="pl-k">if</span> jarPath.contains(<span class="pl-s"><span class="pl-pds">"</span>plugin<span class="pl-pds">"</span></span>)
+  } <span class="pl-k">yield</span> {
+    s<span class="pl-s"><span class="pl-pds">"</span>-Xplugin:$jarPath<span class="pl-pds">"</span></span>
+  }
+}
+
+<span class="pl-c">// Add the scala-junit-mixin-plugin to the test configuration when on 2.12</span>
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> {
+  <span class="pl-k">if</span> (scalaVersion.value.startsWith(<span class="pl-s"><span class="pl-pds">"</span>2.10.<span class="pl-pds">"</span></span>) <span class="pl-k">||</span> scalaVersion.value.startsWith(<span class="pl-s"><span class="pl-pds">"</span>2.11.<span class="pl-pds">"</span></span>))
+    <span class="pl-en">Seq</span>.empty
+  <span class="pl-k">else</span>
+    <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>org.scala-js<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-junit-mixin-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>test-plugin<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full)
+}</pre>
+  </div> 
+  <p><code>scala-2.12-junit-mixin-plugin</code> is platform-independent. It works with Scala on the JVM and with Scala.js.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>The compiler plugin performs a very simple job. When a JUnit-related method is inherited by a class from an interface as a default method, an explicit forwarder is added in the class to call the default method.</p> 
+  <p>For example, consider the following Scala code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">MyTestsBase</span> {
+  <span class="pl-k">@</span><span class="pl-en">Test</span> <span class="pl-k">def</span> <span class="pl-en">add</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+    assertEquals(<span class="pl-c1">3</span>, <span class="pl-c1">1</span> <span class="pl-k">+</span> <span class="pl-c1">2</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">notATest</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+    assertEquals(<span class="pl-c1">5</span>, <span class="pl-c1">2</span> <span class="pl-k">+</span> <span class="pl-c1">3</span>)
+}
+
+<span class="pl-k">class</span> <span class="pl-en">MyTests</span> <span class="pl-k">extends</span> <span class="pl-e">MyTestsBase</span></pre>
+  </div> 
+  <p>Scala 2.12.0-M5 identifies that <code>add()</code> does not need a forward in <code>MyTests</code>, because it will be inherited as a default method on the JVM. But this fools JUnit 4, which does not look for <code>@Test</code> methods in interfaces. In this case, the plugin rewrites <code>MyTests</code> as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyTests</span> <span class="pl-k">extends</span> <span class="pl-e">MyTestsBase</span> {
+  <span class="pl-k">@</span><span class="pl-en">Test</span> <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">add</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+    <span class="pl-v">super</span>[<span class="pl-en">MyTestsBase</span>].add()
+}</pre>
+  </div> 
+  <p>This allows JUnit to find <code>MyTests.add()</code>. Note that <code>notATest()</code> does not receive the plugin treatment, because it is not JUnit-related.</p> 
+  <p>JUnit-related methods are those annotated with one of the following annotations: <code>@Test</code>, <code>@Before</code>, <code>@After</code>, <code>@BeforeClass</code>, <code>@AfterClass</code>, <code>@Ignore</code>.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><code>scala-2.12-junit-mixin-plugin</code> is distributed under the <a href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin/blob/master/LICENSE.txt" target="_blank">BSD 3-Clause license</a>.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Follow the <a href="https://github.com/scala-js/scala-2.12-junit-mixin-plugin/blob/master/CONTRIBUTING.md" target="_blank">contributing guide</a>.</p> 
+ </article>
+</div>

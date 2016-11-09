@@ -1,0 +1,146 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-specs2-spring-" class="anchor" href="https://github.com/eigengo/specs2-spring#specs2-spring-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Specs2 Spring <a href="https://travis-ci.org/eigengo/specs2-spring" target="_blank"><img src="https://camo.githubusercontent.com/db1b099268fdbb6aeabc5e8403567792209f89a2/68747470733a2f2f7472617669732d63692e6f72672f656967656e676f2f7370656373322d737072696e672e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/eigengo/specs2-spring.png?branch=master" style="max-width:100%;"></a></h1> 
+  <p>Specs2 Extension to simplify integration testing with Spring.</p> 
+  <blockquote> 
+   <p>More details at blogs at <a href="http://www.cakesolutions.net/teamblogs" target="_blank">http://www.cakesolutions.net/teamblogs</a> and <a href="http://www.cakesolutions.org" target="_blank">http://www.cakesolutions.org</a></p> 
+  </blockquote> 
+  <p>Most Spring enterprise applications use some DataSources, TransactionManagers and other JEE beasts. In addition to having the beans injected into our specs, we would like to use Specs2 to perform the necessary integration testing, but we don't really want to create separate application context files for the tests. </p> 
+  <p>Instead, we would like to set up the JNDI environment for the test code and use the same application context files for both testing and production. This is where this project helps: the annotations on our test classes specify the JNDI environment we wish to build for the test. </p> 
+  <p>Verba docent, exempla trahunt, so I'll start you off with a simple sample. Let there be:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">Component</span>
+<span class="pl-k">class</span> <span class="pl-en">SomeComponent</span> <span class="pl-k">@</span><span class="pl-en">Autowired</span>()(<span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">hibernateTemplate</span><span class="pl-k">:</span> <span class="pl-en">HibernateTemplate</span>) {
+
+  <span class="pl-k">@</span><span class="pl-en">Transactional</span>
+  <span class="pl-k">def</span> <span class="pl-en">generate</span>(<span class="pl-v">count</span>: <span class="pl-k">Int</span>) {
+    <span class="pl-k">for</span> (c <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">0</span> until count) {
+      <span class="pl-k">val</span> <span class="pl-en">rider</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Rider</span>()
+      rider.setName(<span class="pl-s"><span class="pl-pds">"</span>Rider #<span class="pl-pds">"</span></span> <span class="pl-k">+</span> c)
+      <span class="pl-v">this</span>.hibernateTemplate.saveOrUpdate(rider)
+    }
+  }
+
+}</pre>
+  </div> 
+  <p>To get this running, we give the <code>META-INF/spring/module-context.xml</code> configuration file:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;?<span class="pl-ent">xml</span><span class="pl-e"> version</span>=<span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span><span class="pl-e"> encoding</span>=<span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>?&gt;
+&lt;<span class="pl-ent">beans</span> <span class="pl-e">xmlns</span>=<span class="pl-s"><span class="pl-pds">"</span>...<span class="pl-pds">"</span></span>
+       <span class="pl-e">xsi</span><span class="pl-e">:</span><span class="pl-e">schemaLocation</span>=<span class="pl-s"><span class="pl-pds">"</span>...<span class="pl-pds">"</span></span>&gt;
+
+    &lt;<span class="pl-ent">context</span><span class="pl-ent">:</span><span class="pl-ent">component-scan</span> <span class="pl-e">base-package</span>=<span class="pl-s"><span class="pl-pds">"</span>org.specs2.springexample<span class="pl-pds">"</span></span>/&gt;
+
+    *&lt;<span class="pl-ent">jee</span><span class="pl-ent">:</span><span class="pl-ent">jndi-lookup</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>dataSource<span class="pl-pds">"</span></span> <span class="pl-e">jndi-name</span>=<span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/test<span class="pl-pds">"</span></span> <span class="pl-e">expected-type</span>=<span class="pl-s"><span class="pl-pds">"</span>javax.sql.DataSource<span class="pl-pds">"</span></span>/&gt;*
+    *&lt;<span class="pl-ent">tx</span><span class="pl-ent">:</span><span class="pl-ent">jta-transaction-manager</span> /&gt;*
+    &lt;<span class="pl-ent">tx</span><span class="pl-ent">:</span><span class="pl-ent">annotation-driven</span> /&gt;
+
+    &lt;<span class="pl-ent">bean</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>sessionFactory<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>dataSource<span class="pl-pds">"</span></span> <span class="pl-e">ref</span>=<span class="pl-s"><span class="pl-pds">"</span>dataSource<span class="pl-pds">"</span></span>/&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>packagesToScan<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">list</span>&gt;
+                &lt;<span class="pl-ent">value</span>&gt;org.specs2.springexample&lt;/<span class="pl-ent">value</span>&gt;
+            &lt;/<span class="pl-ent">list</span>&gt;
+        &lt;/<span class="pl-ent">property</span>&gt;
+    &lt;/<span class="pl-ent">bean</span>&gt;
+
+    &lt;<span class="pl-ent">bean</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>hibernateTemplate<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>org.springframework.orm.hibernate3.HibernateTemplate<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>sessionFactory<span class="pl-pds">"</span></span> <span class="pl-e">ref</span>=<span class="pl-s"><span class="pl-pds">"</span>sessionFactory<span class="pl-pds">"</span></span>/&gt;
+    &lt;/<span class="pl-ent">bean</span>&gt;
+
+&lt;/<span class="pl-ent">beans</span>&gt;</pre>
+  </div> 
+  <p>This context file is the same for both tests and for production. The "variable" items (<code>DataSource</code> and <code>TransactionManager</code>) beans are looked up from JNDI.</p> 
+  <p>To the test, then. We have simply</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">TransactionManager</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/TransactionManager<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">DataSource</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/test<span class="pl-pds">"</span></span>, driverClass <span class="pl-k">=</span> <span class="pl-c1">classOf</span>[<span class="pl-en">JDBCDriver</span>], url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:hsqldb:mem:test<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">Transactional</span>
+<span class="pl-k">@</span><span class="pl-en">TransactionConfiguration</span>(defaultRollback <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+<span class="pl-k">@</span><span class="pl-en">ContextConfiguration</span>(<span class="pl-en">Array</span>(<span class="pl-s"><span class="pl-pds">"</span>classpath*:/META-INF/spring/module-context.xml<span class="pl-pds">"</span></span>))
+<span class="pl-k">class</span> <span class="pl-en">SomeComponentSpec</span> <span class="pl-k">extends</span> <span class="pl-e">org.specs2.spring.Specification</span> {
+  <span class="pl-k">@</span><span class="pl-en">Autowired</span> <span class="pl-k">var</span> <span class="pl-en">someComponent</span><span class="pl-k">:</span> <span class="pl-en">SomeComponent</span> <span class="pl-k">=</span> _
+  <span class="pl-k">@</span><span class="pl-en">Autowired</span> <span class="pl-k">var</span> <span class="pl-en">hibernateTemplate</span><span class="pl-k">:</span> <span class="pl-en">HibernateTemplate</span> <span class="pl-k">=</span> _
+
+  <span class="pl-s"><span class="pl-pds">"</span>The rider generation mechanism<span class="pl-pds">"</span></span> in {
+    <span class="pl-s"><span class="pl-pds">"</span>generate 100 riders <span class="pl-pds">"</span></span> <span class="pl-k">!</span> generate(<span class="pl-c1">100</span>)
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">generate</span>(<span class="pl-v">count</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> {
+    <span class="pl-v">this</span>.someComponent.generate(count)
+    <span class="pl-v">this</span>.hibernateTemplate.loadAll(<span class="pl-c1">classOf</span>[<span class="pl-en">Rider</span>]) must have size (count)
+  }
+
+}</pre>
+  </div> 
+  <p>If I wanted to have another integration test (perhaps testing another class), I would write:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">TransactionManager</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/TransactionManager<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">DataSource</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/test<span class="pl-pds">"</span></span>, driverClass <span class="pl-k">=</span> <span class="pl-c1">classOf</span>[<span class="pl-en">JDBCDriver</span>], url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:hsqldb:mem:test<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">Transactional</span>
+<span class="pl-k">@</span><span class="pl-en">TransactionConfiguration</span>(defaultRollback <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+<span class="pl-k">@</span><span class="pl-en">ContextConfiguration</span>(<span class="pl-en">Array</span>(<span class="pl-s"><span class="pl-pds">"</span>classpath*:/META-INF/spring/module-context.xml<span class="pl-pds">"</span></span>))
+<span class="pl-k">class</span> <span class="pl-en">SomeOtherComponentSpec</span> <span class="pl-k">extends</span> <span class="pl-e">org.specs2.spring.Specification</span> {
+  <span class="pl-k">@</span><span class="pl-en">Autowired</span> <span class="pl-k">var</span> <span class="pl-en">someOtherComponent</span><span class="pl-k">:</span> <span class="pl-en">SomeOtherComponent</span> <span class="pl-k">=</span> _
+
+  <span class="pl-s"><span class="pl-pds">"</span>Another component<span class="pl-pds">"</span></span> in {
+    <span class="pl-s"><span class="pl-pds">"</span>do something clever <span class="pl-pds">"</span></span> <span class="pl-k">!</span> doSomethingClever
+  }
+
+
+  <span class="pl-k">def</span> <span class="pl-en">doSomethingClever</span> <span class="pl-k">=</span> {
+    success
+  }
+
+}</pre>
+  </div> 
+  <p>At this point, you may notice the duplication in the annotations. The Specs2 spring extension allows you to "merge" these annotations into one annotation that you can use throughout your tests. You can therefore have:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">TransactionManager</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/TransactionManager<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">DataSource</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/test<span class="pl-pds">"</span></span>, driverClass <span class="pl-k">=</span> <span class="pl-c1">classOf</span>[<span class="pl-en">JDBCDriver</span>], url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:hsqldb:mem:test<span class="pl-pds">"</span></span>)
+<span class="pl-k">@</span><span class="pl-en">Transactional</span>
+<span class="pl-k">@</span><span class="pl-en">TransactionConfiguration</span>(defaultRollback <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+<span class="pl-k">@</span><span class="pl-en">ContextConfiguration</span>(<span class="pl-en">Array</span>(<span class="pl-s"><span class="pl-pds">"</span>classpath*:/META-INF/spring/module-context.xml<span class="pl-pds">"</span></span>))
+public <span class="pl-k">@</span>interface <span class="pl-en">IntegrationTest</span> {
+}</pre>
+  </div> 
+  <p>and modify the specs to just</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">IntegrationTest</span>
+<span class="pl-k">class</span> <span class="pl-en">SomeComponentSpec</span> <span class="pl-k">extends</span> <span class="pl-e">Specification</span> { ... }
+
+<span class="pl-k">@</span><span class="pl-en">IntegrationTest</span>
+<span class="pl-k">class</span> <span class="pl-en">SomeComponentSpec</span> <span class="pl-k">extends</span> <span class="pl-e">Specification</span> { ... }</pre>
+  </div> 
+  <p>To set up multiple <code>DataSource</code>s, <code>MailSession</code>s, ... as well as JMS queues and topics, you can use the Jndi annotation like this:</p> 
+  <div class="highlight highlight-source-java">
+   <pre>@Jndi(
+        dataSources <span class="pl-k">=</span> {
+                @DataSource(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/test<span class="pl-pds">"</span></span>,
+                    driverClass <span class="pl-k">=</span> <span class="pl-smi">JDBCDriver</span><span class="pl-k">.</span>class, url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:hsqldb:mem:test<span class="pl-pds">"</span></span>),
+                @DataSource(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jdbc/external<span class="pl-pds">"</span></span>,
+                    driverClass <span class="pl-k">=</span> <span class="pl-smi">JDBCDriver</span><span class="pl-k">.</span>class, url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:hsqldb:mem:external<span class="pl-pds">"</span></span>)
+        },
+        mailSessions <span class="pl-k">=</span> @MailSession(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/mail/foo<span class="pl-pds">"</span></span>),
+        transactionManager <span class="pl-k">=</span> @TransactionManager(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/TransactionManager<span class="pl-pds">"</span></span>),
+        jms <span class="pl-k">=</span> @Jms(
+                connectionFactoryName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jms/connectionFactory<span class="pl-pds">"</span></span>,
+                queues <span class="pl-k">=</span> {@JmsQueue(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jms/requests<span class="pl-pds">"</span></span>), 
+                          @JmsQueue(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jms/responses<span class="pl-pds">"</span></span>)},
+                topics <span class="pl-k">=</span> {@JmsTopic(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jms/cacheFlush<span class="pl-pds">"</span></span>), 
+                          @JmsTopic(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/jms/ruleUpdate<span class="pl-pds">"</span></span>)}
+        ),
+        workManagers <span class="pl-k">=</span> @WorkManager(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>java:comp/env/work/WorkManager<span class="pl-pds">"</span></span>, kind <span class="pl-k">=</span> <span class="pl-smi">WorkManager</span><span class="pl-k">.</span><span class="pl-smi">Kind</span><span class="pl-k">.</span><span class="pl-smi">CommonJ</span>)
+)
+@<span class="pl-smi">Transactional</span>
+@TransactionConfiguration(defaultRollback <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+@ContextConfiguration(<span class="pl-s"><span class="pl-pds">"</span>classpath*:/META-INF/spring/module-context.xml<span class="pl-pds">"</span></span>)
+@Retention(<span class="pl-smi">RetentionPolicy</span><span class="pl-c1"><span class="pl-k">.</span>RUNTIME</span>)
+<span class="pl-k">public</span> <span class="pl-k">@interface</span> <span class="pl-en">IntegrationTest</span> {
+}</pre>
+  </div> 
+ </article>
+</div>

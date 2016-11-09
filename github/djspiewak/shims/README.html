@@ -1,0 +1,79 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-shims" class="anchor" href="https://github.com/djspiewak/shims#shims" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Shims</h1> 
+  <p><a href="https://travis-ci.org/djspiewak/shims" target="_blank"><img src="https://camo.githubusercontent.com/cf1080776b7d32822010f20a26b9e532407c4ff2/68747470733a2f2f7472617669732d63692e6f72672f646a7370696577616b2f7368696d732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/djspiewak/shims.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>Once upon a time, <a href="https://github.com/scalaz/scalaz" target="_blank">scalaz</a> was the standard library for functional and generally higher-order abstractions in the Scala community. Library and framework authors could confidently write and publish functions in terms of <code>scalaz.Monad</code>, <code>scalaz.State</code> and so on.</p> 
+  <p>Unfortunately, for various reasons, this is no longer the case. <a href="https://github.com/non/cats" target="_blank">Cats</a> is now on the scene, and many users may want to use it rather than scalaz in their downstream projects. As a library author, we do not want to force a specific choice upon our users. We would ideally like to supply our users with a single dependency that could work with scalaz <em>or</em> cats, without introducing classpath polution or code duplication.</p> 
+  <p>Shims is a tool for achieving this goal. It is <em>explicitly</em> targeted at upstream library authors, not downstream, user-facing projects! If you have already committed to specifically scalaz or cats, or (more importantly) you have no reason to support both, <strong>you do not need shims!</strong> However, if you are a library or framework author who does not want to force your downstream users into one universe or another, shims will solve all your problems.</p> 
+  <p>The way this works is you divide your framework into (at minimum) three submodules: for example, <em>emm-core</em>, <em>emm-scalaz</em> and <em>emm-cats</em>. You put all of your code into the <em>core</em> submodule, which has a dependency on <em>shims-core</em>. You do <em>not</em> depend on scalaz or cats in your <em>core!</em> When you need typeclasses (e.g. <code>Monad</code> or <code>Functor</code>), you use the types provided by shims (literally, <code>shims.Monad</code>). Then, your <em>scalaz</em> and <em>cats</em> submodules are defined to depend on your <em>core</em> as well as <em>shims-scalaz</em> or <em>shims-cats</em>, respectively. You can optionally define an <code>object scalaz extends shims.Implicits</code> (or analogously for cats), which insulates your end users from ever needing to know about shims. This also gives you the ability to add custom shims in a uniform and user-transparent fashion.</p> 
+  <p>From a user standpoint, they must add a single additional import which would not be required if you wrote specifically against cats <em>or</em> scalaz. For example, for the emm project, the following <em>pair</em> of imports are required:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">emm.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">emm.compat.scalaz.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>If emm were written specifically against scalaz, the second import would be unnecessary. Users will also need to add a second SBT dependency on the <em>-scalaz</em> or <em>-cats</em> submodule of your project (e.g. <em>emm-scalaz</em>). Transitive dependencies will take care of the rest!</p> 
+  <p>Note that it is highly recommended that you use the following convention in your own projects if at all possible. Or at least, it is recommended that you shy away from something like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// do NOT do this!</span>
+<span class="pl-k">import</span> <span class="pl-v">emm.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">emm.scalaz.</span><span class="pl-v">_             </span><span class="pl-c">// no no no no!</span></pre>
+  </div> 
+  <p>The problem with this revision (droping the <code>compat</code>) is hierarchical imports. Importing <code>emm._</code> brings <code>scalaz</code> into scope, which masks the <code>_root_.scalaz</code> package, which is where all of the real scalaz stuff lives! Tucking your compatibility objects off into their own package, which won't be independently imported by users, avoids this problem.</p> 
+  <h2><a id="user-content-sbt-setup" class="anchor" href="https://github.com/djspiewak/shims#sbt-setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT Setup</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.codecommit<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shims-core<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">ShimsVersion</span></pre>
+  </div> 
+  <p>In your <em>-scalaz</em> and <em>-cats</em> subprojects, add the following dependencies:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.codecommit<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shims-scalaz-71<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">ShimsVersion</span>        <span class="pl-c">// for scalaz 7.1</span>
+
+<span class="pl-c">// or!</span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.codecommit<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shims-scalaz-72<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">ShimsVersion</span>        <span class="pl-c">// for scalaz 7.2</span>
+
+<span class="pl-c">// or!</span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.codecommit<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shims-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">ShimsVersion</span>        <span class="pl-c">// for cats 0.4.1</span></pre>
+  </div> 
+  <p>The current stable version of shims is <strong>0.3</strong>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ShimsVersion</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>0.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-features" class="anchor" href="https://github.com/djspiewak/shims#features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features</h2> 
+  <p>At present, the only non-typeclass feature which shims provides is a default right-projected syntax for <code>scala.util.Either</code>. It provides this primarily in lieu of providing an <code>EitherLike</code>, which may change in the future. The syntax also provides scalaz-style symbolic aliases for <code>Either</code>, so you can use it without tearing your hair out. The syntax can be brought in by importing <code>shims.syntax.either._</code></p> 
+  <h3><a id="user-content-typeclasses" class="anchor" href="https://github.com/djspiewak/shims#typeclasses" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Typeclasses</h3> 
+  <p><em>TODO</em></p> 
+  <h3><a id="user-content-type-shapes" class="anchor" href="https://github.com/djspiewak/shims#type-shapes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Type Shapes</h3> 
+  <p><em>TODO</em></p> 
+  <h3><a id="user-content-providing-instances" class="anchor" href="https://github.com/djspiewak/shims#providing-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Providing Instances</h3> 
+  <p><em>TODO</em></p> 
+  <h2><a id="user-content-what-shims-is-not" class="anchor" href="https://github.com/djspiewak/shims#what-shims-is-not" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What Shims is NOT</h2> 
+  <p>Shims is <em>not</em> a replacement for scalaz or cats! It is not a competitor. It does not fill the same needs. If you think you need shims and you're not an upstream library author, chances are you actually need scalaz or cats. Shims is a compatibility layer, nothing more. If you're writing a "downstream" project (i.e. you deploy to a server, instead of to bintray/sonatype), you should absolutely not see "shims" in your SBT files.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/djspiewak/shims#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>This is a lazily-evaluated library. Currently, it contains only just enough to make <a href="https://github.com/djspiewak/emm" target="_blank">emm</a> and <a href="http://http4s.org" target="_blank">http4s</a> operational. If you need more than that, PRs are very much welcome. Please note that this is a compatibility layer <em>specifically</em> for typeclasses! It is not a replacement for scalaz <em>or</em> cats. For example, we will not implement an <code>Xor</code> (or <code>\/</code>) delegate. <code>State</code>, <code>Kleisli</code> and anything ending in <code>T</code> are similarly out of scope. The whole point is just to write code which works with either cats or scalaz typeclasses, where they are equivalent. I reserve the right to be pointlessly opinionated about what is and isn't out of scope. Also, when we implement something, I reserve the right to be pointlessly opinionated about the names and types thereof. So basically, welcome to my bikeshed. :-)</p> 
+ </article>
+</div>

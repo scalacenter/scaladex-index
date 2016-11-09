@@ -1,0 +1,103 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-webcrank-clientsession" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#webcrank-clientsession" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>webcrank-clientsession</h2> 
+  <p><a href="https://travis-ci.org/webcrank/webcrank-clientsession.scala" target="_blank"><img src="https://camo.githubusercontent.com/748ffcbb42c6959d3fcdedd104a7a9085e04cb1a/68747470733a2f2f7472617669732d63692e6f72672f7765626372616e6b2f7765626372616e6b2d636c69656e7473657373696f6e2e7363616c612e706e67" alt="Build Status" data-canonical-src="https://travis-ci.org/webcrank/webcrank-clientsession.scala.png" style="max-width:100%;"></a></p> 
+  <p>A toolkit for secure client sessions. Provides encryption and authentication for session data.</p> 
+  <p>The library relies on AES with CBC and PKCS5 padding for encryption to ensure nobody can READ the session.</p> 
+  <p>The library relies on HMAC/SHA512 for authentication to ensure nobody can MODIFY the session.</p> 
+  <p>Note that this library has <em>no</em> dependencies on the rest of webcrank and can be used independently.</p> 
+  <h2><a id="user-content-getting-webcrank-clientsession" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#getting-webcrank-clientsession" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting webcrank-clientsession</h2> 
+  <p>If you're using SBT, add the following dependency to your build file:</p> 
+  <pre><code>"io.webcrank" %% "webcrank-clientsession" % "0.1"
+</code></pre> 
+  <h2><a id="user-content-using-webcrank-clientsession" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#using-webcrank-clientsession" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using webcrank-clientsession</h2> 
+  <p>The first think to note is the <code>ClientSessionKey</code>. The <code>ClientSesssionKey</code> wraps the encryption and HMAC keys.</p> 
+  <p>The <code>ClientSessionKey</code> is <strong>secret</strong> data. It is <em>your</em> responsibility to make sure that no else has access to this key.</p> 
+  <p>If you want your sessions to be persistant across restarts, it is <em>your</em> responsibility to store the <code>ClientSessionKey</code>. The key has a convenient string form that can be accessed via <code>ClientSession#token</code> and can be recreated with <code>ClientSession.fromToken</code>.</p> 
+  <p>Normally you will just provide how to <code>store</code> and <code>restore</code> the key.</p> 
+  <p>A standard usage would be:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">webcrank.clientsession.</span><span class="pl-v">_</span>
+
+<span class="pl-k">def</span> <span class="pl-en">store</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  token <span class="pl-k">=&gt;</span> <span class="pl-k">???</span> <span class="pl-c">// write to file or db</span>
+
+<span class="pl-k">def</span> <span class="pl-en">restore</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-k">???</span>          <span class="pl-c">// read from file or db, None if not created yet</span>
+
+<span class="pl-k">val</span> <span class="pl-en">sessions</span> <span class="pl-k">=</span> <span class="pl-en">ClientSession</span>.manage(store, restore)
+
+
+
+<span class="pl-c">// on receiving a request (in pseudo code)</span>
+
+sessions.verify(cookie.get(<span class="pl-s"><span class="pl-pds">"</span>_SESSION<span class="pl-pds">"</span></span>)) <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-k">-</span>\<span class="pl-k">/</span>(err) <span class="pl-k">=&gt;</span> <span class="pl-k">???</span>       <span class="pl-c">// do something when the cookie didn't verify</span>
+  <span class="pl-k">case</span> \<span class="pl-k">/-</span>(session) <span class="pl-k">=&gt;</span> <span class="pl-k">???</span>   <span class="pl-c">// do something with the session</span>
+}
+
+<span class="pl-c">// on sending a request (in pseudo code)</span>
+
+<span class="pl-k">val</span> <span class="pl-en">secured</span> <span class="pl-k">=</span> sessions.secure(<span class="pl-s"><span class="pl-pds">"</span>user1<span class="pl-pds">"</span></span>)
+cookie.set(<span class="pl-s"><span class="pl-pds">"</span>_SESSION<span class="pl-pds">"</span></span>, secured)
+
+</pre>
+  </div> 
+  <h2><a id="user-content-security-considerations" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#security-considerations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Security Considerations</h2> 
+  <p>There are too many things that can go wrong when using any type of session store, so I will be prescriptive:</p> 
+  <ol> 
+   <li>You must keep your <code>ClientSessionKey</code> secret.</li> 
+   <li>You must use HTTPS.</li> 
+   <li>You must set HttpOnly flag on cookie.</li> 
+   <li>You must set Secure flag on cookie.</li> 
+   <li>You must not store sensitive data in cookie (passwords, secret keys etc...), use it for identity only.</li> 
+   <li>You should carefully control expiry dates.</li> 
+  </ol> 
+  <p>All of the above except the encryption key part of the ClientSessionKey are all relevant if you were using a server side store, so don't assume that these requirements are just because it is sent client-side.</p> 
+  <h2><a id="user-content-why-would-you-use-a-client-session-store" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#why-would-you-use-a-client-session-store" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why would you use a client session store?</h2> 
+  <ul> 
+   <li>No db lookup required for each request.</li> 
+   <li>Free distribution, each request is self contained, so we can add a servers without concern for bottlenecking session store.</li> 
+  </ul> 
+  <h2><a id="user-content-why-would-you-not-use-a-session-store" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#why-would-you-not-use-a-session-store" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why would you <em>not</em> use a session store?</h2> 
+  <ul> 
+   <li>Additional bandwidth. This would be come an issue if you were storing lots of data in your session (but just don't).</li> 
+   <li>Hard to invalidate a specific session. You can invalidate everyone by just changing your key, but if you want to pick on a single session you are back to having a data store to track that and you are (prossibly) better off just storing everything.</li> 
+  </ul> 
+  <h2><a id="user-content-future" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#future" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Future</h2> 
+  <p>Things that are planned:</p> 
+  <ul> 
+   <li>Switch to ByteString implementation and remove Array[Byte]</li> 
+   <li>Add simple key/value support.</li> 
+   <li>Add scalaz.effect.IO to track some of the uglies.</li> 
+   <li>Add support for a file backed implementation.</li> 
+  </ul> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/webcrank/webcrank-clientsession.scala#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Any contributions welcome, in particular any security reviews on this library, its recommendations or the underlying crypto libraries would be very helpful.</p> 
+  <p>The <a href="https://github.com/webcrank/webcrank-clientsession.scala/issues" target="_blank">issue tracker</a> is up to date with anything that is planned / desired.</p> 
+ </article>
+</div>

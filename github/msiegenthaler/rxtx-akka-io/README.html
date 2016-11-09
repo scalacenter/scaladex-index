@@ -1,0 +1,61 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-rxtx-akka-io" class="anchor" href="https://github.com/msiegenthaler/rxtx-akka-io#rxtx-akka-io" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>rxtx-akka-io</h1> 
+  <p>Akka IO library in scala for serial ports based on rxtx.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/msiegenthaler/rxtx-akka-io#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <pre><code>libraryDependencies += "ch.inventsoft.akka" %% "rxtx-akka-io" % "1.0.4"
+</code></pre> 
+  <p>To connect use (in an actor):</p> 
+  <pre><code>override def preStart = IO(Serial) ! Open(port, 9600) 
+override def receive = {
+  case Opened(operator, _) =&gt;
+    println("Connected to port")
+    context become open(operator)
+}
+</code></pre> 
+  <p>The actor will be bound to the opened serial port connection using a death pact. So if the actor that opened the connection gets stopped/killed it will also close and stop the serial port connection.</p> 
+  <p>The operator accepts</p> 
+  <ul> 
+   <li><p>Write: To write data to the serial port (a ByteString).</p></li> 
+   <li><p>Close: To close the serial port.</p> <p>operator ! Write(ByteString(“Hello”)) // no ack</p> <p>val ackToken = new AckEvent{} operator ! Write(ByteString(“Hello with ack”), ackToken)</p> <p>operator ! Close</p></li> 
+  </ul> 
+  <p>The operator will send</p> 
+  <ul> 
+   <li><p>Received: Data was received no the serial port (ByteString).</p></li> 
+   <li><p>Ack: Response to successful write.</p></li> 
+   <li><p>Closed: When the port has been closed (i.e. as a response to Close).</p></li> 
+  </ul> 
+  <p>messages. To handle use code like:</p> 
+  <pre><code>case Received(data) =&gt;
+  print("Received data from serial port: ")
+  println(data.toString)
+
+case Closed =&gt;
+  println("Serial port closed")
+  context stop self
+</code></pre> 
+  <p>For more information see the <a href="http://doc.akka.io/docs/akka/snapshot/scala/io.html" target="_blank">Akka IO Documentation</a>.</p> 
+  <h2><a id="user-content-notes" class="anchor" href="https://github.com/msiegenthaler/rxtx-akka-io#notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Notes</h2> 
+  <ul> 
+   <li><p>Make sure you have the rxtx native libraries on the java library path.</p></li> 
+   <li><p>If on Mac OS X you keep getting "gnu.io.PortInUseException: Unknown Application” try to create the /var/lock and give all users access to it.</p> <p>sudo mkdir /var/lock sudo chmod 777 /var/lock</p></li> 
+  </ul> 
+  <h2><a id="user-content-references" class="anchor" href="https://github.com/msiegenthaler/rxtx-akka-io#references" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>References</h2> 
+  <p>For RXTX see: <a href="http://rxtx.qbang.org/" target="_blank">http://rxtx.qbang.org/</a></p> 
+  <p>Provides serial input/output capabilities and the OS native parts.</p> 
+  <p>For Akka IO see: <a href="http://doc.akka.io/docs/akka/snapshot/scala/io.html" target="_blank">http://doc.akka.io/docs/akka/snapshot/scala/io.html</a></p> 
+  <p>Provides the basic interface definition.</p> 
+ </article>
+</div>

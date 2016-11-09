@@ -1,0 +1,94 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-socko" class="anchor" href="https://github.com/mashupbots/socko#socko" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SOCKO</h1> 
+  <p>Socko is an embedded <a href="http://www.scala-lang.org/" target="_blank">Scala</a> web server powered by <a href="http://netty.io/" target="_blank">Netty</a> networking and <a href="http://akka.io/" target="_blank">Akka</a> processing.</p> 
+  <p><strong>Please see our <a href="http://sockoweb.org/" target="_blank">web site</a> for documentaiton and more information</strong></p> 
+  <h2><a id="user-content-a-quick-example" class="anchor" href="https://github.com/mashupbots/socko#a-quick-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>A quick example</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">object</span> <span class="pl-en">HelloApp</span> <span class="pl-k">extends</span> <span class="pl-e">Logger</span> {
+      <span class="pl-c">//</span>
+      <span class="pl-c">// STEP #1 - Define Actors and Start Akka</span>
+      <span class="pl-c">// See `HelloHandler`</span>
+      <span class="pl-c">//</span>
+      <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>HelloExampleActorSystem<span class="pl-pds">"</span></span>)
+
+      <span class="pl-c">//</span>
+      <span class="pl-c">// STEP #2 - Define Routes</span>
+      <span class="pl-c">// Dispatch all HTTP GET events to a newly instanced `HelloHandler` actor for processing.</span>
+      <span class="pl-c">// `HelloHandler` will `stop()` itself after processing each request.</span>
+      <span class="pl-c">//</span>
+      <span class="pl-k">val</span> <span class="pl-en">routes</span> <span class="pl-k">=</span> <span class="pl-en">Routes</span>({
+        <span class="pl-k">case</span> <span class="pl-en">GET</span>(request) <span class="pl-k">=&gt;</span> {
+          actorSystem.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">HelloHandler</span>]) <span class="pl-k">!</span> request
+        }
+      })
+
+      <span class="pl-c">//</span>
+      <span class="pl-c">// STEP #3 - Start and Stop Socko Web Server</span>
+      <span class="pl-c">//</span>
+      <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+        <span class="pl-k">val</span> <span class="pl-en">webServer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">WebServer</span>(<span class="pl-en">WebServerConfig</span>(), routes, actorSystem)
+        webServer.start()
+
+        <span class="pl-en">Runtime</span>.getRuntime.addShutdownHook(<span class="pl-k">new</span> <span class="pl-en">Thread</span> {
+          <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">run</span> { webServer.stop() }
+        })
+
+        <span class="pl-en">System</span>.out.println(<span class="pl-s"><span class="pl-pds">"</span>Open your browser and navigate to http://localhost:8888<span class="pl-pds">"</span></span>)
+      }
+    }
+
+<span class="pl-c">    /**</span>
+<span class="pl-c">     * Hello processor writes a greeting and stops.</span>
+<span class="pl-c">     */</span>
+    <span class="pl-k">class</span> <span class="pl-en">HelloHandler</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> {
+      <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+        <span class="pl-k">case</span> <span class="pl-v">event</span>: <span class="pl-en">HttpRequestEvent</span> <span class="pl-k">=&gt;</span>
+          event.response.write(<span class="pl-s"><span class="pl-pds">"</span>Hello from Socko (<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-k">new</span> <span class="pl-en">Date</span>().toString <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>)<span class="pl-pds">"</span></span>)
+          context.stop(<span class="pl-v">self</span>)
+      }
+    }</pre>
+  </div> 
+  <h2><a id="user-content-editing-the-source-code" class="anchor" href="https://github.com/mashupbots/socko#editing-the-source-code" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Editing the Source Code</h2> 
+  <ul> 
+   <li><p>We are currently using <a href="http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/junosr1" target="_blank">Eclipse Juno</a> with <a href="http://scala-ide.org/download/current.html" target="_blank">Scala IDE 3.0</a></p></li> 
+   <li><p>We are currently using Scala 2.10.1 and JDK7. You will need JDK7 to build. The core and rest projects will be compiled for use with JDK6 but SPDY will not be supported.</p></li> 
+   <li><p>Generate eclipse project files: <code>sbt eclispse</code></p></li> 
+   <li><p>Start <code>Eclipse</code></p></li> 
+   <li><p>From the top menu, select <code>File</code> | <code>Import</code></p> 
+    <ul> 
+     <li>Select <code>General</code> | <code>Existing Projects into Workspace</code>. </li> 
+     <li>Click <code>Next</code>.</li> 
+     <li>Select the <code>socko</code> source code directory as the root</li> 
+     <li>Should see <code>socko-examples</code> and <code>socko-webserver</code> under <code>Projects</code></li> 
+     <li>Click <code>Finish</code></li> 
+    </ul></li> 
+   <li><p>To run the scalatest unit test cases, just right click on a test class file and select <code>Run As JUnit Test</code>.</p></li> 
+  </ul> 
+  <h2><a id="user-content-getting-help" class="anchor" href="https://github.com/mashupbots/socko#getting-help" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Help</h2> 
+  <p>If you have a question or need help, please open a ticket in our <a href="https://github.com/mashupbots/socko/issues" target="_blank">Issues Register</a>.</p> 
+  <h2><a id="user-content-links" class="anchor" href="https://github.com/mashupbots/socko#links" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Links</h2> 
+  <ul> 
+   <li><a href="http://sockoweb.org/" target="_blank">Web Site</a></li> 
+   <li><a href="http://sockoweb.org/blog" target="_blank">Blog</a></li> 
+   <li><a href="https://github.com/mashupbots/socko/issues/" target="_blank">Issues</a></li> 
+   <li><a href="https://github.com/mashupbots/socko/issues/milestones" target="_blank">Road Map</a></li> 
+   <li><a href="https://github.com/mashupbots/socko/tree/master/socko-examples/src/main/scala/org/mashupbots/socko/examples" target="_blank">Examples</a></li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,237 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-mongo-query-streams" class="anchor" href="https://github.com/haghard/mongo-query-streams#mongo-query-streams" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Mongo-query-streams</h1> 
+  <p>Mongo query language</p> 
+  <p>Design goals: </p> 
+  <ul> 
+   <li>Provide mongo query creation in type safe manner</li> 
+   <li>Write resource safe code</li> 
+   <li>Use compositionality, expressiveness of scalaz-streams as advantage in mongo querying</li> 
+   <li>Consider the result as <a href="https://github.com/scalaz/scalaz-stream" target="_blank">ScalazStream</a> or <a href="https://github.com/ReactiveX/RxScala.git" target="_blank">RxScala</a>.</li> 
+  </ul> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/haghard/mongo-query-streams#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h1> 
+  <p>First, you will need to add the Bintray resolver settings to your SBT file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>bintray-repo<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>http://dl.bintray.com/haghard/releases<span class="pl-pds">"</span></span>    </pre>
+  </div> 
+  <p>and</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>   libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.mongo.scalaz<span class="pl-pds">"</span></span>    <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>mongo-query-streams<span class="pl-pds">"</span></span> <span class="pl-k">%</span>  <span class="pl-s"><span class="pl-pds">"</span>0.6.8<span class="pl-pds">"</span></span>   </pre>
+  </div> 
+  <h1><a id="user-content-examples" class="anchor" href="https://github.com/haghard/mongo-query-streams#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h1> 
+  <p>There are several way to create mongo query in type safe manner and treat it like a scalaz-stream process</p> 
+  <p>Using native query which will be parser and validated</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">import</span> <span class="pl-v">mongo.query.</span><span class="pl-v">_</span>
+    create { b <span class="pl-k">⇒</span>
+      b.q(<span class="pl-s"><span class="pl-pds">"""</span> { "article" : 1 } <span class="pl-pds">"""</span></span>)
+      b.collection(<span class="pl-s"><span class="pl-pds">"</span>tmp<span class="pl-pds">"</span></span>)
+      b.db(<span class="pl-s"><span class="pl-pds">"</span>test_db<span class="pl-pds">"</span></span>)
+    }
+</pre>
+  </div> 
+  <p>Using mongo.dsl._</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">query.</span><span class="pl-v">_    </span>
+    create { b <span class="pl-k">⇒</span>
+      b.q(<span class="pl-k">&amp;&amp;</span>(<span class="pl-s"><span class="pl-pds">"</span>num<span class="pl-pds">"</span></span> $gt <span class="pl-c1">3</span>, <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> $eq <span class="pl-s"><span class="pl-pds">"</span>James<span class="pl-pds">"</span></span>))
+      b.sort(<span class="pl-s"><span class="pl-pds">"</span>num<span class="pl-pds">"</span></span> $eq <span class="pl-k">-</span><span class="pl-c1">1</span>)
+      b.collection(<span class="pl-s"><span class="pl-pds">"</span>tmp<span class="pl-pds">"</span></span>)
+      b.db(<span class="pl-s"><span class="pl-pds">"</span>test_db<span class="pl-pds">"</span></span>)
+    }
+</pre>
+  </div> 
+  <p>Using mongo.dsl2_</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">query.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">dsl2.</span><span class="pl-v">_</span>
+    <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> <span class="pl-en">Obj</span>($and().op <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">List</span>(<span class="pl-en">Obj</span>(<span class="pl-s"><span class="pl-pds">"</span>num<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Obj</span>(($gte(), <span class="pl-c1">3</span>), ($lt(), <span class="pl-c1">10</span>))), <span class="pl-en">Obj</span>(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> literal(<span class="pl-s"><span class="pl-pds">"</span>Bauer<span class="pl-pds">"</span></span>))))
+    create { b <span class="pl-k">⇒</span>
+      b.q(q.toString)
+      b.collection(<span class="pl-s"><span class="pl-pds">"</span>tmp<span class="pl-pds">"</span></span>)
+      b.db(<span class="pl-s"><span class="pl-pds">"</span>test_db<span class="pl-pds">"</span></span>)
+    }
+</pre>
+  </div> 
+  <p>Using monadic query composition</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_    </span>
+    <span class="pl-k">import</span> <span class="pl-v">dsl.</span><span class="pl-v">_    </span>
+
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+    _ <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>producer_num<span class="pl-pds">"</span></span> $eq <span class="pl-c1">1</span>
+    x <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>article<span class="pl-pds">"</span></span> $gt <span class="pl-c1">0</span> $lt <span class="pl-c1">6</span> $nin <span class="pl-en">Seq</span>(<span class="pl-c1">4</span>, <span class="pl-c1">5</span>)
+    } <span class="pl-k">yield</span> x
+
+    <span class="pl-c">//string </span>
+    query.toQuery    
+    <span class="pl-c">//DBObject</span>
+    query.toDBObject    </pre>
+  </div> 
+  <p>Using package dsl3 you can easy fetch one/batch/stream </p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">dsl3.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">Query.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">Interaction.</span><span class="pl-v">_</span>
+    <span class="pl-k">import</span> <span class="pl-v">rx.lang.scala.</span>{ <span class="pl-v">Observable</span>, <span class="pl-v">Subscriber</span> }
+
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+      _ <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>producer_num<span class="pl-pds">"</span></span> $gt <span class="pl-c1">1</span> $lt <span class="pl-c1">10</span>
+      _ <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>article<span class="pl-pds">"</span></span> $gt <span class="pl-c1">0</span> $lt <span class="pl-c1">6</span> $nin <span class="pl-en">Seq</span>(<span class="pl-c1">4</span>, <span class="pl-c1">5</span>)
+      q <span class="pl-k">&lt;</span><span class="pl-k">-</span> sort(<span class="pl-s"><span class="pl-pds">"</span>producer_num<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Descending</span>)
+    } <span class="pl-k">yield</span> q
+
+    <span class="pl-c">//scalar result</span>
+    query.findOne(client, <span class="pl-en">DB_NAME</span>, <span class="pl-en">PRODUCT</span>).attemptRun
+
+    <span class="pl-c">//batch result</span>
+    query.list(client, <span class="pl-en">DB_NAME</span>, <span class="pl-en">PRODUCT</span>).attemptRun    
+
+    <span class="pl-c">//or stream of BasicDBObject     </span>
+    query.stream[<span class="pl-en">MProcess</span>](<span class="pl-en">TEST_DB</span>, <span class="pl-en">LANGS</span>)
+
+    <span class="pl-c">//or stream of Int from field "f2" using Observable    </span>
+    query.stream[<span class="pl-en">Observable</span>](<span class="pl-en">TEST_DB</span>, <span class="pl-en">LANGS</span>).column[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>f2<span class="pl-pds">"</span></span>)
+
+    <span class="pl-c">//or stream of Strings from field "f" using Process</span>
+    query.sChannel[<span class="pl-en">MStream</span>](<span class="pl-en">TEST_DB</span>, <span class="pl-en">LANGS</span>).column[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>f<span class="pl-pds">"</span></span>)    
+
+</pre>
+  </div> 
+  <p>Here's a basic example how to build query, run and get results:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">mongo_  </span>
+  <span class="pl-k">import</span> <span class="pl-v">query.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">dsl.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scalaz.concurrent.</span><span class="pl-v">Task</span>
+  <span class="pl-k">import</span> <span class="pl-v">scalaz.stream.process.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scalaz.stream.</span><span class="pl-v">Process</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">client</span><span class="pl-k">:</span> <span class="pl-en">MongoClient</span> <span class="pl-k">=</span> ...
+  <span class="pl-k">val</span> <span class="pl-en">Resource</span> <span class="pl-k">=</span> eval(<span class="pl-en">Task</span>.delay(client))
+
+  <span class="pl-k">val</span> <span class="pl-en">buffer</span><span class="pl-k">:</span> <span class="pl-en">Buffer</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Buffer</span>.empty
+  <span class="pl-k">val</span> <span class="pl-en">sink</span> <span class="pl-k">=</span> scalaz.stream.io.fillBuffer(buffer)
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">exec</span> <span class="pl-k">=</span> newFixedThreadPool(<span class="pl-c1">2</span>, <span class="pl-k">new</span> <span class="pl-en">NamedThreadFactory</span>(<span class="pl-s"><span class="pl-pds">"</span>db-worker<span class="pl-pds">"</span></span>))
+
+  <span class="pl-k">val</span> <span class="pl-en">products</span> <span class="pl-k">=</span> create { b <span class="pl-k">⇒</span>
+    b.q(<span class="pl-s"><span class="pl-pds">"</span>article<span class="pl-pds">"</span></span> $gt <span class="pl-c1">2</span> $lt <span class="pl-c1">40</span>)
+    b.collection(<span class="pl-en">PRODUCT</span>)
+    b.db(<span class="pl-en">TEST_DB</span>)
+  }.column[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>article<span class="pl-pds">"</span></span>)
+
+   (<span class="pl-k">for</span> {
+    article <span class="pl-k">←</span> <span class="pl-en">Resource</span> through products.out
+    _ <span class="pl-k">←</span> article to sink
+   } <span class="pl-k">yield</span> ())          
+    .onFailure { th <span class="pl-k">⇒</span> logger.debug(s<span class="pl-s"><span class="pl-pds">"</span>Failure: ${th.getMessage}<span class="pl-pds">"</span></span>); halt }
+    .onComplete(<span class="pl-en">P</span>.eval(<span class="pl-en">Task</span>.delay(logger.debug(s<span class="pl-s"><span class="pl-pds">"</span>Interaction has been completed<span class="pl-pds">"</span></span>))))
+    .run.run
+
+  <span class="pl-c">//result here</span>
+  buffer
+</pre>
+  </div> 
+  <p>Big win here is that <code>products</code> value incapsulates a full interaction lifecycle for with mongo client (get db by name, get collection by name, submit query with preferences, fetch records from cursor, close the cursor). If exception occurs cursor will close.</p> 
+  <p>We do support join between 2 collections and 2 different streaming library <a href="https://github.com/ReactiveX/RxScala.git" target="_blank">RxScala</a> and <a href="https://github.com/scalaz/scalaz-stream" target="_blank">ScalazStream</a> through single type <code>mongo.join.Join</code> which can by parametrized with <code>MongoProcess</code> and <code>MongoObservable</code> </p> 
+  <p>We have two methods for join collections: <code>joinByPk</code> and <code>join</code>. If you ok with output type from left stream only with key field you should use <code>joinByPk</code>. If you aren't, than use <code>join</code> for unlimited opportunities in output record.</p> 
+  <p>Here's a example of how you can do joinByPk between collections <code>LANGS</code> and <code>PROGRAMMERS</code> by <code>LANGS.index == PROGRAMMERS.lang</code> using <code>Scalaz Streams</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">join.</span><span class="pl-v">_    </span>
+  <span class="pl-k">import</span> <span class="pl-v">dsl.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">Query.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scalaz.stream.</span><span class="pl-v">Process</span>
+  <span class="pl-k">import</span> <span class="pl-v">mongo.join.process.</span><span class="pl-v">MongoProcessStream</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">Buffer</span>.empty[<span class="pl-k">String</span>]
+  <span class="pl-k">val</span> <span class="pl-en">Sink</span> <span class="pl-k">=</span> scalaz.stream.io.fillBuffer(buffer)
+
+  <span class="pl-k">val</span> <span class="pl-en">qLang</span> <span class="pl-k">=</span> <span class="pl-k">for</span> { 
+      _ <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> $gte <span class="pl-c1">0</span> $lte <span class="pl-c1">5</span>
+      q <span class="pl-k">&lt;</span><span class="pl-k">-</span> sort(<span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Descending</span>)
+    } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">def</span> <span class="pl-en">qProg</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> <span class="pl-k">for</span> { q <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>lang<span class="pl-pds">"</span></span> $eq id } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">exec</span> <span class="pl-k">=</span> newFixedThreadPool(<span class="pl-c1">2</span>, <span class="pl-k">new</span> <span class="pl-en">NamedThreadFactory</span>(<span class="pl-s"><span class="pl-pds">"</span>db-worker<span class="pl-pds">"</span></span>))
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> client
+  <span class="pl-k">val</span> <span class="pl-en">joiner</span> <span class="pl-k">=</span> <span class="pl-en">Join</span>[<span class="pl-en">MongoProcess</span>]
+
+  <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> joiner.joinByPk(qLang, <span class="pl-en">LANGS</span>, <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span>, qProg(<span class="pl-v">_</span>: <span class="pl-k">Int</span>), <span class="pl-en">PROGRAMMERS</span>, <span class="pl-en">TEST_DB</span>) { (l, <span class="pl-v">r</span>: <span class="pl-en">DBObject</span>) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Primary-key:$l - val:[Foreign-key:${r.get(<span class="pl-pds">"</span></span>lang<span class="pl-s"><span class="pl-pds">"</span>)} - ${r.get(<span class="pl-pds">"</span></span>name<span class="pl-s"><span class="pl-pds">"</span>)}]<span class="pl-pds">"</span></span>
+  }              
+
+  <span class="pl-k">for</span> {
+    e <span class="pl-k">←</span> <span class="pl-en">Process</span>.eval(<span class="pl-en">Task</span>.delay(client)) through query.out
+    _ <span class="pl-k">←</span> e to <span class="pl-en">Sink</span>
+  } <span class="pl-k">yield</span> ()
+    .onFailure { th <span class="pl-k">⇒</span> logger.debug(s<span class="pl-s"><span class="pl-pds">"</span>Failure: ${th.getMessage}<span class="pl-pds">"</span></span>); halt }
+    .onComplete(<span class="pl-en">P</span>.eval(<span class="pl-en">Task</span>.delay(logger.debug(s<span class="pl-s"><span class="pl-pds">"</span>Interaction has been completed<span class="pl-pds">"</span></span>))))
+    .run.run      
+</pre>
+  </div> 
+  <p>Join using <code>rx.lang.scala.Observable</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">join.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">dsl.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">Query.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">rx.lang.scala.</span><span class="pl-v">Subscriber  </span>
+  <span class="pl-k">import</span> <span class="pl-v">rx.lang.scala.schedulers.</span><span class="pl-v">ExecutionContextScheduler</span>
+  <span class="pl-k">import</span> <span class="pl-v">mongo.join.observable.</span><span class="pl-v">MongoObservableStream</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">Buffer</span>.empty[<span class="pl-k">String</span>]
+  <span class="pl-k">val</span> <span class="pl-en">Sink</span> <span class="pl-k">=</span> io.fillBuffer(buffer)
+
+  <span class="pl-k">val</span> <span class="pl-en">qLang</span> <span class="pl-k">=</span> <span class="pl-k">for</span> { 
+    _ <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> $gte <span class="pl-c1">0</span> $lte <span class="pl-c1">5</span>
+    q <span class="pl-k">&lt;</span><span class="pl-k">-</span> sort(<span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Descending</span>)
+  } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">def</span> <span class="pl-en">qProg</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> <span class="pl-k">for</span> { q <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>lang<span class="pl-pds">"</span></span> $eq id } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">exec</span> <span class="pl-k">=</span> newFixedThreadPool(<span class="pl-c1">2</span>, <span class="pl-k">new</span> <span class="pl-en">NamedThreadFactory</span>(<span class="pl-s"><span class="pl-pds">"</span>db-worker<span class="pl-pds">"</span></span>))
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> client
+  <span class="pl-k">val</span> <span class="pl-en">joiner</span> <span class="pl-k">=</span> <span class="pl-en">Join</span>[<span class="pl-en">MongoObservable</span>]
+
+  <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> joiner.joinByPk(qLang, <span class="pl-en">LANGS</span>, <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span>, qProg(<span class="pl-v">_</span>: <span class="pl-k">Int</span>), <span class="pl-en">PROGRAMMERS</span>, <span class="pl-en">TEST_DB</span>) { (l, <span class="pl-v">r</span>: <span class="pl-en">DBObject</span>) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Primary-key:$l - val:[Foreign-key:${r.get(<span class="pl-pds">"</span></span>lang<span class="pl-s"><span class="pl-pds">"</span>)} - ${r.get(<span class="pl-pds">"</span></span>name<span class="pl-s"><span class="pl-pds">"</span>)}]<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">testSubs</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Subscriber</span>[<span class="pl-k">String</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">onStart</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> request(<span class="pl-c1">1</span>)
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">onNext</span>(<span class="pl-v">n</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> request(<span class="pl-c1">1</span>)    
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">onError</span>(<span class="pl-v">e</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">=</span> logger.info(s<span class="pl-s"><span class="pl-pds">"</span>OnError: ${e.getMessage}<span class="pl-pds">"</span></span>)
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">onCompleted</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> logger.info(<span class="pl-s"><span class="pl-pds">"</span>Interaction has been completed<span class="pl-pds">"</span></span>)          
+  }
+
+  query.observeOn(<span class="pl-en">ExecutionContextScheduler</span>(<span class="pl-en">ExecutionContext</span>.fromExecutor(executor)))
+    .subscribe(testSubs)
+</pre>
+  </div> 
+  <p>To run tests: <code>sbt test</code></p> 
+  <p>html pages: <code>sbt test-only -- html</code></p> 
+  <p>markdown files: <code>sbt test-only -- markdown</code></p> 
+  <p>To run output on console <code>test-only -- console</code></p> 
+  <p>Generated files can be found in /target/spec2-reports</p> 
+  <h2><a id="user-content-status" class="anchor" href="https://github.com/haghard/mongo-query-streams#status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Status</h2> 
+  <p>0.6.9 version</p> 
+ </article>
+</div>

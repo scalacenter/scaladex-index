@@ -1,0 +1,92 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://www.codacy.com/app/Codacy/codacy-scalameta?utm_source=github.com&amp;amp;utm_medium=referral&amp;amp;utm_content=codacy/codacy-scalameta&amp;amp;utm_campaign=Badge_Grade" target="_blank"><img src="https://camo.githubusercontent.com/3ebe32021b920747f409e246c964c7be923f4e04/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f3732383639636435353663353436323462636233363035386337326438333731" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/72869cd556c54624bcb36058c72d8371" style="max-width:100%;"></a> <a href="https://circleci.com/gh/codacy/codacy-scalameta" target="_blank"><img src="https://camo.githubusercontent.com/c27e8b95c57c48cfe386c6a2d7c36a1c5d75065b/68747470733a2f2f636972636c6563692e636f6d2f67682f636f646163792f636f646163792d7363616c616d6574612e7376673f7374796c653d736869656c6426636972636c652d746f6b656e3d3a636972636c652d746f6b656e" alt="Build Status" data-canonical-src="https://circleci.com/gh/codacy/codacy-scalameta.svg?style=shield&amp;circle-token=:circle-token" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-codacy-scalameta" class="anchor" href="https://github.com/codacy/codacy-scalameta#codacy-scalameta" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Codacy scala.meta</h1> 
+  <p>This is the <a href="https://www.codacy.com/" target="_blank">codacy</a> engine for scala static code analysis build on top of scala.meta. Check the <strong>Docs</strong> section for more information.</p> 
+  <h2><a id="user-content-developing" class="anchor" href="https://github.com/codacy/codacy-scalameta#developing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Developing</h2> 
+  <p>implementing a new Pattern:</p> 
+  <p>It is usually a good idea to start by implementing the test file. It contains issues the new pattern should detect as well as implementations that correct said issues. This defines the constraints of what the pattern should and also should not detect and helps avoid false positives. To create a testfile add it to the resources under docs/tests/ You can take a look at the already implemented tests in our <a href="https://github.com/codacy/codacy-scalameta/tree/master/patterns-base/src/main/resources/docs/tests" target="_blank">base plugin</a></p> 
+  <p>Next we implement the actual code. A pattern must currently reside in the package <code>codacy.patterns</code> and implement the <code>codacy.base.Pattern</code> interface. Which means it must implement the <code>def apply(tree:Tree):Iterable[Result]</code>. In most cases the <code>collect</code> method on trees that scala.meta provides us with is sufficient for that purpose. A <code>Result</code> consist of a <code>Message</code> (which itself is just a type-wrapped String) and a <code>Positionable</code> which can currently be implicitly obtained by passing a <code>scala.meta.Tree</code> or a <code>scala.meta.Token</code></p> 
+  <p>Sometimes one might want to change the behavior of the pattern according to some configuration. Such a configuration has to follow some basic rules and gets passed to the pattern as the only argument in the constructor. The rules are:</p> 
+  <p>1) it needs to be a case class</p> 
+  <p>2) all arguments need to define defaults</p> 
+  <p>3) json readers and writers must exist for the argument types. (Currently that means primitive types and <code>scala.util.matching.Regex</code>)</p> 
+  <p>Additional steps can be found in the chapter Tool Integration with one exeption: there is no need to explicitly add pattern parameters to patterns defined in <code>patterns.json</code> since that's already being covered by rule 2 of the configuration rules. For a full example check out the <a href="https://github.com/codacy/codacy-scalameta/tree/master/patterns-base/src/main" target="_blank">existing patterns</a></p> 
+  <h3><a id="user-content-quasiquotes" class="anchor" href="https://github.com/codacy/codacy-scalameta#quasiquotes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quasiquotes:</h3> 
+  <p><a href="https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md" target="_blank">https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md</a></p> 
+  <h3><a id="user-content-tool-integration" class="anchor" href="https://github.com/codacy/codacy-scalameta#tool-integration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tool Integration:</h3> 
+  <p><a href="https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide" target="_blank">https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide</a></p> 
+  <h3><a id="user-content-testing-with-sbt-console" class="anchor" href="https://github.com/codacy/codacy-scalameta#testing-with-sbt-console" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing with "sbt console":</h3> 
+  <pre><code>import scala.meta._
+
+val code = """ .... """
+
+val tree = code.parse[Source]
+
+codacy.patterns.Custom_Scala_ElseIf(tree)
+
+//To see the tree structure:
+
+tree.show[Structure]
+</code></pre> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/codacy/codacy-scalameta#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>You can create the docker by doing:</p> 
+  <pre><code>sbt docker:publishLocal
+</code></pre> 
+  <p>The docker is ran with the following command:</p> 
+  <pre><code>docker run -it -v $srcDir:/src  &lt;DOCKER_NAME&gt;:&lt;DOCKER_VERSION&gt;
+</code></pre> 
+  <h2><a id="user-content-docs" class="anchor" href="https://github.com/codacy/codacy-scalameta#docs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Docs</h2> 
+  <p><a href="https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide" target="_blank">Tool Developer Guide</a></p> 
+  <p><a href="https://support.codacy.com/hc/en-us/articles/207280379-Tool-Developer-Guide-Using-Scala" target="_blank">Tool Developer Guide - Using Scala</a></p> 
+  <h2><a id="user-content-test" class="anchor" href="https://github.com/codacy/codacy-scalameta#test" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Test</h2> 
+  <p>We use the <a href="https://github.com/codacy/codacy-plugins-test" target="_blank">codacy-plugins-test</a> to test our external tools integration. You can follow the instructions there to make sure your tool is working as expected.</p> 
+  <h2><a id="user-content-what-is-codacy" class="anchor" href="https://github.com/codacy/codacy-scalameta#what-is-codacy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What is Codacy?</h2> 
+  <p><a href="https://www.codacy.com/" target="_blank">Codacy</a> is an Automated Code Review Tool that monitors your technical debt, helps you improve your code quality, teaches best practices to your developers, and helps you save time in Code Reviews.</p> 
+  <h3><a id="user-content-among-codacys-features" class="anchor" href="https://github.com/codacy/codacy-scalameta#among-codacys-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Among Codacy’s features:</h3> 
+  <ul> 
+   <li>Identify new Static Analysis issues</li> 
+   <li>Commit and Pull Request Analysis with GitHub, BitBucket/Stash, GitLab (and also direct git repositories)</li> 
+   <li>Auto-comments on Commits and Pull Requests</li> 
+   <li>Integrations with Slack, HipChat, Jira, YouTrack</li> 
+   <li>Track issues in Code Style, Security, Error Proneness, Performance, Unused Code and other categories</li> 
+  </ul> 
+  <p>Codacy also helps keep track of Code Coverage, Code Duplication, and Code Complexity.</p> 
+  <p>Codacy supports PHP, Python, Ruby, Java, JavaScript, and Scala, among others.</p> 
+  <h3><a id="user-content-free-for-open-source" class="anchor" href="https://github.com/codacy/codacy-scalameta#free-for-open-source" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Free for Open Source</h3> 
+  <p>Codacy is free for Open Source projects.</p> 
+ </article>
+</div>

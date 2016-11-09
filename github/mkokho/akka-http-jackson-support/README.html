@@ -1,0 +1,55 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-http-jackson-support" class="anchor" href="https://github.com/mkokho/akka-http-jackson-support#akka-http-jackson-support" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-http-jackson-support</h1> 
+  <p>Addition to Akka HTTP which provides (un)marshalling via Jackson library</p> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/mkokho/akka-http-jackson-support#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">nz.mkokho.akkahttpjackson.</span><span class="pl-v">JacksonJsonSupport</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MarshallingServer</span> <span class="pl-k">extends</span> <span class="pl-e">JacksonJsonSupport</span> {
+  <span class="pl-k">val</span> <span class="pl-en">jacksonObjectMapper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ObjectMapper</span>()
+  <span class="pl-c">//Jackson scala module is required for case classes</span>
+  jacksonObjectMapper.registerModule(<span class="pl-en">DefaultScalaModule</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>my-system<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">executionContext</span> <span class="pl-k">=</span> system.dispatcher
+
+    <span class="pl-k">val</span> <span class="pl-en">route</span> <span class="pl-k">=</span>
+      post {
+        pathSingleSlash {
+          entity(as[<span class="pl-en">Person</span>]) { person <span class="pl-k">=&gt;</span>
+            complete(<span class="pl-en">Result</span>(<span class="pl-s"><span class="pl-pds">"</span>ok<span class="pl-pds">"</span></span>))
+          }
+        }
+      }
+
+    <span class="pl-k">val</span> <span class="pl-en">bindingFuture</span> <span class="pl-k">=</span> <span class="pl-en">Http</span>().bindAndHandle(route, <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>, <span class="pl-c1">8080</span>)
+
+    println(s<span class="pl-s"><span class="pl-pds">"</span>Server online at http://localhost:8080/<span class="pl-cce">\n</span>Press RETURN to stop...<span class="pl-pds">"</span></span>)
+    <span class="pl-en">StdIn</span>.readLine() <span class="pl-c">// let it run until user presses return</span>
+    bindingFuture
+      .flatMap(_.unbind()) <span class="pl-c">// trigger unbinding from the port</span>
+      .onComplete(_ <span class="pl-k">⇒</span> system.terminate()) <span class="pl-c">// and shutdown when done</span>
+  }
+}</pre>
+  </div> 
+  <h1><a id="user-content-dependencies" class="anchor" href="https://github.com/mkokho/akka-http-jackson-support#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies</h1> 
+  <p>The library is built based on Akka HTTP 2.4.4 and Jackson Module Scala 2.7.3</p> 
+  <pre><code>    "com.typesafe.akka" %% "akka-http-core" % "2.4.4"    
+    "com.typesafe.akka" %% "akka-http-experimental" % "2.4.4"
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.7.3"
+</code></pre> 
+ </article>
+</div>

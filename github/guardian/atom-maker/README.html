@@ -1,0 +1,187 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-atom-maker-libraries" class="anchor" href="https://github.com/guardian/atom-maker#atom-maker-libraries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Atom maker libraries</h1> 
+  <p>This repository contains two libraries for creating, publishing and managing content atoms.</p> 
+  <p>You should first define your new content atom model by adding it <a href="https://github.com/guardian/content-atom" target="_blank">here</a>. For the atoms to appear in capi you will also have to make necessary changes to capi (this process will be simplified and documented soon).</p> 
+  <p>An example of a project that uses these libraries to manage atoms can be found <a href="https://github.com/guardian/media-atom-maker" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-atom-publisher-lib" class="anchor" href="https://github.com/guardian/atom-maker#atom-publisher-lib" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Atom-publisher-lib</h2> 
+  <ul> 
+   <li>Provides that traits you an inject in your application</li> 
+  </ul> 
+  <h3><a id="user-content-publishedstore-and-previewdatastore" class="anchor" href="https://github.com/guardian/atom-maker#publishedstore-and-previewdatastore" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PublishedStore and PreviewDataStore</h3> 
+  <ul> 
+   <li>Functionality for getting, creating, listing and updating atoms</li> 
+   <li>You will need to provide these with a AmazonDynamoDBClient and the names of your published and preview dynamo tables, and your new content atom definition.</li> 
+  </ul> 
+  <pre><code>import com.gu.contentatom.thrift._
+import com.gu.contentatom.thrift.atom.myAtom._
+
+class PublishedMyAtomDataStoreProvider @Inject() (myConfig: AWSConfig)
+    extends Provider[PublishedDataStore] {
+        def get = new PublishedDynamoDataStore[MyAtom](myConfig.dynamoClient, myConfig.publishedDynamoTableName) {
+            def fromAtomData = { case AtomData.MyAtom(data) =&gt; data }
+            def toAtomData(data: MyAtom) = MyAtom.My(data)
+        }
+}
+
+class PreviewMyAtomDataStoreProvider @Inject() (awsConfig: AWSConfig)
+    extends Provider[PreviewDataStore] {
+        def get = new PreviewDynamoDataStore[MyAtom](myConfig.dynamoClient, myConfig.dynamoTableName) {
+            def fromAtomData = { case AtomData.MyAtom(data) =&gt; data }
+            def toAtomData(data: MyAtom) = AtomData.MyAtom(data)
+        }
+}
+</code></pre> 
+  <pre><code>bind(classOf[PublishedDataStore])
+.toProvider(classOf[PublishedMyAtomDataStoreProvider])
+
+bind(classOf[PreviewDataStore])
+.toProvider(classOf[PreviewMyAtomDataStoreProvider])
+</code></pre> 
+  <h4><a id="user-content-examples-of-use" class="anchor" href="https://github.com/guardian/atom-maker#examples-of-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples of use:</h4> 
+  <p>Get a published atom</p> 
+  <pre><code>publishedDataStore.getAtom(id) match {
+    case Some(atom) =&gt; //Do something with the published atom
+    case None =&gt; //Handle not finding published atom
+}
+</code></pre> 
+  <p>Create a new atom</p> 
+  <pre><code>previewDataStore.createAtom(atom).fold(
+    {
+      case IDConflictError =&gt; //Handle id conflict error
+      case _ =&gt; //Handle unknown error
+    },
+    _ =&gt; //Do someting with the new atom
+
+</code></pre> 
+  <h3><a id="user-content-liveatompublisher-and-previewatompublisher" class="anchor" href="https://github.com/guardian/atom-maker#liveatompublisher-and-previewatompublisher" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>LiveAtomPublisher and PreviewAtomPublisher</h3> 
+  <ul> 
+   <li>Publishes content atoms to live or preview kinesis streams</li> 
+   <li>You will need to provide these with a kinesis client and the names of live and preview kinesis streams you want to publish to and a kinesis client</li> 
+  </ul> 
+  <pre><code>import javax.inject.{Inject, Provider}
+
+import com.gu.atom.publish._
+
+class LiveAtomPublisherProvider @Inject() (myConfig)
+  extends Provider[LiveAtomPublisher] {
+    def get() = new LiveKinesisAtomPublisher(myConfig.liveKinesisStreamName, myConfig.kinesisClient)
+}
+
+  class PreviewAtomPublisherProvider @Inject() ()
+    extends Provider[PreviewAtomPublisher] {
+      def get() = new PreviewKinesisAtomPublisher(myConfig.previewKinesisStreamName, myConfig.kinesisClient)
+}
+</code></pre> 
+  <pre><code>bind(classOf[LiveAtomPublisher])
+.toProvider(classOf[LiveAtomPublisherProvider])
+
+bind(classOf[PreviewAtomPublisher])
+.toProvider(classOf[PreviewAtomPublisherProvider])
+</code></pre> 
+  <h4><a id="user-content-examples-of-use-1" class="anchor" href="https://github.com/guardian/atom-maker#examples-of-use-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples of use</h4> 
+  <pre><code>import com.gu.contentatom.thrift.{ContentAtomEvent, EventType, Atom}
+
+//ContentAtomEvent and Atom models are provided by the content atom library
+val atom: Atom = functionToParseAtomFromData(data)
+val event = ContentAtomEvent(atom, EvenType.Update, now())
+previewPublisher.publishAtomEvent(event) match {
+  case Success(_)  =&gt; //Handle publishing successfully
+  case Failure(err) =&gt; //Handle error in publishing
+}
+</code></pre> 
+  <h3><a id="user-content-previewatomreindexer-and-publishedatomreindexer" class="anchor" href="https://github.com/guardian/atom-maker#previewatomreindexer-and-publishedatomreindexer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PreviewAtomReindexer and PublishedAtomReindexer</h3> 
+  <ul> 
+   <li>Used to reindex preview and live atoms</li> 
+   <li>You will need to provide these with a kinesis client, and live and preview reindex kinesis stream name, which are usually the same as the live and preview kinesis streams.</li> 
+   <li><code>atom-manager-play-lib</code> provides a reindex controller utilising these (see below).</li> 
+  </ul> 
+  <pre><code>class PreviewAtomReindexerProvider @Inject() (myConfig)
+    extends Provider[PreviewAtomReindexer] {
+        def get() = new PreviewKinesisAtomReindexer(
+            myConfig.previewKinesisReindexStreamName, myConfig.kinesisClient
+        )
+}
+
+class PublishedAtomReindexerProvider @Inject() (myConfig)
+    extends Provider[PublishedAtomReindexer] {
+        def get() = new PublishedKinesisAtomReindexer(
+            myConfig.publishedKinesisReindexStreamName, myConfig.kinesisClient
+        )
+}
+
+</code></pre> 
+  <pre><code>bind(classOf[PreviewAtomReindexer])
+.toProvider(classOf[PreviewAtomReindexerProvider])
+
+bind(classOf[PublishedAtomReindexer])
+.toProvider(classOf[PublishedAtomReindexerProvider])
+</code></pre> 
+  <h2><a id="user-content-atom-manager-play-lib" class="anchor" href="https://github.com/guardian/atom-maker#atom-manager-play-lib" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Atom-manager-play-lib</h2> 
+  <ul> 
+   <li>Sits on top of <code>atom-publisher-lib</code></li> 
+   <li>Provides methods for publishing and reindexing atoms</li> 
+  </ul> 
+  <h3><a id="user-content-reindexing" class="anchor" href="https://github.com/guardian/atom-maker#reindexing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reindexing</h3> 
+  <ul> 
+   <li>You can use the reindex controller to create and view reindex jobs:</li> 
+  </ul> 
+  <pre><code>POST    /reindex-preview                com.gu.atom.play.ReindexController.newPreviewReindexJob()
+POST    /reindex-publish                com.gu.atom.play.ReindexController.newPublishedReindexJob()
+GET     /reindex-preview                com.gu.atom.play.ReindexController.previewReindexJobStatus()
+GET     /reindex-publish                com.gu.atom.play.ReindexController.publishedReindexJobStatus()
+</code></pre> 
+  <h3><a id="user-content-publishing" class="anchor" href="https://github.com/guardian/atom-maker#publishing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing</h3> 
+  <ul> 
+   <li>Provides a method for publishing the atom is in the <code>AtomAPIActions</code> trait.</li> 
+   <li>This method will publish your atom in your live kinesis stream and save it in your published atoms dynamo table.</li> 
+  </ul> 
+  <p>In your controller:</p> 
+  <pre><code>package controllers
+
+import play.api.mvc._
+import com.gu.atom.play._
+
+//The data stores and publishers and provided by `atom-publisher-lib` library and are used by AtomAPIActions
+
+class MyAtomController @Inject()  (val previewDataStore: PreviewDataStore,
+                                   val publishedDataStore: PublishedDataStore,
+                                   val livePublisher: LiveAtomPublisher,
+                                   val previewPublisher: PreviewAtomPublisher)
+    extends AtomAPIActions
+</code></pre> 
+  <p>In your routes file:</p> 
+  <pre><code>POST    /api/atom/:id/publish           controllers.MyAtomController.publishAtom(id)
+</code></pre> 
+ </article>
+</div>

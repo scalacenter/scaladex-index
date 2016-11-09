@@ -1,0 +1,340 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-play-monadic-actions" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#play-monadic-actions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Play monadic actions</h1> 
+  <p><a href="https://travis-ci.org/Kanaka-io/play-monadic-actions" target="_blank"><img src="https://camo.githubusercontent.com/a3b72b34b6c584c7a241077092e33c74b3600652/68747470733a2f2f7472617669732d63692e6f72672f4b616e616b612d696f2f706c61792d6d6f6e616469632d616374696f6e732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/Kanaka-io/play-monadic-actions.svg?branch=master" style="max-width:100%;"></a> <a href="https://gitter.im/Kanaka-io/play-monadic-actions" title="Gitter chat" target="_blank"><img src="https://camo.githubusercontent.com/840166fcfbc1ab94a905fbdbd1f6c537324a6acd/68747470733a2f2f6261646765732e6769747465722e696d2f4b616e616b612d696f2f706c61792d6d6f6e616469632d616374696f6e732e706e67" alt="Gitter chat" data-canonical-src="https://badges.gitter.im/Kanaka-io/play-monadic-actions.png" style="max-width:100%;"></a> <a href="https://coveralls.io/github/Kanaka-io/play-monadic-actions?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/990dcda1de020834fb9d8a7b48a244d06047ca2c/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f6769746875622f4b616e616b612d696f2f706c61792d6d6f6e616469632d616374696f6e732f62616467652e7376673f6272616e63683d6d6173746572" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/github/Kanaka-io/play-monadic-actions/badge.svg?branch=master" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/io.kanaka/play-monadic-actions_2.11" target="_blank"><img src="https://camo.githubusercontent.com/8283120ae3b062dd62a1eb7033435b976e2f4872/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f696f2e6b616e616b612f706c61792d6d6f6e616469632d616374696f6e735f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/io.kanaka/play-monadic-actions_2.11/badge.svg" style="max-width:100%;"></a></p> 
+  <p>This little play module provides some syntactic sugar that allows boilerplate-free Actions using for-comprehensions.</p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>It is commonly admitted that controllers should be lean and only focus on parsing an incoming HTTP request, call (possibly many) service methods and finally build an HTTP response (preferably with a proper status). In the context of an asynchronous framework like Play!, most of these operations results are (or can be) wrapped in a <code>Future</code>, and since their outcome can be either positive or negative, these results have a type that is more or less isomorphic to <code>Future[Either[X, Y]]</code>. </p> 
+  <p>This matter of facts raises some readability issues. Consider for example the following action : </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">ExampleController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">beerOrderForm</span><span class="pl-k">:</span> <span class="pl-en">Form</span>[<span class="pl-en">BeerOrder</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">findAdultUser</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">UnderageError</span>, <span class="pl-en">User</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">sellBeer</span>(<span class="pl-v">beerName</span>: <span class="pl-k">String</span>, <span class="pl-v">customer</span>: <span class="pl-en">User</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">OutOfStockError</span>, <span class="pl-en">Beer</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">orderBeer</span>() <span class="pl-k">=</span> <span class="pl-en">Action</span>.async {
+     beerOrderForm.bindFromRequest().fold(
+       formWithErrors <span class="pl-k">=&gt;</span> <span class="pl-en">BadRequest</span>(views.html.orderBeer(formWithErrors),
+       beerOrder <span class="pl-k">=&gt;</span> 
+        findAdultUser(beerOrder.userId).map(
+          _.fold(
+            ue <span class="pl-k">=&gt;</span> <span class="pl-en">Conflict</span>(displayError(ue)),
+            user <span class="pl-k">=&gt;</span> 
+              sellBeer(beerOrder.beerName, user).map(
+                _.fold(
+                  oose <span class="pl-k">=&gt;</span> <span class="pl-en">NotFound</span>(displayError(oose)),
+                  beer <span class="pl-k">=&gt;</span> <span class="pl-en">Ok</span>(displayBeer(beer)  
+                )
+              )    
+          )
+        )
+  }
+}</pre>
+  </div> 
+  <p>This is pretty straightforward, and yet the different <em>steps</em> of the computation are not made very clear. And since I've typed this in a regular text editor with no syntax highlighting nor static code analysis, there is an obvious error that you may not have spotted (there's a <code>map</code> instead of a <code>flatMap</code> somewhere). </p> 
+  <p>This library addresses this problem by defining a <code>Step[A]</code> monad, which is roughly a <code>Future[Either[Result, A]]</code>, but with a right bias on the <code>Either</code> part, and providing a little DSL to lift relevant types into this monad's context.</p> 
+  <p>Using it, the previous example becomes :</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">io.kanaka.monadic.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// don't forget to import an implicit ExecutionContext</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.libs.concurrent.Execution.Implicits.</span><span class="pl-v">defaultContext </span>
+
+<span class="pl-k">class</span> <span class="pl-en">ExampleController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">beerOrderForm</span><span class="pl-k">:</span> <span class="pl-en">Form</span>[<span class="pl-en">BeerOrder</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">findAdultUser</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">UnderageError</span>, <span class="pl-en">User</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">sellBeer</span>(<span class="pl-v">beerName</span>: <span class="pl-k">String</span>, <span class="pl-v">customer</span>: <span class="pl-en">User</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">OutOfStockError</span>, <span class="pl-en">Beer</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">orderBeer</span>() <span class="pl-k">=</span> <span class="pl-en">Action</span>.async {
+    <span class="pl-k">for</span> {
+      beerOrder <span class="pl-k">&lt;</span><span class="pl-k">-</span> beerOrderForm.bindFromRequest()    <span class="pl-k">?|</span> (formWithErrors <span class="pl-k">=&gt;</span> <span class="pl-en">BadRequest</span>(views.html.orderBeer(formWithErrors))
+      user      <span class="pl-k">&lt;</span><span class="pl-k">-</span> findAdultUser(beerOrder.userId)    <span class="pl-k">?|</span> (ue <span class="pl-k">=&gt;</span> <span class="pl-en">Conflict</span>(displayError(ue))
+      beer      <span class="pl-k">&lt;</span><span class="pl-k">-</span> sellBeer(beerOrder.beerName, user) <span class="pl-k">?|</span> (oose <span class="pl-k">=&gt;</span> <span class="pl-en">NotFound</span>(displayError(oose))  
+    } <span class="pl-k">yield</span> <span class="pl-en">Ok</span>(displayBeer(beer))
+  }
+}</pre>
+  </div> 
+  <p><strong>IMPORTANT NOTE</strong> : one <strong>MUST</strong> provide an implicit <code>ExecutionContext</code> for the DSL to work</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>The DSL introduces the binary <code>?|</code> operator. The happy path goes on the left hand side of the operator and the error path goes on the right : <code>happy ?| error</code>. Such expression produces a <code>Step[A]</code> which has all the required methods to make it usable in a for-comprehension. </p> 
+  <p>So for example, if a service methods <code>foo</code>returns a <code>Future[Option[A]]</code>, we assume the happy path to be the case where the <code>Future</code> succeeds with a <code>Some[A]</code> and the error path to be the case where it succeeds with a <code>None</code> (the case where the <code>Future</code> fails is already taken care of by play's error handler). So we need to provide a proper <code>Result</code> to be returned in the error case (most probably a <code>NotFound</code>) and then we can write </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+ <span class="pl-c">// ...</span>
+ a <span class="pl-k">&lt;</span><span class="pl-k">-</span> foo <span class="pl-k">?|</span> <span class="pl-en">NotFound</span>    
+ <span class="pl-c">// ...</span>
+} <span class="pl-k">yield</span> {
+ <span class="pl-c">// ...</span>
+}</pre>
+  </div> 
+  <p>The <code>a</code> here would be of type <code>A</code>, meaning that we've extracted the meaningful value from the <code>Future[Option[A]]</code> return by <code>foo</code>. Of course, if <code>foo</code> returns a <code>Future[None]</code> the for-comprehension is not evaluated further, and returns <code>NotFound</code>.</p> 
+  <p>The right hand side of the <code>?|</code> operator (the error management part) is a function (or a thunk) that must return a <code>Result</code> and whose input type depends of the type of the expression on the left hand side of the operator (see the table of supported conversions below).</p> 
+  <h2><a id="user-content-filtering-and-pattern-matching" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#filtering-and-pattern-matching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Filtering and Pattern-matching</h2> 
+  <p><code>Step[_]</code> defines a <code>withFilter</code> method, which means that one can use pattern matching and filtering in for-comprehensions involving <code>Step[_]</code>.</p> 
+  <p>For example, if <code>bar</code> is of type <code>Future[Option[(Int, String)]]</code>, one can write </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+ (i, s) <span class="pl-k">&lt;</span><span class="pl-k">-</span> bar <span class="pl-k">?|</span> <span class="pl-en">NotFound</span> <span class="pl-k">if</span> s.length <span class="pl-k">&gt;=</span> i
+} <span class="pl-k">yield</span> <span class="pl-en">Ok</span>(s.take(i))</pre>
+  </div> 
+  <p>Please note though that in the case where the predicate <code>s.length &gt;= i</code> does not hold, the whole <code>Future</code> will fail with a <code>NoSuchElementException</code>, and there is no easy way to transform this failure into a user-specified <code>Result</code>.</p> 
+  <h2><a id="user-content-supported-conversions" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#supported-conversions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported conversions</h2> 
+  <p>The DSL supports the following conversions : </p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>Defining module</th> 
+     <th>Source type</th> 
+     <th>Type of the right hand side</th> 
+     <th>Type of the extracted value</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Boolean</code></td> 
+     <td><code>=&gt; Result</code></td> 
+     <td><code>Unit</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Option[A]</code></td> 
+     <td><code>=&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Try[A]</code></td> 
+     <td><code>Throwable =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Either[B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Form[A]</code></td> 
+     <td><code>Form[A] =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>JsResult[A]</code></td> 
+     <td><code>Seq[(JsPath, Seq[ValidationError])] =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Future[A]</code></td> 
+     <td><code>Throwable =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Future[Boolean]</code></td> 
+     <td><code>=&gt; Result</code></td> 
+     <td><code>Unit</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Future[Option[A]]</code></td> 
+     <td><code>=&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions</code></td> 
+     <td><code>Future[Either[B, A]]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>B Xor A</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>Future[B Xor A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>XorT[Future, B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>OptionT[Future, A]</code></td> 
+     <td><code>=&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>Validated[B Xor A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-cats</code></td> 
+     <td><code>Future[Validated[B Xor A]]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>B \/ A</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>Future[B \/ A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>Validation[B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>EitherT[Future, B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>OptionT[Future, A]</code></td> 
+     <td><code>Unit =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-1</code></td> 
+     <td><code>Future[Validation[B, A]]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>B \/ A</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>Future[B \/ A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>Validation[B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>EitherT[Future, B, A]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>OptionT[Future, A]</code></td> 
+     <td><code>Unit =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>play-monadic-actions-scalaz-7-2</code></td> 
+     <td><code>Future[Validation[B, A]]</code></td> 
+     <td><code>B =&gt; Result</code></td> 
+     <td><code>A</code></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Using sbt :</p> 
+  <p>Current version is 2.0.0</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.kanaka<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-monadic-actions<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.0.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>There are also contrib modules for interoperability with scalaz and cats : </p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>module name</th> 
+     <th>is compatible with / built against</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>play-monadic-actions-cats</td> 
+     <td>cats 0.7.2</td> 
+    </tr> 
+    <tr> 
+     <td>play-monadic-actions-scalaz-7-1</td> 
+     <td>scalaz 7.1.8</td> 
+    </tr> 
+    <tr> 
+     <td>play-monadic-actions-scalaz-7-2</td> 
+     <td>scalaz 7.2.3</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>Each of these module provides <code>Functor</code> and <code>Monad</code> instances for <code>Step[_]</code> as well as conversions for relevant types in the target library </p> 
+  <p>These instances and conversions are made available by importing <code>io.kanaka.monadic.dsl.compat.cats._</code> and <code>io.kanaka.monadic.dsl.compat.scalaz._</code> respectively.</p> 
+  <h2><a id="user-content-compatibility" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#compatibility" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Compatibility</h2> 
+  <ul> 
+   <li>Version <code>1.1.0</code> is compatible with Play! <code>2.4.x</code></li> 
+   <li>Version <code>1.0.1</code> is compatible with Play! <code>2.3.x</code></li> 
+  </ul> 
+  <p>From version 2.0.0 up, dependencies toward play and cats are defined as <code>provided</code>, meaning that you can use the DSL along with any version of these projects you see fit. The two sample projects under <code>samples/</code> demonstrate this capability.</p> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <p><a href="https://twitter.com/ValentinKasas" target="_blank">Valentin Kasas</a></p> 
+  <p><a href="https://twitter.com/cestpasdur" target="_blank">Damien Gouyette</a></p> 
+  <p><a href="https://github.com/drbild" target="_blank">David R. Bild</a></p> 
+  <p><a href="https://github.com/aeons" target="_blank">Bjørn Madsen</a></p> 
+  <p><a href="https://github.com/christophe-calves" target="_blank">Christophe Calves</a></p> 
+  <p>... your name here</p> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p>This project is widely inspired from the <a href="https://github.com/lunatech-labs/play-monad-transformers#master" target="_blank">play-monad-transformers activator template</a> by Lunatech.</p> 
+  <p>It also uses <a href="https://github.com/alexarchambault/coursier" target="_blank">coursier</a> to fetch dependencies in parallel, which is a pure bliss. Take a look if you don't know it yet. </p> 
+ </article>
+</div>

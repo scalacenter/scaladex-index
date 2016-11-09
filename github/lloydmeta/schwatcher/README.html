@@ -1,0 +1,174 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-schwatcher-" class="anchor" href="https://github.com/lloydmeta/schwatcher#schwatcher-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Schwatcher <a href="https://travis-ci.org/lloydmeta/schwatcher" target="_blank"><img src="https://camo.githubusercontent.com/414c29387e3a85b8e7c5dbe952721012ee7e21d5/68747470733a2f2f7472617669732d63692e6f72672f6c6c6f79646d6574612f736368776174636865722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/lloydmeta/schwatcher.svg?branch=master" style="max-width:100%;"></a></h1> 
+  <p><strong>Note</strong>: Requires Java8+ because the <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/WatchService.html" target="_blank">WatchService API</a> is an essential part of this library along with Akka (Akka 2.4.x dropped support for Java7)</p> 
+  <p><strong>TL;DR</strong> A library that wraps the <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/WatchService.html" target="_blank">WatchService API</a>. of Java7. You can choose to send callbacks to be registered on paths (both directories and files) <em>or</em> turn path events into a composable asynchronous data stream (RxScala Observable). For details, check out the Example usage section below.</p> 
+  <p>As of Java7, the WatchService API was introduced to allow developers to monitor the file system without resorting to an external library/dependency like <a href="http://jnotify.sourceforge.net/" target="_blank">JNotify</a>. Unfortunately, it requires you to use a loop that blocks in order to retrieve events from the API and does not have recursion support built-in.</p> 
+  <p>Schwatcher will allow you to instantiate an Akka actor, register callbacks (functions that take a Path and return Unit) to be fired for certain <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/Path.html" target="_blank">Path</a>s and <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/StandardWatchEventKinds.html" target="_blank">event types</a> by sending messages to it, then simply wait for the callbacks to be fired. Alternatively, use the Observable interface to register for notifications on paths.</p> 
+  <p>The goal of Schwatcher is to facilitate the use of the Java7 API in Scala in a simple way that is in line with the functional programming paradigm.</p> 
+  <p><strong>As of now, only Scala versions 2.11.x are supported</strong> (Akka 2.4.x dropped support for 2.10.x)</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/lloydmeta/schwatcher#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Add the following to your <code>build.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.beachape.filemanagement<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>schwatcher<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>If the above does not work because it cannot be resolved, its likely because it hasn't been synced to Maven central yet. In that case, download a SNAPSHOT release of the same version by adding this to <code>build.sbt</code></p> 
+  <pre><code>resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+libraryDependencies += "com.beachape.filemanagement" %% "schwatcher" % "0.3.1-SNAPSHOT"
+</code></pre> 
+  <p><strong>Those using Akka 2.1.x</strong> should stay on 0.0.2 as 0.0.3 onwards uses Akka 2.2.x, which <a href="http://doc.akka.io/docs/akka/current/project/migration-guide-2.1.x-2.2.x.html" target="_blank">requires some work to upgrade to</a>.</p> 
+  <p><strong>Those using Akka 2.2.x</strong> should stay on 0.0.9 as 0.0.10 onwards uses Akka 2.3.x, which <a href="http://doc.akka.io/docs/akka/2.3.0/project/migration-guide-2.2.x-2.3.x.html" target="_blank">may require some work to upgrade to</a>.</p> 
+  <p><strong>0.1.0</strong> brings with it breaking changes on how to register callbacks (see example). Please be aware when upgrading from 0.0.x releases.</p> 
+  <p><strong>Those using Akka 2.3.x</strong> should stay on 0.1.x as 0.2.x onwards uses Akka 2.4.x, which requires Java8 and Scala 2.11.x</p> 
+  <h2><a id="user-content-example-usage" class="anchor" href="https://github.com/lloydmeta/schwatcher#example-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example Usage</h2> 
+  <h3><a id="user-content-akka" class="anchor" href="https://github.com/lloydmeta/schwatcher#akka" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka</h3> 
+  <p>The basic workflow is:</p> 
+  <ol> 
+   <li>Instantiate a MonitorActor</li> 
+   <li>Register callbacks by sending RegisterCallback messages to the MonitorActor</li> 
+   <li><p>Carry on</p></li> 
+  </ol> 
+  <ul> 
+   <li>Optionally, you can un-register <em>all</em> callbacks for a path and event type by sending UnRegisterCallback messages.</li> 
+   <li>Both RegisterCallback and UnRegisterCallback messages have a recursive argument (be sure to see point 5 in the <a href="https://github.com/lloydmeta/schwatcher#caveats" target="_blank">Caveats section</a>) that triggers recursive registration and un-registration of callbacks for path.</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">com.beachape.filemanagement.</span><span class="pl-v">MonitorActor</span>
+<span class="pl-k">import</span> <span class="pl-v">com.beachape.filemanagement.RegistryTypes.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.beachape.filemanagement.Messages.</span><span class="pl-v">_</span>
+
+<span class="pl-k">import</span> <span class="pl-v">java.io.</span>{<span class="pl-v">FileWriter</span>, <span class="pl-v">BufferedWriter</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">java.nio.file.</span><span class="pl-v">Paths</span>
+<span class="pl-k">import</span> <span class="pl-v">java.nio.file.StandardWatchEventKinds.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>actorSystem<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">fileMonitorActor</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">MonitorActor</span>(concurrency <span class="pl-k">=</span> <span class="pl-c1">2</span>))
+
+<span class="pl-k">val</span> <span class="pl-en">modifyCallbackFile</span><span class="pl-k">:</span> <span class="pl-en">Callback</span> <span class="pl-k">=</span> { path <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>Something was modified in a file: $path<span class="pl-pds">"</span></span>)}
+<span class="pl-k">val</span> <span class="pl-en">modifyCallbackDirectory</span><span class="pl-k">:</span> <span class="pl-en">Callback</span> <span class="pl-k">=</span> { path <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>Something was modified in a directory: $path<span class="pl-pds">"</span></span>)}
+
+<span class="pl-k">val</span> <span class="pl-en">desktop</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span> get <span class="pl-s"><span class="pl-pds">"</span>/Users/lloyd/Desktop<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">desktopFile</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span> get <span class="pl-s"><span class="pl-pds">"</span>/Users/lloyd/Desktop/test<span class="pl-pds">"</span></span>
+
+<span class="pl-c">/*</span>
+<span class="pl-c">  This will receive callbacks for just the one file</span>
+<span class="pl-c">*/</span>
+fileMonitorActor <span class="pl-k">!</span> <span class="pl-en">RegisterCallback</span>(
+  event <span class="pl-k">=</span> <span class="pl-en">ENTRY_MODIFY</span>,
+  path <span class="pl-k">=</span> desktopFile,
+  callback <span class="pl-k">=</span>  modifyCallbackFile
+  )
+
+<span class="pl-c">/*</span>
+<span class="pl-c">  If desktopFile is modified, this will also receive a callback</span>
+<span class="pl-c">  it will receive callbacks for everything under the desktop directory</span>
+<span class="pl-c">*/</span>
+fileMonitorActor <span class="pl-k">!</span> <span class="pl-en">RegisterCallback</span>(
+  event <span class="pl-k">=</span> <span class="pl-en">ENTRY_MODIFY</span>,
+  path <span class="pl-k">=</span> desktop,
+  callback <span class="pl-k">=</span> modifyCallbackDirectory)
+
+
+<span class="pl-c">//modify a monitored file</span>
+<span class="pl-k">val</span> <span class="pl-en">writer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BufferedWriter</span>(<span class="pl-k">new</span> <span class="pl-en">FileWriter</span>(desktopFile.toFile))
+writer.write(<span class="pl-s"><span class="pl-pds">"</span>Theres text in here wee!!<span class="pl-pds">"</span></span>)
+writer.close
+
+<span class="pl-c">// #=&gt; Something was modified in a file: /Users/lloyd/Desktop/test.txt</span>
+<span class="pl-c">//     Something was modified in a directory: /Users/lloyd/Desktop/test.txt</span></pre>
+  </div> 
+  <h3><a id="user-content-rxscala" class="anchor" href="https://github.com/lloydmeta/schwatcher#rxscala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>RxScala</h3> 
+  <p>There is another way to monitor files supported by this library: via Rx Observables.</p> 
+  <p>This is neat because it allows you to treat notifications for files as, well, an Observable, which conceptually is like a Stream, or a Go channel. You can filter on the stream, map on it, filter on it ... basically compose it as you would a normal observable.</p> 
+  <p>Note that since RxMonitor is powered by an Akka actor under the covers, the changes to what you (do not) want to monitor are done in a thread-safe manner so feel free to pass this object around.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.beachape.filemanagement.</span><span class="pl-v">RxMonitor</span>
+<span class="pl-k">import</span> <span class="pl-v">java.io.</span>{<span class="pl-v">FileWriter</span>, <span class="pl-v">BufferedWriter</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">java.nio.file.</span><span class="pl-v">Paths</span>
+<span class="pl-k">import</span> <span class="pl-v">java.nio.file.StandardWatchEventKinds.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">monitor</span> <span class="pl-k">=</span> <span class="pl-en">RxMonitor</span>()
+<span class="pl-k">val</span> <span class="pl-en">observable</span> <span class="pl-k">=</span> monitor.observable
+
+<span class="pl-k">val</span> <span class="pl-en">subscription</span> <span class="pl-k">=</span> observable.subscribe(
+  onNext <span class="pl-k">=</span> { p <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>Something was modified in a file mufufu: $p<span class="pl-pds">"</span></span>)},
+  onError <span class="pl-k">=</span> { t <span class="pl-k">=&gt;</span> println(t)},
+  onCompleted <span class="pl-k">=</span> { () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Monitor has been shut down<span class="pl-pds">"</span></span>) }
+)
+
+<span class="pl-k">val</span> <span class="pl-en">desktopFile</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span> get <span class="pl-s"><span class="pl-pds">"</span>/Users/lloyd/Desktop/test<span class="pl-pds">"</span></span>
+
+monitor.registerPath(<span class="pl-en">ENTRY_MODIFY</span>, desktopFile)
+
+<span class="pl-en">Thread</span>.sleep(<span class="pl-c1">100</span>)
+
+<span class="pl-c">//modify a monitored file</span>
+<span class="pl-k">val</span> <span class="pl-en">writer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BufferedWriter</span>(<span class="pl-k">new</span> <span class="pl-en">FileWriter</span>(desktopFile.toFile))
+writer.write(<span class="pl-s"><span class="pl-pds">"</span>Theres text in here wee!!<span class="pl-pds">"</span></span>)
+writer.close
+
+<span class="pl-c">// #=&gt; Something was modified in a file mufufu: /Users/lloyd/Desktop/test</span>
+
+<span class="pl-c">// stop monitoring</span>
+monitor.stop()
+
+<span class="pl-c">// #=&gt; Monitor has been shut down</span></pre>
+  </div> 
+  <h2><a id="user-content-caveats" class="anchor" href="https://github.com/lloydmeta/schwatcher#caveats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats</h2> 
+  <p><strong>Above all things</strong> understand that library relies on the Java7 WatchService API and has the same constraints, limitations, and behaviours according to the implementation for the version of JVM you're using.</p> 
+  <p>Additional library-specific caveats and notes are:</p> 
+  <ol> 
+   <li>Callbacks are registered for specific paths, and for directory paths, can be registered as recursive so that a single callback is fired when an event occurs inside the directory tree.</li> 
+   <li>Callbacks are not checked for uniqueness when registered to a specific path.</li> 
+   <li>A specific path can have multiple callbacks registered to a file <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/StandardWatchEventKinds.html" target="_blank">event types</a>, all will be fired.</li> 
+   <li>Callbacks are not guaranteed to be fired in any particular order unless if concurrency is set to 1 on the MonitorActor.</li> 
+   <li>Any event on a file path will bubble up to its immediate parent folder path. This means that if both a file and it's parent directory are registered for callbacks, both sets of callbacks will be fired.</li> 
+  </ol> 
+  <p>As a result of note 6, you may want to think twice about registering recursive callbacks for <code>ENTRY_DELETE</code> because if a directory is deleted within a directory, 2 callbacks will be fired, once for the path registered for the deleted directory and once for the path registered for the directory above it (its parent directory).</p> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/lloydmeta/schwatcher#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <ul> 
+   <li><a href="https://github.com/crdueck" target="_blank">Crdueck</a></li> 
+   <li><a href="https://github.com/georgeOsdDev" target="_blank">georgeOsdDev</a></li> 
+  </ul> 
+  <h2><a id="user-content-ide-sponsor" class="anchor" href="https://github.com/lloydmeta/schwatcher#ide-sponsor" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>IDE Sponsor</h2> 
+  <p>Jetbrains sponsors this project through their Open Source IntelliJ licence, which has been an immensely helpful tool for all of my Scala development, at home and at work.</p> 
+  <p><a href="https://www.jetbrains.com/idea/" target="_blank"><img src="https://camo.githubusercontent.com/e1c35476c622e222912fcbf70af770f952d39029/68747470733a2f2f7777772e6a6574627261696e732e636f6d2f696465612f646f63732f6c6f676f5f696e74656c6c696a5f696465612e706e67" alt="IntelliJ" data-canonical-src="https://www.jetbrains.com/idea/docs/logo_intellij_idea.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-licence" class="anchor" href="https://github.com/lloydmeta/schwatcher#licence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Licence</h2> 
+  <p>The MIT License (MIT)</p> 
+  <p>Copyright (c) 2015 by Lloyd Chan</p> 
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p> 
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p> 
+  <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p> 
+ </article>
+</div>

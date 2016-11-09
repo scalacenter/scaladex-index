@@ -1,0 +1,232 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-veripacks---verify-package-specifications" class="anchor" href="https://github.com/adamw/veripacks#veripacks---verify-package-specifications" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>veripacks - Verify Package Specifications</h1> 
+  <h2><a id="user-content-what-is-it" class="anchor" href="https://github.com/adamw/veripacks#what-is-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What is it?</h2> 
+  <p>Veripacks implements some of the ideas from the blog post <a href="http://www.warski.org/blog/2012/11/lets-turn-packages-into-a-module-system/" target="_blank">"Let's turn packages into a module system"</a>.</p> 
+  <p>Veripacks allows to specify which classes from a package hierarchy should be accessible, and verify that the specification is met.</p> 
+  <p>This is similar to package-private access in Java, however Veripacks extends this to subpackages, respecting package parent-child dependencies. While usually the package is just a string identifier, Veripacks treats packages in a hierarchical way. For example, <code>foo.bar.baz</code> is a subpackage of <code>foo.bar</code>. That means that exporting a class not only hides other classes from the same package, but also classes from subpackages.</p> 
+  <p>In some cases, Veripacks can be used to replace a separate build module. It aims to be a scalable and composable solution, allowing for multi-layered exports, that is specifying access both for small pieces of code and large functionalities.</p> 
+  <p>Veripacks currently defines the following annotations:</p> 
+  <ul> 
+   <li><code>@Export</code> - applicable to a class, specifies that the annotated class should be visible to other packages. Classes without the annotation but in the same package, and all classes in non-exported subpackages won't be visible. Several classes in one package can be exported.</li> 
+   <li><code>@ExportSubpackages</code> - applicable to a package (in <code>package-info.java</code>), allows to specify which subpackages should be exported. Only classes/sub-subpackages exported by the subpackage will be exported by the package. The value of the annotation is an array of immediate subpackage names.</li> 
+   <li><code>@ExportAllClasses</code> and <code>@ExportAllSubpackages</code> - applicable to a package</li> 
+   <li><code>@ExportAll</code> - applicable to a package, specifies that all classes and subpackages should be exported. Has only documentational significance, as this is the default for all packages if no classes are explicitly exported.</li> 
+   <li><code>@RequiresImport</code> - specifies that exported classes from this package (and any child packages) can only be used, if the package is explicitly import using <code>@Import</code>.</li> 
+   <li><code>@Import</code> - imports a package annotated with <code>@RequiresImport</code>. Exported classes from the package may be used in the annotated package and any child packages.</li> 
+   <li><code>@NotVerified</code> - classes annotated with that annotation won't be verified by Veripacks. Useful e.g. for classes which wire objects from various packages together ("manual DI").</li> 
+  </ul> 
+  <p>Using an export-all annotation and an export-specific annotation for same element type (class, subpackage) will result in an error.</p> 
+  <h2><a id="user-content-access-rules" class="anchor" href="https://github.com/adamw/veripacks#access-rules" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Access rules</h2> 
+  <p>Access rules should be pretty straightforward and work "as expected".</p> 
+  <p>More formally:</p> 
+  <ul> 
+   <li>packages can always access classes from parent packages</li> 
+   <li>within a package, all classes are visible</li> 
+   <li>otherwise a class <code>A</code> can be used in <code>B</code> if: 
+    <ul> 
+     <li>it is exported, looking from the package that is the closest parent of both <code>A</code> and <code>B</code> (closest common root)</li> 
+     <li>all packages between the closest common root and <code>B</code>'s package that require import, must be imported by <code>A</code>'s package or some parent package.</li> 
+    </ul></li> 
+  </ul> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/adamw/veripacks#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <p>Using a bit of an imaginary syntax to make things compact:</p> 
+  <pre><code>package foo.bar.p1 {
+  @Export
+  class A { ... }
+
+  class B { ... }
+}
+
+package foo.bar.p1.sub_p1 {
+  class C { ... }
+}
+
+package foo.bar.p2 {
+  class Test {
+    // ok, A is exported
+    new A()
+
+    // illegal, B is not exported
+    new B()
+
+    // illegal, C is in a subpackage of p1, and p1 only exports A
+    new C()
+  }
+}
+</code></pre> 
+  <h2><a id="user-content-how-to-use-it" class="anchor" href="https://github.com/adamw/veripacks#how-to-use-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use it?</h2> 
+  <p>Veripacks can be used with any language running on the JVM; while written in Scala, it will work without problems in Java-only projects.</p> 
+  <p>No build plugins or such are needed; just create a new test, with the following body:</p> 
+  <pre><code>def runVeripacksTest() {
+  VeripacksBuilder.build
+    .verify("foo.bar")
+    .throwIfNotOk()
+}
+</code></pre> 
+  <p>(Note: when using Veripacks from Java, the above becomes:</p> 
+  <pre><code>public void runVeripacksTest() {
+  VeripacksBuilder$.MODULE$.build()
+    .verify("foo.bar")
+    .throwIfNotOk();
+}
+</code></pre> 
+  <p>as that's how a Scala <code>object</code> is translated to Java.)</p> 
+  <p>This will throw an exception if there are some specification violations. You can also inspect the result of the <code>verify</code> call, which contains more detailed information (also included in the exception message).</p> 
+  <p>The project files are deployed to Sonatype's OSS public Nexus repository, which is synced to Maven Central:</p> 
+  <pre><code>&lt;!-- Only the annotations --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.veripacks&lt;/groupId&gt;
+    &lt;artifactId&gt;veripacks-annotations_2.11&lt;/artifactId&gt;
+    &lt;version&gt;0.4.2&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;!-- The verifier, has a dependency on the annotations --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.veripacks&lt;/groupId&gt;
+    &lt;artifactId&gt;veripacks-verifier_2.11&lt;/artifactId&gt;
+    &lt;version&gt;0.4.2&lt;/version&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <h2><a id="user-content-requiring-import-for-3rd-party-libraries" class="anchor" href="https://github.com/adamw/veripacks#requiring-import-for-3rd-party-libraries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requiring import for 3rd party libraries</h2> 
+  <p>It is also possible to constrain the usage of 3rd party packages using Veripacks. When a <code>Veripacks</code> instance is constructed, it is possible to specify additional packages for which import is required:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">VeripacksBuilder</span>
+    .requireImportOf(<span class="pl-s"><span class="pl-pds">"</span>org.hibernate<span class="pl-pds">"</span></span>)
+    .requireImportOf(<span class="pl-s"><span class="pl-pds">"</span>com.softwaremill<span class="pl-pds">"</span></span>)
+    .build
+    .verify(<span class="pl-s"><span class="pl-pds">"</span>com.company.project<span class="pl-pds">"</span></span>)
+    .throwIfNotOk()</pre>
+  </div> 
+  <p>Then if a Hibernate class is used in a class in the <code>com.company.project</code> package (or a child package), its usage is verified. That is, some package must contain the <code>@Import("org.hibernate")</code> annotation (the import may be of any child package, so when using only commons, <code>@Import("org.hibernate.common")</code> will work as well).</p> 
+  <p>The package names are checked by prefix, so to check usages of all <code>com</code> packages, just invoke <code>requireImportOf("com")</code>. To exclude a class, invoke <code>doNotRequireImportOf("com.softwaremill")</code> before including <code>"com"</code>. Filters defined earlier have precedence.</p> 
+  <p>This is similar to creating a separate build-module and adding the Hibernate dependency to it only.</p> 
+  <h2><a id="user-content-specifying-a-custom-metadata-reader" class="anchor" href="https://github.com/adamw/veripacks#specifying-a-custom-metadata-reader" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Specifying a custom metadata reader</h2> 
+  <p>Sometimes it may be desirable to specify a custom metadata reader. For example, if the package naming convention in a project is <code>com.&lt;company&gt;.&lt;project&gt;.&lt;main module&gt;.&lt;submodule&gt;</code>, instead of adding an <code>@RequiresImport</code> annotation to each main-module package, it would be better to automatically require import for such packages.</p> 
+  <p>We may achieve this by extending the <code>CustomAccessDefinitionsReader</code> trait and providing it when building the <code>Veripacks</code> instance:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">VeripacksBuilder</span>
+  .withCustomAccessDefinitionReader(<span class="pl-k">new</span> <span class="pl-en">CustomAccessDefinitionsReader</span> {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">isRequiresImport</span>(<span class="pl-v">pkg</span>: <span class="pl-en">Pkg</span>) <span class="pl-k">=</span> pkg.name.split(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>).length <span class="pl-k">==</span> <span class="pl-c1">4</span>
+  })
+  .build
+  .verify(<span class="pl-en">List</span>(<span class="pl-s"><span class="pl-pds">"</span>com.&lt;company&gt;.&lt;project&gt;<span class="pl-pds">"</span></span>))
+  .throwIfNotOk()</pre>
+  </div> 
+  <h2><a id="user-content-whats-next" class="anchor" href="https://github.com/adamw/veripacks#whats-next" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What's next?</h2> 
+  <ul> 
+   <li>allow to specify which classes/subpackages are exported in a separate file</li> 
+   <li>IDE support</li> 
+  </ul> 
+  <p>The first point will allow to further constrain usage of external libraries. For example, if using Hibernate, we could specify that only classes from the <code>org.hibernate</code> package should be accessible, while classes from <code>org.hibernate.internal</code> - not.</p> 
+  <h2><a id="user-content-sub--and-child--packages" class="anchor" href="https://github.com/adamw/veripacks#sub--and-child--packages" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sub- and child- packages</h2> 
+  <p>Vocabulary:</p> 
+  <ul> 
+   <li>subpackage - immediate child of a package. E.g. <code>com.foo.bar</code> is a subpackage of <code>com.foo</code>, but <code>com.foo.bar.baz</code> isn't.</li> 
+   <li>child package - any child of a package. Following the example above, both packages are child packages of <code>com.foo</code>.</li> 
+  </ul> 
+  <h2><a id="user-content-blogs-about-veripacks" class="anchor" href="https://github.com/adamw/veripacks#blogs-about-veripacks" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Blogs about Veripacks</h2> 
+  <ul> 
+   <li><a href="http://www.warski.org/blog/2013/08/verifying-usage-of-3rd-party-libraries-using-veripacks/" target="_blank">Verifying usage of 3rd party libraries using Veripacks</a></li> 
+   <li><a href="http://www.warski.org/blog/2013/03/how-to-replace-a-build-module-with-veripacks/" target="_blank">How to replace a build module with Veripacks</a></li> 
+   <li><a href="http://www.warski.org/blog/2013/03/veripacks-0-3-importing-packages-transitively-of-course/" target="_blank">Veripacks 0.3: importing packages (transitively, of course)</a></li> 
+   <li><a href="http://www.warski.org/blog/2013/02/veripacks-0-2-exporting-subpackages/" target="_blank">Veripacks 0.2: exporting subpackages</a></li> 
+   <li><a href="http://www.warski.org/blog/2013/01/veripacks-0-1-verify-package-specifications/" target="_blank">Veripacks 0.1 – Verify Package Specifications</a></li> 
+  </ul> 
+  <h2><a id="user-content-notes" class="anchor" href="https://github.com/adamw/veripacks#notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Notes</h2> 
+  <p>Veripacks is also used to verify itself - the code contains some <code>@Export</code> annotations, usage of which is verified by the single test in the <code>self-test</code> module.</p> 
+  <p>Other tools, like Classycle or Structure 101 also allow similar verification to be done. Veripacks differs mainly by:</p> 
+  <ul> 
+   <li>the export/import metadata is kept close to the code itself, by using class/package annotations, instead of specifying the metadata upfront in an "architecture" file or keeping it in an external file</li> 
+   <li>packages are treated in a hierarchical manner, with proper parent-child relationships</li> 
+  </ul> 
+  <p>Licensed under Apache2. </p> 
+  <h4><a id="user-content-version-043-2-jun-2015" class="anchor" href="https://github.com/adamw/veripacks#version-043-2-jun-2015" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.4.3 (2 Jun 2015)</h4> 
+  <ul> 
+   <li>Bug fixes</li> 
+  </ul> 
+  <h4><a id="user-content-version-042-6-oct-2014" class="anchor" href="https://github.com/adamw/veripacks#version-042-6-oct-2014" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.4.2 (6 Oct 2014)</h4> 
+  <ul> 
+   <li>Java6 compatibility</li> 
+  </ul> 
+  <h4><a id="user-content-version-041-2-may-2014" class="anchor" href="https://github.com/adamw/veripacks#version-041-2-may-2014" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.4.1 (2 May 2014)</h4> 
+  <ul> 
+   <li>Scala 2.11, libraries update</li> 
+  </ul> 
+  <h4><a id="user-content-version-04-5-august-2013" class="anchor" href="https://github.com/adamw/veripacks#version-04-5-august-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.4 (5 August 2013)</h4> 
+  <ul> 
+   <li>support for 3rd party libraries imports</li> 
+   <li><code>@NotVerified</code> annotation</li> 
+   <li>wireable code, overridable components</li> 
+  </ul> 
+  <h4><a id="user-content-version-03-6-march-2013" class="anchor" href="https://github.com/adamw/veripacks#version-03-6-march-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.3 (6 March 2013)</h4> 
+  <ul> 
+   <li><code>@Import</code>, <code>@RequiresImport</code> annotations</li> 
+  </ul> 
+  <h4><a id="user-content-version-02-3-february-2013" class="anchor" href="https://github.com/adamw/veripacks#version-02-3-february-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.2 (3 February 2013)</h4> 
+  <ul> 
+   <li>Support for exporting subpackages (<code>@ExportSubpackages</code>)</li> 
+   <li><code>@ExportAllClasses</code>, <code>@ExportAllSubpackages</code> annotations</li> 
+  </ul> 
+  <h4><a id="user-content-version-01-5-january-2013" class="anchor" href="https://github.com/adamw/veripacks#version-01-5-january-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.1 (5 January 2013)</h4> 
+  <ul> 
+   <li>Initial release</li> 
+   <li>Support for <code>@Export</code> and <code>@ExportAll</code> annotations</li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,103 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-reactive-apns-connector" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#reactive-apns-connector" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reactive APNs Connector</h1> 
+  <p>Akka-stream-apns is an <a href="https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html" target="_blank">Apple Push Notification Service</a> (APNs) connector built on top of <a href="http://akka.io" target="_blank">Akka Streams</a>. As of version 0.2, akka-stream-apns uses the latest HTTP/2-based APNs provider API.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>reactivehub<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>maven<span class="pl-pds">"</span></span>)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.reactivehub<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-stream-apns<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-quick-start" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick Start</h2> 
+  <p>To use the connector, you need a <a href="https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/ConfiguringPushNotifications/ConfiguringPushNotifications.html" target="_blank">push notification client SSL certificate</a> and a <a href="https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/IPhoneOSClientImp.html" target="_blank">device token</a>. See System Requirements for more details on how to choose a TLS provider.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.</span><span class="pl-v">ActorMaterializer</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">Source</span>
+<span class="pl-k">import</span> <span class="pl-v">io.netty.channel.nio.</span><span class="pl-v">NioEventLoopGroup</span>
+<span class="pl-k">import</span> <span class="pl-v">reactivehub.akka.stream.apns.TlsUtil.</span><span class="pl-v">loadPkcs12FromResource</span>
+<span class="pl-k">import</span> <span class="pl-v">reactivehub.akka.stream.apns.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">reactivehub.akka.stream.apns.marshallers.</span><span class="pl-v">SprayJsonSupport</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Main</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> <span class="pl-k">with</span> <span class="pl-e">SprayJsonSupport</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>system<span class="pl-pds">"</span></span>)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">_</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+
+  <span class="pl-k">import</span> <span class="pl-v">system.</span><span class="pl-v">dispatcher</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">group</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">NioEventLoopGroup</span>()
+  <span class="pl-k">val</span> <span class="pl-en">apns</span> <span class="pl-k">=</span> <span class="pl-en">ApnsExt</span>(system).connection[<span class="pl-k">Int</span>](
+    <span class="pl-en">Environment</span>.<span class="pl-en">Development</span>,
+    loadPkcs12FromResource(<span class="pl-s"><span class="pl-pds">"</span>/cert.p12<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>),
+    group)
+
+  <span class="pl-k">val</span> <span class="pl-en">deviceToken</span> <span class="pl-k">=</span> <span class="pl-en">DeviceToken</span>(<span class="pl-s"><span class="pl-pds">"</span>64-chars hex string<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">payload</span> <span class="pl-k">=</span> <span class="pl-en">Payload</span>.<span class="pl-en">Builder</span>()
+    .withAlert(<span class="pl-s"><span class="pl-pds">"</span>Hello!<span class="pl-pds">"</span></span>)
+    .withBadge(<span class="pl-c1">1</span>)
+
+  <span class="pl-en">Source</span>.single(<span class="pl-c1">1</span> <span class="pl-k">→</span> <span class="pl-en">Notification</span>(deviceToken, payload))
+    .via(apns)
+    .runForeach(println)
+    .onComplete { _ <span class="pl-k">⇒</span>
+      group.shutdownGracefully()
+      system.terminate()
+    }
+}</pre>
+  </div> 
+  <h2><a id="user-content-payload-builder" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#payload-builder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Payload Builder</h2> 
+  <p>Akka-stream-apns comes with a convenient payload builder. The payload is a JSON object with the required key <code>apns</code> and zero or more custom keys. The builder can use a JSON library of your choice; just mix in <code>SprayJsonSupport</code>, <code>PlayJsonSupport</code> or <code>LiftJsonSupport</code> or bring into scope your own <code>PayloadMarshaller</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">payload</span> <span class="pl-k">=</span> <span class="pl-en">Payload</span>.<span class="pl-en">Builder</span>()
+  .withAlert(<span class="pl-s"><span class="pl-pds">"</span>Bob wants to play poker<span class="pl-pds">"</span></span>)
+  .withLocalizedAlert(<span class="pl-s"><span class="pl-pds">"</span>GAME_PLAY_REQUEST_FORMAT<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Jenna<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Frank<span class="pl-pds">"</span></span>)
+  .withTitle(<span class="pl-s"><span class="pl-pds">"</span>Game Request<span class="pl-pds">"</span></span>)
+  .withLocalizedTitle(<span class="pl-s"><span class="pl-pds">"</span>GAME_PLAY_REQUEST_TITLE<span class="pl-pds">"</span></span>)
+  .withLocalizedAction(<span class="pl-s"><span class="pl-pds">"</span>PLAY<span class="pl-pds">"</span></span>)
+  .withLaunchImage(<span class="pl-s"><span class="pl-pds">"</span>Default.png<span class="pl-pds">"</span></span>)
+  .withBadge(<span class="pl-c1">9</span>)
+  .withSound(<span class="pl-s"><span class="pl-pds">"</span>chime.aiff<span class="pl-pds">"</span></span>)
+  .withContentAvailable
+  .withCategory(<span class="pl-s"><span class="pl-pds">"</span>ACCEPT_IDENTIFIER<span class="pl-pds">"</span></span>)
+  .withCustomField(<span class="pl-s"><span class="pl-pds">"</span>acme1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)
+  .withCustomField(<span class="pl-s"><span class="pl-pds">"</span>acme2<span class="pl-pds">"</span></span>, <span class="pl-c1">42</span>)</pre>
+  </div> 
+  <h2><a id="user-content-system-requirements" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#system-requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>System Requirements</h2> 
+  <p>Akka-stream-apns works with Java 8 and newer.</p> 
+  <p>HTTP/2 over TLS requires the use of ALPN. Java, however, currently does not support ALPN. As akka-stream-apns internally uses <a href="http://netty.io" target="_blank">Netty's</a> <code>codec-http2</code> to connect to APNs servers, there are two options how to do TLS:</p> 
+  <ul> 
+   <li><a href="http://netty.io/wiki/requirements-for-4.x.html#tls-with-openssl" target="_blank">TLS with OpenSSL</a></li> 
+   <li><p><a href="http://netty.io/wiki/requirements-for-4.x.html#tls-with-jdk-jetty-alpnnpn" target="_blank">TLS with JDK + Jetty-ALPN</a></p> <p>Add <code>Xbootclasspath</code> JVM option with the path to the Jetty <code>alpn-boot</code> jar. The <a href="http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions" target="_blank">Jetty-ALPN jar</a> is specific to the version of Java you are using.</p> <pre><code>java -Xbootclasspath/p:/path/to/jetty/alpn/extension.jar ...
+</code></pre></li> 
+  </ul> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <ul> 
+   <li>No reconnect/resend on error (yet)</li> 
+  </ul> 
+  <h2><a id="user-content-consulting" class="anchor" href="https://github.com/reactive-hub/akka-stream-apns#consulting" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Consulting</h2> 
+  <p>Our professional consulting services are highly flexible to address specific issues such as troubleshooting or other services tailored to suit your needs.</p> 
+  <p>Please <a href="mailto:info@reactivehub.com" target="_blank">contact us</a> for more information.</p> 
+ </article>
+</div>

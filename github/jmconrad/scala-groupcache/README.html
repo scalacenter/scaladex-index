@@ -1,0 +1,116 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-groupcache" class="anchor" href="https://github.com/jmconrad/scala-groupcache#scala-groupcache" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-groupcache</h1> 
+  <p>An implementation of <a href="https://github.com/golang/groupcache" target="_blank">groupcache</a> in Scala.</p> 
+  <p><a href="http://travis-ci.org/jmconrad/scala-groupcache" target="_blank"><img src="https://camo.githubusercontent.com/9570ded9362ccd6e586c5f929664af8f352c1b3c/68747470733a2f2f6170692e7472617669732d63692e6f72672f6a6d636f6e7261642f7363616c612d67726f757063616368652e706e67" alt="Build Status" data-canonical-src="https://api.travis-ci.org/jmconrad/scala-groupcache.png" style="max-width:100%;"></a></p> 
+  <p>The current version is 0.6.0, which is built against Scala 2.10.2.</p> 
+  <p>If you are using sbt, you can pull this library down from the Sonatype OSS repository by adding the following line to your build:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.groupcache<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-groupcache<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-basic-usage" class="anchor" href="https://github.com/jmconrad/scala-groupcache#basic-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Basic Usage</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">future</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.util.</span>{<span class="pl-v">Failure</span>, <span class="pl-v">Success</span>}
+<span class="pl-k">import</span> <span class="pl-v">java.net.</span><span class="pl-v">URL</span>
+<span class="pl-k">import</span> <span class="pl-v">groupcache.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">groupcache.peers.http.</span>{<span class="pl-v">HttpPeer</span>, <span class="pl-v">HttpPeerPicker</span>}
+<span class="pl-k">import</span> <span class="pl-v">groupcache.Implicits.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">BasicUsage</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-c">// URL of the peer running in the current process.</span>
+  <span class="pl-k">val</span> <span class="pl-en">myUrl</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080<span class="pl-pds">"</span></span>
+
+  <span class="pl-c">// URLs of all peers that will participate in the cache.</span>
+  <span class="pl-k">val</span> <span class="pl-en">allUrls</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>[<span class="pl-en">URL</span>](<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Determines which peer owns a particular key.  The set of available</span>
+  <span class="pl-c">// peers can be updated at any time to handle scenarios where the</span>
+  <span class="pl-c">// available peers will change dynamically.</span>
+  <span class="pl-k">val</span> <span class="pl-en">peerPicker</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpPeerPicker</span>(myUrl, allUrls)
+
+  <span class="pl-c">// Manages groups that are currently participating in a distributed cache.</span>
+  <span class="pl-c">// When creating the group cache, you can optionally pass in a callback</span>
+  <span class="pl-c">// to be notified when the server has "started" (i.e., when the first</span>
+  <span class="pl-c">// group has been added), as well as a callback to be notified each time</span>
+  <span class="pl-c">// any group is added.</span>
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">groupCache</span> <span class="pl-k">=</span> <span class="pl-en">GroupCache</span>(peerPicker)
+
+  <span class="pl-c">// Getters fill the cache when a key is requested from the peer</span>
+  <span class="pl-c">// that owns that key and that key's value is not already cached</span>
+  <span class="pl-c">// in-memory by that peer.  An example of an operation that would</span>
+  <span class="pl-c">// be performed in a getter is the retrieval of a value from a</span>
+  <span class="pl-c">// database.</span>
+  <span class="pl-k">val</span> <span class="pl-en">expensiveGetter</span> <span class="pl-k">=</span> (<span class="pl-v">key</span>: <span class="pl-k">String</span>, <span class="pl-v">context</span>: <span class="pl-en">Option</span>[<span class="pl-en">Any</span>]) <span class="pl-k">=&gt;</span> {
+    <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> future {
+      <span class="pl-c">// Potentially long-running operation that eventually returns</span>
+      <span class="pl-c">// a value to be stored in the cache.</span>
+      <span class="pl-s"><span class="pl-pds">"</span>value<span class="pl-pds">"</span></span>
+    }
+
+    <span class="pl-c">// Map the fetched value into a form usable by the cache.</span>
+    result.map(value <span class="pl-k">=&gt;</span> <span class="pl-en">ByteView</span>(value))
+  }
+
+  <span class="pl-c">// Adds the first group that will participate in caching.</span>
+  <span class="pl-k">val</span> <span class="pl-en">group</span> <span class="pl-k">=</span> groupCache.addGroup(
+    name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>group<span class="pl-pds">"</span></span>,
+    maxCacheBytes <span class="pl-k">=</span> <span class="pl-c1">64</span><span class="pl-k">&lt;&lt;</span><span class="pl-c1">20</span>,
+    getter <span class="pl-k">=</span> expensiveGetter)
+
+  <span class="pl-c">// An instance of the peer running in the current process.</span>
+  <span class="pl-k">val</span> <span class="pl-en">peer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpPeer</span>(myUrl)
+
+  <span class="pl-c">// Start listening for requests for cache values over HTTP.</span>
+  peer.serveHttp
+
+  <span class="pl-c">// Ask the group for the cached value associated with the given key.</span>
+  <span class="pl-c">// If it is determined that the peer running in the current</span>
+  <span class="pl-c">// process is the owner of the key (or the value is in the current</span>
+  <span class="pl-c">// process' hot cache), the value will be fetched locally.  Otherwise,</span>
+  <span class="pl-c">// the value will be fetched from a (potentially remote) peer</span>
+  <span class="pl-c">// over HTTP.</span>
+  <span class="pl-k">val</span> <span class="pl-en">futureValue</span> <span class="pl-k">=</span> group.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Register callbacks to determine when the value has been</span>
+  <span class="pl-c">// fetched from the cache.</span>
+  futureValue onComplete {
+    <span class="pl-k">case</span> <span class="pl-en">Success</span>(value) <span class="pl-k">=&gt;</span> {
+      <span class="pl-c">// Do something useful with the requested value.</span>
+      println(s<span class="pl-s"><span class="pl-pds">"</span>Received value '$value'<span class="pl-pds">"</span></span>)
+    }
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(t) <span class="pl-k">=&gt;</span> {
+      <span class="pl-c">// Failed to fetch the cached value.  Handle</span>
+      <span class="pl-c">// the exception appropriately here.</span>
+    }
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/jmconrad/scala-groupcache#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <p>scala-groupcache is built using sbt 0.12.3.</p> 
+  <p>If you are using IntelliJ, you can use the sbt-idea plugin to generate the project files. Additionally, you will need to configure the IntelliJ project to mark the target/scala-2.10/src_managed/scala folder as a Source Folder rather than an Excluded Folder. This is because the build uses <a href="https://github.com/sbt/sbt-scalabuff" target="_blank">sbt-scalabuff</a> to generate Scala code from the <a href="https://github.com/golang/groupcache/blob/master/groupcachepb/groupcache.proto" target="_blank">groupcache protobuf</a> definition, and the code that is generated under src_managed/ is excluded from source control.</p> 
+  <h2><a id="user-content-differences-from-the-original-go-implementation" class="anchor" href="https://github.com/jmconrad/scala-groupcache#differences-from-the-original-go-implementation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Differences from the original Go implementation</h2> 
+  <p>In most cases scala-groupcache tries to stick pretty closely to the behavior of the Go implementation. The primary area in which that is not the case is with potentially expensive operations that block. Rather than following suit with the Go implementation that blocks on HTTP requests and cache filling operations, scala-groupcache instead adopts a non-blocking approach using Scala Futures.</p> 
+  <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/jmconrad/scala-groupcache#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies</h2> 
+  <ul> 
+   <li><a href="https://github.com/SandroGrzicic/ScalaBuff" target="_blank">ScalaBuff</a> - Used to generate Scala case classes from the groupcache protobuf definition.</li> 
+   <li><a href="https://github.com/twitter/finagle" target="_blank">Finagle</a> - Used for fetching and serving cache values over HTTP in a non-blocking way.</li> 
+  </ul> 
+ </article>
+</div>

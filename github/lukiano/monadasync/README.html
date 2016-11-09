@@ -1,0 +1,52 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-monadasync" class="anchor" href="https://github.com/lukiano/monadasync#monadasync" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MonadAsync</h1> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">Callback</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> (<span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>) <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">MonadAsync</span>[<span class="pl-en">F</span>[_]] {
+  <span class="pl-k">def</span> <span class="pl-en">now</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">delay</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">suspend</span>[<span class="pl-en">A</span>](<span class="pl-v">fa</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">async</span>[<span class="pl-en">A</span>](<span class="pl-v">listen</span>: <span class="pl-en">Callback</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">async</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">pool</span>: <span class="pl-en">Executor</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">fork</span>[<span class="pl-en">A</span>](<span class="pl-v">fa</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>])(<span class="pl-k">implicit</span> <span class="pl-v">pool</span>: <span class="pl-en">Executor</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+  <span class="pl-k">def</span> <span class="pl-en">mapA</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">fa</span>: <span class="pl-en">F</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)(<span class="pl-k">implicit</span> <span class="pl-v">pool</span>: <span class="pl-en">Executor</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">B</span>]
+  <span class="pl-k">def</span> <span class="pl-en">bindA</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">fa</span>: <span class="pl-en">F</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">F</span>[<span class="pl-en">B</span>])(<span class="pl-k">implicit</span> <span class="pl-v">pool</span>: <span class="pl-en">Executor</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">B</span>]
+  <span class="pl-k">def</span> <span class="pl-en">schedule</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>, <span class="pl-v">delay</span>: <span class="pl-en">Duration</span>)(<span class="pl-k">implicit</span> <span class="pl-v">pool</span>: <span class="pl-en">ScheduledExecutorService</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">A</span>]
+}
+</pre>
+  </div> 
+  <p>and MonadAsync laws that instances need to comply. </p> 
+  <h2><a id="user-content-monadasync-for-scalaz" class="anchor" href="https://github.com/lukiano/monadasync#monadasync-for-scalaz" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MonadAsync for scalaz</h2> 
+  <p>Because Task is just an EitherT[ Future, Throwable, ? ].</p> 
+  <p>Because Task's handy operations (handle, timed, retry) are lost when you have a WriterT[ Task, ? ]</p> 
+  <ul> 
+   <li>Provides MonadAsync instances for Future, Task, EitherT, WriterT, ReaderT and StateT.</li> 
+   <li>Also Nondeterminism instances.</li> 
+   <li>Provides a Retry operation using Catchable and MonadError.</li> 
+   <li>Provides a Timer that returns a value after certain time has passed, and timeouts for effects / computations that take too long.</li> 
+   <li>For Scala 2.10 and 2.11</li> 
+  </ul> 
+  <h3><a id="user-content-example" class="anchor" href="https://github.com/lukiano/monadasync#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h3> 
+  <p>runs 3 times a block of code that ultimately fail, retrying based on examination of the failure</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">someWork</span>[<span class="pl-en">F</span>[_]<span class="pl-k">:</span> <span class="pl-en">MonadAsync</span><span class="pl-k">:</span> <span class="pl-en">Monad</span><span class="pl-k">:</span> <span class="pl-en">Comonad</span><span class="pl-k">:</span> <span class="pl-en">Catchable</span>]<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">errorMessage</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>can be repeated<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">f</span><span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> <span class="pl-en">MonadAsync</span>[<span class="pl-en">F</span>].delay { println(<span class="pl-s"><span class="pl-pds">"</span>Some code<span class="pl-pds">"</span></span>) } <span class="pl-k">&gt;&gt;</span> <span class="pl-en">Catchable</span>[<span class="pl-en">F</span>].fail(<span class="pl-k">new</span> <span class="pl-en">Exception</span>(errorMessage))
+  <span class="pl-k">val</span> <span class="pl-en">withRetries</span><span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> f.retry(<span class="pl-en">List</span>(<span class="pl-c1">1</span> second, <span class="pl-c1">2</span> seconds, <span class="pl-c1">4</span> seconds), { _.getMessage <span class="pl-k">==</span> errorMessage })
+  withRetries.copoint <span class="pl-c">// assume copoint runs F</span>
+}</pre>
+  </div> 
+  <p>Please refer to existing tests for more usage examples.</p> 
+ </article>
+</div>

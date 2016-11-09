@@ -1,0 +1,462 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-event-store-jvm-client---" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#event-store-jvm-client---" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Event Store JVM Client <a href="https://travis-ci.org/EventStore/EventStore.JVM" target="_blank"><img src="https://camo.githubusercontent.com/d5849e9f01e6e9a638fe4b9f4e4a9fc9f2f11c15/68747470733a2f2f6170692e7472617669732d63692e6f72672f4576656e7453746f72652f4576656e7453746f72652e4a564d2e737667" alt="Build Status" data-canonical-src="https://api.travis-ci.org/EventStore/EventStore.JVM.svg" style="max-width:100%;"></a> <a href="https://coveralls.io/r/EventStore/EventStore.JVM" target="_blank"><img src="https://camo.githubusercontent.com/5a84dd700b99b36ce33eb0ab6b648518609c4bc2/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f4576656e7453746f72652f4576656e7453746f72652e4a564d2f62616467652e737667" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/EventStore/EventStore.JVM/badge.svg" style="max-width:100%;"></a> <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3Acom.geteventstore%20AND%20eventstore-client" target="_blank"><img src="https://camo.githubusercontent.com/9f63c2904a24c5fa15d6ed259cdaa72541117270/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f636f6d2e6765746576656e7473746f72652f6576656e7473746f72652d636c69656e745f322e31312e7376673f6c6162656c3d76657273696f6e" alt="Version" data-canonical-src="https://img.shields.io/maven-central/v/com.geteventstore/eventstore-client_2.11.svg?label=version" style="max-width:100%;"></a></h1> 
+  <p><strong>JVM Client works nicely with EventStore 3.1.0</strong></p> 
+  <table border="0"> 
+   <tbody>
+    <tr> 
+     <td><a href="http://www.scala-lang.org" target="_blank">Scala</a> </td> 
+     <td>2.11.6</td> 
+    </tr> 
+    <tr> 
+     <td><a href="http://akka.io" target="_blank">Akka</a> </td> 
+     <td>2.4.1</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>We have two APIs available:</p> 
+  <ul> 
+   <li>Calling methods on <code>EsConnection</code></li> 
+  </ul> 
+  <p>We are using <a href="http://docs.scala-lang.org/overviews/core/futures.html" target="_blank"><code>scala.concurrent.Future</code></a> for asynchronous calls, however it is not friendly enough for Java users. In order to make Java devs happy and not reinvent a wheel, we propose to use tools invented by Akka team. <a href="http://doc.akka.io/docs/akka/2.4.1/java/futures.html" target="_blank">Check it out</a></p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">final</span> <span class="pl-smi">EsConnection</span> connection <span class="pl-k">=</span> <span class="pl-smi">EsConnectionFactory</span><span class="pl-k">.</span>create(system);
+<span class="pl-k">final</span> <span class="pl-k">Future&lt;<span class="pl-smi">Event</span>&gt;</span> future <span class="pl-k">=</span> connection<span class="pl-k">.</span>readEvent(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>, <span class="pl-k">new</span> <span class="pl-smi">EventNumber</span>.<span class="pl-smi">Exact</span>(<span class="pl-c1">0</span>), <span class="pl-c1">false</span>, <span class="pl-c1">null</span>);</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> <span class="pl-en">EsConnection</span>(system)
+<span class="pl-k">val</span> <span class="pl-en">future</span> <span class="pl-k">=</span> connection future <span class="pl-en">ReadEvent</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>), <span class="pl-en">EventNumber</span>.<span class="pl-en">First</span>)</pre>
+  </div> 
+  <ul> 
+   <li>Sending messages to <code>eventstore.ConnectionActor</code></li> 
+  </ul> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">final</span> <span class="pl-smi">ActorRef</span> connection <span class="pl-k">=</span> system<span class="pl-k">.</span>actorOf(<span class="pl-smi">ConnectionActor</span><span class="pl-k">.</span>getProps());
+<span class="pl-k">final</span> <span class="pl-smi">ReadEvent</span> readEvent <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">ReadEventBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>)
+        .first()
+        .build();
+connection<span class="pl-k">.</span>tell(readEvent, <span class="pl-c1">null</span>);</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionActor</span>.props())
+connection <span class="pl-k">!</span> <span class="pl-en">ReadEvent</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>), <span class="pl-en">EventNumber</span>.<span class="pl-en">First</span>)</pre>
+  </div> 
+  <h2><a id="user-content-java-examples" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#java-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Java examples</h2> 
+  <h3><a id="user-content-read-event" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#read-event" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Read event</h3> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import</span> <span class="pl-smi">akka.actor.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">akka.actor.Status.Failure</span>;
+<span class="pl-k">import</span> <span class="pl-smi">akka.event.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.j.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.tcp.ConnectionActor</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">java.net.InetSocketAddress</span>;
+
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">ReadEventExample</span> {
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        <span class="pl-k">final</span> <span class="pl-smi">ActorSystem</span> system <span class="pl-k">=</span> <span class="pl-smi">ActorSystem</span><span class="pl-k">.</span>create();
+        <span class="pl-k">final</span> <span class="pl-smi">Settings</span> settings <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">SettingsBuilder</span>()
+                .address(<span class="pl-k">new</span> <span class="pl-smi">InetSocketAddress</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-c1">1113</span>))
+                .defaultCredentials(<span class="pl-s"><span class="pl-pds">"</span>admin<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>changeit<span class="pl-pds">"</span></span>)
+                .build();
+        <span class="pl-k">final</span> <span class="pl-smi">ActorRef</span> connection <span class="pl-k">=</span> system<span class="pl-k">.</span>actorOf(<span class="pl-smi">ConnectionActor</span><span class="pl-k">.</span>getProps(settings));
+        <span class="pl-k">final</span> <span class="pl-smi">ActorRef</span> readResult <span class="pl-k">=</span> system<span class="pl-k">.</span>actorOf(<span class="pl-smi">Props</span><span class="pl-k">.</span>create(<span class="pl-smi">ReadResult</span><span class="pl-k">.</span>class));
+
+        <span class="pl-k">final</span> <span class="pl-smi">ReadEvent</span> readEvent <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">ReadEventBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>)
+                .first()
+                .resolveLinkTos(<span class="pl-c1">false</span>)
+                .requireMaster(<span class="pl-c1">true</span>)
+                .build();
+
+        connection<span class="pl-k">.</span>tell(readEvent, readResult);
+    }
+
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">class</span> <span class="pl-en">ReadResult</span> <span class="pl-k">extends</span> <span class="pl-e">UntypedActor</span> {
+        <span class="pl-k">final</span> <span class="pl-smi">LoggingAdapter</span> log <span class="pl-k">=</span> <span class="pl-smi">Logging</span><span class="pl-k">.</span>getLogger(getContext()<span class="pl-k">.</span>system(), <span class="pl-v">this</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onReceive</span>(<span class="pl-smi">Object</span> <span class="pl-v">message</span>) <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
+            <span class="pl-k">if</span> (message <span class="pl-k">instanceof</span> <span class="pl-smi">ReadEventCompleted</span>) {
+                <span class="pl-k">final</span> <span class="pl-smi">ReadEventCompleted</span> completed <span class="pl-k">=</span> (<span class="pl-smi">ReadEventCompleted</span>) message;
+                <span class="pl-k">final</span> <span class="pl-smi">Event</span> event <span class="pl-k">=</span> completed<span class="pl-k">.</span>event();
+                log<span class="pl-k">.</span>info(<span class="pl-s"><span class="pl-pds">"</span>event: {}<span class="pl-pds">"</span></span>, event);
+            } <span class="pl-k">else</span> <span class="pl-k">if</span> (message <span class="pl-k">instanceof</span> <span class="pl-smi">Failure</span>) {
+                <span class="pl-k">final</span> <span class="pl-smi">Failure</span> failure <span class="pl-k">=</span> ((<span class="pl-smi">Failure</span>) message);
+                <span class="pl-k">final</span> <span class="pl-smi">EsException</span> exception <span class="pl-k">=</span> (<span class="pl-smi">EsException</span>) failure<span class="pl-k">.</span>cause();
+                log<span class="pl-k">.</span>error(exception, exception<span class="pl-k">.</span>toString());
+            } <span class="pl-k">else</span>
+                unhandled(message);
+
+            context()<span class="pl-k">.</span>system()<span class="pl-k">.</span>shutdown();
+        }
+    }
+}</pre>
+  </div> 
+  <h3><a id="user-content-write-event" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#write-event" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Write event</h3> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import</span> <span class="pl-smi">akka.actor.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">akka.event.Logging</span>;
+<span class="pl-k">import</span> <span class="pl-smi">akka.event.LoggingAdapter</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.j.EventDataBuilder</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.j.WriteEventsBuilder</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.tcp.ConnectionActor</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">java.util.UUID</span>;
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">WriteEventExample</span> {
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        <span class="pl-k">final</span> <span class="pl-smi">ActorSystem</span> system <span class="pl-k">=</span> <span class="pl-smi">ActorSystem</span><span class="pl-k">.</span>create();
+        <span class="pl-k">final</span> <span class="pl-smi">ActorRef</span> connection <span class="pl-k">=</span> system<span class="pl-k">.</span>actorOf(<span class="pl-smi">ConnectionActor</span><span class="pl-k">.</span>getProps());
+        <span class="pl-k">final</span> <span class="pl-smi">ActorRef</span> writeResult <span class="pl-k">=</span> system<span class="pl-k">.</span>actorOf(<span class="pl-smi">Props</span><span class="pl-k">.</span>create(<span class="pl-smi">WriteResult</span><span class="pl-k">.</span>class));
+
+        <span class="pl-k">final</span> <span class="pl-smi">EventData</span> event <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">EventDataBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>my-event<span class="pl-pds">"</span></span>)
+                .eventId(<span class="pl-c1">UUID</span><span class="pl-k">.</span>randomUUID())
+                .data(<span class="pl-s"><span class="pl-pds">"</span>my event data<span class="pl-pds">"</span></span>)
+                .metadata(<span class="pl-s"><span class="pl-pds">"</span>my first event<span class="pl-pds">"</span></span>)
+                .build();
+
+        <span class="pl-k">final</span> <span class="pl-smi">WriteEvents</span> writeEvents <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">WriteEventsBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>)
+                .addEvent(event)
+                .expectAnyVersion()
+                .build();
+
+        connection<span class="pl-k">.</span>tell(writeEvents, writeResult);
+    }
+
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">class</span> <span class="pl-en">WriteResult</span> <span class="pl-k">extends</span> <span class="pl-e">UntypedActor</span> {
+        <span class="pl-k">final</span> <span class="pl-smi">LoggingAdapter</span> log <span class="pl-k">=</span> <span class="pl-smi">Logging</span><span class="pl-k">.</span>getLogger(getContext()<span class="pl-k">.</span>system(), <span class="pl-v">this</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onReceive</span>(<span class="pl-smi">Object</span> <span class="pl-v">message</span>) <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
+            <span class="pl-k">if</span> (message <span class="pl-k">instanceof</span> <span class="pl-smi">WriteEventsCompleted</span>) {
+                <span class="pl-k">final</span> <span class="pl-smi">WriteEventsCompleted</span> completed <span class="pl-k">=</span> (<span class="pl-smi">WriteEventsCompleted</span>) message;
+                log<span class="pl-k">.</span>info(<span class="pl-s"><span class="pl-pds">"</span>range: {}, position: {}<span class="pl-pds">"</span></span>, completed<span class="pl-k">.</span>numbersRange(), completed<span class="pl-k">.</span>position());
+            } <span class="pl-k">else</span> <span class="pl-k">if</span> (message <span class="pl-k">instanceof</span> <span class="pl-smi">Status</span><span class="pl-k">.</span><span class="pl-smi">Failure</span>) {
+                <span class="pl-k">final</span> <span class="pl-smi">Status</span><span class="pl-k">.</span><span class="pl-smi">Failure</span> failure <span class="pl-k">=</span> ((<span class="pl-smi">Status</span><span class="pl-k">.</span><span class="pl-smi">Failure</span>) message);
+                <span class="pl-k">final</span> <span class="pl-smi">EsException</span> exception <span class="pl-k">=</span> (<span class="pl-smi">EsException</span>) failure<span class="pl-k">.</span>cause();
+                log<span class="pl-k">.</span>error(exception, exception<span class="pl-k">.</span>toString());
+            } <span class="pl-k">else</span>
+                unhandled(message);
+
+            context()<span class="pl-k">.</span>system()<span class="pl-k">.</span>shutdown();
+        }
+    }
+}</pre>
+  </div> 
+  <h3><a id="user-content-subscribe-to-all" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#subscribe-to-all" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Subscribe to All</h3> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import</span> <span class="pl-smi">akka.actor.ActorSystem</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.IndexedEvent</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.SubscriptionObserver</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.j.EsConnection</span>;
+<span class="pl-k">import</span> <span class="pl-smi">eventstore.j.EsConnectionFactory</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">java.io.Closeable</span>;
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">SubscribeToAllExample</span> {
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        <span class="pl-k">final</span> <span class="pl-smi">ActorSystem</span> system <span class="pl-k">=</span> <span class="pl-smi">ActorSystem</span><span class="pl-k">.</span>create();
+        <span class="pl-k">final</span> <span class="pl-smi">EsConnection</span> connection <span class="pl-k">=</span> <span class="pl-smi">EsConnectionFactory</span><span class="pl-k">.</span>create(system);
+        <span class="pl-k">final</span> <span class="pl-smi">Closeable</span> closeable <span class="pl-k">=</span> connection<span class="pl-k">.</span>subscribeToAll(<span class="pl-k">new</span> <span class="pl-k">SubscriptionObserver&lt;<span class="pl-smi">IndexedEvent</span>&gt;</span>() {
+            <span class="pl-k">@Override</span>
+            <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onLiveProcessingStart</span>(<span class="pl-smi">Closeable</span> <span class="pl-v">subscription</span>) {
+                system<span class="pl-k">.</span>log()<span class="pl-k">.</span>info(<span class="pl-s"><span class="pl-pds">"</span>live processing started<span class="pl-pds">"</span></span>);
+            }
+
+            <span class="pl-k">@Override</span>
+            <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onEvent</span>(<span class="pl-smi">IndexedEvent</span> <span class="pl-v">event</span>, <span class="pl-smi">Closeable</span> <span class="pl-v">subscription</span>) {
+                system<span class="pl-k">.</span>log()<span class="pl-k">.</span>info(event<span class="pl-k">.</span>toString());
+            }
+
+            <span class="pl-k">@Override</span>
+            <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onError</span>(<span class="pl-smi">Throwable</span> <span class="pl-v">e</span>) {
+                system<span class="pl-k">.</span>log()<span class="pl-k">.</span>error(e<span class="pl-k">.</span>toString());
+            }
+
+            <span class="pl-k">@Override</span>
+            <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onClose</span>() {
+                system<span class="pl-k">.</span>log()<span class="pl-k">.</span>error(<span class="pl-s"><span class="pl-pds">"</span>subscription closed<span class="pl-pds">"</span></span>);
+            }
+        }, <span class="pl-c1">false</span>, <span class="pl-c1">null</span>);
+    }
+}</pre>
+  </div> 
+  <h3><a id="user-content-build-event" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#build-event" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build event</h3> 
+  <div class="highlight highlight-source-java">
+   <pre>    <span class="pl-k">final</span> <span class="pl-smi">EventData</span> empty <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">EventDataBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>empty<span class="pl-pds">"</span></span>)<span class="pl-k">.</span>build();
+
+    <span class="pl-k">final</span> <span class="pl-smi">EventData</span> binary <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">EventDataBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>binary<span class="pl-pds">"</span></span>)
+            .eventId(<span class="pl-c1">UUID</span><span class="pl-k">.</span>randomUUID())
+            .data(<span class="pl-k">new</span> <span class="pl-smi">byte</span>[]{<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>, <span class="pl-c1">4</span>})
+            .metadata(<span class="pl-k">new</span> <span class="pl-smi">byte</span>[]{<span class="pl-c1">5</span>, <span class="pl-c1">6</span>, <span class="pl-c1">7</span>, <span class="pl-c1">8</span>})
+            .build();
+
+    <span class="pl-k">final</span> <span class="pl-smi">EventData</span> string <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">EventDataBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>)
+            .eventId(<span class="pl-c1">UUID</span><span class="pl-k">.</span>randomUUID())
+            .data(<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>)
+            .metadata(<span class="pl-s"><span class="pl-pds">"</span>metadata<span class="pl-pds">"</span></span>)
+            .build();
+
+    <span class="pl-k">final</span> <span class="pl-smi">EventData</span> json <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">EventDataBuilder</span>(<span class="pl-s"><span class="pl-pds">"</span>json<span class="pl-pds">"</span></span>)
+            .eventId(<span class="pl-c1">UUID</span><span class="pl-k">.</span>randomUUID())
+            .jsonData(<span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span>)
+            .jsonMetadata(<span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>metadata<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>metadata<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span>)
+            .build();</pre>
+  </div> 
+  <h2><a id="user-content-scala-examples" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#scala-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala examples</h2> 
+  <h3><a id="user-content-read-event-1" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#read-event-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Read event</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.Status.</span><span class="pl-v">Failure</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.tcp.</span><span class="pl-v">ConnectionActor</span>
+<span class="pl-k">import</span> <span class="pl-v">java.net.</span><span class="pl-v">InetSocketAddress</span>
+
+<span class="pl-k">object</span> <span class="pl-en">ReadEventExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+
+  <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">Settings</span>(
+    address <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">InetSocketAddress</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-c1">1113</span>),
+    defaultCredentials <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">UserCredentials</span>(<span class="pl-s"><span class="pl-pds">"</span>admin<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>changeit<span class="pl-pds">"</span></span>)))
+
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionActor</span>.props(settings))
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">readResult</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">ReadResult</span>])
+
+  connection <span class="pl-k">!</span> <span class="pl-en">ReadEvent</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>), <span class="pl-en">EventNumber</span>.<span class="pl-en">First</span>)
+
+  <span class="pl-k">class</span> <span class="pl-en">ReadResult</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">ActorLogging</span> {
+    <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+      <span class="pl-k">case</span> <span class="pl-en">ReadEventCompleted</span>(event) <span class="pl-k">=&gt;</span>
+        log.info(<span class="pl-s"><span class="pl-pds">"</span>event: {}<span class="pl-pds">"</span></span>, event)
+        context.system.terminate()
+
+      <span class="pl-k">case</span> <span class="pl-en">Failure</span>(<span class="pl-v">e</span>: <span class="pl-en">EsException</span>) <span class="pl-k">=&gt;</span>
+        log.error(e.toString)
+        context.system.terminate()
+    }
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-write-event-1" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#write-event-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Write event</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.Status.</span><span class="pl-v">Failure</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.actor.</span>{ <span class="pl-v">ActorLogging</span>, <span class="pl-v">Actor</span>, <span class="pl-v">Props</span>, <span class="pl-v">ActorSystem</span> }
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.tcp.</span><span class="pl-v">ConnectionActor</span>
+
+<span class="pl-k">object</span> <span class="pl-en">WriteEventExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionActor</span>.props())
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">writeResult</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">WriteResult</span>])
+
+  <span class="pl-k">val</span> <span class="pl-en">event</span> <span class="pl-k">=</span> <span class="pl-en">EventData</span>(<span class="pl-s"><span class="pl-pds">"</span>my-event<span class="pl-pds">"</span></span>, data <span class="pl-k">=</span> <span class="pl-en">Content</span>(<span class="pl-s"><span class="pl-pds">"</span>my event data<span class="pl-pds">"</span></span>), metadata <span class="pl-k">=</span> <span class="pl-en">Content</span>(<span class="pl-s"><span class="pl-pds">"</span>my first event<span class="pl-pds">"</span></span>))
+
+  connection <span class="pl-k">!</span> <span class="pl-en">WriteEvents</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>), <span class="pl-en">List</span>(event))
+
+  <span class="pl-k">class</span> <span class="pl-en">WriteResult</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">ActorLogging</span> {
+    <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+      <span class="pl-k">case</span> <span class="pl-en">WriteEventsCompleted</span>(range, position) <span class="pl-k">=&gt;</span>
+        log.info(<span class="pl-s"><span class="pl-pds">"</span>range: {}, position: {}<span class="pl-pds">"</span></span>, range, position)
+        context.system.terminate()
+
+      <span class="pl-k">case</span> <span class="pl-en">Failure</span>(<span class="pl-v">e</span>: <span class="pl-en">EsException</span>) <span class="pl-k">=&gt;</span>
+        log.error(e.toString)
+        context.system.terminate()
+    }
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-start-transaction" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#start-transaction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Start transaction</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.TransactionActor.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.tcp.</span><span class="pl-v">ConnectionActor</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span>{ <span class="pl-v">EventData</span>, <span class="pl-v">TransactionActor</span>, <span class="pl-v">EventStream</span>, <span class="pl-v">TransactionStart</span> }
+
+<span class="pl-k">object</span> <span class="pl-en">StartTransactionExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionActor</span>.props())
+
+  <span class="pl-k">val</span> <span class="pl-en">kickoff</span> <span class="pl-k">=</span> <span class="pl-en">Start</span>(<span class="pl-en">TransactionStart</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>)))
+  <span class="pl-k">val</span> <span class="pl-en">transaction</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">TransactionActor</span>.props(connection, kickoff))
+
+  transaction <span class="pl-k">!</span> <span class="pl-en">GetTransactionId</span> <span class="pl-c">// replies with `TransactionId(transactionId)`</span>
+  transaction <span class="pl-k">!</span> <span class="pl-en">Write</span>(<span class="pl-en">EventData</span>(<span class="pl-s"><span class="pl-pds">"</span>transaction-event<span class="pl-pds">"</span></span>)) <span class="pl-c">// replies with `WriteCompleted`</span>
+  transaction <span class="pl-k">!</span> <span class="pl-en">Write</span>(<span class="pl-en">EventData</span>(<span class="pl-s"><span class="pl-pds">"</span>transaction-event<span class="pl-pds">"</span></span>)) <span class="pl-c">// replies with `WriteCompleted`</span>
+  transaction <span class="pl-k">!</span> <span class="pl-en">Write</span>(<span class="pl-en">EventData</span>(<span class="pl-s"><span class="pl-pds">"</span>transaction-event<span class="pl-pds">"</span></span>)) <span class="pl-c">// replies with `WriteCompleted`</span>
+  transaction <span class="pl-k">!</span> <span class="pl-en">Commit</span> <span class="pl-c">// replies with `CommitCompleted`</span>
+}</pre>
+  </div> 
+  <h3><a id="user-content-count-all-events" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#count-all-events" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Count all events</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span><span class="pl-v">LiveProcessingStarted</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.tcp.</span><span class="pl-v">ConnectionActor</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span>{ <span class="pl-v">IndexedEvent</span>, <span class="pl-v">SubscriptionActor</span> }
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">CountAll</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionActor</span>.props(), <span class="pl-s"><span class="pl-pds">"</span>connection<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">countAll</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">CountAll</span>], <span class="pl-s"><span class="pl-pds">"</span>count-all<span class="pl-pds">"</span></span>)
+  system.actorOf(<span class="pl-en">SubscriptionActor</span>.props(connection, countAll), <span class="pl-s"><span class="pl-pds">"</span>subscription<span class="pl-pds">"</span></span>)
+}
+
+<span class="pl-k">class</span> <span class="pl-en">CountAll</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">ActorLogging</span> {
+  context.setReceiveTimeout(<span class="pl-c1">1.</span>second)
+
+  <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> count(<span class="pl-c1">0</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">count</span>(<span class="pl-v">n</span>: <span class="pl-k">Long</span>, <span class="pl-v">printed</span>: <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>)<span class="pl-k">:</span> <span class="pl-en">Receive</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-v">x</span>: <span class="pl-en">IndexedEvent</span>       <span class="pl-k">=&gt;</span> context become count(n <span class="pl-k">+</span> <span class="pl-c1">1</span>)
+    <span class="pl-k">case</span> <span class="pl-en">LiveProcessingStarted</span> <span class="pl-k">=&gt;</span> log.info(<span class="pl-s"><span class="pl-pds">"</span>live processing started<span class="pl-pds">"</span></span>)
+    <span class="pl-k">case</span> <span class="pl-en">ReceiveTimeout</span> <span class="pl-k">if</span> <span class="pl-k">!</span>printed <span class="pl-k">=&gt;</span>
+      log.info(<span class="pl-s"><span class="pl-pds">"</span>count {}<span class="pl-pds">"</span></span>, n)
+      context become count(n, printed <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-future-like-api" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#future-like-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Future-like api</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">EsConnectionExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+
+  <span class="pl-k">import</span> <span class="pl-v">system.</span><span class="pl-v">dispatcher</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> <span class="pl-en">EsConnection</span>(system)
+  <span class="pl-k">val</span> <span class="pl-en">log</span> <span class="pl-k">=</span> system.log
+
+  <span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> <span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>my-stream<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">readEvent</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ReadEventCompleted</span>] <span class="pl-k">=</span> connection.future(<span class="pl-en">ReadEvent</span>(stream))
+  readEvent.onSuccess {
+    <span class="pl-k">case</span> <span class="pl-en">ReadEventCompleted</span>(event) <span class="pl-k">=&gt;</span> log.info(event.toString)
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">readStreamEvents</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ReadStreamEventsCompleted</span>] <span class="pl-k">=</span> connection.future(<span class="pl-en">ReadStreamEvents</span>(stream))
+  readStreamEvents.onSuccess {
+    <span class="pl-k">case</span> <span class="pl-v">x</span>: <span class="pl-en">ReadStreamEventsCompleted</span> <span class="pl-k">=&gt;</span> log.info(x.events.toString())
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">readAllEvents</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ReadAllEventsCompleted</span>] <span class="pl-k">=</span> connection.future(<span class="pl-en">ReadAllEvents</span>(maxCount <span class="pl-k">=</span> <span class="pl-c1">5</span>))
+  readAllEvents.onSuccess {
+    <span class="pl-k">case</span> <span class="pl-v">x</span>: <span class="pl-en">ReadAllEventsCompleted</span> <span class="pl-k">=&gt;</span> log.info(x.events.toString())
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">writeEvents</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">WriteEventsCompleted</span>] <span class="pl-k">=</span> connection.future(<span class="pl-en">WriteEvents</span>(stream, <span class="pl-en">List</span>(<span class="pl-en">EventData</span>(<span class="pl-s"><span class="pl-pds">"</span>my-event<span class="pl-pds">"</span></span>))))
+  writeEvents.onSuccess {
+    <span class="pl-k">case</span> <span class="pl-v">x</span>: <span class="pl-en">WriteEventsCompleted</span> <span class="pl-k">=&gt;</span> log.info(x.numbersRange.toString)
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-eventstoreextension" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#eventstoreextension" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>EventStoreExtension</h3> 
+  <p>Most common use case is to have a single Event Store connection per application. Thus you can use our akka extension, it will make sure you have a single instance of connection actor.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">EventStoreExtension</span>(system).actor <span class="pl-k">!</span> <span class="pl-en">ReadEvent</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>stream<span class="pl-pds">"</span></span>))
+<span class="pl-en">EventStoreExtension</span>(system).connection.future(<span class="pl-en">ReadEvent</span>(<span class="pl-en">EventStream</span>.<span class="pl-en">Id</span>(<span class="pl-s"><span class="pl-pds">"</span>stream<span class="pl-pds">"</span></span>)))</pre>
+  </div> 
+  <h3><a id="user-content-reactive-streams" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#reactive-streams" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reactive Streams</h3> 
+  <p>Client provides ability to use generic <a href="http://www.reactive-streams.org" target="_blank">Reactive Streams</a> <code>Publisher</code> interface for EventStore subscriptions. You can find two methods <code>allStreamsPublisher</code> and <code>streamPublisher</code> available in Java and Scala APIs. Here is a short example on how to use it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.</span><span class="pl-v">ActorMaterializer</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span><span class="pl-v">EventStoreExtension</span>
+
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MessagesPerSecond</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> <span class="pl-en">EventStoreExtension</span>(system).connection
+  <span class="pl-k">val</span> <span class="pl-en">publisher</span> <span class="pl-k">=</span> connection.allStreamsPublisher()
+
+  <span class="pl-en">Source</span>(publisher)
+    .groupedWithin(<span class="pl-k">Int</span>.<span class="pl-en">MaxValue</span>, <span class="pl-c1">1.</span>second)
+    .runForeach { xs <span class="pl-k">=&gt;</span> println(f<span class="pl-s"><span class="pl-pds">"</span>${xs.size.toDouble / 1000}%2.1fk m/s<span class="pl-pds">"</span></span>) }
+}
+</pre>
+  </div> 
+  <h3><a id="user-content-list-all-streams" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#list-all-streams" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>List all streams</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.</span><span class="pl-v">ActorMaterializer</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">Source</span>
+<span class="pl-k">import</span> <span class="pl-v">eventstore.</span>{<span class="pl-v">EventStoreExtension</span>, <span class="pl-v">EventStream</span>}
+
+<span class="pl-k">object</span> <span class="pl-en">ListAllStreamsExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">import</span> <span class="pl-v">system.</span><span class="pl-v">dispatcher</span>
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+  <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> <span class="pl-en">EventStoreExtension</span>(system).connection
+  <span class="pl-k">val</span> <span class="pl-en">publisher</span> <span class="pl-k">=</span> connection.streamPublisher(<span class="pl-en">EventStream</span>.<span class="pl-en">System</span>.`$streams`, infinite <span class="pl-k">=</span> <span class="pl-c1">false</span>, resolveLinkTos <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+  <span class="pl-en">Source</span>(publisher)
+    .runForeach { x <span class="pl-k">=&gt;</span> println(x.streamId.streamId) }
+    .onComplete{ _ <span class="pl-k">=&gt;</span> system.terminate()}
+}</pre>
+  </div> 
+  <h3><a id="user-content-configuration" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h3> 
+  <p>Default client settings defined in <a href="https://github.com/pawelkaczor/eventstore.jvm/blob/master/src/main/resources/reference.conf" target="_blank"><code>reference.conf</code></a>. You can override them via own <code>application.conf</code> put in the <code>src/main/resources</code>, the same way you might already do for akka. We are using the same approach - <a href="https://github.com/typesafehub/config" target="_blank">config</a>.</p> 
+  <h3><a id="user-content-cluster" class="anchor" href="https://github.com/pawelkaczor/eventstore.jvm#cluster" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cluster</h3> 
+  <p>It is possible to use client against cluster of Event Store. For this you need to configure client via <code>eventstore.cluster</code> section in <a href="https://github.com/pawelkaczor/eventstore.jvm/blob/master/src/main/resources/reference.conf" target="_blank"><code>reference.conf</code></a> or <a href="https://github.com/pawelkaczor/eventstore.jvm/blob/master/src/main/scala/eventstore/cluster/ClusterSettings.scala" target="_blank"><code>ClusterSettings</code></a>. Using <code>application.conf</code> for configuration is more preferable option.</p> 
+ </article>
+</div>

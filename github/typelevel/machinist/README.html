@@ -1,0 +1,141 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-machinist" class="anchor" href="https://github.com/typelevel/machinist#machinist" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Machinist</h2> 
+  <blockquote> 
+   <p>"Generic types and overloaded operators would let a user code up all of these, and in such a way that they would look in all ways just like types that are built in. They would let users grow the Java programming language in a smooth and clean way."</p> 
+   <p>-- Guy Steele, "Growing a Language"</p> 
+  </blockquote> 
+  <h3><a id="user-content-overview" class="anchor" href="https://github.com/typelevel/machinist#overview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Overview</h3> 
+  <p>One of the places where type classes incur some unnecessary overhead is implicit enrichment. Generic types have very few methods that can be called directly, so Scala uses implicit conversions to enrich these types with useful operators and methods.</p> 
+  <p>However, these conversions have a cost: they instantiate an implicit object which is only needed to immediately call another method. This indirection is usually not a big deal, but is prohibitive in the case of simple methods that may be called millions of times.</p> 
+  <p>Machinist's ops macros provide a solution. These macros allow the same enrichment to occur without any allocations or additional indirection. These macros can work with most common type class encodings, and are easily extensible. They can also remap symbolic operators (e.g. <code>**</code>) to text names (e.g. <code>pow</code>).</p> 
+  <p>Machinist started out as part of the <a href="http://github.com/non/spire" target="_blank">Spire</a> project.</p> 
+  <p>For a more detailed description, you can read this <a href="http://typelevel.org/blog/2013/10/13/spires-ops-macros.html" target="_blank">article</a> at <a href="http://typelevel.org" target="_blank">typelevel.org</a>.</p> 
+  <h3><a id="user-content-examples" class="anchor" href="https://github.com/typelevel/machinist#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h3> 
+  <p>Here's an example which defines a very minimal typeclass named <code>Eq[A]</code> with a single method called <code>eqv</code>. It is designed to support type-safe equals, similar to <code>scalaz.Equal</code> or <code>spire.algebra.Eq</code>, and it is specialized to avoid boxing primtive values like <code>Int</code> or <code>Double</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.</span>{<span class="pl-v">specialized</span> <span class="pl-k">=&gt;</span> <span class="pl-v">sp</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">machinist.</span><span class="pl-v">DefaultOps</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">Eq</span>[<span class="pl-k">@</span>sp <span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">eqv</span>(<span class="pl-v">lhs</span>: <span class="pl-en">A</span>, <span class="pl-v">rhs</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Eq</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">intEq</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Eq</span>[<span class="pl-k">Int</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">eqv</span>(<span class="pl-v">lhs</span>: <span class="pl-k">Int</span>, <span class="pl-v">rhs</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> lhs <span class="pl-k">==</span> rhs
+  }
+
+  <span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">EqOps</span>[<span class="pl-en">A</span>](<span class="pl-v">x</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ev</span>: <span class="pl-en">Eq</span>[<span class="pl-en">A</span>]) {
+    def <span class="pl-k">===</span>(<span class="pl-v">rhs</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> macro <span class="pl-en">DefaultOps</span>.binop[<span class="pl-en">A</span>, <span class="pl-k">Boolean</span>]
+  }
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Test</span> {
+  <span class="pl-k">import</span> <span class="pl-v">Eq.</span><span class="pl-v">EqOps</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">test</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ev</span>: <span class="pl-en">Eq</span>[<span class="pl-k">Int</span>])<span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span>
+    <span class="pl-k">if</span> (a <span class="pl-k">===</span> b) <span class="pl-c1">999</span> <span class="pl-k">else</span> <span class="pl-c1">0</span>
+}</pre>
+  </div> 
+  <p>Here are some intermediate representations for how the body of the <code>test</code> method will be compiled:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// our scala code</span>
+<span class="pl-k">if</span> (a <span class="pl-k">===</span> b) <span class="pl-c1">999</span> <span class="pl-k">else</span> <span class="pl-c1">0</span>
+
+<span class="pl-c">// after implicit resolution</span>
+<span class="pl-k">if</span> (<span class="pl-en">Eq</span>.<span class="pl-en">EqOps</span>(a)(<span class="pl-en">Eq</span>.intEq).<span class="pl-k">===</span>(b)) <span class="pl-c1">999</span> <span class="pl-k">else</span> <span class="pl-c1">0</span>
+
+<span class="pl-c">// after macro application</span>
+<span class="pl-k">if</span> (<span class="pl-en">Eq</span>.intEq.eqv(a, b)) <span class="pl-c1">999</span> <span class="pl-k">else</span> <span class="pl-c1">0</span>
+
+<span class="pl-c">// after specialization</span>
+<span class="pl-k">if</span> (<span class="pl-en">Eq</span>.intEq.eqv$mcI$sp(a, b)) <span class="pl-c1">999</span> <span class="pl-k">else</span> <span class="pl-c1">0</span></pre>
+  </div> 
+  <p>There are a few things to notice:</p> 
+  <ol> 
+   <li><p><code>EqOps[A]</code> does not need to be specialized. Since we will have removed any constructor calls by the time the <code>typer</code> phase is over, it will not introduce any boxing or interfere with specialization.</p></li> 
+   <li><p>We did not have to write very much boilerplate in <code>EqOps</code> beyond specifying which methods we want to provide implicit operators for. We did have to specify some type information though (in this case, the type of <code>rhs</code> (the "right-hand side" parameter) and the result type.</p></li> 
+   <li><p><code>machinist.DefaultOps</code> automatically knew to connect the <code>===</code> operator with the <code>eqv</code> method, since it has a built-in mapping of symbolic operators to names. You can use your own mapping by extending <code>machinist.Ops</code> and implementing <code>operatorNames</code>.</p></li> 
+  </ol> 
+  <h3><a id="user-content-including-machinist-in-your-project" class="anchor" href="https://github.com/typelevel/machinist#including-machinist-in-your-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Including Machinist in your project</h3> 
+  <p>Machinist supports Scala 2.10, 2.11, and 2.12. If you have an SBT project, add the following snippet to your <code>build.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.typelevel<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>machinist<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-shapes-supported-by-machinist" class="anchor" href="https://github.com/typelevel/machinist#shapes-supported-by-machinist" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Shapes supported by Machinist</h3> 
+  <p>Machinist has macros for recognizing and rewriting the following shapes:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// unop</span>
+conversion(lhs)(ev).method()
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs)
+
+<span class="pl-c">// unop0</span>
+conversion(lhs)(ev).method
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs)
+
+<span class="pl-c">// unopWithEv</span>
+conversion(lhs).method(ev)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs)
+
+<span class="pl-c">// binop</span>
+conversion(lhs)(ev).method(rhs)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, rhs)
+
+<span class="pl-c">// rbinop, for right-associative methods</span>
+conversion(rhs)(ev).method(lhs)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, rhs)
+
+<span class="pl-c">// binopWithEv</span>
+conversion(lhs).method(rhs)(ev)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, rhs)
+
+<span class="pl-c">// rbinopWithEv</span>
+conversion(rhs).method(lhs)(ev)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, rsh)</pre>
+  </div> 
+  <p>Machinist also supports the following oddball cases (which may only be useful for Spire):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// binopWithLift</span>
+conversion(lhs)(ev0).method(<span class="pl-v">rhs</span>: <span class="pl-en">Bar</span>)(ev1)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, ev1.fromBar(rhs))
+
+<span class="pl-c">// binopWithSelfLift</span>
+conversion(lhs)(ev).method(<span class="pl-v">rhs</span>: <span class="pl-en">Bar</span>)
+  <span class="pl-k">-</span><span class="pl-k">&gt;</span> ev.method(lhs, ev.fromBar(rhs))</pre>
+  </div> 
+  <p>In both cases, if "method" is a symbolic operator, it may be rewritten to a new name if a match is found in <code>operatorNames</code>.</p> 
+  <h3><a id="user-content-details--fiddliness" class="anchor" href="https://github.com/typelevel/machinist#details--fiddliness" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Details &amp; Fiddliness</h3> 
+  <p>To see the names Machinist provides for symbolic operators, see the <code>DefaultOperatorNames</code> trait.</p> 
+  <p>One caveat is that if you want to extend <code>machinist.Ops</code> yourself to create your own name mapping, you must do so in a separate project or sub-project from the one where you will be using the macros. Scala macros must be defined in a separate compilation run from where they are applied.</p> 
+  <p>It's also possible that despite the wide variety of shapes provided by <code>machinist.Ops</code> your shape is not supported. Machinist only provides unary and binary operators, meaning that if your method takes 3+ parameters you will need to write your own macro.</p> 
+  <p>It should be relatively easy to extend <code>Ops</code> to support these cases, but that work hasn't been done yet. Pull requests will be gladly accepted.</p> 
+  <h3><a id="user-content-copyright-and-license" class="anchor" href="https://github.com/typelevel/machinist#copyright-and-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright and License</h3> 
+  <p>All code is available to you under the MIT license, available at <a href="http://opensource.org/licenses/mit-license.php" target="_blank">http://opensource.org/licenses/mit-license.php</a> as well as in the COPYING file.</p> 
+  <p>Copyright Erik Osheim and Tom Switzer 2011-2015.</p> 
+ </article>
+</div>

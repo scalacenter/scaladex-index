@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-provider-junit_2.10</artifactId>
+  <version>2.4.4</version>
+  <name>pact-jvm-provider-junit_2.10</name>
+  <description># Pact junit runner
+
+## Overview
+Library provides ability to play contract tests against provider service in JUnit fashionable way.
+
+Supports:
+
+- Out-of-the-box convenient ways to load pacts
+
+- Easy way to change assertion strategy
+
+- **org.junit.BeforeClass**, **org.junit.AfterClass** and **org.junit.ClassRule** JUnit annotations, that will be run once - before/after whole contract test suite
+
+- **org.junit.Before**, **org.junit.After** and **org.junit.Rule** JUnit annotations, that will be run before/after each test of interaction
+
+- **au.com.dius.pact.provider.junit.State** custom annotation - before each interaction that require state change, all methods annotated by State with appropriate state listed will be invoked
+
+## Example of test
+
+```java
+    @RunWith(PactRunner.class) // Say JUnit to run tests with custom Runner
+    @Provider("myAwesomeService") // Set up name of tested provider
+    @PactFolder("pacts") // Point where to find pacts (See also section Pacts source in documentation)
+    public class ContractTest {
+        // NOTE: this is just an example of embedded service that listens to requests, you should start here real service
+        @ClassRule //Rule will be applied once: before/after whole contract test suite
+        public static final ClientDriverRule embeddedService = new ClientDriverRule(8332);
+
+        @BeforeClass //Method will be run once: before whole contract test suite
+        public static void setUpService() {
+            //Run DB, create schema
+            //Run service
+            //...
+        }
+
+        @Before //Method will be run before each test of interaction
+        public void before() {
+            // Rest data
+            // Mock dependent service responses
+            // ...
+            embeddedService.addExpectation(
+                    onRequestTo("/data"), giveEmptyResponse()
+            );
+        }
+
+        @State("default", "no-data") // Method will be run before testing interactions that require "default" or "no-data" state
+        public void toDefaultState() {
+            // Prepare service before interaction that require "default" state
+            // ...
+            System.out.println("Now service in default state");
+        }
+
+        @TestTarget // Annotation denotes Target that will be used for tests
+        public final Target target = new HttpTarget(8332); // Out-of-the-box implementation of Target (for more information take a look at Test Target section)
+    }
+```
+
+## Pacts source
+
+Pact runner will automatically collect pacts: for this purpose there are 2 out-of-the-box options or you can easily add your own Pact source. **Note:** it's possible to use only one source of pacts.
+
+### Download pacts from pact-broker
+
+To use pacts from Pact Broker annotate test class with `@PactBroker(host="host.of.pact.broker.com", port = 80)`.
+
+Version 3.2.2/2.4.3+ you can also specify the protocol, defaults to 'http'.
+
+### Pact Url
+
+To use pacts from urls annotate test class with `@PactUrl(urls = {http://build.server/zoo_app-animal_service.json} )`.
+
+### Pact folder
+
+To use pacts from resource folder of project annotate test class with `@PactFolder("subfolder/in/resource/directory")`.
+
+### Custom pacts source
+
+It's possible to use custom Pact source: for this implement `interface au.com.dius.pact.provider.junit.loader.PactLoader` and annotate test class with `@PactSource(MyOwnPactLoader.class)`. **Note:** `class MyOwnPactLoader` should have default constructor.
+
+## Test target
+
+Field in test class of type `au.com.dius.pact.provider.junit.target.Target` annotated with `au.com.dius.pact.provider.junit.target.TestTarget` will be used for actual Interaction execution and asserting of contract. **Note:** should be exactly 1 such field, otherwise `InitializationException` will be thrown.
+
+### HttpTarget
+
+`au.com.dius.pact.provider.junit.target.HttpTarget` - out-of-the-box implementation of `au.com.dius.pact.provider.junit.target.Target` that will play pacts as http request and assert response from service by matching rules from pact.
+
+Version 3.2.2/2.4.3+ you can also specify the protocol, defaults to 'http'.
+
+### Custom Test Target
+
+It's possible to use custom `Target` for that `interface Target` should be implemented and this class can be used instead of `HttpTarget`.
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+    <developer>
+      <id>kenbot</id>
+      <name>Ken Scambler</name>
+      <email>ken.scambler@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.10.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-core_2.10</artifactId>
+      <version>3.6.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>2.10.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>fluent-hc</artifactId>
+      <version>4.5.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-model_2.10</artifactId>
+      <version>2.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.rholder</groupId>
+      <artifactId>guava-retrying</artifactId>
+      <version>1.0.6</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-provider_2.10</artifactId>
+      <version>2.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.rest-driver</groupId>
+      <artifactId>rest-client-driver</artifactId>
+      <version>1.1.36</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.3.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.7</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.6.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-junit_2.10</artifactId>
+      <version>3.6.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

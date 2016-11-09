@@ -1,0 +1,132 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-safe-config" class="anchor" href="https://github.com/gawkermedia/safe-config#safe-config" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Safe Config</h1> 
+  <p>Safe Config provides a safe and convenient wrapper around Typesafe's Config library.</p> 
+  <h2><a id="user-content-quick-start" class="anchor" href="https://github.com/gawkermedia/safe-config#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick Start</h2> 
+  <p>Add the following to your <code>build.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>com.kinja<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>safe-config<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0<span class="pl-pds">"</span></span>,
+  compilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>paradise<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1.0<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full))</pre>
+  </div> 
+  <p>Create your first config object:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.kinja.config.</span><span class="pl-v">safeConfig</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.Play.configuration.</span>{ <span class="pl-v">underlying</span> <span class="pl-v">⇒</span> <span class="pl-v">playConf</span> }
+
+<span class="pl-k">@</span>safeConfig(playConf)
+<span class="pl-k">object</span> <span class="pl-en">Config</span> {
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">dbConfig</span> <span class="pl-k">=</span> getConfig(<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>)
+
+   <span class="pl-k">val</span> <span class="pl-en">dbConfig</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+      conf  <span class="pl-k">←</span> dbConfig
+      read  <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>read<span class="pl-pds">"</span></span>)
+      write <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>write<span class="pl-pds">"</span></span>)
+   } <span class="pl-k">yield</span> <span class="pl-en">DbConfig</span>(read, write)
+
+   <span class="pl-k">val</span> <span class="pl-en">languages</span> <span class="pl-k">=</span> getStringList(<span class="pl-s"><span class="pl-pds">"</span>application.languages<span class="pl-pds">"</span></span>)
+
+   <span class="pl-k">val</span> <span class="pl-en">secret</span> <span class="pl-k">=</span> getString(<span class="pl-s"><span class="pl-pds">"</span>application.secret<span class="pl-pds">"</span></span>)
+}
+
+<span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">DbConfig</span>(<span class="pl-v">readConnection</span> : <span class="pl-k">String</span>, <span class="pl-v">writeConnection</span> : <span class="pl-k">String</span>)</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// In Global.scala</span>
+<span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">onStart</span>(<span class="pl-v">app</span>: <span class="pl-en">Application</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+  <span class="pl-en">Config</span>
+  ...
+}</pre>
+  </div> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/gawkermedia/safe-config#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How To Use</h2> 
+  <p>The <code>safeConfig</code> annotation marks a configuration object. Within the configuration object all errors are handled automatically and accessors are created exposing the pure values. Additionally, configuration objects expose the <a href="http://gawkermedia.github.io/safe-config/doc/#com.kinja.config.ConfigApi" target="_blank"><code>ConfigApi</code></a> interface (select "Visibility: All").</p> 
+  <p>All config values in the configuration object are eagerly evaluated and if any are the wrong type or missing, an exception is thrown indicating the problems with reading the config file. <a href="https://camo.githubusercontent.com/f39e3f8308784782ec17b24b0dca6894f0d22a16/687474703a2f2f6761776b65726d656469612e6769746875622e696f2f736166652d636f6e6669672f696d672f426f6f7475704572726f7273457863657074696f6e2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/f39e3f8308784782ec17b24b0dca6894f0d22a16/687474703a2f2f6761776b65726d656469612e6769746875622e696f2f736166652d636f6e6669672f696d672f426f6f7475704572726f7273457863657074696f6e2e706e67" alt="" data-canonical-src="http://gawkermedia.github.io/safe-config/img/BootupErrorsException.png" style="max-width:100%;"></a></p> 
+  <p>In order to catch these errors as soon as possible, you should reference your config objects during your application's startup.</p> 
+  <h2><a id="user-content-use-with-classes" class="anchor" href="https://github.com/gawkermedia/safe-config#use-with-classes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Use With Classes</h2> 
+  <p>As of version 1.1.0, Safe Config can be used to annotate a class as well. This works well with Play 2.4's dependency injection. Instead of passing the underlying play config to the macro directly, pass the name of the identifier it is available at within the class object.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.kinja.config.</span><span class="pl-v">safeConfig</span>
+
+<span class="pl-k">import</span> <span class="pl-v">play.api.</span><span class="pl-v">_, </span><span class="pl-v">ApplicationLoader.</span><span class="pl-v">Context</span>
+
+<span class="pl-k">@</span>safeConfig(<span class="pl-s"><span class="pl-pds">"</span>rawConfig<span class="pl-pds">"</span></span>)
+<span class="pl-k">class</span> <span class="pl-en">Bootstrap</span>(<span class="pl-v">context</span>: <span class="pl-en">Context</span>) <span class="pl-k">extends</span> <span class="pl-e">BuiltInComponentsFromContext</span>(context) {
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">rawConfig</span> <span class="pl-k">=</span> configuration.underlying
+
+   <span class="pl-k">val</span> <span class="pl-en">dbConfig</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+      conf  <span class="pl-k">←</span> dbConfig
+      read  <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>read<span class="pl-pds">"</span></span>)
+      write <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>write<span class="pl-pds">"</span></span>)
+   } <span class="pl-k">yield</span> <span class="pl-en">DbConfig</span>(read, write)
+
+   <span class="pl-k">val</span> <span class="pl-en">languages</span> <span class="pl-k">=</span> getStringList(<span class="pl-s"><span class="pl-pds">"</span>application.languages<span class="pl-pds">"</span></span>)
+
+   <span class="pl-k">val</span> <span class="pl-en">secret</span> <span class="pl-k">=</span> getString(<span class="pl-s"><span class="pl-pds">"</span>application.secret<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <h2><a id="user-content-api-documentation" class="anchor" href="https://github.com/gawkermedia/safe-config#api-documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API Documentation</h2> 
+  <p>The full API documentation is available <a href="http://gawkermedia.github.io/safe-config/doc/#package" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/gawkermedia/safe-config#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How It Works</h2> 
+  <p>The example given above will expand to the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.kinja.config.</span><span class="pl-v">safeConfig</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.Play.configuration.</span>{ <span class="pl-v">underlying</span> <span class="pl-v">⇒</span> <span class="pl-v">playConf</span> }
+
+<span class="pl-k">object</span> <span class="pl-en">Config</span> <span class="pl-k">extends</span> <span class="pl-e">com.kinja.config.ConfigApi</span> {
+   <span class="pl-k">import</span> <span class="pl-v">com.kinja.config.</span><span class="pl-v">_</span>
+   <span class="pl-k">val</span> <span class="pl-en">root</span> <span class="pl-k">=</span> <span class="pl-en">BootupErrors</span>(<span class="pl-en">LiftedTypesafeConfig</span>(playConf))
+
+   <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-en">$Extractor</span>(<span class="pl-v">a</span> : <span class="pl-en">DbConfig</span>, <span class="pl-v">b</span> : <span class="pl-en">List</span>[<span class="pl-k">String</span>], <span class="pl-v">c</span> : <span class="pl-k">String</span>)
+   <span class="pl-k">private</span> <span class="pl-k">object</span> <span class="pl-en">$Extractor</span> {
+      <span class="pl-k">def</span> <span class="pl-en">construct</span> <span class="pl-k">:</span> <span class="pl-en">DbConfig</span> <span class="pl-k">⇒</span> <span class="pl-en">List</span>[<span class="pl-k">String</span>] <span class="pl-k">⇒</span> <span class="pl-k">String</span> <span class="pl-k">⇒</span> $<span class="pl-en">Extractor</span> <span class="pl-k">=</span>
+         a <span class="pl-k">⇒</span> b <span class="pl-k">⇒</span> c <span class="pl-k">⇒</span> <span class="pl-k">new</span> <span class="pl-en">$Extractor</span>(a, b, c)
+   }
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">dbConfig</span> <span class="pl-k">=</span> getConfig(<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>)
+
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">$orig_dbConfig</span> <span class="pl-k">:</span> <span class="pl-en">BootupErrors</span>[<span class="pl-en">DbConfig</span>] <span class="pl-k">=</span> <span class="pl-k">for</span> {
+      conf  <span class="pl-k">←</span> dbConfig
+      read  <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>read<span class="pl-pds">"</span></span>)
+      write <span class="pl-k">←</span> conf.getString(<span class="pl-s"><span class="pl-pds">"</span>write<span class="pl-pds">"</span></span>)
+   } <span class="pl-k">yield</span> <span class="pl-en">DbConfig</span>(read, write)
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">$orig_languages</span> <span class="pl-k">:</span> <span class="pl-en">BootupErrors</span>[<span class="pl-en">List</span>[<span class="pl-k">String</span>]] <span class="pl-k">=</span> getStringList(<span class="pl-s"><span class="pl-pds">"</span>application.languages<span class="pl-pds">"</span></span>)
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">$orig_secret</span> <span class="pl-k">:</span> <span class="pl-en">BootupErrors</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> getString(<span class="pl-s"><span class="pl-pds">"</span>application.secret<span class="pl-pds">"</span></span>)
+
+   <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">$Extractor_instance</span> <span class="pl-k">=</span> (<span class="pl-en">BootupErrors</span>($<span class="pl-en">Extractor</span>.construct)
+      <span class="pl-k">&lt;</span><span class="pl-k">*</span><span class="pl-k">&gt;</span> $orig_dbConfig
+      <span class="pl-k">&lt;</span><span class="pl-k">*</span><span class="pl-k">&gt;</span> $orig_languages
+      <span class="pl-k">&lt;</span><span class="pl-k">*</span><span class="pl-k">&gt;</span> $orig_secret
+   ).fold(errs <span class="pl-k">⇒</span> <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">BootupErrorsException</span>(errs), a <span class="pl-k">⇒</span> a)
+
+   <span class="pl-k">val</span> <span class="pl-en">dbConfig</span> <span class="pl-k">=</span> $<span class="pl-en">Extractor_instance</span>.a
+   <span class="pl-k">val</span> <span class="pl-en">languages</span> <span class="pl-k">=</span> $<span class="pl-en">Extractor_instance</span>.b
+   <span class="pl-k">val</span> <span class="pl-en">secret</span> <span class="pl-k">=</span> $<span class="pl-en">Extractor_instance</span>.b
+}
+
+<span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">DbConfig</span>(<span class="pl-v">readConnection</span> : <span class="pl-k">String</span>, <span class="pl-v">writeConnection</span> : <span class="pl-k">String</span>)</pre>
+  </div> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/gawkermedia/safe-config#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <p>Due to the way type-checking occurs within the macro, forward references are not allowed within the annotated object.</p> 
+  <p>Because of a <a href="https://github.com/scalamacros/paradise/issues/49" target="_blank">bug</a> in Macro Paradise, annotation of objects nested within a class does not work.</p> 
+ </article>
+</div>

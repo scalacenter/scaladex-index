@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-consumer-groovy_2.10</artifactId>
+  <version>2.1.6</version>
+  <name>pact-jvm-consumer-groovy_2.10</name>
+  <description>pact-jvm-consumer-groovy
+=========================
+
+Groovy DSL for Pact JVM
+
+##Dependency
+
+The library is available on maven central using:
+
+* group-id = `au.com.dius`
+* artifact-id = `pact-jvm-consumer-groovy_2.11`
+* version-id = `2.1.x`
+
+##Usage
+
+Add the `pact-jvm-consumer-groovy` library to your test class path. This provides a `PactBuilder` class for you to use
+to define your pacts. For a full example, have a look at the example JUnit `ExampleGroovyConsumerPactTest`.
+
+If you are using gradle for your build, add it to your `build.gradle`:
+
+    dependencies {
+        testCompile 'au.com.dius:pact-jvm-consumer-groovy_2.11:2.1.5'
+    }
+  
+Then create an instance of the `PactBuilder` in your test.
+
+```groovy
+    @Test
+    void "A service consumer side of a pact goes a little something like this"() {
+
+        def alice_service = new PactBuilder() // Create a new PactBuilder
+        alice_service {
+            serviceConsumer "Consumer" 	// Define the service consumer by name
+            hasPactWith "Alice Service"   // Define the service provider that it has a pact with
+            port 1234                       // The port number for the service. It is optional, leave it out to
+                                            // to use a random one
+
+            given('there is some good mallory') // defines a provider state. It is optional.
+            uponReceiving('a retrieve Mallory request') // upon_receiving starts a new interaction
+            withAttributes(method: 'get', path: '/mallory')		// define the request, a GET request to '/mallory'
+            willRespondWith(						// define the response we want returned
+                status: 200,
+                headers: ['Content-Type': 'text/html'],
+                body: '"That is some good Mallory."'
+            )
+        }
+        
+	      // Execute the run method to have the mock server run.
+	      // It takes a closure to execute your requests and returns a Pact VerificationResult.
+	      VerificationResult result = alice_service.run() {
+            def client = new RESTClient('http://localhost:1234/')
+            def alice_response = client.get(path: '/mallory')
+
+            assert alice_response.status == 200
+            assert alice_response.contentType == 'text/html'
+
+            def data = alice_response.data.text()
+            assert data == '"That is some good Mallory."'
+        }
+        assert result == PactVerified$.MODULE$  // This means it is all good in weird Scala speak.
+        
+    }
+```    
+
+After running this test, the following pact file is produced:
+
+    {
+      "provider" : {
+        "name" : "Alice Service"
+      },
+      "consumer" : {
+        "name" : "Consumer"
+      },
+      "interactions" : [ {
+        "provider_state" : "there is some good mallory",
+        "description" : "a retrieve Mallory request",
+        "request" : {
+          "method" : "get",
+          "path" : "/mallory",
+          "requestMatchers" : { }
+        },
+        "response" : {
+          "status" : 200,
+          "headers" : {
+            "Content-Type" : "text/html"
+          },
+          "body" : "That is some good Mallory.",
+          "responseMatchers" : { }
+        }
+      } ]
+    }
+
+### DSL Methods
+
+#### serviceConsumer(String consumer)
+
+This names the service consumer for the pact.
+
+#### hasPactWith(String provider)
+
+This names the service provider for the pact.
+
+#### port(int port)
+
+Sets the port that the mock server will run on. If not supplied, a random port will be used.
+
+#### given(String providerState)
+
+Defines a state that the provider needs to be in for the request to succeed. For more info, see
+https://github.com/realestate-com-au/pact/wiki/Provider-states
+
+#### uponReceiving(String requestDescription)
+
+Starts the definition of a of a pact interaction.
+
+#### withAttributes(Map requestData)
+
+Defines the request for the interaction. The request data map can contain the following:
+
+| key                           |  Description                               | Default Value             |
+|----------------------------|-------------------------------------------|-----------------------------|
+| method | The HTTP method to use | get |
+| path | The Path for the request | / |
+| query | Query parameters as a Map&lt;String, List> |  |
+| headers | Map of key-value pairs for the request headers | |
+| body | The body of the request. If it is not a string, it will be converted to JSON. Also accepts a PactBodyBuilder. | |
+
+For the path attribute, you can use regular expressions to match. You can either provide a regex `Pattern` class or use
+the `regexp` method to construct a `RegexpMatcher` (you can use any of the defined matcher methods, see DSL methods below).
+If you use a `Pattern`, or the `regexp` method but don't provide a value, a random one will be generated from the
+regular expression. This value is used when generating requests.
+
+For example:
+
+```groovy
+    .withAttributes(path: ~'/transaction/[0-9]+') // This will generate a random path for requests
+
+    // or
+
+    .withAttributes(path: regexp('/transaction/[0-9]+', '/transaction/1234567890'))
+```
+
+#### withBody(Closure closure)
+
+Constructs the body of the request or response by invoking the supplied closure in the context of a PactBodyBuilder.
+
+#### willRespondWith(Map responseData)
+
+Defines the response for the interaction. The response data map can contain the following:
+
+| key                           |  Description                               | Default Value             |
+|----------------------------|-------------------------------------------|-----------------------------|
+| status | The HTTP status code to return | 200 |
+| headers | Map of key-value pairs for the response headers | |
+| body | The body of the response. If it is not a string, it will be converted to JSON. Also accepts a PactBodyBuilder. | |
+
+#### VerificationResult run(Closure closure)
+
+The `run` method starts the mock server, and then executes the provided closure. It then returns the pact verification
+result for the pact run. If you require access to the mock server configuration for the URL, it is passed into the
+closure, e.g.,
+
+```groovy
+
+VerificationResult result = alice_service.run() { config ->
+  def client = new RESTClient(config.url())
+  def alice_response = client.get(path: '/mallory')
+}
+```
+
+### Body DSL
+
+For building JSON bodies there is a `PactBodyBuilder` that provides as DSL that includes matching with regular expressions
+and by types. For a more complete example look at `PactBodyBuilderTest`.
+
+For an example:
+
+```groovy
+service {
+    uponReceiving('a request')
+    withAttributes(method: 'get', path: '/')
+    withBody {
+      name(~/\w+/, 'harry')
+      surname regexp(~/\w+/, 'larry')
+      position regexp(~/staff|contractor/, 'staff')
+      happy(true)
+    }
+}
+```
+
+This will return the following body:
+
+```json
+{
+       "name": "harry",
+       "surname": "larry",
+       "position": "staff",
+       "happy": true
+}
+```
+
+and add the following matchers:
+
+```json
+"$.body.name": ["regex": "\\w+"],
+"$.body.surname": ["regex": "\\w+"], 
+"$.body.position": ["regex": "staff|contractor"]
+```
+
+#### DSL Methods
+
+The DSL supports the following matching methods:
+
+* regexp(Pattern re, String value = null), regexp(String regexp, String value = null)
+
+Defines a regular expression matcher. If the value is not provided, a random one will be generated.
+
+* hexValue(String value = null)
+
+Defines a matcher that accepts hexidecimal values. If the value is not provided, a random hexidcimal value will be
+generated.
+
+* identifier(def value = null)
+
+Defines a matcher that accepts integer values.  If the value is not provided, a random value will be generated.
+
+* ipAddress(String value = null)
+
+Defines a matcher that accepts IP addresses.  If the value is not provided, a 127.0.0.1 will be used.
+
+* numeric(Number value = null)
+
+Defines a matcher that accepts any numerical values. If the value is not provided, a random integer will be used.
+
+* integer(def value = null)
+
+Defines a matcher that accepts any integer values. If the value is not provided, a random integer will be used.
+
+* real(def value = null)
+
+Defines a matcher that accepts any real numbers. If the value is not provided, a random double will be used.
+
+* timestamp(def value = null)
+
+Defines a matcher that accepts ISO and SMTP timestamps. If the value is not provided, the current date and time is used.
+
+* guid(String value = null)
+
+Defines a matcher that accepts UUIDs. A random one will be generated if no value is provided.
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+    <developer>
+      <id>kenbot</id>
+      <name>Ken Scambler</name>
+      <email>ken.scambler@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.10.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder</groupId>
+      <artifactId>unfiltered-netty-server_2.10</artifactId>
+      <version>0.8.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.3.4</version>
+      <classifier>indy</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-consumer_2.10</artifactId>
+      <version>2.1.6</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-native_2.10</artifactId>
+      <version>3.2.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder.dispatch</groupId>
+      <artifactId>dispatch-core_2.10</artifactId>
+      <version>0.11.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2_2.10</artifactId>
+      <version>2.3.13</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy.modules.http-builder</groupId>
+      <artifactId>http-builder</artifactId>
+      <version>0.7.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging-slf4j_2.10</artifactId>
+      <version>2.1.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-jackson_2.10</artifactId>
+      <version>3.2.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

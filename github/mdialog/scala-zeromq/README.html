@@ -1,0 +1,131 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-zeromq" class="anchor" href="https://github.com/mdialog/scala-zeromq#scala-zeromq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-zeromq</h1> 
+  <p><a href="https://travis-ci.org/mDialog/scala-zeromq" target="_blank"><img src="https://camo.githubusercontent.com/26c1cfea9d252bb94768965cbe25af55e2d74ba3/68747470733a2f2f7472617669732d63692e6f72672f6d4469616c6f672f7363616c612d7a65726f6d712e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/mDialog/scala-zeromq.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>scala-zeromq facilitates communication using the <a href="http://zeromq.org" target="_blank">ZeroMQ</a> messaging library. ZeroMQ is a message-oriented socket communication library that supports several high-level messaging patterns, including request-reply, publish-subscribe and push-pull. For a thorough description of how ZeroMQ works, read the <a href="http://zguide.zeromq.org" target="_blank">guide</a>.</p> 
+  <p>Unlike many ZeroMQ libraries, scala-zeromq provides a <em>completely threadsafe</em> ZeroMQ socket interface. All socket communications are conducted using an immutable handle called a SocketRef. Under the hood, scala-zeromq uses <a href="http://akka.io" target="_blank">Akka</a> to ensure all socket interactions are handled safely and efficiently.</p> 
+  <p><strong>Requires libzmq (v2.1.0 or greater) and <a href="https://github.com/zeromq/jzmq" target="_blank">JZMQ</a></strong>, neither of which is included automatically. See <a href="https://github.com/mdialog/scala-zeromq#Dependencies" target="_blank">Dependencies</a>.</p> 
+  <h2><a id="user-content-using" class="anchor" href="https://github.com/mdialog/scala-zeromq#using" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using</h2> 
+  <p>In your build.sbt</p> 
+  <pre><code>libraryDependencies += "com.mdialog" %% "scala-zeromq" % "1.2.0"
+</code></pre> 
+  <p>To get started with a quick example, create a few sockets:</p> 
+  <pre><code>val pushSocket = ZeroMQ.socket(SocketType.Push)
+val pullSocket = ZeroMQ.socket(SocketType.Pull)
+</code></pre> 
+  <p>Then, bind one to a socket address and connect the other:</p> 
+  <pre><code>pushSocket.bind("tcp://127.0.0.1:5560")
+pullSocket.connect("tcp://127.0.0.1:5560")
+</code></pre> 
+  <p>ZeroMQ supports several message transport protocols.</p> 
+  <p>Next, send and receive a couple of messages. The <code>recv</code> method returns a Future containing a message if one arrives before the timeout is reached.</p> 
+  <pre><code>pushSocket.send(Message(ByteString("one"), ByteString("two")))
+
+val message = pullSocket.recv() // returns Future, default timeout 1s
+Await.result(message, 1000.milliseconds)
+// message: zeromq.Message = Message(ByteString("one"), ByteString("two")))
+
+pushSocket.send(Message(ByteString("three"), ByteString("four")))
+
+pullSocket.recv(10.seconds) map (println(_)) // returns Future, timeout 10s
+// Message(ByteString("three"), ByteString("four")))
+</code></pre> 
+  <p>The <code>recvAll</code> method assigns a function to be called each time a message is received by the socket.</p> 
+  <pre><code>pullSocket.recvAll { message: Message =&gt;
+  println("received: " + message.map(_.utf8String).mkString(" "))
+}
+pushSocket.send(Message(ByteString("five"), ByteString("six")))
+// received: five six
+</code></pre> 
+  <p>The <code>recvOption</code> method returns immediately with an option containing a message if one is waiting to be received.</p> 
+  <pre><code>pushSocket.send(Message(ByteString("seven"), ByteString("eight")))
+pullSocket.recvOption // returns immediately with message, if one is waiting
+// Option[zeromq.Message] = Some(Message(ByteString("seven"), ByteString("eight")))
+</code></pre> 
+  <p>A scala-zeromq Message is a collection of <a href="http://doc.akka.io/api/akka/snapshot/#akka.util.ByteString" target="_blank">akka.util.ByteString</a> objects. Each item in the collection contains one ZeroMQ message part.</p> 
+  <p>If you'd like to stop receiving messages on a socket, close it.</p> 
+  <pre><code>pushSocket.close
+</code></pre> 
+  <p>Once closed a socket it can no longer be used. If you need to send or receive messages again you must create a new socket.</p> 
+  <h3><a id="user-content-using-with-akka" class="anchor" href="https://github.com/mdialog/scala-zeromq#using-with-akka" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using with Akka</h3> 
+  <p>scala-zeromq is implemented as an <a href="http://doc.akka.io/docs/akka/snapshot/scala/extending-akka.html" target="_blank">Akka Extension</a>. To use it's fully asynchronous Akka interface, just load the extension.</p> 
+  <p>This branch uses Akka 2.3, the latest release version of Akka. If you're using Akka 2.2, please use version 0.2.5. If you're using Akka 2.1 see the <a href="https://github.com/mDialog/scala-zeromq/tree/0.1.X" target="_blank">0.1.X</a> branch. If you're using Akka 2.0, see the <a href="https://github.com/mDialog/scala-zeromq/tree/0.0.X" target="_blank">0.0.X</a> branch.</p> 
+  <p>Use the extension to request a new socket. Assign an ActorRef as listener if you expect the socket to receive messages.</p> 
+  <pre><code>val zmq = ZeroMQExtension(system)
+
+val pushSocket = zmq.newSocket(SocketType.Push, Bind("tcp://127.0.0.1:5560"))
+val pullSocket = zmq.newSocket(SocketType.Pull, Connect("tcp://127.0.0.1:5560"), Listener(anActorRef))
+</code></pre> 
+  <p>Each socket is a child of the actor responsible for creating it.</p> 
+  <p>To send messages over the socket, send them to the socket actor.</p> 
+  <pre><code>pushSocket ! Message(ByteString("one"), ByteString("two"))
+</code></pre> 
+  <p>Messages are received as zeromq.Message objects sent to the actor assigned as each socket's listener.</p> 
+  <p>You can get and set options after socket creation by sending messages to the socket actor.</p> 
+  <pre><code>pushSocket ! Rate(100) // fire and forget
+pushSocket ? Rate(100) // return a future, await result to ensure change takes effect
+
+pushSocket ? Rate // returns Rate option
+</code></pre> 
+  <p>Close the socket by sending a PoisonPill to the socket actor.</p> 
+  <pre><code>pullSocket ! PoisonPill
+</code></pre> 
+  <h3><a id="user-content-using-with-akka-java" class="anchor" href="https://github.com/mdialog/scala-zeromq#using-with-akka-java" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using with Akka (Java)</h3> 
+  <p>While not as pretty, scala-zeromq can be used by akka written in Java as well. It looks a bit like this:</p> 
+  <pre><code>ActorRef subscriber = zmq.newSocketJ(SocketType.Sub$.MODULE$, new Listener(theListener), new Connect(endpoint), package$.MODULE$.SubscribeAll());
+</code></pre> 
+  <p>See JavaUsageSuite.java for a full example.</p> 
+  <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/mdialog/scala-zeromq#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a name="user-content-Dependencies" target="_blank" href=""></a>Dependencies</h2> 
+  <h3><a id="user-content-jzmq" class="anchor" href="https://github.com/mdialog/scala-zeromq#jzmq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JZMQ</h3> 
+  <p>JZMQ is a required package that contains java bindings for the native zeromq binaries. To include in your project you should do one of</p> 
+  <ul> 
+   <li><a href="https://github.com/zeromq/jzmq#building-and-installing-jzmq" target="_blank">Build and install from source</a> (most customizable and current).</li> 
+   <li>Include a <a href="http://search.maven.org/#artifactdetails%7Corg.zeromq%7Cjzmq%7C3.1.0%7Cjar" target="_blank">package dependency on JZMQ</a> from maven central (easiest).</li> 
+  </ul> 
+  <p>The package dependency is not included automatically so that you can build your own if you wish.</p> 
+  <h3><a id="user-content-libzmq" class="anchor" href="https://github.com/mdialog/scala-zeromq#libzmq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>libzmq</h3> 
+  <p>libzmq is the native zeromq library which is required. It must be built and installed for your particular platform. Instructions can be <a href="http://zeromq.org/intro:get-the-software" target="_blank">found here</a>.</p> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/mdialog/scala-zeromq#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>Read the API documentation here: <a href="http://mdialog.github.io/api/scala-zeromq-1.0.0/" target="_blank">http://mdialog.github.io/api/scala-zeromq-1.0.0/</a></p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/mdialog/scala-zeromq#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This project is released under the Apache License v2, for more details see the 'LICENSE' file.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/mdialog/scala-zeromq#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Fork the project, add tests if possible and send a pull request.</p> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/mdialog/scala-zeromq#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <p>Chris Dinn, Sebastian Hubbard, Jason Goodwin, Luke Palmer</p> 
+  <p><strong>©2016 mDialog Corp. All rights reserved.</strong></p> 
+ </article>
+</div>

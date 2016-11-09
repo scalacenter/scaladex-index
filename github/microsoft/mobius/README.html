@@ -1,0 +1,221 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://github.com/microsoft/mobius/blob/master/logo/mobius-star-200.png" target="_blank"><img src="https://github.com/microsoft/mobius/raw/master/logo/mobius-star-200.png" width="125px" alt="Mobius logo" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-mobius-c-api-for-spark" class="anchor" href="https://github.com/microsoft/mobius#mobius-c-api-for-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Mobius: C# API for Spark</h1> 
+  <p><a href="https://github.com/Microsoft/Mobius" target="_blank">Mobius</a> provides C# language binding to <a href="https://spark.apache.org/" target="_blank">Apache Spark</a> enabling the implementation of Spark driver program and data processing operations in the languages supported in the .NET framework like C# or F#.</p> 
+  <p>For example, the word count sample in Apache Spark can be implemented in C# as follows :</p> 
+  <div class="highlight highlight-source-cs">
+   <pre><span class="pl-k">var</span> lines = sparkContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/input.txt"</span></span>);  
+<span class="pl-k">var</span> words = lines.FlatMap(s =&gt; s.Split(<span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span>));
+<span class="pl-k">var</span> wordCounts = words.Map(w =&gt; <span class="pl-k">new</span> KeyValuePair&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(w.Trim(), <span class="pl-c1">1</span>))  
+                      .ReduceByKey((x, y) =&gt; x + y);  
+<span class="pl-k">var</span> wordCountCollection = wordCounts.Collect();  
+wordCounts.SaveAsTextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/wordcount.txt"</span></span>);  </pre>
+  </div> 
+  <p>A simple DataFrame application using TempTable may look like the following:</p> 
+  <div class="highlight highlight-source-cs">
+   <pre><span class="pl-k">var</span> reqDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/requests.csv"</span></span>);
+<span class="pl-k">var</span> metricDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/metrics.csv"</span></span>);
+reqDataFrame.RegisterTempTable(<span class="pl-s"><span class="pl-pds">"</span>requests<span class="pl-pds">"</span></span>);
+metricDataFrame.RegisterTempTable(<span class="pl-s"><span class="pl-pds">"</span>metrics<span class="pl-pds">"</span></span>);
+<span class="pl-c">// C0 - guid in requests DataFrame, C3 - guid in metrics DataFrame  </span>
+<span class="pl-k">var</span> joinDataFrame = GetSqlContext().Sql(  
+    <span class="pl-s"><span class="pl-pds">"</span>SELECT joinedtable.datacenter<span class="pl-pds">"</span></span> +
+         <span class="pl-s"><span class="pl-pds">"</span>, MAX(joinedtable.latency) maxlatency<span class="pl-pds">"</span></span> +
+         <span class="pl-s"><span class="pl-pds">"</span>, AVG(joinedtable.latency) avglatency <span class="pl-pds">"</span></span> +
+    <span class="pl-s"><span class="pl-pds">"</span>FROM (<span class="pl-pds">"</span></span> +
+       <span class="pl-s"><span class="pl-pds">"</span>SELECT a.C1 as datacenter, b.C6 as latency <span class="pl-pds">"</span></span> +  
+       <span class="pl-s"><span class="pl-pds">"</span>FROM requests a JOIN metrics b ON a.C0  = b.C3) joinedtable <span class="pl-pds">"</span></span> +   
+    <span class="pl-s"><span class="pl-pds">"</span>GROUP BY datacenter<span class="pl-pds">"</span></span>);
+joinDataFrame.ShowSchema();
+joinDataFrame.Show();</pre>
+  </div> 
+  <p>A simple DataFrame application using DataFrame DSL may look like the following:</p> 
+  <div class="highlight highlight-source-cs">
+   <pre><span class="pl-c">// C0 - guid, C1 - datacenter</span>
+<span class="pl-k">var</span> reqDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/requests.csv"</span></span>)  
+                             .Select(<span class="pl-s"><span class="pl-pds">"</span>C0<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);    
+<span class="pl-c">// C3 - guid, C6 - latency   </span>
+<span class="pl-k">var</span> metricDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/metrics.csv"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>, <span class="pl-c1">true</span>)
+                                .Select(<span class="pl-s"><span class="pl-pds">"</span>C3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>); <span class="pl-c">//override delimiter, hasHeader &amp; inferSchema</span>
+<span class="pl-k">var</span> joinDataFrame = reqDataFrame.Join(metricDataFrame, reqDataFrame[<span class="pl-s"><span class="pl-pds">"</span>C0<span class="pl-pds">"</span></span>] == metricDataFrame[<span class="pl-s"><span class="pl-pds">"</span>C3<span class="pl-pds">"</span></span>])
+                                .GroupBy(<span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);
+<span class="pl-k">var</span> maxLatencyByDcDataFrame = joinDataFrame.Agg(<span class="pl-k">new</span> Dictionary&lt;<span class="pl-k">string</span>, <span class="pl-k">string</span>&gt; { { <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>max<span class="pl-pds">"</span></span> } });
+maxLatencyByDcDataFrame.ShowSchema();
+maxLatencyByDcDataFrame.Show();</pre>
+  </div> 
+  <p>A simple Spark Streaming application that processes messages from Kafka using C# may be implemented using the following code:</p> 
+  <div class="highlight highlight-source-cs">
+   <pre>StreamingContext sparkStreamingContext = StreamingContext.GetOrCreate(checkpointPath, () =&gt;
+    {
+      <span class="pl-k">var</span> ssc = <span class="pl-k">new</span> StreamingContext(sparkContext, slideDurationInMillis);
+      ssc.Checkpoint(checkpointPath);
+      <span class="pl-k">var</span> stream = KafkaUtils.CreateDirectStream(ssc, topicList, kafkaParams, perTopicPartitionKafkaOffsets);
+      <span class="pl-c">//message format: [timestamp],[loglevel],[logmessage]</span>
+      <span class="pl-k">var</span> countByLogLevelAndTime = stream
+                                    .Map(kvp =&gt; Encoding.UTF8.GetString(kvp.Value))
+                                    .Filter(line =&gt; line.Contains(<span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>))
+                                    .Map(line =&gt; line.Split(<span class="pl-s"><span class="pl-pds">'</span>,<span class="pl-pds">'</span></span>))
+                                    .Map(columns =&gt; <span class="pl-k">new</span> KeyValuePair&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(
+                                                          <span class="pl-k">string</span>.Format(<span class="pl-s"><span class="pl-pds">"</span>{0},{1}<span class="pl-pds">"</span></span>, columns[<span class="pl-c1">0</span>], columns[<span class="pl-c1">1</span>]), <span class="pl-c1">1</span>))
+                                    .ReduceByKeyAndWindow((x, y) =&gt; x + y, (x, y) =&gt; x - y,
+                                                          windowDurationInSecs, slideDurationInSecs, <span class="pl-c1">3</span>)
+                                    .Map(logLevelCountPair =&gt; <span class="pl-k">string</span>.Format(<span class="pl-s"><span class="pl-pds">"</span>{0},{1}<span class="pl-pds">"</span></span>,
+                                                          logLevelCountPair.Key, logLevelCountPair.Value));
+      countByLogLevelAndTime.ForeachRDD(countByLogLevel =&gt;
+      {
+          <span class="pl-k">foreach</span> (<span class="pl-k">var</span> logCount <span class="pl-k">in</span> countByLogLevel.Collect())
+              Console.WriteLine(logCount);
+      });
+      <span class="pl-k">return</span> ssc;
+    });
+sparkStreamingContext.Start();
+sparkStreamingContext.AwaitTermination();</pre>
+  </div> 
+  <p>For more code samples, refer to <a href="https://github.com/microsoft/mobius/blob/master/examples" target="_blank">Mobius\examples</a> directory or <a href="https://github.com/microsoft/mobius/blob/master/csharp/Samples" target="_blank">Mobius\csharp\Samples</a> directory.</p> 
+  <h2><a id="user-content-api-documentation" class="anchor" href="https://github.com/microsoft/mobius#api-documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API Documentation</h2> 
+  <p>Refer to <a href="https://github.com/microsoft/mobius/blob/master/csharp/Adapter/documentation/Mobius_API_Documentation.md" target="_blank">Mobius C# API documentation</a> for the list of Spark's data processing operations supported in Mobius.</p> 
+  <h2><a id="user-content-api-usage" class="anchor" href="https://github.com/microsoft/mobius#api-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API Usage</h2> 
+  <p>Mobius API usage samples are available at:</p> 
+  <ul> 
+   <li><p><a href="https://github.com/microsoft/mobius/blob/master/examples" target="_blank">Examples folder</a> which contains standalone <a href="https://github.com/microsoft/mobius/blob/master/notes/running-mobius-app.md#running-mobius-examples-in-local-mode" target="_blank">C# and F# projects</a> that can be used as templates to start developing Mobius applications</p></li> 
+   <li><p><a href="https://github.com/microsoft/mobius/blob/master/csharp/Samples/Microsoft.Spark.CSharp/" target="_blank">Samples project</a> which uses a comprehensive set of Mobius APIs to implement samples that are also used for functional validation of APIs</p></li> 
+   <li><p>Mobius performance test scenarios implemented in <a href="https://github.com/microsoft/mobius/blob/master/csharp/Perf/Microsoft.Spark.CSharp" target="_blank">C#</a> and <a href="https://github.com/microsoft/mobius/blob/master/scala/perf" target="_blank">Scala</a> for side by side comparison of Spark driver code</p></li> 
+  </ul> 
+  <h2><a id="user-content-documents" class="anchor" href="https://github.com/microsoft/mobius#documents" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documents</h2> 
+  <p>Refer to the <a href="https://github.com/microsoft/mobius/blob/master/docs" target="_blank">docs folder</a> for design overview and other info on Mobius</p> 
+  <h2><a id="user-content-build-status" class="anchor" href="https://github.com/microsoft/mobius#build-status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build Status</h2> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>Ubuntu 14.04.3 LTS</th> 
+     <th align="center">Windows</th> 
+     <th align="center">Unit test coverage</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td><a href="https://travis-ci.org/Microsoft/Mobius" target="_blank"><img src="https://camo.githubusercontent.com/1436444d4975e80fc3e0fe118d76646240f8bff4/68747470733a2f2f7472617669732d63692e6f72672f4d6963726f736f66742f4d6f626975732e7376673f6272616e63683d6d6173746572" alt="Build status" data-canonical-src="https://travis-ci.org/Microsoft/Mobius.svg?branch=master" style="max-width:100%;"></a></td> 
+     <td align="center"><a href="https://ci.appveyor.com/project/SparkCLR/sparkclr/branch/master" target="_blank"><img src="https://camo.githubusercontent.com/b80b886ced079b1605d540c80bd7f4af772d90e1/68747470733a2f2f63692e6170707665796f722e636f6d2f6170692f70726f6a656374732f7374617475732f6c666c6b7561383167673073777636692f6272616e63682f6d61737465723f7376673d74727565" alt="Build status" data-canonical-src="https://ci.appveyor.com/api/projects/status/lflkua81gg0swv6i/branch/master?svg=true" style="max-width:100%;"></a></td> 
+     <td align="center"><a href="https://codecov.io/github/Microsoft/Mobius?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/282736827418a00e455d6852f766243a9ecbc06c/68747470733a2f2f636f6465636f762e696f2f6769746875622f4d6963726f736f66742f4d6f626975732f636f7665726167652e7376673f6272616e63683d6d6173746572" alt="codecov.io" data-canonical-src="https://codecov.io/github/Microsoft/Mobius/coverage.svg?branch=master" style="max-width:100%;"></a></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/microsoft/mobius#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <table>
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th align="left">Windows</th> 
+     <th align="left">Linux</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>Build &amp; run unit tests</td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/windows-instructions.md#building-mobius" target="_blank">Build in Windows</a></td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/linux-instructions.md#building-mobius-in-linux" target="_blank">Build in Linux</a></td> 
+    </tr> 
+    <tr> 
+     <td>Run samples (functional tests) in local mode</td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/windows-instructions.md#running-samples" target="_blank">Samples in Windows</a></td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/linux-instructions.md#running-mobius-samples-in-linux" target="_blank">Samples in Linux</a></td> 
+    </tr> 
+    <tr> 
+     <td>Run examples in local mode</td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/running-mobius-app.md#running-mobius-examples-in-local-mode" target="_blank">Examples in Windows</a></td> 
+     <td align="left"><a href="https://github.com/microsoft/mobius/blob/master/notes/linux-instructions.md#running-mobius-examples-in-linux" target="_blank">Examples in Linux</a></td> 
+    </tr> 
+    <tr> 
+     <td>Run Mobius app</td> 
+     <td align="left">
+      <ul>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/running-mobius-app.md#standalone-cluster" target="_blank">Standalone cluster</a></li>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/running-mobius-app.md#yarn-cluster" target="_blank">YARN cluster</a></li>
+      </ul></td> 
+     <td align="left">
+      <ul>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/linux-instructions.md#running-mobius-applications-in-linux" target="_blank">Linux cluster</a></li>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/mobius-in-hdinsight.md" target="_blank">Azure HDInsight Spark Cluster</a></li>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/linux-instructions.md#mobius-in-amazon-web-services-emr-spark-cluster" target="_blank">AWS EMR Spark Cluster</a></li>
+      </ul></td> 
+    </tr> 
+    <tr> 
+     <td>Run Mobius Shell</td> 
+     <td align="left">
+      <ul>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/mobius-shell.md#run-shell" target="_blank">Local</a></li>
+       <li><a href="https://github.com/microsoft/mobius/blob/master/notes/mobius-shell.md#run-shell" target="_blank">YARN</a></li>
+      </ul></td> 
+     <td align="left">Not supported yet</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h3><a id="user-content-useful-links" class="anchor" href="https://github.com/microsoft/mobius#useful-links" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Useful Links</h3> 
+  <ul> 
+   <li><a href="https://github.com/microsoft/mobius/blob/master/notes/configuration-mobius.md" target="_blank">Configuration parameters in Mobius</a></li> 
+   <li><a href="https://github.com/microsoft/mobius/blob/master/notes/troubleshooting-mobius.md" target="_blank">Troubleshoot errors in Mobius</a></li> 
+   <li><a href="https://github.com/microsoft/mobius/blob/master/notes/running-mobius-app.md#debug-mode" target="_blank">Debug Mobius apps</a></li> 
+   <li><a href="https://github.com/microsoft/mobius/blob/master/notes/spark-fsharp-mobius.md" target="_blank">Implementing Spark Apps in F# using Mobius</a></li> 
+  </ul> 
+  <h2><a id="user-content-supported-spark-versions" class="anchor" href="https://github.com/microsoft/mobius#supported-spark-versions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported Spark Versions</h2> 
+  <p>Mobius is built and tested with Apache Spark <a href="https://github.com/Microsoft/Mobius/tree/branch-1.4" target="_blank">1.4.1</a>, <a href="https://github.com/Microsoft/Mobius/tree/branch-1.5" target="_blank">1.5.2</a>, <a href="https://github.com/Microsoft/Mobius/tree/branch-1.6" target="_blank">1.6.*</a> and <a href="https://github.com/Microsoft/Mobius/tree/branch-2.0" target="_blank">2.0</a>.</p> 
+  <h2><a id="user-content-releases" class="anchor" href="https://github.com/microsoft/mobius#releases" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Releases</h2> 
+  <p>Mobius releases are available at <a href="https://github.com/Microsoft/Mobius/releases" target="_blank">https://github.com/Microsoft/Mobius/releases</a>. References needed to build C# Spark driver applicaiton using Mobius are also available in <a href="https://www.nuget.org/packages/Microsoft.SparkCLR" target="_blank">NuGet</a></p> 
+  <p><a href="https://www.nuget.org/packages/Microsoft.SparkCLR" target="_blank"><img src="https://camo.githubusercontent.com/06ca73b45650064110f3aa5bd3aa4878d643fae1/68747470733a2f2f6275696c6473746174732e696e666f2f6e756765742f4d6963726f736f66742e537061726b434c52" alt="NuGet Badge" data-canonical-src="https://buildstats.info/nuget/Microsoft.SparkCLR" style="max-width:100%;"></a></p> 
+  <p>Refer to <a href="https://github.com/microsoft/mobius/blob/master/notes/mobius-release-info.md" target="_blank">mobius-release-info.md</a> for the details on versioning policy and the contents of the release.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/microsoft/mobius#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><a href="https://github.com/Microsoft/Mobius/blob/master/LICENSE" target="_blank"><img src="https://camo.githubusercontent.com/9b850b6aeff7cf950f6a6578817cefd52049cfed/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d626c75652e7376673f7374796c653d706c6173746963" alt="License" data-canonical-src="https://img.shields.io/badge/license-MIT-blue.svg?style=plastic" style="max-width:100%;"></a></p> 
+  <p>Mobius is licensed under the MIT license. See <a href="https://github.com/microsoft/mobius/blob/master/LICENSE" target="_blank">LICENSE</a> file for full license information.</p> 
+  <h2><a id="user-content-community" class="anchor" href="https://github.com/microsoft/mobius#community" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Community</h2> 
+  <p><a href="http://issuestats.com/github/Microsoft/Mobius" target="_blank"><img src="https://camo.githubusercontent.com/eb3749a324f490edb868b0de1847312ed4ebba18/687474703a2f2f697373756573746174732e636f6d2f6769746875622f4d6963726f736f66742f4d6f626975732f62616467652f7072" alt="Issue Stats" data-canonical-src="http://issuestats.com/github/Microsoft/Mobius/badge/pr" style="max-width:100%;"></a> <a href="http://issuestats.com/github/Microsoft/Mobius" target="_blank"><img src="https://camo.githubusercontent.com/8268a62cba35e8bb19a2f6a80b5eee217da79667/687474703a2f2f697373756573746174732e636f6d2f6769746875622f4d6963726f736f66742f4d6f626975732f62616467652f6973737565" alt="Issue Stats" data-canonical-src="http://issuestats.com/github/Microsoft/Mobius/badge/issue" style="max-width:100%;"></a> <a href="https://gitter.im/Microsoft/Mobius?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/5d0777b28ee522a98a72f976862367194d4318ad/68747470733a2f2f6261646765732e6769747465722e696d2f4d6963726f736f66742f4d6f626975732e737667" alt="Join the chat at https://gitter.im/Microsoft/Mobius" data-canonical-src="https://badges.gitter.im/Microsoft/Mobius.svg" style="max-width:100%;"></a> <a href="https://twitter.com/intent/tweet?text=@MobiusForSpark%20%5Byour%20tweet%5D%20via%20@GitHub" target="_blank"><img src="https://camo.githubusercontent.com/4a2db0cdc60a109d4a64303df582a8191e99650a/68747470733a2f2f696d672e736869656c64732e696f2f747769747465722f75726c2f687474702f747769747465722e636f6d2f4d6f62697573466f72537061726b2e7376673f7374796c653d736f6369616c" alt="Twitter" data-canonical-src="https://img.shields.io/twitter/url/http/twitter.com/MobiusForSpark.svg?style=social" style="max-width:100%;"></a></p> 
+  <ul> 
+   <li><p>Mobius project welcomes contributions. To contribute, follow the instructions in <a href="https://github.com/microsoft/mobius/blob/master/notes/CONTRIBUTING.md" target="_blank">CONTRIBUTING.md</a></p></li> 
+   <li><p>Options to ask your question to the Mobius community</p> 
+    <ul> 
+     <li>create issue on <a href="https://github.com/Microsoft/Mobius" target="_blank">GitHub</a></li> 
+     <li>create post with "sparkclr" tag in <a href="https://stackoverflow.com/questions/tagged/sparkclr" target="_blank">Stack Overflow</a></li> 
+     <li>join chat at <a href="https://gitter.im/Microsoft/Mobius" target="_blank">Mobius room in Gitter</a></li> 
+     <li>tweet <a href="http://twitter.com/MobiusForSpark" target="_blank">@MobiusForSpark</a></li> 
+    </ul></li> 
+  </ul> 
+  <h2><a id="user-content-code-of-conduct" class="anchor" href="https://github.com/microsoft/mobius#code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code of Conduct</h2> 
+  <p>This project has adopted the <a href="https://opensource.microsoft.com/codeofconduct/" target="_blank">Microsoft Open Source Code of Conduct</a>. For more information see the <a href="https://opensource.microsoft.com/codeofconduct/faq/" target="_blank">Code of Conduct FAQ</a> or contact <a href="mailto:opencode@microsoft.com" target="_blank">opencode@microsoft.com</a> with any additional questions or comments.</p> 
+ </article>
+</div>

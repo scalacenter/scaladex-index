@@ -1,0 +1,108 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-tempest-graph-library-and-database-beta" class="anchor" href="https://github.com/teapot-co/tempest#tempest-graph-library-and-database-beta" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tempest Graph Library and Database (Beta)</h1> 
+  <p><strong>Table of Contents</strong></p> 
+  <ul> 
+   <li><a href="https://github.com/teapot-co/tempest#background" target="_blank">Background</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#requirements" target="_blank">Requirements</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#converting-a-graph-to-tempest-format" target="_blank">Converting a Graph to Tempest Format</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#using-tempest-from-scala" target="_blank">Using Tempest from Scala</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#using-tempest-from-java" target="_blank">Using Tempest from Java</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#using-tempest-from-python" target="_blank">Using Tempest from Python</a></li> 
+   <li><a href="https://github.com/teapot-co/tempest#project-roadmap" target="_blank">Project Roadmap</a></li> 
+  </ul> 
+  <h2><a id="user-content-background" class="anchor" href="https://github.com/teapot-co/tempest#background" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Background</h2> 
+  <p>At <a href="http://teapot.co" target="_blank">Teapot</a> we work with large social networks, and we needed a graph library that could efficiently allow real-time computation on large graphs. We wanted a JVM-based library so we could write efficient high-level code in Scala. Our web backend is in Ruby, so we also needed a way for languages like Ruby or python to efficiently access our graph. We considered using a distributed library like GraphX or Giraph, but those libraries don't support real-time queries, and the complexity and overhead of managing a cluster were undesirable. On AWS, the cost of a machine scales linearly with the amount of RAM used, so for the price of a 256GB cluster, we could rent a single 256GB machine, and have the convenience and performance of running Scala code directly on a single machine. We initially used the <a href="https://github.com/twitter/cassovary" target="_blank">Cassovary</a> library, which we liked, but as our graph grew the loading time became significant. Cassovary was taking hours to load our graph from a text file, making deployments difficult without significant downtime to our service. This led us to rethink how to store graphs.</p> 
+  <p>Tempest is a graph library for efficiently handling large graphs. A key feature of Tempest is reading data directly from a memory mapped binary file, so there is no parsing required and no object or garbage collector overhead. Once the graph file is cached in RAM by the OS, Tempest can read the graph instantly rather than load the graph as other libraries would.<br> It requires only 8 bytes per edge for bi-directional edge access, so, for example, it can store the <a href="http://law.di.unimi.it/webdata/twitter-2010/" target="_blank">Twitter-2010</a> graph of 1.5 billion edges using 12GB of RAM. We use Tempest in production, and it has careful unit tests.</p> 
+  <p>If you have any questions about using Tempest or have feature requests, create a Github issue or send me an email at <a href="mailto:peter.lofgren@cs.stanford.edu" target="_blank">peter.lofgren@cs.stanford.edu</a>.</p> 
+  <h2><a id="user-content-requirements" class="anchor" href="https://github.com/teapot-co/tempest#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h2> 
+  <p>Tempest depends on Java and <a href="http://www.scala-sbt.org/download.html" target="_blank">sbt</a>.</p> 
+  <h2><a id="user-content-converting-a-graph-to-tempest-format" class="anchor" href="https://github.com/teapot-co/tempest#converting-a-graph-to-tempest-format" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Converting a Graph to Tempest Format</h2> 
+  <p>For large graphs, you will want to first convert your graph to the Tempest binary format. The input to our converter is a simple text format where each line has the form "id1 id2" to indicate an edge from id1 to id2, where id1 and id2 are integers between 0 and 2^31. To convert the test graph, for example, run:</p> 
+  <pre><code>git clone https://github.com/teapot-co/tempest.git
+cd tempest
+bin/convert_graph.sh src/test/resources/test_graph.txt test_graph.dat
+</code></pre> 
+  <h2><a id="user-content-using-tempest-from-scala" class="anchor" href="https://github.com/teapot-co/tempest#using-tempest-from-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Tempest from Scala</h2> 
+  <p>Simply add</p> 
+  <pre><code>libraryDependencies += "co.teapot" %% "tempest" % "0.12.0"
+</code></pre> 
+  <p>to your <code>build.sbt</code> file. The graph classes in tempest are the following:</p> 
+  <ul> 
+   <li><a href="http://teapot-co.github.io/tempest/scaladoc/#co.teapot.tempest.graph.DirectedGraph" target="_blank">DirectedGraph</a> defines the interface for graphs</li> 
+   <li><a href="http://teapot-co.github.io/tempest/scaladoc/#co.teapot.tempest.graph.MemoryMappedDirectedGraph" target="_blank">MemoryMappedDirectedGraph</a> efficiently reads an immutable graph from a Tempest binary graph file</li> 
+   <li><a href="http://teapot-co.github.io/tempest/scaladoc/#co.teapot.tempest.graph.MemMappedDynamicDirectedGraph" target="_blank">MemoryMappedMutableDirectedGraph</a> efficiently stores a graph in a binary file and allows efficient edge additions</li> 
+   <li><a href="http://teapot-co.github.io/tempest/scaladoc/#co.teapot.tempest.graph.ConcurrentHashMapDynamicGraph" target="_blank">ConcurrentHashMapDynamicGraph</a> is a thread-safe mutable graph class based on ConcurrentHashMap</li> 
+   <li><a href="http://teapot-co.github.io/tempest/scaladoc/#co.teapot.tempest.graph.DynamicDirectedGraphUnion" target="_blank">DynamicDirectedGraphUnion</a> combines an immutable graph with a mutable graph, for situations where you have a large memory mapped graph but want to be able to add edges to it.</li> 
+  </ul> 
+  <p>As an example of using the graph methods, convert the test graph to test_graph.dat as described above, then run the following from the tempest directory:</p> 
+  <pre><code>sbt console
+val graph = co.teapot.tempest.graph.MemoryMappedDirectedGraph("test_graph.dat")
+graph.nodeCount
+graph.edgeCount
+graph.outDegree(4)
+graph.outNeighbors(4)
+graph.inNeighbors(4)
+</code></pre> 
+  <h2><a id="user-content-using-tempest-from-java" class="anchor" href="https://github.com/teapot-co/tempest#using-tempest-from-java" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Tempest from Java</h2> 
+  <p>Because scala compiles to the jvm, you can naturally use Tempest from Java. Tempest is in a maven repo, so you're using maven, simply add</p> 
+  <pre><code>&lt;dependency&gt;
+      &lt;groupId&gt;co.teapot&lt;/groupId&gt;
+      &lt;artifactId&gt;tempest_2.11&lt;/artifactId&gt;
+      &lt;version&gt;0.10.0&lt;/version&gt;
+    &lt;/dependency&gt;
+</code></pre> 
+  <p>to your pom.xml file to access the Tempest dependency. Then for example, in Java you can <code>import co.teapot.tempest.graph.MemoryMappedDirectedGraph</code> and write</p> 
+  <pre><code>MemoryMappedDirectedGraph graph = new MemoryMappedDirectedGraph(new File("test_graph.dat"));
+System.out.println("out-neighbors of 2: " + graph.outNeighborList(2));
+</code></pre> 
+  <p>The documentation javadoc for the graph classes is linked above in the Scala section.</p> 
+  <h2><a id="user-content-using-tempest-from-python" class="anchor" href="https://github.com/teapot-co/tempest#using-tempest-from-python" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Tempest from Python</h2> 
+  <p>To use tempest from python, it has a client/server mode, so the server (written efficiently in scala) stores large graphs in RAM, while the client is conveniently in python. The server and client can even be on different machines; for example the client can run on a web server while the server runs in a large graph server.</p> 
+  <p>First clone the repository and convert the graph to Tempest binary format, as described above. Then start the server, supplying the binary graph name, for example</p> 
+  <pre><code>bin/start_server.sh test_graph.dat 
+</code></pre> 
+  <p>The server runs by default on TCP port 10001, but you can change this, for example</p> 
+  <pre><code>bin/start_server.sh test_graph.dat 12345
+</code></pre> 
+  <p>Finally, connect to the server from python. First run <code>pip install tempest_graph</code>. Then from the python console:</p> 
+  <pre><code>&gt;&gt;&gt; import tempest_graph
+&gt;&gt;&gt; graph = tempest_graph.get_client()
+&gt;&gt;&gt; graph.maxNodeId()
+9
+&gt;&gt;&gt; graph.outDegree(2)
+4
+&gt;&gt;&gt; graph.outNeighbors(2)
+[0, 1, 3, 9]
+</code></pre> 
+  <h2><a id="user-content-project-roadmap" class="anchor" href="https://github.com/teapot-co/tempest#project-roadmap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Project Roadmap</h2> 
+  <ul> 
+   <li>(potentially) Support non-integer node ids. Currently node ids must be sequential integers, and the database allows ndoes to be selected by attribute.</li> 
+   <li>(potentially) Support edge attributes.</li> 
+  </ul> 
+ </article>
+</div>

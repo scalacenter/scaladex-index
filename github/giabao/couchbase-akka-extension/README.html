@@ -1,0 +1,244 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-couchbase-akka-extension" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#couchbase-akka-extension" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>couchbase-akka-extension</h1> 
+  <p>This is an <a href="http://doc.akka.io/docs/akka/2.2.1/scala/extending-akka.html" target="_blank">akka extension</a> for accessing <a href="http://www.couchbase.com/" target="_blank">Couchbase 2</a>.</p> 
+  <h3><a id="user-content-sample-usage" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#sample-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sample usage</h3> 
+  <ol> 
+   <li><p>Add to application.conf</p> <pre><code>akka{
+  extensions = ["akka.contrib.couchbase.CBExtension"]
+  contrib.couchbase.buckets = [
+    { bucket=bk1
+      # You can map bk1 to a different `real` bucket name in couchbase.
+      # If cb-bucket setting is missing then CBExtension will use `bucket` (here is bk1).
+      # One use-case of this setting is to support switching
+      # deploy environment without changing any line of code
+      cb-bucket="bk1_test"
+      password="some password"
+      nodes="http://cb1.sandinh.com:8091/pools;http://cb2.sandinh.com:8091/pools"
+    },
+    { bucket=bk2
+      password="some password"
+      nodes="http://cb3.sandinh.com:8091/pools"
+    }
+  ]
+}
+</code></pre></li> 
+   <li><p>Get CouchbaseClient from an ActorSystem.</p> <p>This example use Play framework 2 - in which, we can get ActorSystem by importing. Of course, you can get CouchbaseClient without Play.</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">import</span> <span class="pl-v">play.api.libs.concurrent.</span><span class="pl-v">Akka</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.Play.</span><span class="pl-v">current</span>
+
+<span class="pl-k">val</span> <span class="pl-en">cb</span> <span class="pl-k">=</span> <span class="pl-en">CBExtension</span>(<span class="pl-en">Akka</span>.system).buckets(<span class="pl-s"><span class="pl-pds">"</span>bk1<span class="pl-pds">"</span></span>)</pre>
+    </div></li> 
+   <li><p>Use CouchbaseClient. If use asynchronous methods then we can use CbFutureAsScala to implicit convert spymemcache ListenableFuture to scala Future This code use play-json - a json parser library that do NOT depends on play framework</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">import</span> <span class="pl-v">akka.contrib.couchbase.CbFutureAsScala.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.libs.json.</span><span class="pl-v">Json</span>
+<span class="pl-k">import</span> <span class="pl-v">net.spy.memcached.ops.StatusCode.</span><span class="pl-v">ERR_NOT_FOUND</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fmt</span> <span class="pl-k">=</span> <span class="pl-en">Json</span>.format[<span class="pl-en">User</span>]
+
+<span class="pl-k">def</span> <span class="pl-en">getOrCreate</span>(<span class="pl-v">key</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">User</span>] <span class="pl-k">=</span>
+  cb.asyncGet(key).asScala.map{
+    <span class="pl-k">case</span> <span class="pl-v">s</span>: <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Json</span>.fromJson[<span class="pl-en">User</span>](<span class="pl-en">Json</span>.parse(s)).get
+  }.recoverWith{
+    <span class="pl-k">case</span> <span class="pl-en">CBException</span>(<span class="pl-en">ERR_NOT_FOUND</span>) <span class="pl-k">=&gt;</span>
+      <span class="pl-k">val</span> <span class="pl-en">u</span> <span class="pl-k">=</span> <span class="pl-en">User</span>(<span class="pl-s"><span class="pl-pds">"</span>Bob<span class="pl-pds">"</span></span>, <span class="pl-c1">18</span>)
+      cb.set(key, <span class="pl-en">Json</span>.stringify(<span class="pl-en">Json</span>.toJson(u))).asScala.map(_ <span class="pl-k">=&gt;</span> u)
+  }</pre>
+    </div></li> 
+  </ol> 
+  <h3><a id="user-content-install" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#install" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h3> 
+  <p>This library is published to <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.sandinh%22%20AND%20a%3A%22couchbase-akka-extension_2.10%22" target="_blank">maven central</a>.</p> 
+  <p>If you use sbt then: <code>libraryDependencies += "com.sandinh" %% "couchbase-akka-extension" % "3.1.3"</code></p> 
+  <h3><a id="user-content-changelogs" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#changelogs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelogs</h3> 
+  <p>We use <a href="http://semver.org" target="_blank">Semantic Versioning</a>, so changing in micro version is binary compatible.</p> 
+  <p>Ex, v2.0.x is binary compatible with v2.0.0</p> 
+  <h5><a id="user-content-v316" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v316" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.6</h5> 
+  <ul> 
+   <li>update scala 2.11.2, specs2 2.4, play-json 2.3.2, couchbase-client 1.4.4</li> 
+  </ul> 
+  <h5><a id="user-content-v315" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v315" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.5</h5> 
+  <ul> 
+   <li>update play-json 2.3.1 (optional dependency), akka-actor 2.3.4</li> 
+   <li>note: couchbase-client is NOT updated to 1.4.3 because when run <code>sbt test</code> with v1.4.3 =&gt; many warning lines: <code>WARN net.spy.memcached.MemcachedConnection: handling node for operation is not set</code></li> 
+  </ul> 
+  <h5><a id="user-content-v314" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v314" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.4</h5> 
+  <ul> 
+   <li>update play-json 2.3.0 (optional dependency)</li> 
+   <li>update couchbase-client 1.4.2 (&amp; spymemcached 2.11.3)</li> 
+  </ul> 
+  <h5><a id="user-content-v313" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v313" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.3</h5> 
+  <ul> 
+   <li>update play-json 2.3.0-RC2 (optional dependency)</li> 
+  </ul> 
+  <h5><a id="user-content-v312" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v312" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.2</h5> 
+  <ul> 
+   <li>update sbt 0.13.5-RC4, scala 2.11.1, akka 2.3.3 &amp; specs2 2.3.12</li> 
+   <li>add convenient traits akka.contrib.couchbase.{HasKey0, ReadsKey0, WritesKey0, Key0}</li> 
+  </ul> 
+  <h5><a id="user-content-v311" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v311" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.1</h5> 
+  <ul> 
+   <li>update couchbase-client 1.4.1. version 1.4.0 of couchbase-client depends on spymemcached 2.11.1 which has some critical bugs.</li> 
+  </ul> 
+  <h5><a id="user-content-v310" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v310" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.1.0</h5> 
+  <ul> 
+   <li>Change nothing in code but update play-json (optional dependency) to 2.3.0-RC1 &amp; akka-actor 2.3.2</li> 
+   <li>cross compile for scala 2.11 &amp; scala 2.10</li> 
+  </ul> 
+  <h5><a id="user-content-v301" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v301" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.0.1</h5> 
+  <ul> 
+   <li>update couchbase-client 1.4.0 &amp; spymemcached 2.11.1</li> 
+   <li>update sbt 0.13.2</li> 
+  </ul> 
+  <h5><a id="user-content-v300" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v300" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v3.0.0</h5> 
+  <ul> 
+   <li>Only change structure of CBException to use StatusCode type-safe feature in spymemcached 2.10.6. @see <a href="http://www.couchbase.com/issues/browse/SPY-153" target="_blank">SPY-153</a> &amp; the <a href="https://github.com/couchbase/spymemcached/commit/eb4c019f919370c9993d4a58d4990574b58d0f1e" target="_blank">corresponding commit</a></li> 
+  </ul> 
+  <h6><a id="user-content-migration-guide-from-v2x" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#migration-guide-from-v2x" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration guide from v2.x:</h6> 
+  <p>In v2.x, you check whether the get operation return NotFound by matching <code>case CBException(NotFound)</code> where NotFound is a string, hardcode = "Not found".</p> 
+  <p>Now, in v3.x, this checking must change to <code>case CBException(ERR_NOT_FOUND)</code> where ERR_NOT_FOUND is a value in enum net.spy.memcached.ops.StatusCode.</p> 
+  <p>Of course, you can check with other StatusCode.</p> 
+  <h5><a id="user-content-v213" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v213" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.1.3</h5> 
+  <ul> 
+   <li>support <code>cb-bucket</code> setting. This version is backward compatible with 2.1.x</li> 
+  </ul> 
+  <h5><a id="user-content-v212" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v212" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.1.2</h5> 
+  <ul> 
+   <li>update play 2.2.2 &amp; akka 2.2.4</li> 
+  </ul> 
+  <h5><a id="user-content-v210" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v210" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.1.0</h5> 
+  <ul> 
+   <li>Add scala doc for CBJson.scala</li> 
+   <li>Remove handler when future completed in <a href="https://github.com/giabao/couchbase-akka-extension/blob/master/src/main/scala/akka/contrib/couchbase/CbFutureAsScala.scala" target="_blank">CbFutureAsScala</a></li> 
+   <li>Change <code>ReadsKey1[T, A] { this: CBReads[T] =&gt;</code> to <code>ReadsKey1[T, A] extends CBReads[T] {</code>. This change can break binary compatibility, but keep source compatibility. @See case "not throws StackOverflowError" in <a href="https://github.com/giabao/couchbase-akka-extension/blob/master/src/test/scala/akka/contrib/couchbase/CBJsonSpec.scala" target="_blank">CBJsonSpec</a> for more information.</li> 
+  </ul> 
+  <h5><a id="user-content-v208" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v208" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.8</h5> 
+  <ul> 
+   <li>fix <a href="https://github.com/giabao/couchbase-akka-extension/issues/2" target="_blank">IllegalStateException: Promise already completed. in RichBulkFuture</a></li> 
+  </ul> 
+  <h5><a id="user-content-v207" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v207" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.7</h5> 
+  <ul> 
+   <li>fix <a href="https://github.com/giabao/couchbase-akka-extension/issues/1" target="_blank">UnsupportedOperationException</a></li> 
+  </ul> 
+  <h5><a id="user-content-v204" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v204" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.4</h5> 
+  <ul> 
+   <li>only update akka-actor 2.2.3</li> 
+  </ul> 
+  <h5><a id="user-content-v203" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v203" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.3</h5> 
+  <ul> 
+   <li>update akka-actor 2.2.2</li> 
+   <li>add <a href="https://github.com/giabao/couchbase-akka-extension/blob/master/src/main/scala/akka/contrib/couchbase/CBJson.scala" target="_blank">CBJson util traits</a> for reads/ writes couchbase. See sample usage in <a href="https://github.com/giabao/couchbase-akka-extension/blob/master/src/test/scala/akka/contrib/couchbase/CBJsonSpec.scala" target="_blank">CBJsonSpec</a></li> 
+   <li>add optional dependency <code>"com.typesafe.play" %% "play-json" % "2.2.0" % "optional"</code>. This is mandatory if you use CBJson.</li> 
+  </ul> 
+  <h5><a id="user-content-v202" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v202" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.2</h5> 
+  <ul> 
+   <li>update couchbase-client 1.2.1 (&amp; spymemcached 2.10.1)</li> 
+  </ul> 
+  <h5><a id="user-content-v201" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v201" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.1</h5> 
+  <ul> 
+   <li>add val akka.contrib.couchbase.CbFutureAsScala.NotFound</li> 
+  </ul> 
+  <h5><a id="user-content-v200" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v200" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v2.0.0</h5> 
+  <ul> 
+   <li>Add unit test</li> 
+   <li>(NOT compatible) change from:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">xxCbFutureAsScala</span>[<span class="pl-en">T</span>](<span class="pl-v">underlying</span>: <span class="pl-en">XxCbFuture</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">T</span>]</pre>
+  </div> 
+  <p>to:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">RichXxCbFuture</span>(<span class="pl-v">underlying</span>: <span class="pl-en">XxCbFuture</span>[<span class="pl-en">T</span>]){
+  <span class="pl-k">def</span> <span class="pl-en">asScala</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">T</span>]
+}</pre>
+  </div> 
+  <p>So, in v2.0.0, you must call .asScala to convert CbFuture to scala Future (similar to collection.JavaConverters._ )</p> 
+  <h5><a id="user-content-v100" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#v100" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.0</h5> 
+  <p>First stable release</p> 
+  <h3><a id="user-content-licence" class="anchor" href="https://github.com/giabao/couchbase-akka-extension#licence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Licence</h3> 
+  <p>This software is licensed under the Apache 2 license: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Copyright 2013 Sân Đình (<a href="http://sandinh.com" target="_blank">http://sandinh.com</a>)</p> 
+ </article>
+</div>

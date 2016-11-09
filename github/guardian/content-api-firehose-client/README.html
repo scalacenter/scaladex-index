@@ -1,0 +1,132 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-content-api-firehose-client" class="anchor" href="https://github.com/guardian/content-api-firehose-client#content-api-firehose-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Content API Firehose Client</h1> 
+  <p>A client for the Guardian's <a href="http://explorer.capi.gutools.co.uk/" target="_blank">Content API</a> firehose - an events stream for all updates and deletes of Guardian content.</p> 
+  <h2><a id="user-content-setup" class="anchor" href="https://github.com/guardian/content-api-firehose-client#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h2> 
+  <p>Add the following line to your SBT build definition, and set the version number to be the latest from the <a href="https://github.com/guardian/content-api-firehose-client/releases" target="_blank">releases page</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.gu<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>content-api-firehose-client<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>x.y<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/guardian/content-api-firehose-client#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>In order to get started with reading from the content-api firehose you will need to provide us with your AWS account number so that we can provide you with permissions. To do so, you may speak to anyone within the content api/off platform team and they will be able to help. Or better yet, you can submit the PR yourself! You will need to provide a new parameter to <a href="https://github.com/guardian/crier/blob/master/cloudformation.json" target="_blank">this</a> cloudformation file as so:</p> 
+  <pre><code>"TEAM_NAMEAccountNumber": {
+    "Description": "Account number for the TEAM_NAME team",
+    "Type": "String"
+}
+</code></pre> 
+  <p>And then add a corresponding assumeRole command to the <a href="https://github.com/guardian/crier/blob/master/cloudformation.json#L100" target="_blank">cross account role</a> as such: </p> 
+  <pre><code>{
+    "Action": "sts:AssumeRole",
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": {
+            "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "TEAM_NAMEAccountNumber" }, ":root" ]]
+        }
+    }
+}
+</code></pre> 
+  <p>Once this been done, someone on the team will review, merge and update for you to begin. Create an IAM policy in your project's cloudformation file as so: </p> 
+  <ul> 
+   <li>STAGE - e.g PROD or CODE</li> 
+   <li>APP_NAME - e.g. my-application</li> 
+   <li>MODE - e.g. live or preview</li> 
+   <li>CAPI_ACCOUNT_NUMBER - The AWS account number for CAPI. Ask someone from the CAPI team to provide you with this.</li> 
+   <li>STREAM_NAME - The AWS Kinesis stream name of the CAPI events stream. Ask someone from the CAPI team to provide you with this.</li> 
+  </ul> 
+  <div class="highlight highlight-source-json">
+   <pre>  <span class="pl-s"><span class="pl-pds">"</span>CrierDynamoDBPolicy<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>Type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>AWS::IAM::Policy<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>Properties<span class="pl-pds">"</span></span>: {
+      <span class="pl-s"><span class="pl-pds">"</span>PolicyName<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>CrierDynamo<span class="pl-pds">"</span></span>,
+      <span class="pl-s"><span class="pl-pds">"</span>PolicyDocument<span class="pl-pds">"</span></span>: {
+        <span class="pl-s"><span class="pl-pds">"</span>Statement<span class="pl-pds">"</span></span>: [
+          {
+            <span class="pl-s"><span class="pl-pds">"</span>Effect<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Allow<span class="pl-pds">"</span></span>,
+            <span class="pl-s"><span class="pl-pds">"</span>Action<span class="pl-pds">"</span></span>: [
+              <span class="pl-s"><span class="pl-pds">"</span>dynamodb:*<span class="pl-pds">"</span></span>
+            ],
+            <span class="pl-s"><span class="pl-pds">"</span>Resource<span class="pl-pds">"</span></span>: [
+              {
+                <span class="pl-s"><span class="pl-pds">"</span>Fn::Join<span class="pl-pds">"</span></span>: [
+                  <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,
+                  [
+                    <span class="pl-s"><span class="pl-pds">"</span>arn:aws:dynamodb:*:YOUR_ACCOUNT_NUMBER:table/content-api-firehose-v2-STAGE_APP_NAME-MODE-<span class="pl-pds">"</span></span>,
+                    {
+                      <span class="pl-s"><span class="pl-pds">"</span>Ref<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Stage<span class="pl-pds">"</span></span>
+                    },
+                    <span class="pl-s"><span class="pl-pds">"</span>*<span class="pl-pds">"</span></span>
+                  ]
+                ]
+              }
+            ]
+          },
+          {
+            <span class="pl-s"><span class="pl-pds">"</span>Effect<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Allow<span class="pl-pds">"</span></span>,
+            <span class="pl-s"><span class="pl-pds">"</span>Action<span class="pl-pds">"</span></span>: [
+              <span class="pl-s"><span class="pl-pds">"</span>kinesis:Get*<span class="pl-pds">"</span></span>,
+              <span class="pl-s"><span class="pl-pds">"</span>kinesis:List*<span class="pl-pds">"</span></span>,
+              <span class="pl-s"><span class="pl-pds">"</span>kinesis:Describe*<span class="pl-pds">"</span></span>
+            ],
+            <span class="pl-s"><span class="pl-pds">"</span>Resource<span class="pl-pds">"</span></span>: [
+              <span class="pl-s"><span class="pl-pds">"</span>arn:aws:kinesis:*:CAPI_ACCOUNT_NUMBER:stream/STREAM_NAME<span class="pl-pds">"</span></span>
+            ]
+          }
+        ]
+      },
+      <span class="pl-s"><span class="pl-pds">"</span>Roles<span class="pl-pds">"</span></span>: [
+        {
+          <span class="pl-s"><span class="pl-pds">"</span>Ref<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>RootRole<span class="pl-pds">"</span></span>
+        }
+      ]
+    }
+  }</pre>
+  </div> 
+  <p>Once this has been done you will be able to create a <code>ContentApiFirehoseConsumer</code> in your application as such:</p> 
+  <ul> 
+   <li>STS_ROLE_TO_ASSUME - The cross account role to assume in order to read from the content api events stream. Ask anyone from the CAPI team to provide you with this. This should be stored by your application as a secret.</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">kinesisCredsProvider</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AWSCredentialsProviderChain</span>(
+    <span class="pl-k">new</span> <span class="pl-en">ProfileCredentialsProvider</span>(<span class="pl-s"><span class="pl-pds">"</span>capi<span class="pl-pds">"</span></span>),
+    <span class="pl-k">new</span> <span class="pl-en">STSAssumeRoleSessionCredentialsProvider</span>(<span class="pl-en">STS_ROLE_TO_ASSUME</span>, <span class="pl-s"><span class="pl-pds">"</span>capi<span class="pl-pds">"</span></span>)
+  )
+
+  <span class="pl-k">val</span> <span class="pl-en">dynamoCredsProvider</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AWSCredentialsProviderChain</span>(
+    <span class="pl-k">new</span> <span class="pl-en">ProfileCredentialsProvider</span>(<span class="pl-s"><span class="pl-pds">"</span>YOUR_PROFILE_NAME<span class="pl-pds">"</span></span>),
+    <span class="pl-k">new</span> <span class="pl-en">InstanceProfileCredentialsProvider</span>()
+  )
+
+  <span class="pl-k">val</span> <span class="pl-en">kinesisStreamReaderConfig</span> <span class="pl-k">=</span> <span class="pl-en">KinesisStreamReaderConfig</span>(
+    streamName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>GET_STREAM_NAME_FROM_SOMEONE_IN_CAPI<span class="pl-pds">"</span></span>,
+    app <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my-application<span class="pl-pds">"</span></span>, <span class="pl-c">// must match the table name in CrierDynamoDBPolicy</span>
+    stage <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>PROD<span class="pl-pds">"</span></span>,
+    mode <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>live<span class="pl-pds">"</span></span>,
+    suffix <span class="pl-k">=</span> <span class="pl-c1">None</span>,
+    kinesisCredentialsProvider <span class="pl-k">=</span> kinesisCredsProvider,
+    dynamoCredentialsProvider <span class="pl-k">=</span> dynamoCredsProvider,
+    awsRegion <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>eu-west-1<span class="pl-pds">"</span></span>
+  )
+
+<span class="pl-k">val</span> <span class="pl-en">contentApiFirehoseConsumer</span><span class="pl-k">:</span> <span class="pl-en">ContentApiFirehoseConsumer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ContentApiFirehoseConsumer</span>(
+    kinesisStreamReaderConfig
+    streamListener <span class="pl-c">// Your implementation of `StreamListener` - to provide behavior per event type.</span>
+)
+</pre>
+  </div> 
+  <p>Then all is left is to start consuming from the firehose.</p> 
+  <pre><code>contentApiFirehoseConsumer.start()
+</code></pre> 
+  <p>And when you're finished:</p> 
+  <pre><code>contentApiFirehoseConsumer.shutdown()
+</code></pre> 
+ </article>
+</div>

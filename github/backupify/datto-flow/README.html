@@ -1,0 +1,130 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-dattoflow-" class="anchor" href="https://github.com/backupify/datto-flow#dattoflow-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>datto.flow <a href="https://travis-ci.org/backupify/datto-flow" target="_blank"><img src="https://camo.githubusercontent.com/8f03e6c03370a79a622f944bb5e4c13de24a1899/68747470733a2f2f7472617669732d63692e6f72672f6261636b75706966792f646174746f2d666c6f772e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/backupify/datto-flow.svg?branch=master" style="max-width:100%;"></a></h1> 
+  <p>Datto-flow augments <a href="http://doc.akka.io/docs/akka/current/scala/stream/index.html" target="_blank">Akka-stream</a> to make streams that carry context easy to construct and manipulate.</p> 
+  <p>When constructing a stream, one often wants to do two things: 1. Maintain a unchanged context about each item in the stream, which may be accessed by each processing step of the stream. 2. Allow a processing step to fail when processing on a particular item, such that subsequent processing steps will not be executed.</p> 
+  <p>Akka-stream does not directly provide tools for these tasks. Instead, the solution is to create streams of more complicated types. For example, instead of a akka flow of type <code>Flow[A, B, akka.NotUsed]</code>, one could create a flow of type <code>Flow[(A, Context), (Try[B], Context), akka.NotUsed]</code>, where <code>Context</code> is some context type associated with each item in the stream.</p> 
+  <p>Manipulating such streams is tiresome. Datto-flow provides tools to make this easy. The <code>FlowResult[A, Context]</code> type represents the items in a stream, which have a success/failure state and a context. <code>FlowBuilder</code> provides a tool for constructing flows of type <code>Flow[FlowResult[A, Context], FlowResult[B, Context]]</code> (this type is abbreviated to <code>ContextFlow[A, B, Context]</code>).</p> 
+  <h2><a id="user-content-flowresult" class="anchor" href="https://github.com/backupify/datto-flow#flowresult" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FlowResult</h2> 
+  <p>The simplified definition of <code>FlowResult</code> is as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">FlowResult</span>[<span class="pl-k">+</span><span class="pl-en">T</span>, <span class="pl-en">Ctx</span>](<span class="pl-v">value</span>: <span class="pl-en">Try</span>[<span class="pl-en">T</span>], <span class="pl-v">context</span>: <span class="pl-en">Ctx</span>, <span class="pl-v">metadata</span>: <span class="pl-en">Metadata</span> <span class="pl-k">=</span> <span class="pl-en">Metadata</span>())</pre>
+  </div> 
+  <p>So, a flow result contains either a value or a failure, a context that is unchanged over the course of the stream, as well as metadata, which represents additional information that may have been generated during the course of the stream.</p> 
+  <p><code>FlowResult</code> is also a monad: it supports <code>map[B](f: A =&gt; B)</code>, <code>flatMap[B](f: A =&gt; Try[B])</code> and <code>mapAsync[B](f: A =&gt; Future[B])</code> operations. It also supports operations that expose the context, such as <code>mapWithContext[B](f: (A, Context, Metadata) =&gt; B)</code>. Many other useful operations are available. In all cases, these operations are only applied to successful flow results. Failures are propogated unchanged.</p> 
+  <h2><a id="user-content-flowbuilder" class="anchor" href="https://github.com/backupify/datto-flow#flowbuilder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FlowBuilder</h2> 
+  <p><code>FlowBuilder</code> makes building flows of <code>FlowResults</code> easy. A standard use of <code>FlowBuilder</code> would be as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">myFlow</span><span class="pl-k">:</span> <span class="pl-en">ContextFlow</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>, <span class="pl-en">MyContext</span>] <span class="pl-k">=</span> <span class="pl-en">FlowBuilder</span>[<span class="pl-k">Int</span>, <span class="pl-en">MyContext</span>]()
+  .map(i <span class="pl-k">=&gt;</span> i <span class="pl-k">+</span> <span class="pl-c1">2</span>)
+  .mapWithContextAsync((i, context, metadata) <span class="pl-k">=&gt;</span> i <span class="pl-k">+</span> context.baseSize)
+  .flow</pre>
+  </div> 
+  <p><code>FlowBuilder</code> supports building flows using most operations provided by <code>FlowResult</code>. It also supports other useful operations, such as <code>flatMapGrouped</code>, which will process multiple items at once.</p> 
+  <h2><a id="user-content-mergeflow" class="anchor" href="https://github.com/backupify/datto-flow#mergeflow" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MergeFlow</h2> 
+  <p>MergeFlow provides a way to apply branching logic to a flow. It works as follows: with each flow, you assign a predicate that determines the conditions under which that flow should be applied. Generally, these predicates should be mutually exclusive and cover all possible cases, but this is not enforced. Together, these form a list of flow-predicate pairs. From these, a new flow is constructed, in which (in order)</p> 
+  <ul> 
+   <li>Each item in the flow is broadcast to N child flows</li> 
+   <li>Each child flow is filtered according to the associated predicate.</li> 
+   <li>The items for which the predicate is true are passed down the associated flow.</li> 
+   <li>Items that are errors (and hence to which none of the predicates apply) are propogated in another error flow.</li> 
+   <li>The items in each flow are merged back into a single flow.</li> 
+  </ul> 
+  <pre><code>              +------------+
+              |            |
+              |  Broadcast |
+              |            |
+              +------+-----+
+                    /|\
+                   / | \
+                  /  |  \
+                 /   |   \
+                /    |    \
+               /     |     \
+              /      |      \
+             /       |       \
+   +----------+ +-------+ +-------------+
+   |Predicate | | ...   | |   Errors    |
+   |1 Applied | |       | | Propgated   |
+   |          | |       | |             |
+   +-----+----+ +---+---+ +------+------+
+         |          |            |
+         |          |            |
+   +-----+----+ +---+---+        /
+   | Flow 1   | | Flows |       /
+   |          | |       |      /
+   +-----\----+ +---+---+     /
+          \         |        /
+           \        |       /
+            \       |      /
+             \      |     /
+              \     |    /
+               \    |   /
+                \   |  /
+                 \  | /
+                  \ |/
+          +----------------+
+          |                |
+          |     Merge      |
+          |                |
+          +----------------+
+
+</code></pre> 
+  <p>For example, given two flows, one for handling positive integers and another for handling negative ones, we can create a new flow that will handle all integers according to the combined flow operation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>   <span class="pl-k">val</span> <span class="pl-en">flow</span><span class="pl-k">:</span> <span class="pl-en">ContextFlow</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>, <span class="pl-en">Ctx</span>] <span class="pl-k">=</span> <span class="pl-en">MergeFlow</span>(
+     (positiveIntFlow, _ <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span>),
+     (negativeIntFlow, _ <span class="pl-k">&lt;</span> <span class="pl-c1">0</span>)
+   )</pre>
+  </div> 
+  <h2><a id="user-content-generator" class="anchor" href="https://github.com/backupify/datto-flow#generator" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Generator</h2> 
+  <p>Often, a few asynchronous operations are needed to properly construct a <code>Source</code>. This can lead to working with objects of type <code>Future[Source[_]]</code> instead of type <code>Source[_]</code>. <code>Generator</code> encapsulates this, making such objects easier to manipulate.</p> 
+  <p>Some examples:</p> 
+  <p>Creating a generator from data retrieved by a future:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">getDataFuture</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Stream</span>[<span class="pl-k">Int</span>]]
+
+<span class="pl-k">val</span> <span class="pl-en">generator</span> <span class="pl-k">=</span> <span class="pl-en">Generator</span>.future[<span class="pl-k">Int</span>, <span class="pl-k">Unit</span>] {
+  getDataFuture().map(dataCollection <span class="pl-k">=&gt;</span> <span class="pl-en">Source</span>(dataCollection))
+}
+generator.runWith(<span class="pl-en">Sink</span>.seq) <span class="pl-c">//returns a Future[Seq[Int]]</span>
+</pre>
+  </div> 
+  <p>Performing a task prior to executing the stream:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">preRunHook</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>]
+
+<span class="pl-k">val</span> <span class="pl-en">generator</span> <span class="pl-k">=</span> <span class="pl-en">Generator</span>.future {
+  preRunHook().map(_ <span class="pl-k">=&gt;</span> mySource)
+}
+generator.runWith(<span class="pl-en">Sink</span>.seq)</pre>
+  </div> 
+  <p>The materialization of the underlying source is always of type <code>Future[T]</code>. In the above examples, it is of type <code>Future[Unit]</code>. For other materialization types, use the <code>Generator.Mat</code> functions:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">generator</span> <span class="pl-k">=</span> <span class="pl-en">Generator</span>.<span class="pl-en">Mat</span>.future {
+  getDataFuture().map(dataCollection <span class="pl-k">=&gt;</span> <span class="pl-en">Source</span>(dataCollection)).mapMaterializedValue(_ <span class="pl-k">=&gt;</span> <span class="pl-c1">1</span>)
+}
+
+generator.runWithMat(<span class="pl-en">Sink</span>.ignore)(<span class="pl-en">Keep</span>.left) <span class="pl-c">// returns a Future[Int]</span></pre>
+  </div> 
+  <p>Another way to express the materialization in the last line would be:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>generator.to(<span class="pl-en">Sink</span>.ignore).map(_.run())</pre>
+  </div> 
+ </article>
+</div>

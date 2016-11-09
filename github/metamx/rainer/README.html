@@ -1,0 +1,246 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="" class="anchor" href="https://github.com/metamx/rainer#" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a href="https://cloud.githubusercontent.com/assets/1214075/3766893/c5322fb2-18c8-11e4-8a92-08a8e45bc5ca.jpg" target="_blank"><img width="175" alt="Rainer" src="https://cloud.githubusercontent.com/assets/1214075/3766893/c5322fb2-18c8-11e4-8a92-08a8e45bc5ca.jpg" style="max-width:100%;"></a></h1> 
+  <p>Rainer is a configuration management library that is based around versioned key/value pairs called "commits". We created it after we noticed that we had a lot of services that each managed configuration in slightly different ways (with slightly different flaws!). It is composed of a set of APIs that can be used independently, or together as part of a powerful configuration management system. In addition to key/value access, it can also provide:</p> 
+  <ul> 
+   <li>Full audit trail of historical commits for each key, including who, why, and when they were committed.</li> 
+   <li>Ability to detect concurrent modifications and prevent users from clobbering each other.</li> 
+   <li>Extensibility to handle a variety of storage backends and commit payload types.</li> 
+   <li>Optional ZooKeeper-backed views and notifications, for immediate cluster-wide updates.</li> 
+   <li>Optional HTTP API along with clients for the JVM, Python, and the command line.</li> 
+  </ul> 
+  <p>Rainer is written in Scala, as are the examples on this page, but it should also be usable from other JVM languages (like Java).</p> 
+  <h2><a id="user-content-commits" class="anchor" href="https://github.com/metamx/rainer#commits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Commits</h2> 
+  <p>Rainer is based around versioned key/value pairs called "commits". Commits have the attributes:</p> 
+  <ul> 
+   <li>Key, which is a String.</li> 
+   <li>Payload, which can be an arbitrary type. Think of this like a short document.</li> 
+   <li>Version, which must increase by one with each successive commit.</li> 
+   <li>Author, the entity that created the commit.</li> 
+   <li>Comment, some free-form string describing the commit.</li> 
+   <li>Mtime, the timestamp when the commit was created.</li> 
+  </ul> 
+  <p>Each key's commits are separate from every other key's commits, and are versioned independently. In particular, there is no concept of a global database version.</p> 
+  <p>Your payload type must be deserializable, so you need to provide a KeyValueDeserialization for it. You can optionally provide a KeyValueSerialization as well.</p> 
+  <p>If you are not using a serializer, then when you create a new Commit, instead of providing the payload as an object, you just provide some bytes that are deserializable using your KeyValueDeserialization. This mode is useful if you want to allow humans to edit the serialized documents directly, since it will preserve comments, whitespace, and so on.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/metamx/rainer#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Rainer offers three server-side components that can work together or separately:</p> 
+  <ul> 
+   <li>CommitStorage (persistent journaled storage)</li> 
+   <li>CommitKeeper (ZooKeeper-backed views and notifications)</li> 
+   <li>RainerServlet (HTTP API for remote inspection and modification)</li> 
+  </ul> 
+  <p>If you want to use all three together, the simplest way is using the "Rainers" builder, which creates all three and links them together:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">serialization</span> <span class="pl-k">=</span> <span class="pl-en">KeyValueSerialization</span>.usingJackson[<span class="pl-en">ValueType</span>](objectMapper)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">deserialization</span> <span class="pl-k">=</span> <span class="pl-en">KeyValueDeserialization</span>.usingJackson[<span class="pl-en">ValueType</span>](objectMapper)
+
+<span class="pl-k">val</span> <span class="pl-en">db</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MySQLDB</span>(dbConfig) <span class="pl-k">with</span> <span class="pl-e">DbCommitStorageMySQLMixin</span>
+<span class="pl-k">val</span> <span class="pl-en">rainers</span> <span class="pl-k">=</span> <span class="pl-en">Rainers</span>.create[<span class="pl-en">ValueType</span>](
+  curator,
+  <span class="pl-s"><span class="pl-pds">"</span>/path/in/zk<span class="pl-pds">"</span></span>,
+  <span class="pl-k">new</span> <span class="pl-en">DbCommitStorage</span>[<span class="pl-en">ValueType</span>](db, <span class="pl-s"><span class="pl-pds">"</span>table_name<span class="pl-pds">"</span></span>)
+)
+
+db.start()
+rainers.start()
+
+<span class="pl-c">// Do what you will with these:</span>
+<span class="pl-k">val</span> <span class="pl-en">myStorage</span><span class="pl-k">:</span> <span class="pl-en">CommitStorage</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.storage
+<span class="pl-k">val</span> <span class="pl-en">myKeeper</span><span class="pl-k">:</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.keeper
+<span class="pl-k">val</span> <span class="pl-en">myServlet</span><span class="pl-k">:</span> <span class="pl-en">RainerServlet</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.servlet
+
+<span class="pl-c">// For example:</span>
+myStorage.save(<span class="pl-en">Commit</span>.fromValue(
+  key <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>,
+  version <span class="pl-k">=</span> <span class="pl-c1">1</span>,
+  payload <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ValueType,</span>
+  author <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me<span class="pl-pds">"</span></span>,
+  comment <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Creating foo<span class="pl-pds">"</span></span>,
+  mtime <span class="pl-k">=</span> <span class="pl-en">DateTime</span>.now
+))</pre>
+  </div> 
+  <h2><a id="user-content-components" class="anchor" href="https://github.com/metamx/rainer#components" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Components</h2> 
+  <h3><a id="user-content-commitstorage-persistent-journaled-storage" class="anchor" href="https://github.com/metamx/rainer#commitstorage-persistent-journaled-storage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>CommitStorage: Persistent journaled storage</h3> 
+  <p>The CommitStorage trait represents a key/value store that retains every version of every commit. The main builtin implementation is DbCommitStorage, which is backed by an RDBMS.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">deserialization</span> <span class="pl-k">=</span> <span class="pl-en">KeyValueDeserialization</span>.usingJackson[<span class="pl-en">ValueType</span>](objectMapper)
+
+<span class="pl-k">val</span> <span class="pl-en">db</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MySQLDB</span>(dbConfig) <span class="pl-k">with</span> <span class="pl-e">DbCommitStorageMySQLMixin</span>
+<span class="pl-k">val</span> <span class="pl-en">storage</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DbCommitStorage</span>[<span class="pl-en">ValueType</span>](db, <span class="pl-s"><span class="pl-pds">"</span>table_name<span class="pl-pds">"</span></span>)
+
+db.start()
+storage.start()
+
+<span class="pl-c">// Revert "foo" to previous version</span>
+<span class="pl-k">val</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> storage.get(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">previousFoo</span> <span class="pl-k">=</span> foo flatMap (x <span class="pl-k">=&gt;</span> storage.get(x.key, x.version <span class="pl-k">-</span> <span class="pl-c1">1</span>))
+previousFoo foreach (x <span class="pl-k">=&gt;</span> storage.save(<span class="pl-en">Commit</span>.fromBytes(x.key, x.version <span class="pl-k">+</span> <span class="pl-c1">2</span>, x.payload, <span class="pl-s"><span class="pl-pds">"</span>me<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Reverting foo<span class="pl-pds">"</span></span>, <span class="pl-en">DateTime</span>.now))</pre>
+  </div> 
+  <h3><a id="user-content-commitkeeper-zookeeper-views" class="anchor" href="https://github.com/metamx/rainer#commitkeeper-zookeeper-views" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>CommitKeeper: ZooKeeper views</h3> 
+  <p>The CommitKeeper class represents the most recent versions of each commit stored in ZooKeeper. It supports on-demand access, live-updating views, and instant notifications. It does not keep a full history for each key; only CommitStorages do that.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">deserialization</span> <span class="pl-k">=</span> <span class="pl-en">KeyValueDeserialization</span>.usingJackson[<span class="pl-en">ValueType</span>](objectMapper)
+
+<span class="pl-k">val</span> <span class="pl-en">keeper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>](curator, <span class="pl-s"><span class="pl-pds">"</span>/path/in/zk<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// On-demand access (synchronous ZK operations):</span>
+<span class="pl-k">val</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> keeper.get(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">keys</span> <span class="pl-k">=</span> keeper.keys
+
+<span class="pl-c">// Create a mirror (async updates from ZK):</span>
+<span class="pl-k">val</span> <span class="pl-en">mirror</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]] <span class="pl-k">=</span> keeper.mirror()
+
+<span class="pl-c">// Which, for example, you can use to update an AtomicReference:</span>
+<span class="pl-k">val</span> <span class="pl-en">ref</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AtomicReference</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]]
+<span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> mirror.changes.register(<span class="pl-en">Witness</span>(ref))
+
+<span class="pl-c">// When you're no longer interested in updates, close the mirror:</span>
+<span class="pl-en">Await</span>.result(c.close())</pre>
+  </div> 
+  <h3><a id="user-content-using-commitkeeper-with-commitstorage" class="anchor" href="https://github.com/metamx/rainer#using-commitkeeper-with-commitstorage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using CommitKeeper with CommitStorage</h3> 
+  <p>Combining a CommitStorage with a CommitKeeper is a common pattern used for managing configuration of a cluster of machines. Combined setups can provide full-history journaled updates in an RDBMS, coupled with low latency notifications through ZooKeeper. The idea is to do all of your saves through a keeperPublishing CommitStorage (which will update ZooKeeper any time you save something) and to do your reads through a mirror provided by a CommitKeeper. To prevent inopportune crashes or out of band ZooKeeper modifications from causing ZooKeeper to become out of sync, an autoPublisher can periodically detect and push any unpushed updates from your storage.</p> 
+  <p>The "Rainers" builder sets all of this up for you, but you can also do it manually with something like:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// During setup, link your underlying storage and keeper together.</span>
+<span class="pl-c">// Afterwards, use "storage", not "underlyingStorage" for your own operations.</span>
+<span class="pl-k">val</span> <span class="pl-en">keeper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>](curator, <span class="pl-s"><span class="pl-pds">"</span>/path/in/zk<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">storage</span> <span class="pl-k">=</span> <span class="pl-en">CommitStorage</span>.keeperPublishing(underlyingStorage, keeper)
+<span class="pl-k">val</span> <span class="pl-en">autoPublisher</span> <span class="pl-k">=</span> keeper.autoPublisher(underlyingStorage, period, periodFuzz)
+autoPublisher.start()
+
+<span class="pl-c">// When your application exits, shut down your autoPublisher.</span>
+<span class="pl-en">Await</span>.result(autoPublisher.close())</pre>
+  </div> 
+  <p>When using a linked CommitStorage and CommitKeeper, make sure to send writes through the CommitStorage only. This is because the CommitStorage is treated as the system of record.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// You can get a mirror from your keeper, which will now reflect the most recent commits from your storage.</span>
+<span class="pl-k">val</span> <span class="pl-en">mirror</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]] <span class="pl-k">=</span> keeper.mirror()
+
+<span class="pl-c">// Which, for example, you can use to update an AtomicReference:</span>
+<span class="pl-k">val</span> <span class="pl-en">ref</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AtomicReference</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]]
+<span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> mirror.changes.register(<span class="pl-en">Witness</span>(ref))
+
+<span class="pl-c">// When you save to the storage, ZooKeeper and the mirror will be updated automatically. (Don't save using the keeper!)</span>
+storage.save(someCommit)</pre>
+  </div> 
+  <h3><a id="user-content-using-commitstorage-without-commitkeeper" class="anchor" href="https://github.com/metamx/rainer#using-commitstorage-without-commitkeeper" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using CommitStorage without CommitKeeper</h3> 
+  <p>You can use a CommitStorage by itself. The only thing you lose are the ZooKeeper views, which means you can't set up mirrors. In this case you'll either need to access the underlying storage on-demand, or set up a cache yourself that refreshes periodically.</p> 
+  <h3><a id="user-content-using-commitkeeper-without-commitstorage" class="anchor" href="https://github.com/metamx/rainer#using-commitkeeper-without-commitstorage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using CommitKeeper without CommitStorage</h3> 
+  <p>You can use CommitKeeper by itself, too, without any backing journaled storage. You won't be able to access old versions of any commits. Just call <code>keeper.save(commit)</code> to publish new commits, and don't use the autoPublisher. The other CommitKeeper features will work normally, including gets and mirrors.</p> 
+  <h3><a id="user-content-http-server" class="anchor" href="https://github.com/metamx/rainer#http-server" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HTTP server</h3> 
+  <p>You can use the RainerServlet to gain a nice HTTP API to your CommitStorage. It does not use, or require, a CommitKeeper. The API can be used like this with any HTTP client:</p> 
+  <pre><code>$ curl \
+  -s \
+  -XPOST \
+  -H'Content-Type: application/octet-stream' \
+  -H'X-Rainer-Author: gian' \
+  -H'X-Rainer-Comment: rofl' \
+  --data-binary '{"hey":"what"}' \
+  http://localhost:8080/diary/foo/1
+{"author":"gian","comment":"rofl","key":"foo","mtime":"2014-02-11T14:01:28.839-08:00","version":1}
+
+$ curl -s http://localhost:8080/diary/foo
+{"hey":"what"}
+
+$ curl -s http://localhost:8080/diary/foo/1
+{"hey":"what"}
+
+$ curl -s http://localhost:8080/diary/foo/1/meta
+{"author":"gian","key":"foo","version":1,"mtime":"2014-02-11T14:01:28.839-08:00","comment":"rofl"}
+</code></pre> 
+  <h2><a id="user-content-clients" class="anchor" href="https://github.com/metamx/rainer#clients" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Clients</h2> 
+  <p>If you have a RainerServlet running, there are a few pre-built clients that can be used to inspect and modify configurations remotely.</p> 
+  <h3><a id="user-content-jvm-http-client" class="anchor" href="https://github.com/metamx/rainer#jvm-http-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JVM HTTP client</h3> 
+  <p>You can use HttpCommitStorage to access a RainerServlet running on another machine:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">uri</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">URI</span>(<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080/diary<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">ClientBuilder</span>()
+  .name(uri.toString)
+  .codec(<span class="pl-en">Http</span>())
+  .group(<span class="pl-en">Group</span>.fromVarAddr(<span class="pl-en">InetResolver</span>.bind(uri.getAuthority)))
+  .hostConnectionLimit(<span class="pl-c1">2</span>)
+  .build()
+<span class="pl-k">val</span> <span class="pl-en">storage</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpCommitStorage</span>[<span class="pl-en">ValueType</span>](client, uri)
+
+<span class="pl-c">// Use it like any other CommitStorage:</span>
+<span class="pl-k">val</span> <span class="pl-en">commit</span> <span class="pl-k">=</span> storage.get(<span class="pl-s"><span class="pl-pds">"</span>hey<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h3><a id="user-content-python-http-client" class="anchor" href="https://github.com/metamx/rainer#python-http-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Python HTTP client</h3> 
+  <p>From Python, you can use "pyrainer". You can install it with <code>pip install pyrainer</code> and use it like this:</p> 
+  <div class="highlight highlight-source-python">
+   <pre><span class="pl-k">import</span> pyrainer.http
+
+client <span class="pl-k">=</span> pyrainer.http.RainerClient(<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080/diary<span class="pl-pds">"</span></span>)
+
+commits <span class="pl-k">=</span> client.list_full()
+<span class="pl-k">for</span> key <span class="pl-k">in</span> <span class="pl-c1">sorted</span>(commits.keys()):
+  version <span class="pl-k">=</span> commits[key].version
+  <span class="pl-c1">print</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">%s</span> [current version = <span class="pl-c1">%s</span>]<span class="pl-pds">"</span></span> <span class="pl-k">%</span> (key, <span class="pl-c1">str</span>(version))
+
+hey <span class="pl-k">=</span> client.get_commit(<span class="pl-s"><span class="pl-pds">"</span>hey<span class="pl-pds">"</span></span>)
+<span class="pl-c1">print</span> <span class="pl-s"><span class="pl-pds">"</span>Commit version <span class="pl-c1">%s</span> = <span class="pl-c1">%s</span><span class="pl-pds">"</span></span> <span class="pl-k">%</span> (hey.meta[<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>], hey.value)
+
+client.post_commit({<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>hey<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>: <span class="pl-c1">2</span>, <span class="pl-s"><span class="pl-pds">"</span>author<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>sue<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>comment<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>rofl<span class="pl-pds">"</span></span>}, <span class="pl-s"><span class="pl-pds">"</span>new value<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h3><a id="user-content-command-line-client" class="anchor" href="https://github.com/metamx/rainer#command-line-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Command-line client</h3> 
+  <p>If you have pyrainer installed (<code>pip install pyrainer</code>), you can use the command line tool interactively or in shell scripts.</p> 
+  <pre><code>$ python -m pyrainer.rainer --url http://localhost:8080/diary list
+foo     1       http://localhost:8080/diary/foo/1
+hey     6       http://localhost:8080/diary/hey/6
+
+$ python -m pyrainer.rainer --url http://localhost:8080/diary show hey
+{"hey":"whatsit"}
+
+$ python -m pyrainer.rainer --url http://localhost:8080/diary edit hey
+[...a wild $EDITOR appears!]
+</code></pre> 
+  <p>You can also create a wrapper for your service that makes invocation simpler. An executable script like this should do it:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre><span class="pl-c">#!/bin/sh -e</span>
+<span class="pl-c1">exec</span> python -m pyrainer.rainer --url <span class="pl-s"><span class="pl-pds">"</span>http://example.com/foo<span class="pl-pds">"</span></span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">$@</span><span class="pl-pds">"</span></span></pre>
+  </div> 
+ </article>
+</div>

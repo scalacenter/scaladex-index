@@ -1,0 +1,156 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-simulacrum" class="anchor" href="https://github.com/mpilquist/simulacrum#simulacrum" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>simulacrum</h1> 
+  <p><a href="https://gitter.im/mpilquist/simulacrum?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p>Type classes rock. Alas, their encoding in Scala requires a lot of boilerplate, which doesn't rock. There is inconsistency between projects, where type classes are encoded differently. There is inconsistency within projects, where object-oriented forwarders (aka. ops, syntax) accidentally differ in exact parameter lists or forwarders are missing where they are expected to be. Even in disciplined teams, the bike-shedding opportunities alone are a source of lost productivity.</p> 
+  <p>This project addresses these concerns by introducing first class support for type classes in Scala 2.11. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">simulacrum.</span><span class="pl-v">_</span>
+
+<span class="pl-k">@</span>typeclass <span class="pl-k">trait</span> <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">@</span>op(<span class="pl-s"><span class="pl-pds">"</span>|+|<span class="pl-pds">"</span></span>) <span class="pl-k">def</span> <span class="pl-en">append</span>(<span class="pl-v">x</span>: <span class="pl-en">A</span>, <span class="pl-v">y</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">A</span>
+}</pre>
+  </div> 
+  <p>Given this definition, something similar to the following is generated at compile time:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">append</span>(<span class="pl-v">x</span>: <span class="pl-en">A</span>, <span class="pl-v">y</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">A</span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Semigroup</span> {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-k">implicit</span> <span class="pl-v">instance</span>: <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> instance
+
+  <span class="pl-k">trait</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">typeClassInstance</span><span class="pl-k">:</span> <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>]
+    <span class="pl-k">def</span> <span class="pl-en">self</span><span class="pl-k">:</span> <span class="pl-en">A</span>
+    <span class="pl-k">def</span> <span class="pl-en">|+|</span>(<span class="pl-v">y</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> typeClassInstance.append(<span class="pl-v">self</span>, y)
+  }
+
+  <span class="pl-k">trait</span> <span class="pl-en">ToSemigroupOps</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toSemigroupOps</span>[<span class="pl-en">A</span>](<span class="pl-v">target</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">tc</span>: <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] {
+      <span class="pl-k">val</span> <span class="pl-en">self</span> <span class="pl-k">=</span> target
+      <span class="pl-k">val</span> <span class="pl-en">typeClassInstance</span> <span class="pl-k">=</span> tc
+    }
+  }
+
+  <span class="pl-k">object</span> <span class="pl-en">nonInheritedOps</span> <span class="pl-k">extends</span> <span class="pl-e">ToSemigroupOps</span>
+
+  <span class="pl-k">trait</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Ops</span>[<span class="pl-en">A</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">typeClassInstance</span><span class="pl-k">:</span> <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>]
+  }
+
+  <span class="pl-k">object</span> <span class="pl-en">ops</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toAllSemigroupOps</span>[<span class="pl-en">A</span>](<span class="pl-v">target</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">tc</span>: <span class="pl-en">Semigroup</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] {
+      <span class="pl-k">val</span> <span class="pl-en">self</span> <span class="pl-k">=</span> target
+      <span class="pl-k">val</span> <span class="pl-en">typeClassInstance</span> <span class="pl-k">=</span> tc
+    }
+  }
+}</pre>
+  </div> 
+  <p>The <code>Ops</code> trait contains extension methods for a value of type <code>A</code> for which there's a <code>Semigroup[A]</code> instance available. The <code>ToSemigroupOps</code> trait contains an implicit conversion from an <code>A</code> to an <code>Ops[A]</code>. The <code>ToSemigroupOps</code> trait can be mixed in to a class in order to get access to the extension methods. It can also be mixed in to an object, along with other <code>ToXyzOps</code> traits, in order to provide a single mass import object.</p> 
+  <p>The <code>AllOps</code> trait mixes in <code>Ops</code> along with the <code>AllOps</code> traits of all super types. In this example, there are no super types, but we'll look at such an example soon. Finally, the <code>ops</code> object provides an implicit conversion that can be directly imported in order to use the extension methods.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">semigroupInt</span><span class="pl-k">:</span> <span class="pl-en">Semigroup</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Semigroup</span>[<span class="pl-k">Int</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">append</span>(<span class="pl-v">x</span>: <span class="pl-k">Int</span>, <span class="pl-v">y</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> x <span class="pl-k">+</span> y
+}
+
+<span class="pl-k">import</span> <span class="pl-v">Semigroup.ops.</span><span class="pl-v">_</span>
+<span class="pl-c1">1</span> <span class="pl-k">|</span><span class="pl-k">+</span><span class="pl-k">|</span> <span class="pl-c1">2</span> <span class="pl-c">// 3</span></pre>
+  </div> 
+  <p>Subtyping of type classes is supported. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span>typeclass <span class="pl-k">trait</span> <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Semigroup</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">id</span><span class="pl-k">:</span> <span class="pl-en">A</span>
+}</pre>
+  </div> 
+  <p>Generates:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Semigroup</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">id</span><span class="pl-k">:</span> <span class="pl-en">A</span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Monoid</span> {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-k">implicit</span> <span class="pl-v">instance</span>: <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> instance
+
+  <span class="pl-k">trait</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">typeClassInstance</span><span class="pl-k">:</span> <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>]
+    <span class="pl-k">def</span> <span class="pl-en">self</span><span class="pl-k">:</span> <span class="pl-en">A</span>
+  }
+
+  <span class="pl-k">trait</span> <span class="pl-en">ToMonoidOps</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toMonoidOps</span>[<span class="pl-en">A</span>](<span class="pl-v">target</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">tc</span>: <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Ops</span>[<span class="pl-en">A</span>] {
+      <span class="pl-k">val</span> <span class="pl-en">self</span> <span class="pl-k">=</span> target
+      <span class="pl-k">val</span> <span class="pl-en">typeClassInstance</span> <span class="pl-k">=</span> tc
+    }
+  }
+
+  <span class="pl-k">trait</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Ops</span>[<span class="pl-en">A</span>] <span class="pl-k">with</span> <span class="pl-e">Semigroup.AllOps</span>[<span class="pl-en">A</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">typeClassInstance</span><span class="pl-k">:</span> <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>]
+  }
+
+  <span class="pl-k">object</span> <span class="pl-en">ops</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toAllMonoidOps</span>[<span class="pl-en">A</span>](<span class="pl-v">target</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">tc</span>: <span class="pl-en">Monoid</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AllOps</span>[<span class="pl-en">A</span>] {
+      <span class="pl-k">val</span> <span class="pl-en">self</span> <span class="pl-k">=</span> target
+      <span class="pl-k">val</span> <span class="pl-en">typeClassInstance</span> <span class="pl-k">=</span> tc
+    }
+  }
+}</pre>
+  </div> 
+  <p>In this example, the <code>id</code> method was not lifted to the <code>Ops</code> trait because it is not an extension method for an <code>A</code> value. Even though there were no such methods, an empty <code>Ops</code> trait was still generated. This is important for various subtyping scenarios as they relate to separate compilation.</p> 
+  <p>Higher kinds are also supported -- specifically, type classes that are polymorphic over type constructors, like <code>Functor</code>. The current implementation only supports unary type constructors, but support for binary type constructors is planned.</p> 
+  <p>This allows usage like:</p> 
+  <p>See <a href="https://github.com/mpilquist/simulacrum/blob/master/examples/src/test/scala/simulacrum/examples/examples.scala" target="_blank">the examples</a> for more.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/mpilquist/simulacrum#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>The generated code supports two modes of method extension. Consider the case of the <code>Monad</code> typeclass: it is a subtype of <code>Applicative</code> which is, itself, a subtype of <code>Functor</code>. After extending our monad with the <code>Monad</code> trait, we need to bring our implicits into scope.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">/**</span>
+<span class="pl-c"> * We can simply import the contents of Monad's ops</span>
+<span class="pl-c"> *  object to get it and all ancestor methods:</span>
+<span class="pl-c"> */</span>
+<span class="pl-k">import</span> <span class="pl-v">Monad.ops.</span><span class="pl-v">_</span>
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Alternatively, we can use the ToMonadOps trait</span>
+<span class="pl-c"> *  to mixin just the operations we want:</span>
+<span class="pl-c"> */</span>
+<span class="pl-k">object</span> <span class="pl-en">NoMapForMonad</span> <span class="pl-k">extends</span> <span class="pl-e">ToMonadOps</span> <span class="pl-k">with</span> <span class="pl-e">ToApplicativeOps</span> {}
+<span class="pl-k">import</span> <span class="pl-v">NoMapForMonad.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>Note that the second approach will not include the <code>map</code> operation of its grandparent type, <code>Functor</code>. The benefit of this second approach is that a collection of method extensions can be brought into scope all at once. Indeed, the typeclasses of operations imported in this second fashion need not be related.</p> 
+  <h2><a id="user-content-including-simulacrum" class="anchor" href="https://github.com/mpilquist/simulacrum#including-simulacrum" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Including Simulacrum</h2> 
+  <p>This project supports Scala 2.10 and 2.11. The project is based on macro paradise. To use the project, add the following to your build.sbt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>paradise<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1.0<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.mpilquist<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>simulacrum<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>To use the latest SNAPSHOT version, add the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Sonatype Public<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/groups/public/<span class="pl-pds">"</span></span>
+
+addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>paradise<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1.0<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.mpilquist<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>simulacrum<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.11.0-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Macro paradise must exist in projects which use <code>@typeclass</code>, but code that depends on the generated type classes do not need macro paradise.</p> 
+  <p>Feedback is much appreciated. The generated code is a result of working with project leads of a variety of open source projects that use type classes. However, there's certainly room for improvement, so please open issues or PRs containing feedback.</p> 
+  <h2><a id="user-content-known-limitations" class="anchor" href="https://github.com/mpilquist/simulacrum#known-limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Known Limitations</h2> 
+  <ul> 
+   <li>Only type classes that abstract over a proper type or a unary type constructor are currently supported. This will be extended to binary type constructors in the future, and perhaps n-ary type constructors.</li> 
+   <li>When defining a type class as a subtype of another type class, and defining an abstract member of the super type concretely in the sub type, the <code>override</code> keyword must be used. For example, defining <code>map</code> in terms of <code>flatMap</code> requires <code>override def map[A, B](...)</code>.</li> 
+   <li>See the GitHub issues list for other known limitations and please open issues for any other limitations you encounter. If you suspect a problem, it may be helpful to run with the <code>simulacrum.trace</code> system property (e.g., <code>sbt -Dsimulacrum.trace compile</code>), which adds a significant amount of logging to the compiler output.</li> 
+  </ul> 
+ </article>
+</div>

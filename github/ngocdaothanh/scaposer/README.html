@@ -1,0 +1,100 @@
+<div class="announce instapaper_body rst" data-path="README.rst" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <a href="https://github.com/ngocdaothanh/scaposer/blob/master/poedit.png" target="_blank"><img alt="poedit.png" src="https://github.com/ngocdaothanh/scaposer/raw/master/poedit.png" style="max-width:100%;"></a> 
+  <p>Scaposer is a GNU gettext po file parser written in Scala. It's strange that there's not many JVM libraries of this kind, see the <a href="http://stackoverflow.com/questions/4635721/is-there-a-java-library-for-parsing-gettext-po-files" target="_blank">discussion on Stackoverflow</a>.</p> 
+  <p>To extract i18n strings from Scala source code files, use <a href="https://github.com/xitrum-framework/scala-xgettext" target="_blank">Scala xgettext</a>.</p> 
+  <p>Presentation: <a href="http://www.slideshare.net/ngocdaothanh/i18nize-scala-program-a-la-gettext" target="_blank">I18nize Scala programs à la gettext</a></p> 
+  <p>Discussion group: <a href="https://groups.google.com/group/scala-xgettext" target="_blank">https://groups.google.com/group/scala-xgettext</a></p> 
+  <a name="user-content-basic-usage" target="_blank" href=""></a> 
+  <h2><a id="user-content-basic-usage" class="anchor" href="https://github.com/ngocdaothanh/scaposer#basic-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Basic usage</h2> 
+  <p>See <a href="http://xitrum-framework.github.io/scaposer/" target="_blank">Scaladoc</a>.</p> 
+  <pre>val po = """
+msgid "Hello"
+msgstr "Bonjour"
+"""
+
+val result = scaposer.Parser.parse(po)
+// =&gt; An Either,
+// Left(scaposer.ParseFailure) or
+// Right(Seq[scaposer.Translation])
+</pre> 
+  <p>Use <code>t</code> methods to get the translations:</p> 
+  <pre>val translations = result.right.get
+val i18n         = scaposer.I18n(translations)
+i18n.t("Hello")  // =&gt; "Bonjour"
+</pre> 
+  <p>If there's no translation, or the translation is an empty string (not translated yet), the original input is returned:</p> 
+  <pre>i18n.t("Hi")  // =&gt; "Hi"
+</pre> 
+  <a name="user-content-context" target="_blank" href=""></a> 
+  <h2><a id="user-content-context" class="anchor" href="https://github.com/ngocdaothanh/scaposer#context" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Context</h2> 
+  <pre>val po = """
+msgid "Hello"
+msgstr "Bonjour"
+
+msgctxt "Casual"
+msgid "Hello"
+msgstr "Salut"
+"""
+
+val translations = scaposer.Parser.parse(po).right.get
+val i18n         = scaposer.I18n(translations)
+i18n.tc("Casual", "Hello")  // =&gt; "Salut"
+</pre> 
+  <p>If there's no translation for the context, the translation without context is tried:</p> 
+  <pre>i18n.tc("Missing context", "Hello")  // =&gt; "Bonjour"
+</pre> 
+  <a name="user-content-plural-forms" target="_blank" href=""></a> 
+  <h2><a id="user-content-plural-forms" class="anchor" href="https://github.com/ngocdaothanh/scaposer#plural-forms" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Plural-Forms</h2> 
+  <pre>val po = """
+msgid ""
+msgstr "Plural-Forms: nplurals=2; plural=n&gt;1;"
+
+msgid "I have one apple"
+msgid_plural "I have %d apples"
+msgstr[0] "J'ai une pomme"
+msgstr[1] "J'ai %d pommes"
+"""
+
+val translations = scaposer.Parser.parse(po).right.get
+val i18n         = scaposer.I18n(translations)
+i18n.tn("I have one apple", "I have %d apples", 1)                // =&gt; "J'ai une pomme"
+i18n.tn("I have one apple", "I have %d apples", 2)                // =&gt; "J'ai 2 pommes"
+i18n.tcn("A context", "I have one apple", "I have %d apples", 3)  // =&gt; "J'ai 3 pommes"
+</pre> 
+  <p>For performance, your po file should define <code>Plural-Forms</code> exactly as at:</p> 
+  <ul> 
+   <li><a href="http://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html#Plural-forms" target="_blank">http://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html#Plural-forms</a></li> 
+   <li><a href="http://www.gnu.org/software/gettext/manual/html_node/Translating-plural-forms.html#Translating-plural-forms" target="_blank">http://www.gnu.org/software/gettext/manual/html_node/Translating-plural-forms.html#Translating-plural-forms</a></li> 
+  </ul> 
+  <p>Otherwise, Scaposer cannot compare the plural form string, and it needs to parse and evaluate (slower).</p> 
+  <a name="user-content-merge-po-objects" target="_blank" href=""></a> 
+  <h2><a id="user-content-merge-po-objects" class="anchor" href="https://github.com/ngocdaothanh/scaposer#merge-po-objects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Merge Po objects</h2> 
+  <p>You can merge multiple <a href="https://github.com/ngocdaothanh/scaposer#id1" target="_blank">``</a>I18n``s together.</p> 
+  <pre>val i18n4 = i18n1 ++ i18n2 ++ i18n3
+</pre> 
+  <p>Just like when you merge maps, translations in i18n3 will overwrite those in i18n2 will overwrite those in i18n1.</p> 
+  <a name="user-content-use-with-sbt" target="_blank" href=""></a> 
+  <h2><a id="user-content-use-with-sbt" class="anchor" href="https://github.com/ngocdaothanh/scaposer#use-with-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Use with SBT</h2> 
+  <p>Supported Scala versions: 2.11.x, 2.10.x</p> 
+  <p>build.sbt example:</p> 
+  <pre>libraryDependencies += "tv.cntt" %% "scaposer" % "1.9"
+</pre> 
+  <p>Scaposer is used in <a href="https://github.com/xitrum-framework/xitrum" target="_blank">Xitrum web framework</a>.</p> 
+ </article>
+</div>

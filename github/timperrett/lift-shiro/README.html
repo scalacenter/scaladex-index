@@ -1,0 +1,95 @@
+<div class="announce instapaper_body textile" data-path="README.textile" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-lift-shiro" class="anchor" href="https://github.com/timperrett/lift-shiro#lift-shiro" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Lift Shiro</h2> 
+  <p>This is an initial version of integration between <a href="http://shiro.apache.org/" target="_blank">Apache Shiro</a> and the <a href="http://liftweb.net/" target="_blank">Lift Web framework</a>. Specifically this integration does not use Shiro’s built in web.xml resource filters to control access to URLs… it instead uses Lift’s sitemap Locs. In addition it also has a range of snippets for conditionally displaying content based on rules and permissions.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/timperrett/lift-shiro#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>First, add the SBT dependency:</p> 
+  <pre><code>
+  libraryDependencies += "eu.getintheloop" %% "lift-shiro" % "0.0.9-SNAPSHOT"
+  
+  resolvers ++= Seq(
+    "apache.repo" at "https://repository.apache.org/content/repositories/snapshots/",
+    "sonatype.repo" at "https://oss.sonatype.org/content/repositories/public/"
+  )
+  
+</code></pre> 
+  <p>Next, you need to add this to the web.xml within your project in order to initialise the Shiro context when your application receives a request. You need to add this above the lift filter and filter-map. Otherwise, login redirection will not work.</p> 
+  <pre><code>  &lt;listener&gt;
+    &lt;listener-class&gt;org.apache.shiro.web.env.EnvironmentLoaderListener&lt;/listener-class&gt;
+  &lt;/listener&gt;
+  &lt;filter&gt;
+    &lt;filter-name&gt;ShiroFilter&lt;/filter-name&gt;
+    &lt;filter-class&gt;org.apache.shiro.web.servlet.ShiroFilter&lt;/filter-class&gt;
+  &lt;/filter&gt;
+  &lt;filter-mapping&gt;
+    &lt;filter-name&gt;ShiroFilter&lt;/filter-name&gt;
+    &lt;url-pattern&gt;/*&lt;/url-pattern&gt;
+  &lt;/filter-mapping&gt;
+</code></pre> 
+  <p>Next, you need to add some configuration to your Boot.scala like so:</p> 
+  <pre><code>class Boot {
+  def boot {
+    import shiro.Shiro
+    import shiro.sitemap.Locs._
+    Shiro.init()
+    ...
+  }
+}
+</code></pre> 
+  <p>By default this uses the Shiro <code>IniSecurityManagerFactory</code> meaning you need to supply a shiro.ini at the root of your classpath that uses the Shiro ini configuration style. If however you want to use another security manager, you simply supply it into the init() method like so:</p> 
+  <pre><code>Shiro.init(new IniSecurityManagerFactory("classpath:shiro.ini"))
+</code></pre> 
+  <p>In order to actually use the integration within your sitemap to restrict access to resources, apply it to your SiteMap like so:</p> 
+  <pre><code>LiftRules.setSiteMap(SiteMap(List(
+    Menu("Home") / "index" &gt;&gt; RequireAuthentication,
+    Menu("Role Test") / "restricted" &gt;&gt; RequireAuthentication &gt;&gt; HasRole("admin"),
+    Menu("Login") / "login" &gt;&gt; RequireNoAuthentication
+    ) ::: Shiro.menus: _*
+  ))
+</code></pre> 
+  <p>There are several <code>LocParam</code> that you can use to augment your <code>Menu</code> structure. Specifically you can use:</p> 
+  <ul> 
+   <li><code>RequireAuthentication</code> – Ensures that users are authenticated, irrespective of roles or permissions</li> 
+   <li><code>RequireNoAuthentication</code> – Ensures public access (read: guest subject)</li> 
+   <li><code>RequireRemembered</code> – Ensure that this subject is authenticated or remembered</li> 
+   <li><code>RequireNotRemembered</code> – Ensure that the subject is <strong>not</strong> authenticated or remembered</li> 
+   <li><code>HasRole("rolename")</code> – Ensures that user has a specific role.</li> 
+   <li><code>HasPermission("somePermission")</code> – Ensures that user has a specific permission.</li> 
+   <li><code>LacksPermission("permissionName")</code> – Ensures that user <em>lacks</em> a specific permission.</li> 
+  </ul> 
+  <p>In addition to using the integration in the SiteMap, you can also use it within your markup using the following snippet technique:</p> 
+  <pre><code>  &lt;lift:has_role name="someRole"&gt;
+    Some content that is only available to users who have the "someRole" role assigned to them
+  &lt;/lift:has_role&gt;
+</code></pre> 
+  <p>The snippets this integration wires in are the follow (all are methods on subject/subjects):</p> 
+  <ul> 
+   <li>has_role</li> 
+   <li>lacks_role</li> 
+   <li>has_permission</li> 
+   <li>lacks_permission</li> 
+   <li>has_any_roles</li> 
+   <li>is_guest</li> 
+   <li>is_user</li> 
+   <li>is_authenticated</li> 
+   <li>is_not_authenticated</li> 
+  </ul> 
+  <p>All use the <code>name</code> attribute, with the exception of <code>has_any_roles</code> which takes the <code>roles</code> attribute which contains a comma-delimited list of assigned roles.</p> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/timperrett/lift-shiro#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <ul> 
+   <li>Why did you bother making this? Well MegaProtoUberTron was not really for me, as I don’t typically want the user data stored within my application (i.e. im using AD, OpenDirectory etc)</li> 
+  </ul> 
+  <ul> 
+   <li>In that case, why not just make the LDAP connection using javax.naming? Because i’m lazy, and frankly I dont want to have to maintain that code when someone else is already doing it (likely better than I would)</li> 
+  </ul>
+ </article>
+</div>

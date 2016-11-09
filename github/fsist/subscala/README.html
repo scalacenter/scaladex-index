@@ -1,0 +1,54 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-subscala" class="anchor" href="https://github.com/fsist/subscala#subscala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>subscala</h1> 
+  <p>A Scala library that restricts the syntax, types used, or methods called by the code passed to it.</p> 
+  <h2><a id="user-content-short-overview" class="anchor" href="https://github.com/fsist/subscala#short-overview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Short overview</h2> 
+  <p><code>subscala.Restrict</code> is a macro that fails compilation if the code passed to it doesn't match the given restrictions. It doesn't affect the result of the compilation if it succeeds.</p> 
+  <p>It can restrict the methods that code may call:</p> 
+  <pre><code>object Test {
+  import com.fsist.subscala._
+
+  trait AllowLength extends CallTargets.MethodsOf[String] { def length(): Int }
+
+  val len = Restrict.targets[Int, AllowLength] {
+    "foo".length()
+  }
+}
+</code></pre> 
+  <p>This succeeds and <code>val len</code> receives the value 3. On the other hand, if we try this:</p> 
+  <pre><code>val size = Restrict.targets[Int, AllowLength] {
+  "foo".size
+}
+</code></pre> 
+  <p>Compilation will fail with <code>error: Calling method scala.Predef.augmentString is disallowed</code>. Let's add the missing methods:</p> 
+  <pre><code>import CallTargets.+
+import collection.immutable.StringOps
+
+trait AllowAugment extends CallTargets.MethodsOf[Predef.type] { def augmentString(x: String): StringOps }
+trait AllowSize extends CallTargets.MethodsOf[StringOps] { def size: Int }
+
+val size = Restrict.targets[Int, AllowAugment + AllowSize] {
+  "foo".size
+}
+
+</code></pre> 
+  <p>Use cases include:</p> 
+  <ul> 
+   <li>Defining a DSL as a subset of the Scala language (i.e. without a separate parser). </li> 
+   <li>Restricting scripts from accessing anything outside a set of interfaces meant for scripting a system.</li> 
+   <li>Enforcing rules in a codebase such as not using a particular interface which cannot be marked @deprecated.</li> 
+  </ul> 
+  <p>For usage examples, see the test code.</p> 
+  <h2><a id="user-content-artifacts" class="anchor" href="https://github.com/fsist/subscala#artifacts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Artifacts</h2> 
+  <p>Artifacts are published on Maven Central; see the github 'releases' tag for the latest version and for changelogs. Add dependencies to <code>com.fsist:subscala_2.11:VERSION</code> (gradle) or <code>com.fsist % subscala %% VERSION</code> (sbt).</p> 
+ </article>
+</div>

@@ -1,0 +1,218 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-requester" class="anchor" href="https://github.com/jducoeur/requester#requester" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requester</h1> 
+  <p>One of the most useful, and most fraught, functions in Akka is <code>ask</code>. On the one hand, it is invaluable for writing clear, understandable code -- after all, the pattern of "Send this message, and then do that with the result" makes loads of sense, and it's usually easy to see what the code is trying to do.</p> 
+  <p>On the other hand, <code>ask</code> is something of a landmine in practice, because it violates the most important invariant of Actors: there should never be code lexically inside of the Actor that doesn't run within the Actor's receive loop. <code>ask</code> returns a Future, and that Future will be run out-of-band, at some random time in the future. It can happen in parallel with running receive code, or not. There is lots of danger there, and it is easy to cause erratic, hard-to-reproduce bugs.</p> 
+  <p>(Not to mention the fact that <code>sender</code> probably won't be set to the value you expect during the response handler. One of the easiest Akka traps to fall into is using <code>sender</code> during a Future, which almost never works.)</p> 
+  <p>This library introduces <code>request</code>, which you can think of as the better-behaved big brother of <code>ask</code>. The look and feel is similar, but there is one crucial difference: the response handler from <code>request</code> is <em>not</em> Future, and it runs inside the normal receive loop. Also, unlike <code>ask</code>, <code>request</code> preserves the value of <code>sender</code>. The result is that you can safely write straightforward, intuitive, composable code for complex multi-Actor operations, like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-en">GetSpacesStatus</span>(requester) <span class="pl-k">=&gt;</span> {
+  <span class="pl-k">for</span> {
+    <span class="pl-en">ActiveThings</span>(nConvs) <span class="pl-k">&lt;</span><span class="pl-k">-</span> conversations <span class="pl-k">?</span> <span class="pl-en">GetActiveThings</span>
+    <span class="pl-en">ActiveSessions</span>(nSessions) <span class="pl-k">&lt;</span><span class="pl-k">-</span> sessions <span class="pl-k">?</span> <span class="pl-en">GetActiveSessions</span>
+  }
+    sender <span class="pl-k">!</span> <span class="pl-en">SpaceStatus</span>(spaceId, state.displayName, nConvs, nSessions)
+}</pre>
+  </div> 
+  <p>and have it work just as you expect.</p> 
+  <h3><a id="user-content-installing-requester" class="anchor" href="https://github.com/jducoeur/requester#installing-requester" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installing Requester</h3> 
+  <p>To use Requester, add this to your libraryDependencies in sbt:</p> 
+  <pre><code>"org.querki" %% "requester" % "2.4"
+</code></pre> 
+  <h3><a id="user-content-using-requester" class="anchor" href="https://github.com/jducoeur/requester#using-requester" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Requester</h3> 
+  <p>The most common and straightforward use case for Requester is when you have one Actor that wants to make requests of others. You enhance the <em>requesting</em> Actor (not the target!) with the Requester trait:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.querki.requester.</span><span class="pl-v">_</span>
+
+<span class="pl-k">class</span> <span class="pl-en">MyActor</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">Requester</span> {
+  ... your usual code ...
+}</pre>
+  </div> 
+  <p>Once you've done that, you can write code like the example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-en">GetSpacesStatus</span>(requester) <span class="pl-k">=&gt;</span> {
+  <span class="pl-k">for</span> {
+    <span class="pl-en">ActiveThings</span>(nConvs) <span class="pl-k">&lt;</span><span class="pl-k">-</span> conversations <span class="pl-k">?</span> <span class="pl-en">GetActiveThings</span>
+    <span class="pl-en">ActiveSessions</span>(nSessions) <span class="pl-k">&lt;</span><span class="pl-k">-</span> sessions <span class="pl-k">?</span> <span class="pl-en">GetActiveSessions</span>
+  }
+    sender <span class="pl-k">!</span> <span class="pl-en">SpaceStatus</span>(spaceId, state.displayName, nConvs, nSessions)
+}</pre>
+  </div> 
+  <p>(All examples are real code from <a href="https://www.querki.net/" target="_blank">Querki</a>, sometimes a bit simplified.)</p> 
+  <p>Or if you don't need to compose, just use <code>foreach</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>persister.request(<span class="pl-en">LoadCommentsFor</span>(thingId, state)) foreach {
+  <span class="pl-k">case</span> <span class="pl-en">AllCommentsFor</span>(_, comments) <span class="pl-k">=&gt;</span> {
+    <span class="pl-k">val</span> <span class="pl-en">convs</span> <span class="pl-k">=</span> {
+      <span class="pl-k">val</span> <span class="pl-en">cs</span> <span class="pl-k">=</span> buildConversations(comments)
+      loadedConversations <span class="pl-k">+</span><span class="pl-k">=</span> (thingId <span class="pl-k">-</span><span class="pl-k">&gt;</span> cs)
+      cs
+    }
+    f(convs)
+  }
+}</pre>
+  </div> 
+  <p><code>request</code> returns a RequestM, which is a monad that cheats a little -- it's actually slightly mutable, so don't assume perfectly-monadic behavior, but it works as expected inside a for comprehension, and deliberately mimics the core behavior of Future. The functions <code>map</code>, <code>flatMap</code>, <code>foreach</code>, <code>withFilter</code> and <code>onComplete</code> all work pretty much the same as they do in Future, and other methods of Future will likely be added over time.</p> 
+  <p><strong>Important:</strong> since <code>request</code> is intended to replace <code>ask</code>, you should <em>not</em> be importing <code>akka.pattern._</code> (which is where <code>ask</code> comes from). If you have both imported, you will get a name conflict on <code>?</code>, and will have to use the wordier <code>request()</code> call instead.</p> 
+  <h3><a id="user-content-how-it-works" class="anchor" href="https://github.com/jducoeur/requester#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h3> 
+  <p><code>request</code> actually uses <code>ask</code> under the hood, but in a very precise and constrained way. It sends your message to the target Actor and gets the response via <code>ask</code>. However, it then loops that response (plus the handler) back as a message to this Actor, preserving the original value of <code>sender</code>. This way, the response is relatively safe to use (since it is being processed within the Actor's main receive function), and you still have the sender you expect.</p> 
+  <p>Note that the native function for Requester is <code>request()</code>. This is aliased to <code>?</code>, to mimic <code>akka.pattern.ask</code>. The name conflict is entirely intentional: using ask inside of a Requester is <em>usually</em> a bug, since it invites all sorts of accidental dangers. If you really want to use <code>ask()</code> inside of a Requester, do it with the full name.</p> 
+  <h3><a id="user-content-handlerequestresponse" class="anchor" href="https://github.com/jducoeur/requester#handlerequestresponse" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>handleRequestResponse</h3> 
+  <p>Normally, Requester deals with this loopback automatically, by overriding <code>unhandled()</code>. However, in some exceptional cases this doesn't work -- in particular, if your receive function handles <em>all</em> messages, the loopback will never get to unhandled, so it will never get resolved. This can happen, for example, when using <code>stash()</code> aggressively during setup, stashing all messages until the Actor is fully initialized.</p> 
+  <p>In cases like this, you should put <code>handleRequestResponse</code> at the front of your receive function, like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> handleRequestResponse orElse {
+  <span class="pl-k">case</span> <span class="pl-en">Start</span> <span class="pl-k">=&gt;</span> {
+    persister.requestFor[<span class="pl-en">LoadedState</span>](<span class="pl-en">LoadMe</span>(myId)) foreach { currentState <span class="pl-k">=&gt;</span>
+      setState(currentState)
+      unstashAll()
+      become(normalReceive)
+    }
+  }
+
+  <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> stash()
+}</pre>
+  </div> 
+  <p>In this example, if we didn't have handleRequestResponse there, the response to <code>LoadMe</code> would get stashed along with everything else, never processed, and the Actor would simply hang in its Start state. But putting handleRequestResponse at the front deals with the loopbacks before that stash, so everything works.</p> 
+  <h3><a id="user-content-request-and-futures" class="anchor" href="https://github.com/jducoeur/requester#request-and-futures" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>request</code> and Futures</h3> 
+  <p>In ordinary Akka, the above is usually enough: you usually use the results of your request-based computation to set local state in the Requester, or to send a response, typically back to <code>sender</code>. Occasionally, though, you may want to wrap the whole thing up into a Future -- this is particularly common when you are writing client/server RPC code, using Scala.js on the front end, <a href="https://github.com/lihaoyi/autowire" target="_blank">Autowire</a> for the API communication, and Akka Actors implementing the back-end server implementation.</p> 
+  <p>For a case like this, there is an implicit conversion from RequestM[T] to Future[T], so you can write code like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">doChangeProps</span>(thing<span class="pl-k">:</span><span class="pl-en">Thing</span>, props<span class="pl-k">:</span><span class="pl-en">PropMap</span>)<span class="pl-k">:</span><span class="pl-en">Future</span>[<span class="pl-en">PropertyChangeResponse</span>] <span class="pl-k">=</span> {
+  <span class="pl-v">self</span>.request(createSelfRequest(<span class="pl-en">ChangeProps2</span>(thing.toThingId, props))) map {
+    <span class="pl-k">case</span> <span class="pl-en">ThingFound</span>(_, _) <span class="pl-k">=&gt;</span> <span class="pl-en">PropertyChanged</span>
+    <span class="pl-k">case</span> <span class="pl-en">ThingError</span>(ex, _) <span class="pl-k">=&gt;</span> <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">querki.api.GeneralChangeFailure</span>(<span class="pl-s"><span class="pl-pds">"</span>Error during save<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>Note that the bulk of the code is doing a <code>request</code>, so it is returning a <code>RequestM[PropertyChangeResponse]</code>. Since we are in a context that expects a <code>Future[PropertyChangeResponse]</code>, the system implicitly does the conversion, and it works as you want it to.</p> 
+  <h3><a id="user-content-requestfor" class="anchor" href="https://github.com/jducoeur/requester#requestfor" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>requestFor</code></h3> 
+  <p>The ordinary <code>request</code> call returns Any, as is usual in Akka. Sometimes, it is clearer to be able to state upfront what type you expect to receive, especially if there is only one "right" answer. <code>requestFor</code> is a variant of <code>request</code> that allows you to state this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>notePersister.requestFor[<span class="pl-en">CurrentNotifications</span>](<span class="pl-en">Load</span>) foreach { notes <span class="pl-k">=&gt;</span>
+  currentNotes <span class="pl-k">=</span> notes.notes.sortBy(_.id).reverse
+
+  <span class="pl-c">// Okay, we're ready to roll:</span>
+  <span class="pl-v">self</span> <span class="pl-k">!</span> <span class="pl-en">InitComplete</span>
+}</pre>
+  </div> 
+  <p>This makes the whole thing more strongly-typed upfront -- in the above code, the compiler knows that <code>notes</code> should be a <code>CurrentNotifications</code> message. If anything other than <code>CurrentNotifications</code> is received, it will throw a <code>ClassCastException</code>.</p> 
+  <h3><a id="user-content-retries" class="anchor" href="https://github.com/jducoeur/requester#retries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Retries</h3> 
+  <p><code>request</code> and <code>requestFor</code> actually have a second parameter -- the number of times to retry sending this request. Akka is explicitly unreliable: that's not as obvious when running on a single-node system (where message delivery usually succeeds), but when running multi-node that can be quite important. So it is <em>sometimes</em> appropriate to retry message sends once or twice when they fail.</p> 
+  <p>You can specify a retry simply by adding the parameter, like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>myTarget.requestFor[<span class="pl-en">Loaded</span>](<span class="pl-en">Load</span>, <span class="pl-c1">2</span>) foreach { loaded <span class="pl-k">=&gt;</span> ...</pre>
+  </div> 
+  <p>This says that, if the request times out, Requester should retry up to 2 times. If it continues to fail, after the last retry the RequestM will fail with an <code>AskTimeoutException</code>, as usual.</p> 
+  <p><strong>Important:</strong> retries aren't a panacea, and you can get yourself into real trouble with them if you're not careful. All this is doing is retrying if we don't get a <em>response</em>. That doesn't necessarily mean the request didn't get through. It could be that the response failed to get through, or that the request somehow caused an exception, or that that code pathway is broken, or that it's simply taking a long time. This easy retry mechanism can be helpful, but is not by any means the same thing as reliable message delivery. Think through the whole request/response cycle before using it -- in particular, whether getting a duplicate request is going to confuse the recipient.</p> 
+  <h3><a id="user-content-loopback" class="anchor" href="https://github.com/jducoeur/requester#loopback" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>loopback()</h3> 
+  <p>Requester is primarily focused on the common case where you are trying to send a request to another Actor within receive. But what if you want to use a plain old Future instead? That is where the loopback() function comes in.</p> 
+  <p>loopback() takes one parameter, a Future, and treats it like a Request -- it wraps the Future inside of a RequestM, so that when the Future completes, it will execute the subsequent functions (foreach and map) looped back in the main loop of the Actor. As with an ordinary Request, sender is preserved across this operation.</p> 
+  <p>loopback() is implicit, so if the code already expects a RequestM (for instance, inside of a for comprehension that is led off by a request()), you can just use a Future and it will auto-convert to RequestM. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+  <span class="pl-c">// This returns a RequestM</span>
+  <span class="pl-en">ThingConversations</span>(convs) <span class="pl-k">&lt;</span><span class="pl-k">-</span> spaceRouter.requestFor[<span class="pl-en">ThingConversations</span>](<span class="pl-en">ConversationRequest</span>(rc.requesterOrAnon, rc.state.get.id, <span class="pl-en">GetConversations</span>(rc.thing.get.id)))
+  <span class="pl-c">// This returns a Future</span>
+  identities <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">IdentityAccess</span>.getIdentities(getIds(convs).toSeq) 
+}
+   ...</pre>
+  </div> 
+  <p>Since this starts off with requestFor, the for comprehension is expecting RequestM; the Future returned from getIdentities automatically gets looped back, keeping everything running safely inside the Actor's receive loop.</p> 
+  <p>Note however, this can be a bit fragile -- it is easy to forget to put a request at the top of the comprehension, so everything winds up using dangerous raw Futures. So use this implicit with some care.</p> 
+  <h3><a id="user-content-requesterimplicits" class="anchor" href="https://github.com/jducoeur/requester#requesterimplicits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>RequesterImplicits</h3> 
+  <p>The above is all fine so long as you are sending your requests from directly inside the Requester. But what if your structure is more complex -- say, you have your handlers broken up into a number of classes instantiated by and running under the Requester? (For example, in Querki, we have a single primary UserSpaceSession Actor that mediates all normal client/server requests. Each request then causes an appropriate handler object to be created, running under that Actor's receive loop, which actually deals with the functions in question.)</p> 
+  <p>If you want one of these outside classes to be able to use <code>request</code>, then you should have it inherit from the RequesterImplicits trait, and override that trait's <code>requester</code> member to point to the controlling Requester Actor.</p> 
+  <p>RequesterImplicits actually defines <code>request</code>, <code>requestFor</code> and <code>requestFuture</code>; it delegates the actual processing to the associated Requester. (Requester itself implements RequesterImplicits, so you can just ignore this for the ordinary case.)</p> 
+  <h3><a id="user-content-promise-like-constructions" class="anchor" href="https://github.com/jducoeur/requester#promise-like-constructions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>Promise</code>-like Constructions</h3> 
+  <p>The above covers <em>most</em> situations where you want to use RequestM. But what about the down-and-dirty situations, where you have to want to compose complex but relatively primitive interactions safely? These are the sorts of situations where, if you were using <code>Future</code>s, you would need to bring <code>Promise</code> into play. The corresponding concepts in Requester are the <code>prep()</code> and <code>resolve()</code> methods.</p> 
+  <p><code>RequestM.prep[T]()</code> creates a new, raw <code>RequestM[T]</code>, containing no value and not in any conventional workflow -- it's just a <code>RequestM</code>. Sometime after you have that, you call <code>.resolve(v:Try[T])</code> on that <code>RequestM</code>, to set its value and (more importantly) fire off any subsequent requests that have been mapped onto it.</p> 
+  <p>You would typically use this in situations where need to pass a <code>RequestM</code> around externally-defined walls. For example, Akka's <code>PersistentActor</code> centers on the method <code>persist[T](evt:T)(handler:T =&gt; Unit):Unit</code>. Note that this returns a Unit. So how do you compose this operation? How do I return something that allows other functions to do something <em>after</em> my handler? You would do that like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">myPersist</span>[<span class="pl-en">T</span>, <span class="pl-en">U</span>](evtIn<span class="pl-k">:</span><span class="pl-en">T</span>)(handler<span class="pl-k">:</span><span class="pl-en">T</span> <span class="pl-k">=&gt;</span> <span class="pl-en">U</span>)<span class="pl-k">:</span><span class="pl-en">RequestM</span>[<span class="pl-en">U</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">rm</span> <span class="pl-k">=</span> <span class="pl-en">RequestM</span>.prep[<span class="pl-en">U</span>]
+  persist(evtIn) { evt <span class="pl-k">=&gt;</span>
+    <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> handler(evt)
+    rm.resolve(<span class="pl-en">Success</span>(result))
+  }
+  rm
+}</pre>
+  </div> 
+  <p>This persists the event as usual, but returns a <code>RequestM</code> that can be mapped and flatMapped, and those mappings will execute immediately after the handler executes. That way, you can build composable flows. (This is especially useful in Akka Persistence when you have multiple commands that can result in the same event, but want somewhat different responses afterwards.)</p> 
+  <p>It's reasonable to ask, "So why not just use <code>Promise</code> and <code>Future</code> here?" That's entirely an option. Using <code>prep</code>/<code>resolve</code> has two advantages:</p> 
+  <ul> 
+   <li>Since it is using a RequestM, it combines well with other RequestM-based code, and doesn't require polluting your Actor with potentially dangerous Futures.</li> 
+   <li>Any additional functions that are mapped onto the returned <code>RequestM</code> are guaranteed to be executed synchronously in the same thread where <code>resolve</code> was called, so the threading is safe and predictable.</li> 
+  </ul> 
+  <p>It is your responsibility to only call <code>resolve</code> in an "Actor-safe" thread -- during a <code>receive</code>, a <code>persist</code> handler, or some other safely single-threaded point.</p> 
+  <p>Note that <code>resolve</code> takes a <code>Try[T]</code> -- you can use it to resolve either <code>Success</code> or <code>Failure</code>.</p> 
+  <p><code>resolve</code> is the heart of Requester, and is used internally to complete requests -- the conventional Requester workflow is to send an <code>ask</code>, loop the response back into the requester's <code>receive</code> function, and pass that response into <code>resolve</code>. Similarly, <code>RequestM.successful()</code> and <code>.failure()</code> simply create a <code>RequestM</code> and immediately call <code>resolve</code> on it. Thus, you can use <code>resolve</code> to build other, high-level constructs on top of <code>RequestM</code>.</p> 
+  <h3><a id="user-content-caveats" class="anchor" href="https://github.com/jducoeur/requester#caveats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats</h3> 
+  <p>Because of the loopback, request necessarily increases the latency of processing a request. This increase is typically slight (since it sends a message locally to the same Actor), but in a heavily-loaded Actor it could become non-trivial.</p> 
+  <p>Requester is powerful, and brings you back into the land of Akka sanity, but it isn't a panacea. In particular, remember that your <code>request</code> response handler will <em>always</em> be run asynchronously, in a later run through receive. The state of your Actor may well have changed since you sent your message -- be sure to keep that in mind when you are writing your response handler.</p> 
+  <p>Also, for the same reasons, using Requester with frequent <code>become</code> operations or with FSM is pretty fraught. While it isn't necessarily incompatible, I recommend using caution if you are trying to combine these concepts. (This is no different from usual, though: FSM always requires care and thought about what you want to have happen when an obsolete request comes back.)</p> 
+  <p>While Requester is being used heavily in production at Querki, nobody else has used it as of this writing. Please give a yell if you come across bugs, and pull requests are welcomed.</p> 
+  <h3><a id="user-content-to-do" class="anchor" href="https://github.com/jducoeur/requester#to-do" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>To Do</h3> 
+  <p>Requester clearly ought to pair well with <a href="http://doc.akka.io/docs/akka/2.3.9/scala/typed-actors.html" target="_blank">Typed Actors</a>, but some surgery will be needed. (Unless Typed Actors do this loopback automatically under the hood, in which case Requester isn't necessary.) Basically, we need to extend Requester to have a straightforward way to interpret any Future-producing function (not just ask) as a RequestM, automatically sussing the type that is implicit in the Future, and looping it back as normal. In principle this isn't difficult, but we need to think about how to minimize the boilerplate.</p> 
+  <p>One possibility for the above: create a new implicit ExecutionContext, available on any Requester, which executes <em>all</em> Futures as loopbacks. In principle this seems like it would work in the general case, and would be an enormous win -- if we can do that, then RequestM might be able to go away, and you could simply do ordinary Future-based programming that would work properly. This is the ideal case, but needs more research to figure out if it is actually possible.</p> 
+  <p>At the moment, the timeout for requests is built into Requester as a member, instead of being an implicit to functions the way Futures usually work. This is very convenient, but I worry that it's too coarse-grained. We should think about whether it needs to be changed.</p> 
+  <p>I am pretty sure that withFilter() doesn't do the right thing yet. It needs to be adjusted so that its behavior matches that of Future.</p> 
+  <p>More unit tests are needed, especially around failure management.</p> 
+  <h3><a id="user-content-change-log" class="anchor" href="https://github.com/jducoeur/requester#change-log" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change log</h3> 
+  <ul> 
+   <li><p><strong>2.4</strong> -- Added support for <code>prep()</code> and <code>resolve()</code>. <code>resolve</code> has always been there -- it's central to the system -- but had previously been private. It is now opened up, to allow <code>Promise</code>-like code.</p></li> 
+   <li><p><strong>2.1</strong> -- If a Request is being auto-converted to a Future, Exceptions now propagate from the Request to the Future. request() and requestFor() now work with ActorSelection as well as ActorRef. Fixed the unwinding of nested flatMaps to work tail-recursively. (Previously, if you nested a <em>lot</em> of flatMaps together, they could throw a StackOverflow while unwinding at the end.)</p></li> 
+   <li><p><strong>2.0</strong> -- Improved RequestM to make it compose properly, so you can mostly treat it as you expect from Futures. Added onComplete, so you can handle failures. Added an implicit to convert RequestM[T] to Future[T], which makes interoperability with Futures much easier, and removed the clunky requestFuture mechanism. unhandled() now deals with loopbacks, so you can usually just mix Requester in with no other changes and have it work. Added ? as a syntax for request, specifically to help prevent accidentally mixing the unsafe ask into a Requester.</p></li> 
+  </ul> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/jducoeur/requester#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p>Copyright (c) 2015 Querki Inc. (justin at querki dot net)</p> 
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p> 
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p> 
+  <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p> 
+ </article>
+</div>

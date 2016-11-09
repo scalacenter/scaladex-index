@@ -1,0 +1,89 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://github.com/twitter/chill" target="_blank">Chill</a> <strong>now supports Scala 2.11. Please use it instead.</strong></p> 
+  <hr> 
+  <p>This is a fork of Twitter's <a href="https://github.com/twitter/chill" target="_blank">Chill's</a> chill-scala to build for both Scala 2.10 &amp; 2.11. At this moment (Jul 5 2014), the original Chill doesn't support Scala 2.11.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/xitrum-framework/chill-scala#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>In your SBT project:</p> 
+  <pre><code>libraryDependencies += "tv.cntt" %% "chill-scala" % "1.2"
+</code></pre> 
+  <p>Example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.io.</span>{<span class="pl-v">ByteArrayInputStream</span>, <span class="pl-v">ByteArrayOutputStream</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">scala.util.control.</span><span class="pl-v">NonFatal</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.esotericsoftware.kryo.</span><span class="pl-v">Kryo</span>
+<span class="pl-k">import</span> <span class="pl-v">com.esotericsoftware.kryo.io.</span>{<span class="pl-v">Input</span>, <span class="pl-v">Output</span>}
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.chill.</span><span class="pl-v">KryoSerializer</span>
+
+<span class="pl-k">object</span> <span class="pl-en">SeriDeseri</span> {
+  <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">kryo</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> <span class="pl-en">KryoSerializer</span>.registerAll
+    <span class="pl-k">val</span> <span class="pl-en">k</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Kryo</span>
+    a(k)
+    k
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">toBytes</span>(<span class="pl-v">any</span>: <span class="pl-en">Any</span>)<span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ByteArrayOutputStream</span>
+    <span class="pl-k">val</span> <span class="pl-en">o</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Output</span>(b)
+    kryo.writeObject(o, any)
+    o.close()
+    b.toByteArray
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">fromBytes</span>[<span class="pl-en">T</span>](<span class="pl-v">bytes</span>: <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>])(<span class="pl-k">implicit</span> <span class="pl-v">m</span>: <span class="pl-en">Manifest</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">i</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Input</span>(bytes)
+    <span class="pl-k">try</span> {
+      <span class="pl-k">val</span> <span class="pl-en">t</span> <span class="pl-k">=</span> kryo.readObject(i, m.runtimeClass.<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">Class</span>[<span class="pl-en">T</span>]])
+      <span class="pl-en">Option</span>(t)
+    } <span class="pl-k">catch</span> {
+      <span class="pl-k">case</span> <span class="pl-en">NonFatal</span>(e) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>
+    } <span class="pl-k">finally</span> {
+      i.close()
+    }
+  }
+}</pre>
+  </div> 
+  <p><a href="https://github.com/EsotericSoftware/kryo#threading" target="_blank">Kryo is not threadsafe</a>, you may want to use this code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.util.control.</span><span class="pl-v">NonFatal</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.chill.</span>{<span class="pl-v">KryoInstantiator</span>, <span class="pl-v">KryoPool</span>, <span class="pl-v">KryoSerializer</span>}
+
+<span class="pl-k">object</span> <span class="pl-en">SeriDeseri</span> {
+  <span class="pl-c">// Use this utility instead of using Kryo directly because Kryo is not threadsafe!</span>
+  <span class="pl-c">// https://github.com/EsotericSoftware/kryo#threading</span>
+  <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">kryoPool</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">r</span>  <span class="pl-k">=</span> <span class="pl-en">KryoSerializer</span>.registerAll
+    <span class="pl-k">val</span> <span class="pl-en">ki</span> <span class="pl-k">=</span> (<span class="pl-k">new</span> <span class="pl-en">KryoInstantiator).withRegistrar</span>(r)
+    <span class="pl-en">KryoPool</span>.withByteArrayOutputStream(<span class="pl-en">Runtime</span>.getRuntime.availableProcessors <span class="pl-k">*</span> <span class="pl-c1">2</span>, ki)
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">toBytes</span>(<span class="pl-v">any</span>: <span class="pl-en">Any</span>)<span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> kryoPool.toBytesWithoutClass(any)
+
+  <span class="pl-k">def</span> <span class="pl-en">fromBytes</span>[<span class="pl-en">T</span>](<span class="pl-v">bytes</span>: <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>])(<span class="pl-k">implicit</span> <span class="pl-v">m</span>: <span class="pl-en">Manifest</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">try</span> {
+      <span class="pl-k">val</span> <span class="pl-en">t</span> <span class="pl-k">=</span> kryoPool.fromBytes(bytes, m.runtimeClass.<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">Class</span>[<span class="pl-en">T</span>]])
+      <span class="pl-en">Option</span>(t)
+    } <span class="pl-k">catch</span> {
+      <span class="pl-k">case</span> <span class="pl-en">NonFatal</span>(e) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>
+    }
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-source-code" class="anchor" href="https://github.com/xitrum-framework/chill-scala#source-code" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Source code</h2> 
+  <p>Basically, the source code comes from Chill with minor modifications:</p> 
+  <pre><code>src
+  main
+   java  -&gt; chill/chill-java/src/main/java
+   scala -&gt; chill/chill-scala/src/main/scala
+</code></pre> 
+ </article>
+</div>

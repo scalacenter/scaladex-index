@@ -1,0 +1,114 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>Use Tesseract to make a PDF searchable.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/overview/pdfocr#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Install <a href="https://github.com/tesseract-ocr/tesseract" target="_blank">Tesseract</a> v3.0.4. This library shells out to it.</p> 
+  <p>Then install this package. Maven-style:</p> 
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.overviewproject&lt;/groupId&gt;
+  &lt;artifactId&gt;pdfocr_2.11&lt;/artifactId&gt;
+  &lt;version&gt;0.0.2&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Sbt-style:</p> 
+  <pre><code>dependencies += "org.overviewproject" %% "pdfocr" % "0.0.2"
+</code></pre> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/overview/pdfocr#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>You've got to use Scala. Code something like this:</p> 
+  <pre><code>import java.nio.file.Path
+import java.util.Locale
+import org.overviewproject.pdfocr.{PdfOcr,PdfOcrProgress,PdfOcrResult}
+import org.overviewproject.pdfocr.exceptions._
+import scala.concurrent.Future
+
+val pdfOcr = new PdfOcr()                          // default settings: finds tesseract in your $PATH
+val inPdf = new Path("/path/to/needs-ocr.pdf")     // exists
+val outPdf = new Path("/path/to/ocr-finished.pdf") // doesn't exist; will be deleted if it does
+val process = PdfOcr.makePdfSearchable(inPdf, outPdf, Seq(Locale("en")))
+
+process.progress // Future[PdfOcrProgress]
+  .map { progress =&gt;
+    // It's a Future because we don't know how many pages there are until
+    // we begin parsing the PDF, which takes time.
+
+    progress.value       // 0.0 ... 1.0
+    progress.currentPage // 1 .. nPages
+    progress.nPages      // n
+  }
+
+process.result // Future[PdfTextResult]
+  .map { result =&gt;
+    // do something with outPdf now...
+
+    // Also, since the data is handy and would otherwise take a long time
+    // to compute, PdfOcr returns the text, in pages.
+    val text = result.pages.map(_.text).mkString("\n")
+  }
+  .recover {
+    // outPdf is guaranteed not to exist
+
+    case TesseractMissingException =&gt; throw
+    case TesseractLanguageMissingException =&gt; throw
+    case EncryptedPdfException =&gt; throw
+    case InvalidPdfException =&gt; throw
+    // Other errors may happen -- PDFBox bugs, Tesseract bugs,
+    // out-of-memory.... You shouldn't catch those.
+  }
+
+// Or if you got impatient, you could:
+process.cancel // Future[Unit]
+</code></pre> 
+  <h2><a id="user-content-how-pdfocr-behaves" class="anchor" href="https://github.com/overview/pdfocr#how-pdfocr-behaves" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How PdfOcr behaves</h2> 
+  <ul> 
+   <li>PdfOcr processes one page at a time.</li> 
+   <li>PdfOcr sends Tesseract any page that's missing fonts or missing 100 characters of text.</li> 
+   <li>PdfOcr's progress reports are page-by-page. If one page needs OCR and nine don't, the progress report will be unintuitive.</li> 
+   <li>PdfOcr communicates with Tesseract via stdin and stdout.</li> 
+   <li>For any method that will block on I/O, PdfOcr returns a Future. In other words: blocking methods are asynchronous.</li> 
+   <li>PdfOcr does heavy computations (especially in <code>PdfPage</code>) which are slow. These are non-blocking and synchronous.</li> 
+  </ul> 
+  <h2><a id="user-content-developing" class="anchor" href="https://github.com/overview/pdfocr#developing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Developing</h2> 
+  <p>First, <a href="http://www.scala-sbt.org/download.html" target="_blank">Install sbt</a>.</p> 
+  <p>After that, </p> 
+  <ol> 
+   <li>Run <code>sbt ~test</code> to run unit tests in the background.</li> 
+   <li>Edit files in <code>src/test</code> until a test fails.</li> 
+   <li>Edit files in <code>src/main</code> until the test passes.</li> 
+   <li>Return to step 2.</li> 
+   <li>Commit to a git branch, push it to GitHub, and submit a pull request.</li> 
+  </ol> 
+  <h2><a id="user-content-publishing" class="anchor" href="https://github.com/overview/pdfocr#publishing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing</h2> 
+  <p>We use <a href="https://github.com/xerial/sbt-sonatype%20for%20more%20details" target="_blank">sbt-sonatype</a> for all this.</p> 
+  <p>Setup: using the sbt-sonatype instructions, ensure you've done these things:</p> 
+  <ul> 
+   <li>Created an account at <a href="https://oss.sonatype.org" target="_blank">https://oss.sonatype.org</a> and get access to this project.</li> 
+   <li>Created <code>~/.sbt/0.13/sonatype.sbt</code> with your credentials.</li> 
+  </ul> 
+  <p>Then, every new version:</p> 
+  <ol> 
+   <li><code>sbt publishSigned</code> to deploy to staging</li> 
+   <li><code>sbt sonatypeRelease</code> to close and promote it</li> 
+  </ol> 
+  <p>If the version ends in <code>-SNAPSHOT</code>, you won't be able to release it.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/overview/pdfocr#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This software is Copyright 2011-2014 The Associated Press, and distributed under the terms of the GNU Affero General Public License. See the LICENSE file for details.</p> 
+ </article>
+</div>

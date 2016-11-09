@@ -1,0 +1,103 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sscheme" class="anchor" href="https://github.com/edadma/sscheme#sscheme" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SScheme</h1> 
+  <p>SScheme is a small Scheme interpreter in Scala intended to be used as an internal DSL/scripting language.</p> 
+  <p>The following is a simple example of how to use it in a Scala program. The Scheme code is from the book "The Scheme Programming Language, Third Edition" in the "Extended Examples" (section 9.2).</p> 
+  <pre><code>import ca.hyperreal.sscheme
+
+object Main extends App
+{
+    val env = environment(
+        """
+        (define sort #f)
+        (let ()
+            (define dosort
+                (lambda (pred? ls n)
+                    (if (= n 1)
+                        (list (car ls))
+                        (let ((i (quotient n 2)))
+                            (merge pred?
+                                (dosort pred? ls i)
+                                (dosort pred? (list-tail ls i) (- n i)))))))
+            (define merge
+                (lambda (pred? l1 l2)
+                    (cond
+                        ((null? l1) l2)
+                        ((null? l2) l1)
+                        ((pred? (car l2) (car l1))
+                        (cons (car l2) (merge pred? l1 (cdr l2))))
+                        (else (cons (car l1) (merge pred? (cdr l1) l2))))))
+            (set! sort
+                (lambda (pred? l)
+                    (if (null? l) l (dosort pred? l (length l))))))
+        """ )
+    val l = SList( 5, 7, 3, 9, 2, 1, 6 )
+
+    println( interpret( """ (sort &lt; l) """, env add ('l -&gt; l) ) )
+    println( interpret( """ (sort &gt; l) """, env add ('l -&gt; l) ) )
+}
+</code></pre> 
+  <p>The output is:</p> 
+  <pre><code>List(1, 2, 3, 5, 6, 7, 9)
+List(9, 7, 6, 5, 3, 2, 1)
+</code></pre> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/sscheme#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>SScheme is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/sscheme#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Use the following elements to use SScheme in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+    &lt;id&gt;hyperreal&lt;/id&gt;
+    &lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;ca.hyperreal&lt;/groupId&gt;
+    &lt;artifactId&gt;sscheme&lt;/artifactId&gt;
+    &lt;version&gt;0.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use SScheme in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "ca.hyperreal" %% "sscheme" % "0.1"
+</code></pre> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/edadma/sscheme#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <h3><a id="user-content-requirements" class="anchor" href="https://github.com/edadma/sscheme#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h3> 
+  <ul> 
+   <li>SBT 13.2+</li> 
+   <li>Java 6+</li> 
+  </ul> 
+  <p>Clone and build:</p> 
+  <pre><code>git clone git://github.com/edadma/sscheme.git
+cd sscheme
+sbt assembly
+</code></pre> 
+  <p>This will build an executable requiring only that Java be installed. You can now also type</p> 
+  <pre><code>sbt run
+</code></pre> 
+  <p>to start the REPL, or</p> 
+  <pre><code>sbt "run &lt;SScheme script file&gt;"
+</code></pre> 
+  <p>to execute a script. Note that the double quotes are required.</p> 
+  <h2><a id="user-content-executable" class="anchor" href="https://github.com/edadma/sscheme#executable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Executable</h2> 
+  <p>The latest executable can be downloaded from <a href="https://dl.bintray.com/edadma/generic/sscheme-0.1.jar" target="_blank">https://dl.bintray.com/edadma/generic/sscheme-0.1.jar</a>.</p> 
+ </article>
+</div>

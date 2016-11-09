@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-consumer-junit_2.10</artifactId>
+  <version>2.1.2</version>
+  <name>pact-jvm-consumer-junit_2.10</name>
+  <description>pact-jvm-consumer-junit
+=======================
+
+Provides a DSL and a base test class for use with Junit to build consumer tests.
+
+##Dependency
+
+The library is available on maven central using:
+
+* group-id = `au.com.dius`
+* artifact-id = `pact-jvm-consumer-junit_2.11`
+* version-id = `2.1.0`
+
+##Usage
+
+### Using the base ConsumerPactTest
+
+To write a pact spec extend ConsumerPactTest. This base class defines the following four methods which must be
+overridden in your test class.
+
+* *providerName:* Returns the name of the API provider that Pact will mock
+* *consumerName:* Returns the name of the API consumer that we are testing.
+* *createFragment:* Returns the PactFrament containing the interactions that the test setup using the
+  ConsumerPactBuilder DSL
+* *runTest:* The actual test run. It receives the URL to the mock server as a parameter.
+
+Here is an example:
+
+```java
+import au.com.dius.pact.model.PactFragment;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+
+public class ExampleJavaConsumerPactTest extends ConsumerPactTest {
+
+    @Override
+    protected PactFragment createFragment(ConsumerPactBuilder.PactDslWithProvider builder) {
+        Map&lt;String, String> headers = new HashMap&lt;String, String>();
+        headers.put("testreqheader", "testreqheadervalue");
+
+        return builder
+            .given("test state") // NOTE: Using provider states are optional, you can leave it out
+            .uponReceiving("java test interaction")
+                .path("/")
+                .method("GET")
+                .headers(headers)
+                .body("{\"test\":true}")
+            .willRespondWith()
+                .status(200)
+                .headers(headers)
+                .body("{\"responsetest\":true}").toFragment();
+    }
+
+
+    @Override
+    protected String providerName() {
+        return "test_provider";
+    }
+
+    @Override
+    protected String consumerName() {
+        return "test_consumer";
+    }
+
+    @Override
+    protected void runTest(String url) {
+        try {
+            assertEquals(new ConsumerClient(url).get("/"), "{\"responsetest\":true}");
+        } catch (Exception e) {
+            // NOTE: if you want to see any pact failure, do not throw an exception here. This should be
+            // fixed at some point (see Issue #40 https://github.com/DiUS/pact-jvm/issues/40)
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+### Using the Pact DSL directly
+
+Sometimes it is not convenient to use the ConsumerPactTest as it only allows one test per test class. The DSL can be
+ used directly in this case.
+
+Example:
+
+```java
+import au.com.dius.pact.model.MockProviderConfig;
+import au.com.dius.pact.model.PactFragment;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+
+public class PactTest {
+
+    @Test
+    public void testPact() {
+        PactFragment pactFragment = ConsumerPactBuilder
+            .consumer("test_consumer")
+            .hasPactWith("test_provider")
+            .uponReceiving("a test interaction")
+                .path("/hello")
+                .method("POST")
+                .body("{\"name\": \"harry\"}")
+            .willRespondWith()
+                .status(200)
+                .body("{\"hello\": \"harry\"}")
+                .toFragment();
+
+        MockProviderConfig config = MockProviderConfig.createDefault();
+        VerificationResult result = pactFragment.runConsumer(config, new TestRun() {
+            @Override
+            public void run(MockProviderConfig config) {
+                Map expectedResponse = new HashMap();
+                expectedResponse.put("hello", "harry");
+                try {
+                    assertEquals(new ConsumerClient(config.url()).post("/hello", "{\"name\": \"harry\"}"),
+                            expectedResponse);
+                } catch (IOException e) {}
+            }
+        });
+
+        if (result instanceof PactError) {
+            throw new RuntimeException(((PactError)result).error());
+        }
+
+        assertEquals(ConsumerPactTest.PACT_VERIFIED, result);
+    }
+
+}
+
+```
+
+### The Pact JUnit DSL
+
+The DSL has the following pattern:
+
+```java
+.consumer("test_consumer")
+.hasPactWith("test_provider")
+.given("test state")
+    .uponReceiving("a test interaction")
+        .path("/hello")
+        .method("POST")
+        .body("{\"name\": \"harry\"}")
+    .willRespondWith()
+        .status(200)
+        .body("{\"hello\": \"harry\"}")
+    .uponReceiving("a second test interaction")
+        .path("/hello")
+        .method("POST")
+        .body("{\"name\": \"harry\"}")
+    .willRespondWith()
+        .status(200)
+        .body("{\"hello\": \"harry\"}")
+    .
+    .
+    .
+.toFragment()
+```
+
+You can define as many interactions as required. Each interaction starts with `uponReceiving` followed by `willRespondWith`.
+The test state setup with `given` is a mechanism to describe what the state of the provider should be in before the provider
+is verified. It is only recorded in the consumer tests and used by the provider verification tasks.
+
+### Building JSON bodies with PactDslJsonBody DSL
+
+The body method of the ConsumerPactBuilder can accept a PactDslJsonBody, which can construct a JSON body as well as
+define regex and type matchers.
+
+For example:
+
+```java
+PactDslJsonBody body = new PactDslJsonBody()
+    .stringType("name")
+    .booleanType("happy")
+    .hexValue("hexCode")
+    .id()
+    .ipAddress("localAddress")
+    .numberValue("age", 100)
+    .timestamp();
+```
+
+## Debugging pact failures
+
+When the test runs, Pact will start a mock provider that will listen for requests and match them against the expectations
+you setup in `createFragment`. If the request does not match, it will return a 500 error response.
+
+Each request received and the generated response is logged using [SLF4J](http://www.slf4j.org/). Just enable debug level
+logging for au.com.dius.pact.consumer.UnfilteredMockProvider. Most failures tend to be mismatched headers or bodies.
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+    <developer>
+      <id>kenbot</id>
+      <name>Ken Scambler</name>
+      <email>ken.scambler@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>fluent-hc</artifactId>
+      <version>4.3.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.10.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20140107</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder</groupId>
+      <artifactId>unfiltered-netty-server_2.10</artifactId>
+      <version>0.8.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-native_2.10</artifactId>
+      <version>3.2.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder.dispatch</groupId>
+      <artifactId>dispatch-core_2.10</artifactId>
+      <version>0.11.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2_2.10</artifactId>
+      <version>2.3.13</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.3.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-consumer_2.10</artifactId>
+      <version>2.1.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging-slf4j_2.10</artifactId>
+      <version>2.1.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-jackson_2.10</artifactId>
+      <version>3.2.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

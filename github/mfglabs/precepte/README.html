@@ -1,0 +1,425 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-précepte-let-your-code-be-state-aware--make-runtime-effect-observation-acceptable" class="anchor" href="https://github.com/mfglabs/precepte#précepte-let-your-code-be-state-aware--make-runtime-effect-observation-acceptable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Précepte, let your code be state-aware &amp; make runtime effect observation acceptable...</h1> 
+  <p><a href="https://gitter.im/MfgLabs/precepte?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/MfgLabs/precepte" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p>Précepte is an opinionated purely functional &amp; lazy API stacking some useful monads to help you observe the execution of your runtime effects by instrumenting your code with a managed state propagated all along your business workflow.</p> 
+  <p>It can help you to:</p> 
+  <ul> 
+   <li><a href="https://github.com/mfglabs/precepte#contextualized-logs" target="_blank">Collect contextualized logs</a></li> 
+   <li><a href="https://github.com/mfglabs/precepte#monitoring-with-influxdb-and-grafana" target="_blank">Collect high quality metrics</a></li> 
+   <li><a href="https://github.com/mfglabs/precepte#graph-it" target="_blank">Generate a graph representing you program execution</a></li> 
+   <li>etc.</li> 
+  </ul> 
+  <p>Précepte embraces the concept that observing has a cost but let you control explicitly the balance between precision and performance without sacrifying code cleanness, FP purity or laziness.</p> 
+  <p>Précepte's idea is simply to make your code <em>state-aware</em> by allowing you to obtain a State anywhere in your code. This state will provide you with:</p> 
+  <ul> 
+   <li>a context defining from where this code comes and where it is (function name, custom tags, etc..)</li> 
+   <li>any values you want to measure in your observation</li> 
+  </ul> 
+  <p>The state provided by Précepte is composed of:</p> 
+  <ul> 
+   <li><p>a managed part that is managed by Précepte and that consists in:</p> 
+    <ul> 
+     <li>the Span: a global ID uniquely identifying the full execution workflow</li> 
+     <li>the Call Path: a sequence of tuples of PId (local step ID) and Tags (defined at compile-time) accumulated by Précepte all along the execution of the workflow. This is what provides you with the place from where you come and where you are...</li> 
+    </ul></li> 
+   <li><p>an unmanaged part that is just a container in which you can put anything you want and also perform some compile-time DI.</p></li> 
+  </ul> 
+  <p>Precepte is a custom purely functional structure based on:</p> 
+  <ul> 
+   <li>A State Monad to represent the pure propagation of the State in the workflow</li> 
+   <li>A Free Monad to represent our monadic &amp; applicative effectful workflow</li> 
+   <li>Some helpers to make Precepte usable with Monad Transformers</li> 
+   <li>Coyoneda to reduce the requirement of effects to be Functor in Free Monads</li> 
+   <li>some custom optimization to reduce the burden of Free Monads classic model (right associatio, map fusion, structure squashing, )</li> 
+  </ul> 
+  <h2><a id="user-content-prerequisites" class="anchor" href="https://github.com/mfglabs/precepte#prerequisites" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Prerequisites</h2> 
+  <p>Using Précepte is not different from using a <code>Future</code> or any other monadic data type. You should understand the concepts of <code>Monad</code>, <code>Functor</code> and <code>Applicative</code>, and be familiar with <a href="https://github.com/scalaz/scalaz" target="_blank">Scalaz</a> or <a href="https://github.com/non/cats" target="_blank">Cats</a>. All the examples below are using Scalaz, but Précepte is also fully compatible with Cats</p> 
+  <h2><a id="user-content-using-précepte-in-your-project" class="anchor" href="https://github.com/mfglabs/precepte#using-précepte-in-your-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Précepte in your project</h2> 
+  <p>Just add the following dependency in your <code>built.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-core<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion</pre>
+  </div> 
+  <p>You may also want the modules providing support for Logback, Influxdb, and Play framework:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-logback<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-influx<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-play<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion</pre>
+  </div> 
+  <h2><a id="user-content-from-future-to-précepte" class="anchor" href="https://github.com/mfglabs/precepte#from-future-to-précepte" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>From Future to Précepte</h2> 
+  <p>A Précepte is always parameterized by a type <code>F</code> representing the effect. This documentation is using <code>Future</code>, since it's familiar to most Scala developers.</p> 
+  <p>Let's say you've written the following code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+
+<span class="pl-k">def</span> <span class="pl-en">f1</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Future</span>.successful(<span class="pl-c1">42</span>)
+<span class="pl-k">def</span> <span class="pl-en">f2</span>(<span class="pl-v">s</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Future</span>.successful(s<span class="pl-s"><span class="pl-pds">"</span>The answer to life the universe and everything is $s<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>If you were to "chain" the calls to <code>f1</code> and <code>f2</code>, that is call <code>f1</code> and feed it's return to <code>f2</code>, you'd be writing something like:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ultimateAnswer</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    s <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1
+    i <span class="pl-k">&lt;</span><span class="pl-k">-</span> f2(s)
+  } <span class="pl-k">yield</span> i</pre>
+  </div> 
+  <p>Let's define a simple await function to test our code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Await</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">def</span> <span class="pl-en">await</span>[<span class="pl-en">A</span>](<span class="pl-v">f</span>: <span class="pl-en">Future</span>[<span class="pl-en">A</span>]) <span class="pl-k">=</span> <span class="pl-en">Await</span>.result(f, <span class="pl-c1">10</span> seconds)</pre>
+  </div> 
+  <p>Now we can test it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> await(ultimateAnswer)
+res1<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-en">The</span> answer to life the universe and everything is <span class="pl-c1">42</span></pre>
+  </div> 
+  <p>All is well, but you'd really like to be able to collect insights on your code, like how fast it is. Of course you choose to use Précepte for that!</p> 
+  <p>Let's rewrite your code to use Précepte, and attach some metadata to it.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.mfglabs.precepte.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">corescalaz.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">default.</span><span class="pl-v">_</span>
+
+<span class="pl-k">type</span> <span class="pl-en">Pre</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">DPre</span>[<span class="pl-en">Future</span>, <span class="pl-k">Unit</span>, <span class="pl-en">A</span>]
+<span class="pl-k">object</span> <span class="pl-en">Demo</span> <span class="pl-k">extends</span> <span class="pl-e">Category</span>(<span class="pl-s"><span class="pl-pds">"</span>demo<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-v">f</span>: <span class="pl-en">ST</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>[<span class="pl-en">A</span>])(<span class="pl-k">implicit</span> <span class="pl-v">c</span>: <span class="pl-en">Callee</span>) <span class="pl-k">=</span>
+    <span class="pl-en">Pre</span>(<span class="pl-en">BaseTags</span>(c, <span class="pl-en">Demo</span>))(f)
+}
+
+<span class="pl-k">import</span> <span class="pl-v">Macros.</span><span class="pl-v">callee</span>
+
+<span class="pl-k">def</span> <span class="pl-en">f1</span><span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span>
+  <span class="pl-en">Demo</span> { st <span class="pl-k">=&gt;</span>
+    <span class="pl-en">Future</span>.successful(<span class="pl-c1">42</span>)
+  }
+
+<span class="pl-k">def</span> <span class="pl-en">f2</span>(<span class="pl-v">s</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-en">Demo</span> { st <span class="pl-k">=&gt;</span>
+    <span class="pl-en">Future</span>.successful(s<span class="pl-s"><span class="pl-pds">"</span>The answer to life the universe and everything is $s<span class="pl-pds">"</span></span>)
+  }</pre>
+  </div> 
+  <p>What we've done so far is not particularly exiting. We wrapped everything in a Précepte, and added metadata: the name of the current method, and their "categories". A category is just a group or layer of things in your code. It could be "Database" for all the methods accessing a Database, or "WS" for the methods calling a webservice, or anything you like.</p> 
+  <p>One interesting point is that, at call site, apart from the return type, everything stays identical to our old <code>Future</code> version (pun totally intended).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ultimateAnswerPre</span><span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    s <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1
+    i <span class="pl-k">&lt;</span><span class="pl-k">-</span> f2(s)
+  } <span class="pl-k">yield</span> i</pre>
+  </div> 
+  <h3><a id="user-content-the-state" class="anchor" href="https://github.com/mfglabs/precepte#the-state" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The state</h3> 
+  <p>You probably have noticed a little <code>st</code> parameter sneaked into our code. This <code>st</code> is the current state. By default, Précepte will add the interesting metadata it collected in that state (Category, function name, ...). You can also use Précepte to carry a "custom" state. The type of the custom state is fixed in our type definition for Pre. We said it was Unit (remember: <code>type Pre[A] = DPre[Future, Unit, A]</code>).</p> 
+  <p>Now if we want to run our code, we need to provide an initial state. Précepte will also ask you to provide information about the environment in which our application is executing.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">env</span> <span class="pl-k">=</span> <span class="pl-en">BaseEnv</span>(<span class="pl-en">Host</span>(<span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>), <span class="pl-en">Environment</span>.<span class="pl-en">Dev</span>, <span class="pl-en">Version</span>(<span class="pl-s"><span class="pl-pds">"</span>1.0-DEMO<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">nostate</span> <span class="pl-k">=</span> <span class="pl-en">ST</span>(<span class="pl-en">Span</span>.gen, env, <span class="pl-en">Vector</span>.empty, ())
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">unitSG</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">scalaz.Semigroup</span>[<span class="pl-k">Unit</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">append</span>(<span class="pl-v">f1</span>: <span class="pl-k">Unit</span>, <span class="pl-v">f2</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>) <span class="pl-k">=</span> ()
+}
+
+<span class="pl-k">import</span> <span class="pl-v">scalaz.std.scalaFuture.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>// TODO: explain semigroup</p> 
+  <p>Ok so we've added a bit of code, and finally, we're able to test the execution:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">eventuallyUltimateAnswer</span> <span class="pl-k">=</span> ultimateAnswerPre.eval(nostate)
+eventuallyUltimateAnswer<span class="pl-k">:</span> scala.concurrent.<span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> scala.concurrent.impl.<span class="pl-en">Promise</span>$<span class="pl-en">DefaultPromise</span><span class="pl-k">@</span>4ebc3945
+
+scala<span class="pl-k">&gt;</span> await(eventuallyUltimateAnswer)
+res9<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-en">The</span> answer to life the universe and everything is <span class="pl-c1">42</span></pre>
+  </div> 
+  <h3><a id="user-content-error-handling" class="anchor" href="https://github.com/mfglabs/precepte#error-handling" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Error handling</h3> 
+  <p>TODO</p> 
+  <h2><a id="user-content-contextualized-logs" class="anchor" href="https://github.com/mfglabs/precepte#contextualized-logs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contextualized logs</h2> 
+  <p>Now that you have access to metadata about the executing code, you can do pretty interesting things, like collecting contextualized logs. Précepte has a module to support <a href="http://logback.qos.ch/" target="_blank">Logback</a>. all you have to to is add it into your <code>build.sbt</code> file.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-logback<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion</pre>
+  </div> 
+  <p>Once you have that, you can start using you contextualized Logger :)</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">logback</span> <span class="pl-k">=</span> <span class="pl-en">Logback</span>(env, <span class="pl-s"><span class="pl-pds">"</span>demo-logger<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">object</span> <span class="pl-en">WithLogger</span> <span class="pl-k">extends</span> <span class="pl-e">Category</span>(<span class="pl-s"><span class="pl-pds">"</span>demo<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-v">f</span>: logback.<span class="pl-en">Logger</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>[<span class="pl-en">A</span>])(<span class="pl-k">implicit</span> <span class="pl-v">c</span>: <span class="pl-en">Callee</span>) <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">withLogger</span> <span class="pl-k">=</span> (<span class="pl-v">st</span>: <span class="pl-en">ST</span>[<span class="pl-k">Unit</span>]) <span class="pl-k">=&gt;</span> f(logback.<span class="pl-en">Logger</span>(st.managed.span, st.managed.path))
+    <span class="pl-en">Pre</span>(<span class="pl-en">BaseTags</span>(c, <span class="pl-en">Demo</span>))(withLogger)
+  }
+}
+
+<span class="pl-k">import</span> <span class="pl-v">Macros.</span><span class="pl-v">callee</span>
+
+<span class="pl-k">def</span> <span class="pl-en">f1</span><span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span>
+  <span class="pl-en">WithLogger</span> { logger <span class="pl-k">=&gt;</span>
+    logger.info(<span class="pl-s"><span class="pl-pds">"</span>Computing a value<span class="pl-pds">"</span></span>)
+    <span class="pl-en">Future</span>.successful(<span class="pl-c1">42</span>)
+  }
+
+<span class="pl-k">def</span> <span class="pl-en">f2</span>(<span class="pl-v">s</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-en">WithLogger</span> { logger <span class="pl-k">=&gt;</span>
+    println(<span class="pl-s"><span class="pl-pds">"</span>prout<span class="pl-pds">"</span></span>)
+    logger.info(<span class="pl-s"><span class="pl-pds">"</span>Performing string concatenation!<span class="pl-pds">"</span></span>, <span class="pl-en">Macros</span>.param(s))
+    <span class="pl-en">Future</span>.successful(s<span class="pl-s"><span class="pl-pds">"</span>The answer to life the universe and everything is $s<span class="pl-pds">"</span></span>)
+  }
+
+<span class="pl-k">val</span> <span class="pl-en">ultimateAnswerPre</span><span class="pl-k">:</span> <span class="pl-en">Pre</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    s <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1
+    i <span class="pl-k">&lt;</span><span class="pl-k">-</span> f2(s)
+  } <span class="pl-k">yield</span> i</pre>
+  </div> 
+  <p>And now when we run the code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ultimateAnswer</span> <span class="pl-k">=</span> ultimateAnswerPre.eval(nostate)
+await(ultimateAnswer)</pre>
+  </div> 
+  <p>Assuming logback is configured properly (see <a href="https://github.com/mfglabs/precepte/blob/master/../precepte-tut/src/main/resources/logback.xml" target="_blank">the example logback.xml</a>), the following should appear in your console:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>@timestamp<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>2015-11-13T16:29:47.656+01:00<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>@version<span class="pl-pds">"</span></span>: <span class="pl-c1">1</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>message<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Computing a value<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>logger_name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>application<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>thread_name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>run-main-11<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>level<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>INFO<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>level_value<span class="pl-pds">"</span></span>: <span class="pl-c1">20000</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>HOSTNAME<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Juliens-MacBook-Pro.local<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>span<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>c8e9b61b-cf7c-4272-85da-7c320effb037<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>callees<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>/f1<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>/3_0<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>environment<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>dev<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>parameters<span class="pl-pds">"</span></span>: {}
+}
+{
+  <span class="pl-s"><span class="pl-pds">"</span>@timestamp<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>2015-11-13T16:29:47.717+01:00<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>@version<span class="pl-pds">"</span></span>: <span class="pl-c1">1</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>message<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Performing string concatenation!<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>logger_name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>application<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>thread_name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>ForkJoinPool-1-worker-13<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>level<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>INFO<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>level_value<span class="pl-pds">"</span></span>: <span class="pl-c1">20000</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>HOSTNAME<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>Juliens-MacBook-Pro.local<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>span<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>c8e9b61b-cf7c-4272-85da-7c320effb037<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>callees<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>/f1/f2<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>/3_0/4_0<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>environment<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>dev<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>parameters<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>s<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>42<span class="pl-pds">"</span></span>
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-graph-it" class="anchor" href="https://github.com/mfglabs/precepte#graph-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Graph it!</h2> 
+  <p>Précepte basically turn your code into a algebra, and an interpreter. It's very easy to change the runtime a bit in order to alter the semantics of a program. One application of this simple but powerful idea is built-in into Précepte. You can very easily generate an execution graph of your program:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">ultimateAnswerWithExecutionGraph</span> <span class="pl-k">=</span> ultimateAnswerPre.graph(<span class="pl-en">Graph</span>.empty).eval(nostate)
+  <span class="pl-k">val</span> (graph, result) <span class="pl-k">=</span> await(ultimateAnswerWithExecutionGraph)</pre>
+  </div> 
+  <p>The graph can then easily be turned into a graphviz representation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> graph.viz
+res16<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span>
+<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">digraph G {</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>f1_5_0<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>f1<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>f2_6_0<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>f2<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>f1_5_0<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>f2_6_0<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">}</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Which once rendered looks like this:</p> 
+  <p><a href="https://github.com/mfglabs/precepte/blob/master/documentation/images/graph.png" target="_blank"><img src="https://github.com/mfglabs/precepte/raw/master/documentation/images/graph.png" alt="rendered graph" style="max-width:100%;"></a></p> 
+  <p>And indeed in our code, we call f1 and then f2. Let's try this with a slightly more complex example. Let's start by defining a bunch of async computations:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">p0</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(<span class="pl-c1">0</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span>))
+<span class="pl-k">def</span> <span class="pl-en">p1</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(<span class="pl-c1">1</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span>))
+<span class="pl-k">def</span> <span class="pl-en">p2</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(<span class="pl-c1">2</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>))
+<span class="pl-k">def</span> <span class="pl-en">p3</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(<span class="pl-c1">3</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">3</span>))
+<span class="pl-k">def</span> <span class="pl-en">p4</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>(<span class="pl-c1">4</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">4</span>))</pre>
+  </div> 
+  <p>We can now built a more realistic example than the previous, mixing sequential and parallel effects using monads and applicative functors:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scalaz.syntax.applicative.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">ptest</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> p0
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> (p1 <span class="pl-k">|@|</span> p2 <span class="pl-k">|@|</span> p3).tupled
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> p4
+  } <span class="pl-k">yield</span> ()
+  <span class="pl-k">val</span> (demoGraph, _) <span class="pl-k">=</span> await(ptest.graph(<span class="pl-en">Graph</span>.empty).eval(nostate))</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> demoGraph.viz
+res17<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span>
+<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">digraph G {</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p2_9_4<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>p2<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p3_8_1<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>p3<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p0_7_0<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>p0<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p4_11_0<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>p4<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p1_10_6<span class="pl-s"><span class="pl-pds">"</span> [label = <span class="pl-pds">"</span></span>p1<span class="pl-s"><span class="pl-pds">"</span>]</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p0_7_0<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p2_9_4<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p0_7_0<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p3_8_1<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p1_10_6<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p4_11_0<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p3_8_1<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p4_11_0<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p2_9_4<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p4_11_0<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">  <span class="pl-pds">"</span></span>p0_7_0<span class="pl-s"><span class="pl-pds">"</span> -&gt; <span class="pl-pds">"</span></span>p1_10_6<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">}</span>
+<span class="pl-s">  <span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>And again rendering this nice little graph :)</p> 
+  <p><a href="https://github.com/mfglabs/precepte/blob/master/documentation/images/demoGraph.png" target="_blank"><img src="https://github.com/mfglabs/precepte/raw/master/documentation/images/demoGraph.png" alt="rendered graph" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-monitoring-with-influxdb-and-grafana" class="anchor" href="https://github.com/mfglabs/precepte#monitoring-with-influxdb-and-grafana" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Monitoring with InfluxDB and Grafana</h2> 
+  <p>So far we've used Précepte to generate fancy logs, and visualize the execution of our program as a graph. The last use case we're going to show is the addition of monitoring to an application developed with Précepte.</p> 
+  <p>For this feature to work, you'll need to add the influxdb module in you project dependencies:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mfglabs<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>precepte-influx<span class="pl-pds">"</span></span> <span class="pl-k">%</span> precepteVersion</pre>
+  </div> 
+  <p>For the sake of demo, we'll use effect with random execution times:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>;
+<span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>.create(<span class="pl-s"><span class="pl-pds">"</span>demo-system<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">def</span> <span class="pl-en">rnd</span>(<span class="pl-v">d</span>: <span class="pl-en">FiniteDuration</span>)(<span class="pl-v">v</span>: (<span class="pl-k">Int</span>, <span class="pl-k">Int</span>)) <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">rnd</span> <span class="pl-k">=</span> scala.util.<span class="pl-en">Random</span>
+  <span class="pl-k">val</span> <span class="pl-en">salt</span> <span class="pl-k">=</span> rnd.nextInt(<span class="pl-c1">10</span>).milliseconds
+  akka.pattern.after(d <span class="pl-k">+</span> salt, system.scheduler)(<span class="pl-en">Future</span>.successful(v))
+}
+
+<span class="pl-k">def</span> <span class="pl-en">p0</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> rnd(<span class="pl-c1">10</span> milliseconds)(<span class="pl-c1">0</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span>))
+<span class="pl-k">def</span> <span class="pl-en">p1</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> rnd(<span class="pl-c1">20</span> milliseconds)(<span class="pl-c1">1</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span>))
+<span class="pl-k">def</span> <span class="pl-en">p2</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> rnd(<span class="pl-c1">40</span> milliseconds)(<span class="pl-c1">2</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>))
+<span class="pl-k">def</span> <span class="pl-en">p3</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> rnd(<span class="pl-c1">5</span> milliseconds)(<span class="pl-c1">3</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">3</span>))
+<span class="pl-k">def</span> <span class="pl-en">p4</span> <span class="pl-k">=</span> <span class="pl-en">Demo</span>(s <span class="pl-k">=&gt;</span> rnd(<span class="pl-c1">15</span> milliseconds)(<span class="pl-c1">4</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">4</span>))
+
+<span class="pl-k">import</span> <span class="pl-v">scalaz.syntax.applicative.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">demo</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> p0
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> (p1 <span class="pl-k">|@|</span> p2 <span class="pl-k">|@|</span> p3).tupled
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> p4
+  } <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <p>Now we have created the program but we've not executed it yet. All we have to do to push metrics into an <a href="https://influxdb.com/" target="_blank">influxdb</a> instance is configure the influx client, and "inject" it into the execution of our program.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">influx</span> <span class="pl-k">=</span> <span class="pl-en">Influx</span>[<span class="pl-k">Unit</span>](
+    <span class="pl-k">new</span> <span class="pl-en">java.net.URL</span>(<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8086<span class="pl-pds">"</span></span>),
+      <span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>,
+      <span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>,
+      <span class="pl-s"><span class="pl-pds">"</span>precepte_demo<span class="pl-pds">"</span></span>
+    )
+<span class="pl-k">val</span> <span class="pl-en">monitoredDemo</span> <span class="pl-k">=</span> demo.mapSuspension(influx.monitor)</pre>
+  </div> 
+  <p>now if we execute the code, metrics are automatically pushed to Influxdb.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">1</span> to <span class="pl-c1">100</span>
+  } await(monitoredDemo.eval(nostate))</pre>
+  </div> 
+  <p>Using <a href="http://grafana.org/" target="_blank">Grafana</a> and the following query:</p> 
+  <p><a href="https://github.com/mfglabs/precepte/blob/master/documentation/images/query.png" target="_blank"><img src="https://github.com/mfglabs/precepte/raw/master/documentation/images/query.png" alt="influx query" style="max-width:100%;"></a></p> 
+  <p>We can get a very nice graph of our functions execution times.</p> 
+  <p><a href="https://github.com/mfglabs/precepte/blob/master/documentation/images/influx.png" target="_blank"><img src="https://github.com/mfglabs/precepte/raw/master/documentation/images/influx.png" alt="influx graph" style="max-width:100%;"></a></p> 
+  <p>Précepte will push the following tags in influxdb:</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>type</th> 
+     <th>name</th> 
+     <th>description</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>tag</td> 
+     <td>host</td> 
+     <td>Name of the host</td> 
+    </tr> 
+    <tr> 
+     <td>tag</td> 
+     <td>environment</td> 
+     <td>Environment (Dev, Staging, Prod)</td> 
+    </tr> 
+    <tr> 
+     <td>tag</td> 
+     <td>version</td> 
+     <td>Application version</td> 
+    </tr> 
+    <tr> 
+     <td>tag</td> 
+     <td>category</td> 
+     <td>Metric category (Database, Api, etc.)</td> 
+    </tr> 
+    <tr> 
+     <td>tag</td> 
+     <td>callees</td> 
+     <td>Callees (ex: /method1/method2/method3)</td> 
+    </tr> 
+    <tr> 
+     <td>tag</td> 
+     <td>method</td> 
+     <td>Name of the current method (ex: method3)</td> 
+    </tr> 
+    <tr> 
+     <td>field</td> 
+     <td>span</td> 
+     <td>Span Id (ex: 8fe3a664-ade1-4bfb-9c28-fa4497a93979)</td> 
+    </tr> 
+    <tr> 
+     <td>field</td> 
+     <td>path</td> 
+     <td>Full call path (ex: /5_0/7_0/12_0)</td> 
+    </tr> 
+    <tr> 
+     <td>field</td> 
+     <td>execution_time</td> 
+     <td>Execution time for the current method.</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-using-précepte-with-play-framework" class="anchor" href="https://github.com/mfglabs/precepte#using-précepte-with-play-framework" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Précepte with Play Framework.</h2> 
+  <p>TODO</p> 
+  <h2><a id="user-content-précepte-and-the-free-monad" class="anchor" href="https://github.com/mfglabs/precepte#précepte-and-the-free-monad" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Précepte and the Free monad.</h2> 
+ </article>
+</div>

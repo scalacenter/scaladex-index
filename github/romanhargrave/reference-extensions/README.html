@@ -1,0 +1,77 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-reference-extensions" class="anchor" href="https://github.com/romanhargrave/reference-extensions#scala-reference-extensions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala Reference Extensions</h1> 
+  <p>Being that scala is a JVM language, it is inevitable that you will have to deal with the nuisance that is the native null reference. Because null is a native type, not an object, and furthermore assignable to any field of any type, it is necessary to introduce unneded, non-orthagonal complexity in to software by introducing null checks:</p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-smi">Object</span> myObject <span class="pl-k">=</span> <span class="pl-c1">null</span>
+myObject<span class="pl-k">.</span>toString()             <span class="pl-c">// =&gt; NullPointerException</span>
+<span class="pl-c1">null</span><span class="pl-k">.</span>toString()                 <span class="pl-c">// =&gt; Syntax error</span>
+
+(<span class="pl-c1">null</span> <span class="pl-k">instanceof</span> <span class="pl-smi">Object</span>)        <span class="pl-c">// =&gt; false</span>
+(myObject <span class="pl-k">instanceof</span> <span class="pl-smi">Object</span>)    <span class="pl-c">// =&gt; false</span>
+
+(myObject <span class="pl-k">==</span> <span class="pl-c1">null</span>)              <span class="pl-c">// =&gt; true</span>
+(<span class="pl-k">boolean</span>) myObject              <span class="pl-c">// =&gt; CastException</span></pre>
+  </div> 
+  <p>the above code demonstrates some properties of null references in java. While the behaviour of a null reference is partially consistent with the behaviour of a null reference (<code>((void*) 0x0)</code>) in <em>C</em>, it cannot be evaluated as a boolean value in a predicate (this is really only possible in C as magic numbers are used in place of native boolean types). It is furthermore both unnecessary, as Java is a high level language and executed in a platform-agnostic virtual machine, and also because Java is an object-oriented language that <em>does not</em> allow for distinction between values and references by the programmer in the same way as <em>C</em> does, and therefore could have easily implemented a null type as opposed to a null pointer, and could have furthermore added nullable types for better compile-time bug checking. That being said, what has been done has been done, and java will likely not see the reengineering of null references in the near future. Additionally, what with <code>null</code> being the only way for java developers to succinctly refer to emptiness, it is inevitably present as a significant value in nearly every java API written since the conception of java.</p> 
+  <p>Some languages such as ruby approach the issue of the null reference by defining it in terms of an object, rather than a primitive type. This allows the developer to approach the null reference with sane and idiomatic code such as</p> 
+  <div class="highlight highlight-source-ruby">
+   <pre>myvar <span class="pl-k">=</span> <span class="pl-c1">nil</span>
+myvar.nil?          <span class="pl-c"># =&gt; true</span>
+myvar.is_a? <span class="pl-c1">Object</span>  <span class="pl-c"># =&gt; true</span>
+
+myvar <span class="pl-k">=</span> <span class="pl-c1">Object</span>.<span class="pl-k">new</span>
+myvar.nil?          <span class="pl-c"># =&gt; false</span>
+myvar.is_a? <span class="pl-c1">Object</span>  <span class="pl-c"># =&gt; true</span></pre>
+  </div> 
+  <p>Other languages, like Scala and Java 8, the concept of emptiness is may be expressed using optional types</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">var</span> <span class="pl-en">myObject</span>    <span class="pl-k">=</span> <span class="pl-en">Option</span>.empty[<span class="pl-en">Object</span>]
+myObject.isEmpty    <span class="pl-c">// =&gt; true</span>
+myObject.get        <span class="pl-c">// =&gt; NoSuchElementException</span>
+myObject.toString   <span class="pl-c">// =&gt; None</span>
+
+myObject        <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-k">new</span> <span class="pl-en">Object)</span>
+myObject.isEmpty    <span class="pl-c">// =&gt; false</span>
+myObject.get        <span class="pl-c">// =&gt; Object@...</span>
+myObject.toString   <span class="pl-c">// =&gt; Some(Object@...)</span>
+
+myObject        <span class="pl-k">=</span> <span class="pl-en">Option</span>(<span class="pl-c1">null</span>)
+myObject.isEmpty    <span class="pl-c">// =&gt; true</span></pre>
+  </div> 
+  <p>and that is all fine and well; however, the existence of that pernicious null reference has not been terminated, mostly for the sake of compatibility. Through the use of <code>Option.apply</code>, nullable references <em>can</em> be handled in client code, but it often makes for unneeded layers of boilerplate and wrappers in places where it can add visual complexity to code, and dissuade potential users and contributors.</p> 
+  <p>My intention with <code>reference-extensions</code> is to provide some layer of abstraction to <em>every</em> reference in scala by adding implicit decorations and converters that are accessible in a modular and idiomatic fashion which may be leveraged to concisely deal with potential null refernces.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">info.hargrave.refext.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">innocentField</span>   <span class="pl-k">=</span> <span class="pl-en">VeryEnterpriseJava14LibrarySingleton</span>.getInstance.getPotentiallyNullReference
+<span class="pl-c">// innocentField    == null</span>
+
+<span class="pl-c">// Concise explicit conversion of N-typed reference to N-typed Option</span>
+innocentField<span class="pl-k">?</span>              <span class="pl-c">// =&gt; None: Option[N]</span>
+innocentField.optional      <span class="pl-c">// =&gt; None: Option[N]</span>
+
+<span class="pl-c">// Strict non-null assertion via Unary `!`</span>
+innocentField<span class="pl-k">!</span>              <span class="pl-c">// =&gt; NullPointerException("innocentField is null")</span>
+
+<span class="pl-c">// Implicit conversion of Product to boolean (implicit bridging of isEmpty)</span>
+<span class="pl-c1">None</span> <span class="pl-k">:</span> <span class="pl-k">Boolean</span>              <span class="pl-c">// =&gt; false</span>
+
+<span class="pl-c">// Unary null reference check via Product -&gt; Boolean conversion</span>
+innocentField<span class="pl-k">?</span> <span class="pl-k">:</span> <span class="pl-k">Boolean</span>    <span class="pl-c">// =&gt; false</span>
+
+<span class="pl-c">// Boolean coercion of references (if imported), can be used seamlessly in a predicate</span>
+(<span class="pl-v">innocentField</span>: <span class="pl-k">Boolean</span>)    <span class="pl-c">// =&gt; false</span>
+
+<span class="pl-c">// Option coercion of references</span>
+(<span class="pl-v">innocentField</span>: <span class="pl-en">Option</span>)     <span class="pl-c">// =&gt; None</span>
+
+<span class="pl-c">// Default value shorthand in the same manner as Option#getOrElse</span>
+innocentField orElse <span class="pl-s"><span class="pl-pds">"</span>yes<span class="pl-pds">"</span></span>  <span class="pl-c">// =&gt; "yes"</span></pre>
+  </div> 
+  <p>Ultimately, this library is meant to be a semi-experimental extension to Scala by means of the powerful metaprogramming facilities available in Scala.</p> 
+ </article>
+</div>

@@ -1,0 +1,448 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-ping-play" class="anchor" href="https://github.com/brikis98/ping-play#ping-play" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ping-Play</h1> 
+  <p>The ping-play project brings <a href="https://www.facebook.com/note.php?note_id=389414033919" target="_blank">BigPipe</a> streaming to the <a href="http://playframework.com/" target="_blank">Play Framework</a>. It includes tools for a) splitting your pages up into small "pagelets", which makes it easier to maintain large websites, and b) streaming those pagelets down to the browser as soon as they are ready, which can significantly reduce page load time.</p> 
+  <p>To fetch the data for a page, modern apps often have to make requests to multiple remote backend services (e.g. RESTful HTTP calls to a profile service, a search service, an ads service, etc). You then have to wait for <em>all</em> of these remote calls to come back before you can send <em>any</em> data back to the browser. For example, the following screen capture shows a page that makes 6 remote service calls, most of which complete in few hundred milliseconds, but one takes over 5 seconds. As a result, the time to first byte is 5 seconds, during which the user sees a completely blank page:</p> 
+  <p><a href="https://github.com/brikis98/ping-play/blob/master/images/without-big-pipe.gif" target="_blank"><img src="https://github.com/brikis98/ping-play/raw/master/images/without-big-pipe.gif" alt="Page loading without BigPipe" style="max-width:100%;"></a></p> 
+  <p>With BigPipe, you can start streaming data back to the browser without waiting for the backends at all, and fill in the page incrementally as each backend responds. For example, the following screen capture shows the same page making the same 6 remote service calls, but this time rendered using BigPipe. The header and much of the markup is sent back instantly, so time to first byte is 10 milliseconds (instead of 5 seconds), static content (i.e. CSS, JS, images) can start loading right away, and then, as each backend service responds, the corresponding part of the page (i.e. the pagelet) is sent to the browser and rendered on the screen:</p> 
+  <p><a href="https://github.com/brikis98/ping-play/blob/master/images/with-big-pipe.gif" target="_blank"><img src="https://github.com/brikis98/ping-play/raw/master/images/with-big-pipe.gif" alt="Page loading with BigPipe" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-quick-start" class="anchor" href="https://github.com/brikis98/ping-play#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick start</h1> 
+  <p>To understand how to transform your Play app to use BigPipe, it's helpful to first see an example that does <em>not</em> use BigPipe (note, the example is in Scala, but ping-play supports Java too!). Here is the controller code, <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/controllers/WithoutBigPipe.scala" target="_blank">controllers/WithoutBigPipe.scala</a>, for the example mentioned earlier:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">WithoutBigPipe</span>(<span class="pl-v">serviceClient</span>: <span class="pl-en">FakeServiceClient</span>) <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+  <span class="pl-k">def</span> <span class="pl-en">index</span> <span class="pl-k">=</span> <span class="pl-en">Action</span>.async { <span class="pl-k">implicit</span> request <span class="pl-k">=&gt;</span>
+    <span class="pl-c">// Make several fake service calls in parallel to represent fetching data from remote backends. Some of the calls</span>
+    <span class="pl-c">// will be fast, some medium, and some slow.</span>
+    <span class="pl-k">val</span> <span class="pl-en">profileFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallMedium(<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">graphFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallMedium(<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">feedFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallSlow(<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">inboxFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallSlow(<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">adsFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallFast(<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">searchFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallFast(<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>)
+
+    <span class="pl-c">// Wait for all the remote calls to complete</span>
+    <span class="pl-k">for</span> {
+      profile <span class="pl-k">&lt;</span><span class="pl-k">-</span> profileFuture
+      graph <span class="pl-k">&lt;</span><span class="pl-k">-</span> graphFuture
+      feed <span class="pl-k">&lt;</span><span class="pl-k">-</span> feedFuture
+      inbox <span class="pl-k">&lt;</span><span class="pl-k">-</span> inboxFuture
+      ads <span class="pl-k">&lt;</span><span class="pl-k">-</span> adsFuture
+      search <span class="pl-k">&lt;</span><span class="pl-k">-</span> searchFuture
+    } <span class="pl-k">yield</span> {
+      <span class="pl-c">// Render the template once all the data is available</span>
+      <span class="pl-en">Ok</span>(views.html.withoutBigPipe(profile, graph, feed, inbox, ads, search))
+    }
+  }
+}</pre>
+  </div> 
+  <p>This controller makes 6 remote service calls, gets back 6 <code>Future</code> objects, and when they have all redeemed, it uses them to render the following template, <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-common/src/main/twirl/views/withoutBigPipe.scala.html" target="_blank">views/withoutBigPipe.scala.html</a>:</p> 
+  <div class="highlight highlight-text-html-basic">
+   <pre>@(profile: data.Response, graph: data.Response, feed: data.Response, inbox: data.Response, ads: data.Response, search: data.Response)
+
+&lt;<span class="pl-ent">html</span>&gt;
+  &lt;<span class="pl-ent">head</span>&gt;
+    &lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>/assets/stylesheets/main.css<span class="pl-pds">"</span></span>&gt;
+  &lt;/<span class="pl-ent">head</span>&gt;
+  &lt;<span class="pl-ent">body</span>&gt;
+    &lt;<span class="pl-ent">h1</span>&gt;Without Big Pipe&lt;/<span class="pl-ent">h1</span>&gt;
+    &lt;<span class="pl-ent">table</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>wrapper<span class="pl-pds">"</span></span>&gt;
+      &lt;<span class="pl-ent">tr</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(profile)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(ads)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(feed)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+      &lt;/<span class="pl-ent">tr</span>&gt;
+      &lt;<span class="pl-ent">tr</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(search)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(inbox)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;<span class="pl-ent">td</span>&gt;&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>&gt;@views.html.helpers.module(graph)&lt;/<span class="pl-ent">div</span>&gt;&lt;/<span class="pl-ent">td</span>&gt;
+      &lt;/<span class="pl-ent">tr</span>&gt;
+    &lt;/<span class="pl-ent">table</span>&gt;
+  &lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;</pre>
+  </div> 
+  <p>When you load this page, nothing will show up on the screen until all of the backend calls complete, which will take about 5 seconds.</p> 
+  <p>To transform this page to use BigPipe, you first add the big-pipe dependency to your build (note, this project requires Play 2.4, Scala 2.11.6, SBT 0.13.8, and Java 8):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.ybrikman.ping<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>big-pipe<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.13<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Next, add support for the <code>.scala.stream</code> template type and some imports for it to your build:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">TwirlKeys</span>.templateFormats <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>stream<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>com.ybrikman.ping.scalaapi.bigpipe.HtmlStreamFormat<span class="pl-pds">"</span></span>),
+<span class="pl-en">TwirlKeys</span>.templateImports <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>com.ybrikman.ping.scalaapi.bigpipe.HtmlStream<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>com.ybrikman.ping.scalaapi.bigpipe._<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Now you can create streaming templates. These templates can mix normal HTML markup, which will be streamed to the browser immediately, with the <code>HtmlStream</code> class, which is a wrapper for an <code>Enumerator[Html]</code> that will be streamed to the browser whenever the <code>Enumerator</code> has data. Here is <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-common/src/main/twirl/views/withBigPipe.scala.stream" target="_blank">views/withBigPipe.scala.stream</a>, which is the streaming version of the template above:</p> 
+  <div class="highlight highlight-text-html-basic">
+   <pre>@(bigPipe: BigPipe, profile: Pagelet, graph: Pagelet, feed: Pagelet, inbox: Pagelet, ads: Pagelet, search: Pagelet)
+
+&lt;<span class="pl-ent">html</span>&gt;
+  &lt;<span class="pl-ent">head</span>&gt;
+    &lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>/assets/stylesheets/main.css<span class="pl-pds">"</span></span>&gt;
+    <span class="pl-c">&lt;!-- You need to include the BigPipe JavaScript at the top of the page --&gt;</span>
+<span class="pl-s1">    &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>/assets/com/ybrikman/ping/big-pipe.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</span>
+  &lt;/<span class="pl-ent">head</span>&gt;
+  &lt;<span class="pl-ent">body</span>&gt;
+    &lt;<span class="pl-ent">h1</span>&gt;With Big Pipe&lt;/<span class="pl-ent">h1</span>&gt;
+    @HtmlStream.fromHtml(views.html.helpers.timing())
+
+    <span class="pl-c">&lt;!--</span>
+<span class="pl-c">      Wrap the entire body of your page with a bigPipe.render call. The pagelets parameter contains a Map from</span>
+<span class="pl-c">      Pagelet id to the HtmlStream for that Pagelet. You should put the HtmlStream for each of your Pagelets</span>
+<span class="pl-c">      into the appropriate place in the markup.</span>
+<span class="pl-c">    --&gt;</span>
+    @bigPipe.render { pagelets =&gt;
+      &lt;<span class="pl-ent">table</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>wrapper<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">tr</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(profile.id)&lt;/<span class="pl-ent">td</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(ads.id)&lt;/<span class="pl-ent">td</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(feed.id)&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;/<span class="pl-ent">tr</span>&gt;
+        &lt;<span class="pl-ent">tr</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(search.id)&lt;/<span class="pl-ent">td</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(inbox.id)&lt;/<span class="pl-ent">td</span>&gt;
+          &lt;<span class="pl-ent">td</span>&gt;@pagelets(graph.id)&lt;/<span class="pl-ent">td</span>&gt;
+        &lt;/<span class="pl-ent">tr</span>&gt;
+      &lt;/<span class="pl-ent">table</span>&gt;
+    }
+
+    &lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;</pre>
+  </div> 
+  <p>The key changes to notice from the original template are:</p> 
+  <ol> 
+   <li>Most of the markup in the page is wrapped in a call to the <code>BigPipe.render</code> method.</li> 
+   <li>The <code>BigPipe.render</code> method gives you a parameter, named <code>pagelets</code> in the example above, that is a <code>Map</code> from Pagelet <code>id</code> to the <code>HtmlStream</code> for that Pagelet. The idea is to place the <code>HtmlStream</code> for each of your Pagelets into the proper place in the markup where that Pagelet should appear.</li> 
+   <li>You need to include <code>big-pipe.js</code> in the <code>head</code> of the document.</li> 
+  </ol> 
+  <p>Now, let's look at the controller you can use with this template, called <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/controllers/WithBigPipe.scala" target="_blank">controllers/WithBigPipe.scala</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">WithBigPipe</span>(<span class="pl-v">serviceClient</span>: <span class="pl-en">FakeServiceClient</span>) <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">index</span> <span class="pl-k">=</span> <span class="pl-en">Action</span> {
+    <span class="pl-c">// Make several fake service calls in parallel to represent fetching data from remote backends. Some of the calls</span>
+    <span class="pl-c">// will be fast, some medium, and some slow.</span>
+    <span class="pl-k">val</span> <span class="pl-en">profileFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallMedium(<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">graphFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallMedium(<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">feedFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallSlow(<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">inboxFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallSlow(<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">adsFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallFast(<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">searchFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallFast(<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>)
+
+    <span class="pl-c">// Convert each Future into a Pagelet which will be rendered as HTML as soon as the data is available</span>
+    <span class="pl-k">val</span> <span class="pl-en">profile</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>, profileFuture.map(views.html.helpers.module.apply))
+    <span class="pl-k">val</span> <span class="pl-en">graph</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>, graphFuture.map(views.html.helpers.module.apply))
+    <span class="pl-k">val</span> <span class="pl-en">feed</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>, feedFuture.map(views.html.helpers.module.apply))
+    <span class="pl-k">val</span> <span class="pl-en">inbox</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>, inboxFuture.map(views.html.helpers.module.apply))
+    <span class="pl-k">val</span> <span class="pl-en">ads</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>, adsFuture.map(views.html.helpers.module.apply))
+    <span class="pl-k">val</span> <span class="pl-en">search</span> <span class="pl-k">=</span> <span class="pl-en">HtmlPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>, searchFuture.map(views.html.helpers.module.apply))
+
+    <span class="pl-c">// Use BigPipe to compose the pagelets and render them immediately using a streaming template</span>
+    <span class="pl-k">val</span> <span class="pl-en">bigPipe</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BigPipe</span>(<span class="pl-en">PageletRenderOptions</span>.<span class="pl-en">ClientSide</span>, profile, graph, feed, inbox, ads, search)
+    <span class="pl-en">Ok</span>.chunked(views.stream.withBigPipe(bigPipe, profile, graph, feed, inbox, ads, search))
+  }
+}</pre>
+  </div> 
+  <p>The key changes to notice from the original controller are:</p> 
+  <ol> 
+   <li>Instead of waiting for <em>all</em> of the service calls to redeem, you render each one individually into <code>Html</code> as soon as the data is available, giving you a <code>Future[Html]</code>.</li> 
+   <li>Each <code>Future[Html]</code>, plus the DOM id of where in the DOM it should be inserted, is wrapped in an <code>HtmlPagelet</code> object.</li> 
+   <li>The <code>HtmlPagelet</code> objects are composed into a <code>BigPipe</code> object, and told to use client-side rendering.</li> 
+   <li>This <code>BigPipe</code> instance and all the <code>HtmlPagelet</code> objects are passed to the streaming template for rendering.</li> 
+  </ol> 
+  <p>When you load this page, you will see the outline of the page almost immediately, and each piece of the page will fill in this outline as soon as the corresponding remote service responds.</p> 
+  <h1><a id="user-content-more-examples" class="anchor" href="https://github.com/brikis98/ping-play#more-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>More examples</h1> 
+  <p>There are several BigPipe examples, including the one described above, in <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala" target="_blank">sample-app-scala</a> and <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java" target="_blank">sample-app-java</a> in this repo (yes, BigPipe streaming works with both Scala and Java). You'll also want to browse <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-common" target="_blank">sample-app-common</a>, which has some code shared by both sample apps, including all of their templates. For example, here is how to run the Scala sample app (assuming you have <a href="https://www.typesafe.com/community/core-tools/activator-and-sbt" target="_blank">Typesafe Activator</a> installed already):</p> 
+  <ol> 
+   <li><code>git clone</code> this repo.</li> 
+   <li><code>activator shell</code></li> 
+   <li><code>project sampleAppScala</code></li> 
+   <li><code>run</code></li> 
+   <li>Open <code>http://localhost:9000/withoutBigPipe</code> to see how long the page takes to load without BigPipe streaming.</li> 
+   <li>Open <code>http://localhost:9000/withBigPipe</code> to see how much faster the page loads with BigPipe streaming.</li> 
+  </ol> 
+  <p>Check out the <a href="https://github.com/brikis98/ping-play#Documentation" target="_blank">Documentation</a> to see what APIs are available and <a href="https://github.com/brikis98/ping-play#FAQ" target="_blank">FAQ</a> to learn more about BigPipe.</p> 
+  <h1><a id="user-content-documentation" class="anchor" href="https://github.com/brikis98/ping-play#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h1> 
+  <h2><a id="user-content-scala-vs-java" class="anchor" href="https://github.com/brikis98/ping-play#scala-vs-java" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala vs Java</h2> 
+  <p>BigPipe streaming is supported for both Scala and Java developers.</p> 
+  <p>Scala developers should primarily be using classes in the <code>com.ybrikman.ping.scalaapi</code> package. In particular, use the <code>com.ybrikman.ping.scalaapi.bigpipe.HtmlPagelet</code> class to wrap your <code>Future[Html]</code> objects as <code>Pagelet</code> objects, and use the <code>com.ybrikman.ping.scalaapi.bigpipe.BigPipe</code> class to compose and render your <code>Pagelet</code> objects. See <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala" target="_blank">sample-app-scala</a> for examples.</p> 
+  <p>Java developers should primarily be using classes in the <code>com.ybrikman.ping.javaapi</code> package. In particular, use the <code>com.ybrikman.ping.javaapi.bigpipe.HtmlPagelet</code> class to wrap your and <code>Promise&lt;Html&gt;</code> as <code>Pagelet</code> objects and use the <code>com.ybrikman.ping.javaapi.bigpipe.BigPipe</code> class to compose and render your <code>Pagelet</code> objects. See <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java" target="_blank">sample-app-java</a> for examples.</p> 
+  <h2><a id="user-content-client-side-vs-server-side-rendering" class="anchor" href="https://github.com/brikis98/ping-play#client-side-vs-server-side-rendering" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Client-side vs server-side rendering</h2> 
+  <p>Ping-Play supports both client-side and server-side BigPipe streaming. Client-side streaming sends down the pagelets in whatever order they complete and uses JavaScript to insert each pagelet into the correct spot in the DOM. This gives you the fastest possible loading time, but it does add a dependency on JavaScript. For use cases where you want to avoid JavaScript, such as slower browsers or search engine crawlers (i.e. SEO), you can use server-side rendering, which sends all the pagelets down already rendered as HTML and in the proper order. This will have a longer page-load time than client-side rendering, but still much faster than not using BigPipe at all.</p> 
+  <p>The <em>only</em> part of your code that you have to change to switch between server-side and client-side rendering is the <code>PageletRenderOptions</code> parameter you pass into the <code>BigPipe</code> constructor. Here is an example of how you could check the <code>User-Agent</code> header and select <code>PageletRenderOptions.ServerSide</code> if you detect GoogleBot and <code>PageletRenderOptions.ClientSide</code> otherwise:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">index</span> <span class="pl-k">=</span> <span class="pl-en">Action</span> { request <span class="pl-k">=&gt;</span>
+  <span class="pl-c">// ... fetch data, create pagelets ...</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">bigPipe</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BigPipe</span>(renderOptions(request), pagelet1, pagelet2, ...)
+
+  <span class="pl-c">// ... render a streaming template ...</span>
+}
+
+<span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">renderOptions</span>(<span class="pl-v">request</span>: <span class="pl-en">RequestHeader</span>)<span class="pl-k">:</span> <span class="pl-en">PageletRenderOptions</span> <span class="pl-k">=</span> {
+  request.headers.get(<span class="pl-en">HeaderNames</span>.<span class="pl-en">USER_AGENT</span>) <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Some</span>(header) <span class="pl-k">if</span> header.contains(<span class="pl-s"><span class="pl-pds">"</span>GoogleBot<span class="pl-pds">"</span></span>) <span class="pl-k">=&gt;</span> <span class="pl-en">PageletRenderOptions</span>.<span class="pl-en">ServerSide</span>
+    <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-en">PageletRenderOptions</span>.<span class="pl-en">ClientSide</span>
+  }
+}
+</pre>
+  </div> 
+  <h2><a id="user-content-htmlstream-and-scalastream-templates" class="anchor" href="https://github.com/brikis98/ping-play#htmlstream-and-scalastream-templates" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HtmlStream and .scala.stream templates</h2> 
+  <p>Play's built-in <code>.scala.html</code> templates are compiled into functions that append together and return <code>Html</code>, which is just a wrapper for a <code>StringBuilder</code>, and cannot be streamed. This is why this project introduces a new <code>.scala.stream</code> template that appends together and returns <code>HtmlStream</code> objects, which are a wrapper for an <code>Enumerator[Html]</code>, which can be streamed. Note that this new template type still uses Play's <a href="https://github.com/playframework/twirl" target="_blank">Twirl</a> template compiler and its syntax. The only things that are different are:</p> 
+  <ol> 
+   <li>The extension is <code>.scala.stream</code> instead of <code>.scala.html</code>.</li> 
+   <li>When you are using the template in a controller, the package name will be <code>views.stream.XXX</code> instead of <code>views.html.XXX</code>.</li> 
+   <li>To include raw, unescaped HTML, instead of wrapping the content in an <code>Html</code> object (e.g. <code>Html(someStringWithMarkup)</code>), wrap it in an <code>HtmlStream</code> object (e.g. <code>HtmlStream.fromString(someStringWithMarkup)</code>).</li> 
+   <li>You can include an <code>HtmlStream</code> object anywhere in the markup of a <code>.scala.stream</code> template and Play will stream the content down from the <code>HtmlStream</code>'s <code>Enumerator</code> whenever the content is available.</li> 
+  </ol> 
+  <p>The last point is how you get BigPipe style streaming. The <code>HtmlStream</code> class has many helper methods to create an <code>HtmlStream</code>, including <code>fromHtml</code> and <code>fromHtmlFuture</code>, and to compose several streams into one, such as <code>interleave</code>.</p> 
+  <h2><a id="user-content-pagelet-and-bigpipe-classes" class="anchor" href="https://github.com/brikis98/ping-play#pagelet-and-bigpipe-classes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pagelet and BigPipe classes</h2> 
+  <p>Although you can use the <code>HtmlStream</code> class directly, this project also comes with <code>Pagelet</code> and <code>BigPipe</code> classes that offer a higher level API for working with <code>HtmlStream</code>. The idea is to break your page down into small "pagelets" that know how to fetch their own data independently and render themselves. For example, you might have one pagelet that fetches data from a profile service and knows how to render a user's profile, another pagelet that fetches data from an ads service and knows how to render an ad unit, and so on. For each pagelet, you make your backend calls, get back some <code>Future</code> (Scala) or <code>Promise</code> (Java) objects, render them into a <code>Future[Html]</code> or <code>Promise&lt;Html&gt;</code>, and then use <code>new HtmlPagelet(id, future)</code> or <code>new HtmlPagelet(id, promise)</code> to wrap them in a <code>Pagelet</code> class. You can then compose multiple <code>Pagelet</code> instances together using the <code>BigPipe</code> constructor.</p> 
+  <p>The <code>BigPipe</code> instance you get back has a <code>render</code> method that you use to actually render your pagelets. The <code>render</code> method processes your <code>Pagelets</code> as necessary for server-side or client-side rendering and gives you a <code>Map</code> from <code>Pagelet</code> id to the <code>HtmlStream</code> for that <code>Pagelet</code>. In your template, you should extract the <code>HtmlStream</code> for each of your <code>Pagelets</code> from this map and put it into the proper place in the markup:</p> 
+  <div class="highlight highlight-text-html-basic">
+   <pre>@bigPipe.render { pagelets =&gt;
+  &lt;<span class="pl-ent">h2</span>&gt;The foo pagelet should go here&lt;/<span class="pl-ent">h2</span>&gt;
+  &lt;<span class="pl-ent">div</span>&gt;@pagelets(fooPagelet.id)&lt;/<span class="pl-ent">div</span>&gt;
+
+  &lt;<span class="pl-ent">h2</span>&gt;The bar pagelet should go here&lt;/<span class="pl-ent">h2</span>&gt;
+  &lt;<span class="pl-ent">div</span>&gt;@pagelets(barPagelet.id)&lt;/<span class="pl-ent">div</span>&gt;
+}</pre>
+  </div> 
+  <p>When doing server-side rendering, the <code>HtmlStream</code> you get back from the <code>pagelets</code> <code>Map</code> will contain the fully rendered HTML. When doing client-side rendering, the <code>HtmlStream</code> will instead contain an empty placeholder that looks something like this:</p> 
+  <div class="highlight highlight-text-html-basic">
+   <pre>&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>foo-pagelet<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">div</span>&gt;</pre>
+  </div> 
+  <p>The actual content for your <code>Pagelet</code> will be streamed down at the very end (ie, at the bottom of all the markup you pass to the <code>BigPipe.render</code> method) and it will be wrapped in markup that makes it invisible when it first arrives in the browser. It will also include some JavaScript that knows how to extract the content and inject it into the right placeholder in the DOM. This is what allows the pagelets to be sent down in any order, but still render correctly on the page. The markup sent back by each <code>Pagelet</code> is in <a href="https://github.com/brikis98/ping-play/blob/master/big-pipe/src/main/twirl/com/ybrikman/bigpipe/pageletClientSide.scala.html" target="_blank">com.ybrikman.bigpipe.pagelet.scala.html</a> and looks roughly like this:</p> 
+  <div class="highlight highlight-text-html-basic">
+   <pre>&lt;<span class="pl-ent">code</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>pagelet1<span class="pl-pds">"</span></span>&gt;<span class="pl-c">&lt;!--Your content--&gt;</span>&lt;/<span class="pl-ent">code</span>&gt;
+<span class="pl-s1">&lt;<span class="pl-ent">script</span>&gt;<span class="pl-smi">BigPipe</span>.<span class="pl-en">onPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>pagelet1<span class="pl-pds">"</span></span>);&lt;/<span class="pl-ent">script</span>&gt;</span></pre>
+  </div> 
+  <p>The <code>BigPipe.onPagelet</code> method is part of <a href="https://github.com/brikis98/ping-play/blob/master/big-pipe/src/main/resources/public/com/ybrikman/ping/big-pipe.js" target="_blank">big-pipe.js</a>, so make sure to include that script on every page.</p> 
+  <h2><a id="user-content-big-pipejs" class="anchor" href="https://github.com/brikis98/ping-play#big-pipejs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>big-pipe.js</h2> 
+  <p>The <code>BigPipe.onPagelet</code> method will extract the content from the <code>code</code> tag and call <code>BigPipe.renderPagelet</code> to render it client-side into the DOM node with the specified id (e.g. <code>pagelet1</code> in the example above). The default <code>BigPipe.renderPagelet</code> just inserts the content into the DOM using the <code>innerHTML</code> method. If you wish to use a more sophisticated method for client-side rendering, simply override the <code>BigPipe.renderPagelet</code> with your own:</p> 
+  <div class="highlight highlight-source-js">
+   <pre><span class="pl-smi">BigPipe</span>.<span class="pl-en">renderPagelet</span> <span class="pl-k">=</span> <span class="pl-k">function</span>(<span class="pl-smi">id</span>, <span class="pl-smi">content</span>) {
+  <span class="pl-c">// Provide a custom way to insert the specified content into the DOM node with the given id</span>
+}</pre>
+  </div> 
+  <p>The <code>id</code> parameter will be the id of the DOM node and <code>content</code> will be your content. Note that if your content was JSON instead of HTML, <code>big-pipe.js</code> will automatically call <code>JSON.parse</code> on it before passing it to you. This can be convenient if you use client-side templating.</p> 
+  <h2><a id="user-content-client-side-templating" class="anchor" href="https://github.com/brikis98/ping-play#client-side-templating" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Client-side templating</h2> 
+  <p>You can use a client-side templating technology, such as mustache.js or handlebars.js to render most of your page in the browser. To do that, all you need to do is create a <code>Pagelet</code> that contains JSON (a <code>JsValue</code> for Scala developers or <code>JsonNode</code> for Java developers) instead of HTML:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MoreBigPipeExamples</span>(<span class="pl-v">serviceClient</span>: <span class="pl-en">FakeServiceClient</span>) <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+
+<span class="pl-c">  /**</span>
+<span class="pl-c">   * Instead of rendering each pagelet server-side with Play's templating, you can send back JSON and render each</span>
+<span class="pl-c">   * pagelet with a client-side templating library such as mustache.js</span>
+<span class="pl-c">   *</span>
+<span class="pl-c">   * <span class="pl-k">@return</span></span>
+<span class="pl-c">   */</span>
+  <span class="pl-k">def</span> <span class="pl-en">clientSideTemplating</span> <span class="pl-k">=</span> <span class="pl-en">Action</span> {
+    <span class="pl-c">// Make several fake service calls in parallel to represent fetching data from remote backends. Some of the calls</span>
+    <span class="pl-c">// will be fast, some medium, and some slow.</span>
+    <span class="pl-k">val</span> <span class="pl-en">profileFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonMedium(<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">graphFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonMedium(<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">feedFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonSlow(<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">inboxFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonSlow(<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">adsFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonFast(<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">searchFuture</span> <span class="pl-k">=</span> serviceClient.fakeRemoteCallJsonFast(<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>)
+
+    <span class="pl-c">// Convert each Future into a Pagelet which will send the JSON to the browser as soon as it's available</span>
+    <span class="pl-k">val</span> <span class="pl-en">profile</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>profile<span class="pl-pds">"</span></span>, profileFuture)
+    <span class="pl-k">val</span> <span class="pl-en">graph</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>graph<span class="pl-pds">"</span></span>, graphFuture)
+    <span class="pl-k">val</span> <span class="pl-en">feed</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>feed<span class="pl-pds">"</span></span>, feedFuture)
+    <span class="pl-k">val</span> <span class="pl-en">inbox</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>inbox<span class="pl-pds">"</span></span>, inboxFuture)
+    <span class="pl-k">val</span> <span class="pl-en">ads</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>ads<span class="pl-pds">"</span></span>, adsFuture)
+    <span class="pl-k">val</span> <span class="pl-en">search</span> <span class="pl-k">=</span> <span class="pl-en">JsonPagelet</span>(<span class="pl-s"><span class="pl-pds">"</span>search<span class="pl-pds">"</span></span>, searchFuture)
+
+    <span class="pl-c">// Use BigPipe to compose the pagelets and render them immediately using a streaming template</span>
+    <span class="pl-k">val</span> <span class="pl-en">bigPipe</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BigPipe</span>(<span class="pl-en">PageletRenderOptions</span>.<span class="pl-en">ClientSide</span>, profile, graph, feed, inbox, ads, search)
+    <span class="pl-en">Ok</span>.chunked(views.stream.clientSideTemplating(bigPipe, profile, graph, feed, inbox, ads, search))
+  }
+}</pre>
+  </div> 
+  <p>Next, create your custom <code>BigPipe.renderPagelet</code> method:</p> 
+  <div class="highlight highlight-source-js">
+   <pre><span class="pl-c">// Override the original BigPipe.renderPagelet method with one that uses mustache.js for client-side rendering</span>
+<span class="pl-smi">BigPipe</span>.<span class="pl-en">renderPagelet</span> <span class="pl-k">=</span> <span class="pl-k">function</span>(<span class="pl-smi">id</span>, <span class="pl-smi">json</span>) {
+  <span class="pl-k">var</span> domElement <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">getElementById</span>(id);
+  <span class="pl-k">if</span> (domElement) {
+    <span class="pl-smi">domElement</span>.<span class="pl-smi">innerHTML</span> <span class="pl-k">=</span> <span class="pl-smi">Mustache</span>.<span class="pl-en">render</span>(template, json);
+  } <span class="pl-k">else</span> {
+    <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">"</span>ERROR: cannot render pagelet because DOM node with id <span class="pl-pds">"</span></span> <span class="pl-k">+</span> id <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span> does not exist<span class="pl-pds">"</span></span>);
+  }
+};</pre>
+  </div> 
+  <p>See the <code>clientSideTemplating</code> method in <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/controllers/MoreBigPipeExamples.scala" target="_blank">controllers/MoreBigPipeExamples.scala</a> (Scala developers) or <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java/app/controllers/MoreBigPipeExamples.java" target="_blank">controllers/MoreBigPipeExamples.java</a> (Java developers) and <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-common/src/main/resources/public/javascripts/big-pipe-with-mustache.js" target="_blank">big-pipe-with-mustache.js</a> for working examples.</p> 
+  <h2><a id="user-content-composing-independent-pagelets" class="anchor" href="https://github.com/brikis98/ping-play#composing-independent-pagelets" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Composing independent pagelets</h2> 
+  <p>TODO: write documentation</p> 
+  <h2><a id="user-content-de-duping-remote-service-calls" class="anchor" href="https://github.com/brikis98/ping-play#de-duping-remote-service-calls" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>De-duping remote service calls</h2> 
+  <p>If your page is built out of composable, independent pagelets, then each pagelet will know how to fetch all the data it needs from backend services. If each pagelet is truly independent, that means you may have duplicated service calls. For example, several pagelets may make the exact same backend call to fetch the current user's profile. This is inefficient and increases the load on downstream services.</p> 
+  <p>This project comes with a <code>DedupingCache</code> library that makes it easy to <em>de-dupe</em> service calls. You can use it to ensure that if several pagelets request the exact same data, you only make one call to a backend service, and all the other calls get the same cached response. This class has a single method called <code>get</code> that takes a key and a way to generate the value for that key if it isn't already in the cache.</p> 
+  <p>For example, if you are using Play's <code>WSClient</code> to make remote calls, you could wrap any calls to it with this <code>get</code> method to ensure that any duplicate calls for a given URL get back a cached value:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">ServiceClient</span> {
+  <span class="pl-k">val</span> <span class="pl-en">cache</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DedupingCache</span>[<span class="pl-k">String</span>, <span class="pl-en">Future</span>[<span class="pl-en">WSResponse</span>]]
+
+  <span class="pl-k">def</span> <span class="pl-en">makeRequest</span>(<span class="pl-v">url</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">WSResponse</span>] <span class="pl-k">=</span> {
+    cache.get(url, wsClient.url(url).get())
+  }
+}</pre>
+  </div> 
+  <p>See <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/controllers/Deduping.scala" target="_blank">controllers/Deduping.scala</a> (Scala developers) or <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java/app/controllers/Deduping.java" target="_blank">controllers/Deduping.java</a> (Java developers) for a complete example of how to setup and use the <code>DedupingCache</code>. You will also have to add the <code>CacheFilter</code> to your filter chain, as shown in <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/loader/PingApplicationLoader.scala" target="_blank">loader/PingApplicationLoader.scala</a> (Scala developers) or <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java/app/loader/Filters.java" target="_blank">loader/Filters.java</a> (Java developers).</p> 
+  <h1><a id="user-content-faq" class="anchor" href="https://github.com/brikis98/ping-play#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h1> 
+  <h2><a id="user-content-what-are-the-caveats-and-drawbacks-to-bigpipe" class="anchor" href="https://github.com/brikis98/ping-play#what-are-the-caveats-and-drawbacks-to-bigpipe" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What are the caveats and drawbacks to BigPipe?</h2> 
+  <p>BigPipe is not for everyone. There are some serious drawbacks and caveats you should be aware of before using it:</p> 
+  <h3><a id="user-content-http-headers-and-error-handling" class="anchor" href="https://github.com/brikis98/ping-play#http-headers-and-error-handling" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HTTP headers and error handling</h3> 
+  <p>With BigPipe streaming, you typically start sending the response back to the browser before your backend calls are finished. The first part of that response is the HTTP headers and once you've sent them back to the browser, it's too late to change your mind. If one of those backend calls fails, you've already sent your 200 OK, so you can no longer just send the browser a 500 error or a redirect!</p> 
+  <p>Instead, you must handle errors by injecting JavaScript code into your stream that displays the message when it arrives in the browser or redirects the user as necessary. See the <code>errorHandling</code> method in <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-scala/app/controllers/MoreBigPipeExamples.scala" target="_blank">controllers/MoreBigPipeExamples.scala</a> (Scala developers) or <a href="https://github.com/brikis98/ping-play/blob/master/sample-app-java/app/controllers/MoreBigPipeExamples.java" target="_blank">controllers/MoreBigPipeExamples.java</a> (Java developers) for a working example.</p> 
+  <h3><a id="user-content-caching" class="anchor" href="https://github.com/brikis98/ping-play#caching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caching</h3> 
+  <p>Because of the the way headers and error handling work, be extra careful using BigPipe if you cache entire pages, especially at the CDN level. Otherwise, you may stream out a 200 OK to the CDN, hit an error with a backend call, and accidentally end up caching a page with an error on it.</p> 
+  <p>If your pages are mostly static and can be cached for a long time (e.g. blogs), BigPipe is probably not for you. If your pages are mostly dynamic and cannot be cached (e.g. the news feeds at Facebook, LinkedIn, Twitter), then BigPipe can help.</p> 
+  <h3><a id="user-content-pop-in" class="anchor" href="https://github.com/brikis98/ping-play#pop-in" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pop-in</h3> 
+  <p>Pagelets can be sent down to the browser and rendered client-side in any order. Therefore, you have to be careful to avoid too much "pop-in", where rendering each pagelet causes random parts of the page to pop in and move around, which makes the page hard to use.</p> 
+  <p>To avoid annoying your users, use CSS to size the placeholder elements appropriately so they don't resize or move much as the actual content pops in. Alternatively, use JavaScript to ensure that the elements on a page render from top to bottom, even if they show up in a different order (e.g. set <code>display: none</code> until all the pagelets above the current one have been filled in).</p> 
+  <h2><a id="user-content-why-not-ajax" class="anchor" href="https://github.com/brikis98/ping-play#why-not-ajax" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why not AJAX?</h2> 
+  <p>You could try to accomplish something similar to BigPipe by sending back a page that's empty and makes lots of AJAX calls to fill in each pagelet. This approach is much slower than BigPipe for a number of reasons:</p> 
+  <ol> 
+   <li>Each AJAX call requires an extra roundtrip to your server, which adds a lot of latency. This latency is especially bad on mobile or slower connections.</li> 
+   <li>Each extra roundtrip also increases the load on your server. Instead of 1 QPS to load a page, you now have 6 QPS to load a page with 6 pagelets.</li> 
+   <li>Older browsers severly limit how many AJAX calls you can do and most browsers give AJAX calls a low priority during the initial page load.</li> 
+   <li>You have to download, parse, and execute a bunch of JavaScript code before you can even make the AJAX calls.</li> 
+   <li>It only works with JavaScript enabled.</li> 
+  </ol> 
+  <p>BigPipe gives you all the benefits of an AJAX portal, but without the downsides, by using a single connection—that is, the original connection used to request the page—and streaming down each pagelet using <a href="https://en.wikipedia.org/wiki/Chunked_transfer_encoding" target="_blank">HTTP Chunked Encoding</a>, which works in almost all browsers.</p> 
+  <h2><a id="user-content-where-can-i-find-more-info" class="anchor" href="https://github.com/brikis98/ping-play#where-can-i-find-more-info" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Where can I find more info?</h2> 
+  <ol> 
+   <li><a href="https://engineering.linkedin.com/play/composable-and-streamable-play-apps" target="_blank">Composable and Streamable Play Apps</a>: a talk that introduces how BigPipe streaming works on top of Play (see the <a href="https://www.youtube.com/watch?v=4b1XLka0UIw" target="_blank">video</a> and <a href="http://www.slideshare.net/brikis98/composable-and-streamable-play-apps" target="_blank">slides</a>).</li> 
+   <li><a href="https://www.facebook.com/note.php?note_id=389414033919" target="_blank">BigPipe: Pipelining web pages for high performance</a>: the original blog post by Facebook that introduces BigPipe on PHP.</li> 
+   <li><a href="http://engineering.linkedin.com/frontend/new-technologies-new-linkedin-home-page" target="_blank">New technologies for the new LinkedIn home page</a>: the new LinkedIn homepage is using BigPipe style streaming with Play. This ping-play project is loosely based off of the work done originally at LinkedIn.</li> 
+  </ol> 
+  <h1><a id="user-content-project-info" class="anchor" href="https://github.com/brikis98/ping-play#project-info" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Project info</h1> 
+  <h2><a id="user-content-status" class="anchor" href="https://github.com/brikis98/ping-play#status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Status</h2> 
+  <p>This project is in alpha status. It has been used on small projects and is reasonably well coded, tested, and documented, but it needs more real world usage before it can be considered a mature library. Until the project hits version 1.0.0, backwards compatibility is <em>not</em> guaranteed, so expect APIs to change.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/brikis98/ping-play#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Contributions in the form of bug reports and pull requests are very welcome. Check out the <a href="https://github.com/brikis98/ping-play/labels/help%20wanted" target="_blank">help wanted label</a> for ideas.</p> 
+  <p>Also, if you're using this project in production, <a href="mailto:jim@ybrikman.com" target="_blank">drop me a line</a>, as I'd love to hear about your experiences!</p> 
+  <h2><a id="user-content-changelog" class="anchor" href="https://github.com/brikis98/ping-play#changelog" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelog</h2> 
+  <h3><a id="user-content-013-102215" class="anchor" href="https://github.com/brikis98/ping-play#013-102215" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.13 (10/22/15)</h3> 
+  <ul> 
+   <li>Fix issue where the pagelet body was not being escaped correctly</li> 
+  </ul> 
+  <h3><a id="user-content-012-070615" class="anchor" href="https://github.com/brikis98/ping-play#012-070615" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.12 (07/06/15)</h3> 
+  <ul> 
+   <li>Added support for server-side rendering.</li> 
+   <li>Refactored the <code>Pagelet</code> API into a trait and subclasses</li> 
+   <li>Added the <code>BigPipe</code> class for composing and rendering <code>Pagelets</code></li> 
+  </ul> 
+  <h3><a id="user-content-011-063015" class="anchor" href="https://github.com/brikis98/ping-play#011-063015" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.11 (06/30/15)</h3> 
+  <ul> 
+   <li>First public release.</li> 
+  </ul> 
+  <h2><a id="user-content-release-process" class="anchor" href="https://github.com/brikis98/ping-play#release-process" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release process</h2> 
+  <p>This project is published to Sonatype as described in the <a href="http://www.scala-sbt.org/release/docs/Using-Sonatype.html" target="_blank">SBT Deploying to Sonatype</a> documentation. To do that, this project uses the <a href="https://github.com/xerial/sbt-sonatype" target="_blank">sbt-sonatype</a>, <a href="http://www.scala-sbt.org/sbt-pgp" target="_blank">sbt-pgp</a>, and <a href="https://github.com/sbt/sbt-release" target="_blank">sbt-release</a> plugins.</p> 
+  <p>To release a new version:</p> 
+  <ol> 
+   <li>Add an entry to the <a href="https://github.com/brikis98/ping-play#Changelog" target="_blank">Changelog</a> in this README.</li> 
+   <li>Make sure your PGP keys are setup (<a href="http://www.scala-sbt.org/release/docs/Using-Sonatype.html#First+-+PGP+Signatures" target="_blank">docs here</a>)</li> 
+   <li>Run the SBT <code>release</code> command:</li> 
+  </ol> 
+  <pre><code>activator shell
+set credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", "&lt;username&gt;", "&lt;password&gt;")
+release
+</code></pre> 
+  <p>Currently, only the maintainer, <a href="http://www.ybrikman.com" target="_blank">Yevgeniy Brikman</a> has the credentials for publishing new versions.</p> 
+  <h2><a id="user-content-todo" class="anchor" href="https://github.com/brikis98/ping-play#todo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TODO</h2> 
+  <ol> 
+   <li>The implementation, tests, and documentation for "composing" pagelets are not yet finished. See <a href="https://github.com/brikis98/ping-play/issues/18" target="_blank">#18</a>. Note, you can find an implementation of composable pagelets in the <a href="https://github.com/splink/pagelets" target="_blank">splink/pagelets</a> library. Perhaps the two can be merged?</li> 
+   <li>There are a number of feature requests. See the <a href="https://github.com/brikis98/ping-play/labels/enhancement" target="_blank">enhancement label</a> in issues.</li> 
+  </ol> 
+  <h1><a id="user-content-license" class="anchor" href="https://github.com/brikis98/ping-play#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h1> 
+  <p>This code is available under the MIT license. See the LICENSE file for more info.</p> 
+ </article>
+</div>

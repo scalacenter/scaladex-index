@@ -1,0 +1,186 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-bond--" class="anchor" href="https://github.com/fwbrasil/bond#bond--" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bond </h1> 
+  <p>Type-level validation for Scala<br> <a href="http://travis-ci.org/fwbrasil/bond" target="_blank"><img src="https://camo.githubusercontent.com/3e988bfd299474890bf1b6cb5ee53a914afad58b/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f667762726173696c2f626f6e642e706e67" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/fwbrasil/bond.png" style="max-width:100%;"></a> <a href="https://www.codacy.com/public/fwbrasil/bond" target="_blank"><img src="https://camo.githubusercontent.com/ed34f2d225f4483f69458c302d220010c4a053ff/68747470733a2f2f7777772e636f646163792e636f6d2f70726f6a6563742f62616467652f6562346436383666666337393439623438353136613830366630653234313263" alt="Codacy Badge" data-canonical-src="https://www.codacy.com/project/badge/eb4d686ffc7949b48516a806f0e2412c" style="max-width:100%;"></a> <a href="https://gitter.im/fwbrasil/bond?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/fwbrasil/bond" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p>Bond provides a mechanism to express validation constraints by using the type system. A quick example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">net.fwbrasil.bond.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Employee</span> (
+    <span class="pl-v">name</span>: <span class="pl-k">String</span> <span class="pl-k">with</span> <span class="pl-e">NonEmpty,</span>
+    <span class="pl-v">email</span>: <span class="pl-k">String</span> <span class="pl-k">with</span> <span class="pl-e">Email,</span>
+    <span class="pl-v">age</span>: <span class="pl-k">Int</span> <span class="pl-k">with</span> <span class="pl-e">GreaterThan</span>[<span class="pl-en">T</span>.`<span class="pl-c1">14</span>`.<span class="pl-en">T</span>]
+)
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Company</span> (
+    <span class="pl-v">employees</span>: <span class="pl-en">List</span>[<span class="pl-en">Employee</span>] <span class="pl-k">with</span> <span class="pl-e">MinSize</span>[<span class="pl-en">T</span>.`<span class="pl-c1">2</span>`.<span class="pl-en">T</span>]
+)</pre>
+  </div> 
+  <blockquote> 
+   <p><em>Note</em>: Scala does not have support for easily defining singleton types. The <code>T.`2`.T</code> definition is a shortcut for <code>shapeless.Witness.`2`.T</code>, that produces the singleton type by using a macro. It is possible to define singleton types for <code>String</code> as well: <code>T.`"a"`.T</code>.</p> 
+  </blockquote> 
+  <p>The type-level computations allow the application of constraint transformations at compile time. The 'lift' method is used to apply such transformations:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">net.fwbrasil.bond.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">employeeAge</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">with</span> <span class="pl-e">GreaterThan</span>[<span class="pl-en">T</span>.`<span class="pl-c1">14</span>`.<span class="pl-en">T</span>] <span class="pl-k">=</span> ...
+
+<span class="pl-k">val</span> <span class="pl-en">lifted</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">with</span> <span class="pl-e">GreaterThan</span>[<span class="pl-en">T</span>.`<span class="pl-c1">12</span>`.<span class="pl-en">T</span>] <span class="pl-k">=</span>
+    <span class="pl-en">GreaterThan</span>(<span class="pl-c1">12</span>).lift(employee.age)</pre>
+  </div> 
+  <p>Observe that <code>GreaterThan(14)</code> is liftable to <code>GreaterThan(12)</code> because any number that is greater than <code>14</code> will be greater than <code>12</code>. The transformation is not applicable for <code>GreaterThan(18)</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">GreaterThan</span>(<span class="pl-c1">18</span>).lift(employee.age)
+
+[error] <span class="pl-en">The</span> lifting of <span class="pl-en">'Int</span> <span class="pl-k">with</span> <span class="pl-e">net.fwbrasil.bond.GreaterThan</span>[<span class="pl-k">Int</span>(<span class="pl-c1">14</span>)]<span class="pl-c1">''</span> to <span class="pl-en">'net</span>.fwbrasil.bond.<span class="pl-en">GreaterThan</span>[<span class="pl-k">Int</span>(<span class="pl-c1">18</span>)]<span class="pl-c1">'<span class="pl-ii"> is not valid (Bond)</span></span>
+<span class="pl-c1"><span class="pl-ii">[error] GreaterThan(18).lift(employee.age)</span></span>
+<span class="pl-c1"><span class="pl-ii">[error] ^</span></span></pre>
+  </div> 
+  <p>As a previous step of type-level validations, it is necessary to apply value-level validations. In an ideal application, the value-level validations should happen on the boundaries where it is necessary to interface with non-validated values. For instance, the boundaries could be the user interface or a database interaction.</p> 
+  <p>Bond provides a validation DSL that is capable of accumulating multiple errors:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">net.fwbrasil.bond.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">controller</span> {
+
+    <span class="pl-k">def</span> <span class="pl-en">createEmployeeRestEndpoint</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">email</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span>
+        applyValueLevelValidations(name, email, age) <span class="pl-k">match</span> {
+            <span class="pl-k">case</span> <span class="pl-en">Valid</span>((name, email, age)) <span class="pl-k">=&gt;</span> render.json(<span class="pl-en">Employee</span>(name, email, age))
+            <span class="pl-k">case</span> <span class="pl-en">Invalid</span>(violations)       <span class="pl-k">=&gt;</span> render.badRequest(violations)
+        }
+
+    <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">applyValueLevelValidations</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">email</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Result</span>[(<span class="pl-k">String</span> <span class="pl-k">with</span> <span class="pl-e">NonEmpty,</span> <span class="pl-k">String</span> <span class="pl-k">with</span> <span class="pl-e">Email,</span> <span class="pl-k">Int</span> <span class="pl-k">with</span> <span class="pl-e">GreaterThan</span>[<span class="pl-en">T</span>.`<span class="pl-c1">14</span>`.<span class="pl-en">T</span>])] <span class="pl-k">=</span>
+        <span class="pl-k">for</span> {
+            name <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">NonEmpty</span>.validate(name)
+            email <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Email</span>.validate(email)
+            age <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">GreaterThan</span>(<span class="pl-c1">14</span>).validate(age)
+        } <span class="pl-k">yield</span> {
+            (name, email, age)
+        }
+
+    <span class="pl-k">private</span> <span class="pl-k">object</span> <span class="pl-en">render</span> { 
+        <span class="pl-k">def</span> <span class="pl-en">json</span>(<span class="pl-v">v</span>: <span class="pl-en">Any</span>) <span class="pl-k">=</span> println(s<span class="pl-s"><span class="pl-pds">"</span>OK: $v<span class="pl-pds">"</span></span>)
+        <span class="pl-k">def</span> <span class="pl-en">badRequest</span>(<span class="pl-v">v</span>: <span class="pl-en">Any</span>) <span class="pl-k">=</span> println(s<span class="pl-s"><span class="pl-pds">"</span>BadRequest: $v<span class="pl-pds">"</span></span>) 
+    } 
+}</pre>
+  </div> 
+  <p>Execution examples:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> controller.createEmployeeRestEndpoint(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>)
+<span class="pl-en">BadRequest</span><span class="pl-k">:</span> <span class="pl-en">List</span>(<span class="pl-en">Violation</span>(,<span class="pl-en">NonEmpty</span>), <span class="pl-en">Violation</span>(b,<span class="pl-en">Email</span>), <span class="pl-en">Violation</span>(<span class="pl-c1">1</span>,<span class="pl-en">GreaterThan</span>(<span class="pl-c1">14</span>)))
+
+scala<span class="pl-k">&gt;</span> controller.createEmployeeRestEndpoint(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>)
+<span class="pl-en">BadRequest</span><span class="pl-k">:</span> <span class="pl-en">List</span>(<span class="pl-en">Violation</span>(b,<span class="pl-en">Email</span>), <span class="pl-en">Violation</span>(<span class="pl-c1">1</span>,<span class="pl-en">GreaterThan</span>(<span class="pl-c1">14</span>)))
+
+scala<span class="pl-k">&gt;</span> controller.createEmployeeRestEndpoint(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b@a.com<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>)
+<span class="pl-en">BadRequest</span><span class="pl-k">:</span> <span class="pl-en">List</span>(<span class="pl-en">Violation</span>(<span class="pl-c1">1</span>,<span class="pl-en">GreaterThan</span>(<span class="pl-c1">14</span>)))
+
+scala<span class="pl-k">&gt;</span> controller.createEmployeeRestEndpoint(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b@a.com<span class="pl-pds">"</span></span>, <span class="pl-c1">17</span>)
+<span class="pl-en">OK</span><span class="pl-k">:</span> <span class="pl-en">Employee</span>(a,b<span class="pl-k">@</span>a.com,<span class="pl-c1">17</span>)</pre>
+  </div> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/fwbrasil/bond#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting started</h1> 
+  <p>To use bond, just add the dependency to the project's build configuration.</p> 
+  <p><strong>Important</strong>: Bond is available only for Scala <code>2.11.x</code>. Change <code>x.x.x</code> with the latest version listed in the <a href="https://github.com/fwbrasil/bond/blob/master/CHANGELOG.md" target="_blank">CHANGELOG.md</a> file.</p> 
+  <p>SBT</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>net.fwbrasil<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>bond<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>x.x.x<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <p>Maven</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;net.fwbrasil&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;bond&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;x.x.x&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h1><a id="user-content-built-in-validations" class="anchor" href="https://github.com/fwbrasil/bond#built-in-validations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Built-in Validations</h1> 
+  <p><em><a href="https://github.com/fwbrasil/bond/blob/v0.0.1/src/main/scala/net/fwbrasil/bond/Iterables.scala" target="_blank">Iterables</a></em></p> 
+  <p>These validators can be used with any type that is convertible to <code>Iterable[_]</code>. This includes <code>List</code>, <code>Seq</code>, <code>String</code> and many other types.</p> 
+  <ul> 
+   <li>NonEmpty</li> 
+   <li>Empty</li> 
+   <li>Size(N)</li> 
+   <li>MinSize(N)</li> 
+   <li>MaxSize(N)</li> 
+  </ul> 
+  <p><em><a href="https://github.com/fwbrasil/bond/blob/v0.0.1/src/main/scala/net/fwbrasil/bond/Numbers.scala" target="_blank">Numbers</a></em></p> 
+  <p>Validators to be used with any type that is convertible to <code>java.lang.Number</code>.</p> 
+  <ul> 
+   <li>GreaterThan(N)</li> 
+   <li>GreaterThanOrEqual(N)</li> 
+   <li>LesserThan(N)</li> 
+   <li>LesserThanOrEqual(N)</li> 
+   <li>Odd</li> 
+   <li>Even</li> 
+   <li>Prime</li> 
+   <li>Perfect</li> 
+  </ul> 
+  <p><em><a href="https://github.com/fwbrasil/bond/blob/v0.0.1/src/main/scala/net/fwbrasil/bond/Strings.scala" target="_blank">Strings</a></em></p> 
+  <ul> 
+   <li>CreditCard</li> 
+   <li>Email</li> 
+   <li>StartsWith(S)</li> 
+   <li>EndsWith(S)</li> 
+   <li>MatchesRegex(S)</li> 
+   <li>URI</li> 
+   <li>URL</li> 
+   <li>UUID</li> 
+  </ul> 
+  <p><em><a href="https://github.com/fwbrasil/bond/blob/v0.0.1/src/main/scala/net/fwbrasil/bond/Booleans.scala" target="_blank">Booleans</a></em></p> 
+  <ul> 
+   <li>False</li> 
+   <li>True</li> 
+  </ul> 
+  <p><em><a href="https://github.com/fwbrasil/bond/blob/v0.0.1/src/main/scala/net/fwbrasil/bond/Objects.scala" target="_blank">Objects</a></em></p> 
+  <ul> 
+   <li>IsNull</li> 
+   <li>IsNotNull</li> 
+  </ul> 
+  <h1><a id="user-content-custom-validations" class="anchor" href="https://github.com/fwbrasil/bond#custom-validations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom Validations</h1> 
+  <p>Example of custom validation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Adult</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Adult</span>
+  <span class="pl-k">extends</span> <span class="pl-e">Validator</span>[<span class="pl-en">Employee</span>, <span class="pl-en">Adult</span>] {
+
+  <span class="pl-k">def</span> <span class="pl-en">isValid</span>(<span class="pl-v">e</span>: <span class="pl-en">Employee</span>) <span class="pl-k">=</span>
+    e.age <span class="pl-k">&gt;=</span> <span class="pl-c1">21</span>
+}</pre>
+  </div> 
+  <p>Example usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">registerForDangerousJob</span>(<span class="pl-v">employee</span>: <span class="pl-en">Employee</span> <span class="pl-k">with</span> <span class="pl-e">Adult)</span> <span class="pl-k">=</span> ...</pre>
+  </div> 
+  <blockquote> 
+   <p><strong>Important</strong>: Scala does not provide a mechanism to define the macro expansion order and the lift macro depends on the validation class. This means that you need to manually guarantee that the validation class is compiled before the <code>lift</code> macro expansion. There are some workarounds to influence the compilation order:</p> 
+   <ul> 
+    <li>Use a separate source folder that compiles before the main source folder.</li> 
+    <li>Define the custom validations inside a separate sub-module</li> 
+   </ul> 
+  </blockquote> 
+  <h1><a id="user-content-versioning" class="anchor" href="https://github.com/fwbrasil/bond#versioning" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Versioning</h1> 
+  <p>Bond adheres to Semantic Versioning 2.0.0. If there is a violation of this scheme, report it as a bug. Specifically, if a patch or minor version is released and breaks backward compatibility, that version should be immediately yanked and/or a new version should be immediately released that restores compatibility. Any change that breaks the public API will only be introduced at a major-version release.</p> 
+  <h1><a id="user-content-license" class="anchor" href="https://github.com/fwbrasil/bond#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h1> 
+  <p>See the <a href="https://github.com/fwbrasil/bond/blob/master/LICENSE-LGPL.txt" target="_blank">LICENSE-LGPL</a> file for details.</p> 
+ </article>
+</div>

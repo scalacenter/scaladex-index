@@ -1,0 +1,196 @@
+<div class="announce instapaper_body md" data-path="readme.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-acyclic" class="anchor" href="https://github.com/lihaoyi/acyclic#acyclic" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Acyclic</h1> 
+  <p><strong>Acyclic</strong> is a Scala compiler plugin that allows you to mark files within a build as <code>acyclic</code>, turning circular dependencies between files into compilation errors.</p> 
+  <p>For example, the following two files have a circular dependency between them:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">fail.simple</span>
+
+<span class="pl-k">class</span> <span class="pl-en">A</span> {
+  <span class="pl-k">val</span> <span class="pl-en">b</span><span class="pl-k">:</span> <span class="pl-en">B</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">fail.simple</span>
+
+<span class="pl-k">class</span> <span class="pl-en">B</span> {
+  <span class="pl-k">val</span> <span class="pl-en">a</span><span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>
+}</pre>
+  </div> 
+  <p>In this case it is very obvious that there is a circular dependency, but in larger projects the fact that a circular dependency exists can be difficult to spot. With <strong>Acyclic</strong>, you can annotate either source file with an <code>acyclic</code> import:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">fail.simple</span>
+<span class="pl-k">import</span> <span class="pl-v">acyclic.</span><span class="pl-v">file</span>
+
+<span class="pl-k">class</span> <span class="pl-en">A</span> {
+  <span class="pl-k">val</span> <span class="pl-en">b</span><span class="pl-k">:</span> <span class="pl-en">B</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>
+}</pre>
+  </div> 
+  <p>And attempting to compile these files together will then result in a compilation error:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>error<span class="pl-k">:</span> <span class="pl-en">Unwanted</span> cyclic dependency
+
+src<span class="pl-k">/</span>test<span class="pl-k">/</span>resources<span class="pl-k">/</span>fail<span class="pl-k">/</span>simple<span class="pl-k">/</span><span class="pl-en">B</span>.scala<span class="pl-k">:</span><span class="pl-c1">4</span><span class="pl-k">:</span>
+  <span class="pl-k">val</span> <span class="pl-en">a1</span><span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">A</span>
+                  ^
+symbol<span class="pl-k">:</span> <span class="pl-k">class</span> <span class="pl-en">A</span>
+<span class="pl-en">More</span> dependencies at lines <span class="pl-c1">5</span>
+
+src<span class="pl-k">/</span>test<span class="pl-k">/</span>resources<span class="pl-k">/</span>fail<span class="pl-k">/</span>simple<span class="pl-k">/</span><span class="pl-en">A</span>.scala<span class="pl-k">:</span><span class="pl-c1">6</span><span class="pl-k">:</span>
+  <span class="pl-k">val</span> <span class="pl-en">b</span><span class="pl-k">:</span> <span class="pl-en">B</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>
+      ^
+symbol<span class="pl-k">:</span> <span class="pl-k">class</span> <span class="pl-en">B</span>
+</pre>
+  </div> 
+  <p>This applies to term-dependencies, type-dependencies, as well as cycles that span more than two files. Circular dependencies between files is something that people often don't want, but are difficult to avoid as introducing cycles is hard to detect while working or during code review. <strong>Acyclic</strong> is designed to help you guard against unwanted cycles at compile-time, and tells you exactly where the cycles are when they appear so you can deal with them.</p> 
+  <p>A more realistic example of a cycle that <strong>Acyclic</strong> may find is this one taken from a cycle in <a href="https://github.com/lihaoyi/utest" target="_blank">uTest</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>[error] <span class="pl-en">Circular</span> dependency between acyclic <span class="pl-v">files</span>:
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>utest<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>utest<span class="pl-k">/</span><span class="pl-en">Formatter</span>.scala<span class="pl-k">:</span><span class="pl-c1">58</span><span class="pl-k">:</span> acyclic
+[info]       <span class="pl-k">val</span> <span class="pl-en">traceStr</span> <span class="pl-k">=</span> r.value <span class="pl-k">match</span>{
+[info]                        ^
+[info] <span class="pl-en">Other</span> dependencies at <span class="pl-v">lines</span>: <span class="pl-c1">20</span>, <span class="pl-c1">54</span>, <span class="pl-c1">44</span>, <span class="pl-c1">66</span>, <span class="pl-c1">40</span>, <span class="pl-c1">15</span>, <span class="pl-c1">67</span>, <span class="pl-c1">2</span>, <span class="pl-c1">45</span>, <span class="pl-c1">42</span>
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>utest<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>utest<span class="pl-k">/</span>framework<span class="pl-k">/</span><span class="pl-en">Model</span>.scala<span class="pl-k">:</span><span class="pl-c1">76</span><span class="pl-k">:</span>
+[info]           v.runAsync(onComplete, path <span class="pl-k">:</span><span class="pl-k">+</span> i, strPath <span class="pl-k">:</span><span class="pl-k">+</span> v.value.name, thisError)
+[info]           ^
+[info] <span class="pl-en">Other</span> dependencies at <span class="pl-v">lines</span>: <span class="pl-c1">120</span>
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>utest<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>utest<span class="pl-k">/</span>package.scala<span class="pl-k">:</span><span class="pl-c1">72</span><span class="pl-k">:</span>
+[info]   <span class="pl-k">val</span> <span class="pl-en">TestSuite</span> <span class="pl-k">=</span> framework.<span class="pl-en">TestSuite</span>
+[info]       ^
+[info] <span class="pl-en">Other</span> dependencies at <span class="pl-v">lines</span>: <span class="pl-c1">73</span>
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>utest<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>utest<span class="pl-k">/</span>framework<span class="pl-k">/</span><span class="pl-en">TestSuite</span>.scala<span class="pl-k">:</span><span class="pl-c1">37</span><span class="pl-k">:</span>
+[info]         log(formatter.formatSingle(path, s))
+[info]                       ^
+[info] <span class="pl-en">Other</span> dependencies at <span class="pl-v">lines</span>: <span class="pl-c1">41</span>, <span class="pl-c1">33</span></pre>
+  </div> 
+  <p>As you can see, there is a dependency cycle between <code>Formatter.scala</code>, <code>Model.scala</code>, <code>package.scala</code> and <code>TestSuite.scala</code>. <code>package.scala</code> has been explicitly marked <code>acyclic</code>, and so compilation fails with an error. Apart from the line shown, <strong>Acyclic</strong> also gives other lines in the same file which contain dependencies contributing to this cycle.</p> 
+  <p>Spotting this dependency cycle spanning 4 different files, and knowing exactly which pieces of code are causing it, is something that is virtually impossible to do manually via inspection or code-review. Using <strong>Acyclic</strong>, there is no chance of accidentally introducing a dependency cycle you don't want, and even when you do, it shows you exactly what's causing the cycle that you need to fix to make it go away.</p> 
+  <h1><a id="user-content-package-cycles" class="anchor" href="https://github.com/lihaoyi/acyclic#package-cycles" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Package Cycles</h1> 
+  <p><strong>Acyclic</strong> also allows you to annotate entire packages as <code>acyclic</code> by placing a <code>import acyclic.pkg</code> inside the package object. Consider the following set of files:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// c/C1.scala</span>
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle.c</span>
+
+<span class="pl-k">object</span> <span class="pl-en">C1</span></pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// c/C2.scala</span>
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle</span>
+<span class="pl-k">package</span> <span class="pl-en">c</span>
+
+<span class="pl-k">class</span> <span class="pl-en">C2</span> {
+  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">B</span>
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// c/package.scala</span>
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle</span>
+
+<span class="pl-k">package object</span> <span class="pl-en">c</span> {
+  <span class="pl-k">import</span> <span class="pl-v">acyclic.</span><span class="pl-v">pkg</span>
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// A.scala</span>
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle</span>
+
+<span class="pl-k">class</span> <span class="pl-en">A</span> {
+  <span class="pl-k">val</span> <span class="pl-en">thing</span> <span class="pl-k">=</span> c.<span class="pl-en">C1</span>
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// B.scala</span>
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle</span>
+
+<span class="pl-k">class</span> <span class="pl-en">B</span> <span class="pl-k">extends</span> <span class="pl-e">A</span></pre>
+  </div> 
+  <p>These 5 files do not have any file-level cycles, and form a nice linear dependency chain:</p> 
+  <pre><code>c/C2.scala -&gt; B.scala -&gt; A.scala -&gt; c/C1.scala
+</code></pre> 
+  <p>However, we may want to preserve the invariant that the package <code>c</code> does not have any cyclic dependencies with other packages or files.. By annotating the package with <code>import acyclic.pkg</code> in its package objects as shown above, we can make this circular package dependency error out:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>error<span class="pl-k">:</span> <span class="pl-en">Unwanted</span> cyclic dependency
+
+src<span class="pl-k">/</span>test<span class="pl-k">/</span>resources<span class="pl-k">/</span>fail<span class="pl-k">/</span>halfpackagecycle<span class="pl-k">/</span><span class="pl-en">B</span>.scala<span class="pl-k">:</span><span class="pl-c1">3</span><span class="pl-k">:</span>
+<span class="pl-k">class</span> <span class="pl-en">B</span> <span class="pl-k">extends</span> <span class="pl-e">A</span>
+        ^
+symbol<span class="pl-k">:</span> constructor <span class="pl-en">A</span>
+
+src<span class="pl-k">/</span>test<span class="pl-k">/</span>resources<span class="pl-k">/</span>fail<span class="pl-k">/</span>halfpackagecycle<span class="pl-k">/</span><span class="pl-en">A</span>.scala<span class="pl-k">:</span><span class="pl-c1">4</span><span class="pl-k">:</span>
+  <span class="pl-k">val</span> <span class="pl-en">thing</span> <span class="pl-k">=</span> c.<span class="pl-en">C1</span>
+      ^
+symbol<span class="pl-k">:</span> <span class="pl-k">object</span> <span class="pl-en">C1</span>
+
+<span class="pl-k">package</span> <span class="pl-en">fail.halfpackagecycle.c</span>
+src<span class="pl-k">/</span>test<span class="pl-k">/</span>resources<span class="pl-k">/</span>fail<span class="pl-k">/</span>halfpackagecycle<span class="pl-k">/</span>c<span class="pl-k">/</span><span class="pl-en">C2</span>.scala<span class="pl-k">:</span><span class="pl-c1">5</span><span class="pl-k">:</span>
+  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">B</span>
+           ^
+symbol<span class="pl-k">:</span> <span class="pl-k">class</span> <span class="pl-en">B</span></pre>
+  </div> 
+  <p>Since, <code>c</code> as a whole must be acyclic, the dependency cycle between <code>c</code>, <code>B.scala</code> and <code>A.scala</code> is prohibited, and <strong>Acyclic</strong> errors out. As you can see, it tells you exactly where the dependencies are in the source files, giving you an opportunity to find and remove them. Here's a realistic example from Scala.Rx:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>[error] <span class="pl-en">Unwanted</span> cyclic dependency
+[info]
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>scala.rx<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>rx<span class="pl-k">/</span>core<span class="pl-k">/</span><span class="pl-en">Dynamic</span>.scala<span class="pl-k">:</span><span class="pl-c1">10</span><span class="pl-k">:</span>
+[info] <span class="pl-k">import</span> <span class="pl-v">rx.ops.</span><span class="pl-v">Spinlock</span>
+[info]        ^
+[info] <span class="pl-v">symbol</span>: value &lt;<span class="pl-ent">import</span>&gt;
+[info] <span class="pl-en">More</span> dependencies at lines <span class="pl-c1">29</span> <span class="pl-c1">60</span> <span class="pl-c1">33</span> <span class="pl-c1">41</span> <span class="pl-c1">27</span> <span class="pl-c1">23</span>
+[info]
+[info] <span class="pl-k">package</span> <span class="pl-en">rx.ops</span>
+[info] <span class="pl-k">/</span><span class="pl-en">Users</span><span class="pl-k">/</span>haoyi<span class="pl-k">/</span><span class="pl-en">Dropbox</span> (<span class="pl-en">Personal</span>)<span class="pl-k">/</span><span class="pl-en">Workspace</span><span class="pl-k">/</span>scala.rx<span class="pl-k">/</span>shared<span class="pl-k">/</span>main<span class="pl-k">/</span>scala<span class="pl-k">/</span>rx<span class="pl-k">/</span>ops<span class="pl-k">/</span><span class="pl-en">Async</span>.scala<span class="pl-k">:</span><span class="pl-c1">78</span><span class="pl-k">:</span>
+[info]       <span class="pl-v">super</span>.ping(incoming)
+[info]             ^
+[info] <span class="pl-v">symbol</span>: method ping
+[info] <span class="pl-en">More</span> dependencies at lines <span class="pl-c1">69</span> <span class="pl-c1">101</span> <span class="pl-c1">97</span> <span class="pl-c1">95</span> <span class="pl-c1">67</span></pre>
+  </div> 
+  <p>As you can see, <code>Dynamic.scala</code> in <code>rx.core</code> was accidentally depending on <code>Spinlock</code> in <code>rx.ops</code>. That cross-module dependency from <code>rx.core</code> to <code>rx.ops</code> should not exist, and the proper solution was to move <code>Spinlock</code> over to <code>rx.core</code>. Without <strong>Acyclic</strong>, this circular dependency would likely have gone un-noticed.</p> 
+  <h1><a id="user-content-how-to-use" class="anchor" href="https://github.com/lihaoyi/acyclic#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to Use</h1> 
+  <p>To use, add the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.lihaoyi<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>acyclic<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.4<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
+
+autoCompilerPlugins <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">true</span>
+
+addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.lihaoyi<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>acyclic<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.4<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>If you are on Scala 2.10.x, you may need an additional compile-time dependency:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>org.scala-lang<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-compiler<span class="pl-pds">"</span></span> <span class="pl-k">%</span> scalaVersion.value <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span> <span class="pl-c">// needed for 2.10.x only</span></pre>
+  </div> 
+  <p><strong>Acyclic</strong> is currently being used in <a href="https://github.com/lihaoyi/utest" target="_blank">uTest</a>, <a href="https://github.com/lihaoyi/scalatags" target="_blank">Scalatags</a> and <a href="https://github.com/lihaoyi/scala.rx" target="_blank">Scala.Rx</a>, and helped remove many cycle between files which had no good reason for being cyclic. It is also being used to verify the acyclicity of <a href="https://github.com/lihaoyi/acyclic/blob/master/src/main/scala/acyclic/plugin/PluginPhase.scala#L3" target="_blank">its own code</a>. It works with both Scala 2.10 and 2.11.</p> 
+  <p>If you're using incremental compilation, you may need to do a clean compile for <strong>Acyclic</strong> to find all unwanted cycles in the compilation run.</p> 
+  <h1><a id="user-content-limitations" class="anchor" href="https://github.com/lihaoyi/acyclic#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h1> 
+  <p>Acyclic has problems in a number of cases:</p> 
+  <ul> 
+   <li>If you use curly-braced <code>package XXX {}</code> acyclic inside your source files, it does the wrong thing. Acyclic assumes all packages are listed in a sequence of statements at the top of each file</li> 
+   <li>Under incremental compilation, Acyclic does not always find all possible cycles, since one cycles within the files currently getting compiled will get caught. A solution is to do a clean build every once in a while.</li> 
+  </ul> 
+  <h1><a id="user-content-changelog" class="anchor" href="https://github.com/lihaoyi/acyclic#changelog" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ChangeLog</h1> 
+  <p><strong>0.1.4</strong>: Loosen restrictions on compiler plugin placement, to allow better interactions with other plugins. Also, <code>acyclic.file</code> is now <code>@compileTimeOnly</code> to provide better errors <strong>0.1.3</strong>: Ignore, but don't crash, on Java sources</p> 
+  <h1><a id="user-content-mit-license" class="anchor" href="https://github.com/lihaoyi/acyclic#mit-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MIT License</h1> 
+  <p>The MIT License (MIT)</p> 
+  <p>Copyright (c) 2014 Li Haoyi</p> 
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p> 
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p> 
+  <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p> 
+ </article>
+</div>

@@ -1,0 +1,106 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-b-tree" class="anchor" href="https://github.com/edadma/b-tree#b-tree" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>b-tree</h1> 
+  <p><em>b-tree</em> is a B+ Tree implementation in Scala. <em>b-tree</em> is designed to be both generic (type parameters for keys and values, and an abstract type for node references) and general (doesn't care how the tree is stored). An extending class needs to implement a number of simple methods and node type that provide storage independence.</p> 
+  <p>Scaladoc library documentation can be found at <a href="http://edadma.github.io/b-tree" target="_blank">http://edadma.github.io/b-tree</a>.</p> 
+  <p>As an example, the following code</p> 
+  <pre><code>import xyz.hyperreal.btree.{MemoryBPlusTree, FileBPlusTree}
+
+
+object Example1 extends App {
+  val memoryTree = new MemoryBPlusTree[String, Any]( 5 )
+
+  memoryTree.insertKeys( "k", "z", "p", "d", "b", "v", "h", "x", "o", "y", "c", "t", "j", "n", "f", "l", "s", "q", "i", "m", "e", "u", "w", "a", "g", "r" )
+  memoryTree.diagram( "memoryTree" )
+
+  val fileTree = new FileBPlusTree[String, Any]( "btree", 5 )
+
+  fileTree.insertKeys( "k", "z", "p", "d", "b", "v", "h", "x", "o", "y", "c", "t", "j", "n", "f", "l", "s", "q", "i", "m", "e", "u", "w", "a", "g", "r" )
+  fileTree.diagram( "fileTree" )
+  fileTree.close
+
+  println( memoryTree.boundedKeysIterator(('&gt;, "c"), ('&lt;, "l")).mkString(", ") )
+  println( memoryTree.reverseKeysIterator.mkString(", ") )
+}
+</code></pre> 
+  <p>produces identical B+ Tree structures in memory and on disk, and therefore the generated image files <code>memoryTree</code> and <code>fileTree</code> will be identical. The diagram that is produced is</p> 
+  <p><a href="https://github.com/edadma/b-tree/blob/master/tree1.png" target="_blank"><img src="https://github.com/edadma/b-tree/raw/master/tree1.png" alt="tree" style="max-width:100%;"></a></p> 
+  <p>The call to <code>boundedKeysIterator</code> above produces an iterator over the keys</p> 
+  <pre><code>d, e, f, g, h, i, j, k
+</code></pre> 
+  <p>since these are the ones that are strictly between <code>c</code> and <code>l</code>. The call to <code>reverseKeysIterator</code> produces an iterator over the keys</p> 
+  <pre><code>z, y, x, w, v, u, t, s, r, q, p, o, n, m, l, k, j, i, h, g, f, e, d, c, b, a
+</code></pre> 
+  <h2><a id="user-content-adding-b-tree-to-a-project" class="anchor" href="https://github.com/edadma/b-tree#adding-b-tree-to-a-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Adding <em>b-tree</em> to a project</h2> 
+  <p>There are two ways to add <em>b-tree</em> to a project. If you just want either an in-memory B+ tree "map" or file based B+ tree persistant storage for your project, then the concrete classes <code>MemoryBPlusTree</code> and <code>FileBPlusTree</code> work out-of-the-box. On the other hand, if you want to integrate the B+ tree algorithms into your project, then you can extend the abstract class <code>BPlusTree</code> by implementing it's storage abstraction methods to hook it into your project.</p> 
+  <h3><a id="user-content-extending-bplustree" class="anchor" href="https://github.com/edadma/b-tree#extending-bplustree" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Extending <code>BPlusTree</code></h3> 
+  <p><em>b-tree</em> has one abstract class called <code>BPlusTree</code> which provides for interaction with a B+ tree. The concrete methods operate through a storage abstraction layer composed of 1 abstract type (the node type), 4 variables, and 34 methods. To use <em>b-tree</em> in a project, it is necessary to extend <code>BPlusTree</code> and provide implementations for all the abstract members. 34 methods sounds like a lot but they are all easy to implement. A lot of effort was put into coding <code>BPlusTree</code> so that it's abstraction layer would be dead simple to implement.</p> 
+  <p>There are two example implementations provided: <code>MemoryBPlusTree</code> and <code>FileBPlusTree</code>. <code>MemoryBPlusTree</code> is just a normal in-memory data structure where the node type is a simple class. <code>FileBPlusTree</code> provides for persistant storage of key/value pairs in disk files. To see how easy it can be to implement the abstraction layer just look at the source code for <code>MemoryBPlusTree</code>.</p> 
+  <p>To begin working on adding <em>b-tree</em> to a project, visit the <a href="http://edadma.github.io/b-tree" target="_blank">scaladoc library documentation</a>. Next, click on <code>BPlusTree</code> and then select visibility "All" to see all the protected members. Everything under "Type Members" and "Abstract Value Members" must be implemented. All the information needed is in the member descriptions and in the class description at the top.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/b-tree#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><em>b-tree</em> is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/b-tree#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Use the following elements to use <em>b-tree</em> in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+    &lt;id&gt;hyperreal&lt;/id&gt;
+    &lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;xyz.hyperreal&lt;/groupId&gt;
+    &lt;artifactId&gt;b-tree&lt;/artifactId&gt;
+    &lt;version&gt;0.2&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use <em>b-tree</em> in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "xyz.hyperreal" %% "b-tree" % "0.2"
+</code></pre> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/edadma/b-tree#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <h3><a id="user-content-requirements" class="anchor" href="https://github.com/edadma/b-tree#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h3> 
+  <ul> 
+   <li>SBT 0.13.12+</li> 
+   <li>Java 7+</li> 
+   <li>Scala 2.11.8+</li> 
+   <li>graphviz, imageMagick (optionally, for tree diagrams)</li> 
+  </ul> 
+  <h3><a id="user-content-clone" class="anchor" href="https://github.com/edadma/b-tree#clone" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Clone</h3> 
+  <pre><code>git clone git://github.com/edadma/b-tree.git
+</code></pre> 
+  <h3><a id="user-content-compile-and-test" class="anchor" href="https://github.com/edadma/b-tree#compile-and-test" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Compile and Test</h3> 
+  <p>For compiling and testing, it's best to use the following command:</p> 
+  <pre><code>test-only -- -l slow
+</code></pre> 
+  <p>to exclude the "stress tests" that are tagged as "slow". Some stress testing is still done with this command. If you just type <code>test</code>, you may have to wait many minutes for all the tests to complete. The example above can then be executed with</p> 
+  <pre><code>test:runMain Example1
+</code></pre> 
+ </article>
+</div>

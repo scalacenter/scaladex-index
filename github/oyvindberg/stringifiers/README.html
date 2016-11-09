@@ -1,0 +1,91 @@
+<div class="announce instapaper_body md" data-path="readme.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-stringifiers" class="anchor" href="https://github.com/oyvindberg/stringifiers#stringifiers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Stringifiers</h1> 
+  <p>A Scala micro library for moving values to and from strings, with error handling and abstraction possibilities.</p> 
+  <p>Analogue to <code>Read</code> and <code>Show</code> type classes, but a bit simpler and more specialized. The library aims to be a comfortable introduction to type class-based programming.</p> 
+  <p>In the simplest of cases, these <code>Stringifier</code>s can be used to DRY code which otherwise would ad hoc parse the same types everywhere.</p> 
+  <p>A bit more elaborate use can see them used to derive Json or Xml codecs, for parsing Http parameters, for sql, /etc/.</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/oyvindberg/stringifiers#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.olvind.stringifiers.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.olvind.stringifiers.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">UserId</span>(<span class="pl-v">value</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span>
+defined <span class="pl-k">class</span> <span class="pl-en">UserId</span>
+
+<span class="pl-c">/* This picks up the bundled instance for `Int`,</span>
+<span class="pl-c">    and uses that to construct one for UserId */</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">S</span> <span class="pl-k">=</span> <span class="pl-en">Stringifier</span>.instance(<span class="pl-en">UserId</span>)(_.value)
+<span class="pl-en">S</span><span class="pl-k">:</span> <span class="pl-en">Stringifier</span>[<span class="pl-en">UserId</span>] <span class="pl-k">=</span> ...
+
+<span class="pl-c">/* encoding is modelled as not failing */</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Stringifier</span> encode <span class="pl-en">UserId</span>(<span class="pl-c1">2</span>)
+res0<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>
+
+<span class="pl-c">/* while parsing, of course, can fail */</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Stringifier</span> decode[<span class="pl-en">UserId</span>] <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>
+res0<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">DecodeFail</span>,<span class="pl-en">UserId</span>] <span class="pl-k">=</span> <span class="pl-en">Right</span>(<span class="pl-en">UserId</span>(<span class="pl-c1">2</span>))
+
+<span class="pl-c">/* can also use the instance directly */</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-en">S</span> decode <span class="pl-s"><span class="pl-pds">"</span>zxc<span class="pl-pds">"</span></span>
+res0<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">DecodeFail</span>,<span class="pl-en">UserId</span>] <span class="pl-k">=</span> <span class="pl-en">Left</span>(<span class="pl-en">ValueNotValid</span>(zxc,<span class="pl-en">Typename</span>(<span class="pl-en">UserId</span>),<span class="pl-en">Some</span>(<span class="pl-en">NumberFormatException</span><span class="pl-k">:</span> <span class="pl-en">For</span> input <span class="pl-v">string</span>: <span class="pl-s"><span class="pl-pds">"</span>zxc<span class="pl-pds">"</span></span>)))
+
+<span class="pl-c">/* supports optional values */</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Stringifier</span> decode[<span class="pl-en">Option</span>[<span class="pl-en">UserId</span>]] <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>
+res0<span class="pl-k">:</span> <span class="pl-en">Either</span>[com.olvind.stringifiers.<span class="pl-en">DecodeFail</span>,<span class="pl-en">Option</span>[<span class="pl-en">UserId</span>]] <span class="pl-k">=</span> <span class="pl-en">Right</span>(<span class="pl-c1">None</span>)</pre>
+  </div> 
+  <h2><a id="user-content-setup-sbt" class="anchor" href="https://github.com/oyvindberg/stringifiers#setup-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup (sbt)</h2> 
+  <p>Available for Scala 2.10/2.11:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.olvind<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>stringifiers<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>And for Scala.js (not compiled for 2.10 because of a scaladoc issue)</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.olvind<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>stringifiers<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h1><a id="user-content-type-class-instance-derivation" class="anchor" href="https://github.com/oyvindberg/stringifiers#type-class-instance-derivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Type class instance derivation</h1> 
+  <p>A lot of operations naturally work for <code>String</code>. By having defined a way to map back and forth, we can provide loads of type class instances with just a few lines of glue code.</p> 
+  <p>So by providing these once:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">ArgonautSupport</span> {
+  <span class="pl-k">import</span> <span class="pl-v">scala.language.</span><span class="pl-v">implicitConversions</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toEncoder</span>[<span class="pl-en">T</span>](<span class="pl-k">implicit</span> <span class="pl-en">S</span><span class="pl-k">:</span> <span class="pl-en">Stringifier</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">EncodeJson</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span>
+    <span class="pl-en">EncodeJson</span>[<span class="pl-en">T</span>](<span class="pl-en">S</span>.encode andThen <span class="pl-en">Argonaut</span>.jString)
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">toDecoder</span>[<span class="pl-en">T</span>](<span class="pl-k">implicit</span> <span class="pl-en">S</span><span class="pl-k">:</span> <span class="pl-en">Stringifier</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">DecodeJson</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span>
+    <span class="pl-en">DecodeJson</span>[<span class="pl-en">T</span>](
+      c <span class="pl-k">=&gt;</span> c.as[<span class="pl-k">String</span>](<span class="pl-en">DecodeJson</span>.<span class="pl-en">StringDecodeJson</span>) map <span class="pl-en">Stringifier</span>[<span class="pl-en">T</span>].decode flatMap {
+        <span class="pl-k">case</span> <span class="pl-en">Right</span>(t) <span class="pl-k">=&gt;</span>
+          <span class="pl-en">DecodeResult</span> ok t
+        <span class="pl-k">case</span> <span class="pl-en">Left</span>(<span class="pl-en">ValueNotValid</span>(v, t, oe)) <span class="pl-k">=&gt;</span>
+          <span class="pl-en">DecodeResult</span> fail (s<span class="pl-s"><span class="pl-pds">"</span>«$v» is not a valid ${t.value}${oe.fold(<span class="pl-pds">"</span><span class="pl-pds">"</span>)(<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span> + _)}<span class="pl-pds">"</span></span>, c.history)
+        <span class="pl-k">case</span> <span class="pl-en">Left</span>(<span class="pl-en">ValueNotInSet</span>(v, t, ss)) <span class="pl-k">=&gt;</span>
+          <span class="pl-en">DecodeResult</span> fail (s<span class="pl-s"><span class="pl-pds">"</span>«$v» is not a valid ${t.value}. Not among ${ss.mkString(<span class="pl-pds">"</span></span>[«<span class="pl-s"><span class="pl-pds">"</span>, <span class="pl-pds">"</span></span>», «<span class="pl-s"><span class="pl-pds">"</span>, <span class="pl-pds">"</span></span>»]<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>, c.history)
+      }
+    )
+}</pre>
+  </div> 
+  <p>You can have these implicits automagically:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Secrets</span>(<span class="pl-v">value</span>: <span class="pl-k">Long</span>)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">S</span><span class="pl-k">:</span> <span class="pl-en">Stringifier</span>[<span class="pl-en">Secrets</span>] <span class="pl-k">=</span> (<span class="pl-en">Stringifier</span> instance <span class="pl-en">Secrets</span>)(_.value)
+
+  <span class="pl-k">import</span> <span class="pl-v">Argonaut.</span><span class="pl-v">_, </span><span class="pl-v">ArgonautSupport.</span><span class="pl-v">_</span>
+  implicitly[<span class="pl-en">EncodeJson</span>[<span class="pl-en">WrapChar</span>]]
+  implicitly[<span class="pl-en">DecodeJson</span>[<span class="pl-en">WrapChar</span>]]</pre>
+  </div> 
+ </article>
+</div>

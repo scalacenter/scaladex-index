@@ -1,0 +1,155 @@
+<div class="announce instapaper_body md" data-path="Readme.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-anorm-relational" class="anchor" href="https://github.com/mhzajac/anorm-relational#anorm-relational" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><em>Anorm Relational</em></h2> 
+  <p>Anorm relational is a simple wrapper around the Anorm library available within <a href="http://www.playframework.com" target="_blank">Play Framework</a>, designed to extend the parsing API to handle one-to-many relationships with ease. It is currently available for Play 2.3.x or Anorm 2.5.0 and built against Scala 2.11.8 and 2.10.6.</p> 
+  <h2><a id="user-content-motivations" class="anchor" href="https://github.com/mhzajac/anorm-relational#motivations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivations</h2> 
+  <p>Anorm is a great light-weight library that allows you to write your own SQL and parse the results, without the need for an ORM. It's able to parse complicated data structures easily using the parser combinator API, but even that has its drawbacks. Consider this simple example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Blog</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">title</span>: <span class="pl-k">String</span>, <span class="pl-v">posts</span>: <span class="pl-en">List</span>[<span class="pl-en">Post</span>])
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Post</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">title</span>: <span class="pl-k">String</span>, <span class="pl-v">body</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>Let's say that I'm hosting some sort of multi-blog site, and when you visit a particular blog, you see a landing page with a summary of posts. When serving this page I want to pass the <code>Blog</code> to the view for rendering. I have two options for constructing this object. I could call something like <code>Blog.read(id)</code>, then <code>Post.list(blogId)</code> to retrieve the posts that belong to that <code>Blog</code> and copy them within. Or, <code>Blog.read(id)</code> could achieve this all within one query:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">SELECT</span> <span class="pl-k">*</span> <span class="pl-k">FROM</span> blogs b
+<span class="pl-k">LEFT OUTER JOIN</span> posts p <span class="pl-k">ON</span>(<span class="pl-c1">p</span>.<span class="pl-c1">blog_id</span> <span class="pl-k">=</span> <span class="pl-c1">b</span>.<span class="pl-c1">id</span>)
+<span class="pl-k">WHERE</span> <span class="pl-c1">b</span>.<span class="pl-c1">id</span> <span class="pl-k">=</span> {id}</pre>
+  </div> 
+  <p>I prefer the second option, because it saves another round-trip to the database. Anorm however, has no natural way of processing the result rows, because a <code>RowParser</code> parses rows to objects, but not multiple rows to a single object. Therefore, parsing a result set containing a one-to-many relation must be done like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">/** Parses a `Blog` without nested posts. */</span>
+<span class="pl-k">val</span> <span class="pl-en">simple</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
+    get[<span class="pl-k">Long</span>](<span class="pl-s"><span class="pl-pds">"</span>blogs.id<span class="pl-pds">"</span></span>) <span class="pl-k">~</span> get[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>blogs.title<span class="pl-pds">"</span></span>) map {
+        <span class="pl-k">case</span> id<span class="pl-k">~</span>title <span class="pl-k">=&gt;</span> <span class="pl-en">Blog</span>(id, title, <span class="pl-c1">Nil</span>)
+    }
+}
+
+<span class="pl-c">/** Parses a `Blog` paired with an optional `Post` that can be later be collapsed into one object. */</span>
+<span class="pl-k">val</span> <span class="pl-en">parser</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[(<span class="pl-en">Blog</span>, <span class="pl-en">Option</span>[<span class="pl-en">Post</span>])] <span class="pl-k">=</span> {
+    simple <span class="pl-k">~</span> <span class="pl-en">Post</span>.parser.<span class="pl-k">?</span> map {
+        <span class="pl-k">case</span> blog<span class="pl-k">~</span>post <span class="pl-k">=&gt;</span> (blog, post)
+    }
+}
+
+<span class="pl-c">/** Selects a blog with related posts within one query, parses the rows as (blog, post) tuples,</span>
+<span class="pl-c">*   then groups the tuples by blog to eventually nest the posts within their parent blog.</span>
+<span class="pl-c">*/</span>
+<span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">DB</span>.withConnection { <span class="pl-k">implicit</span> c <span class="pl-k">=&gt;</span>
+        <span class="pl-en">SQL</span>(<span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">            SELECT * FROM blogs b</span>
+<span class="pl-s">            LEFT OUTER JOIN posts p ON(p.blog_id = b.id)</span>
+<span class="pl-s">            WHERE b.id = {id}</span>
+<span class="pl-s">        <span class="pl-pds">"""</span></span>).on(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> id)
+            .as(parser <span class="pl-k">*</span>)
+            .groupBy(_._1)
+            .mapValues(_.map(_._2).flatten)
+            .toList
+            .map{ <span class="pl-k">case</span> (blog, posts) <span class="pl-k">=&gt;</span> blog.copy(posts <span class="pl-k">=</span> posts) }
+            .headOption
+    }
+}</pre>
+  </div> 
+  <p>As you can see, there is a good chunk of logic involved to make this work. It's terrible to reason about, and also not very portable. The <code>parser</code> can be re-used, but there logic thereafter must be duplicated, which is undesirable. If for some reason you wanted to implement a similar <code>list</code> function that list all blogs with their nested posts, you would have to do this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">list</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">DB</span>.withConnection { <span class="pl-k">implicit</span> c <span class="pl-k">=&gt;</span>
+        <span class="pl-en">SQL</span>(<span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">            SELECT * FROM blogs b</span>
+<span class="pl-s">            LEFT OUTER JOIN posts p ON(p.blog_id = b.id)</span>
+<span class="pl-s">        <span class="pl-pds">"""</span></span>).as(parser <span class="pl-k">*</span>)
+            .groupBy(_._1)
+            .mapValues(_.map(_._2).flatten)
+            .toList
+            .map{ <span class="pl-k">case</span> (blog, posts) <span class="pl-k">=&gt;</span> blog.copy(posts <span class="pl-k">=</span> posts) }
+    }
+}</pre>
+  </div> 
+  <p>This isn't very much different than <code>read</code>, but it duplicates the post-parsing logic, which I find unacceptable. And what happens when we complicate the example? What if it looks more like this?</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Blog</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">title</span>: <span class="pl-k">String</span>, <span class="pl-v">posts</span>: <span class="pl-en">List</span>[<span class="pl-en">Post</span>], <span class="pl-v">authors</span>: <span class="pl-en">List</span>[<span class="pl-en">User</span>])
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Post</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">title</span>: <span class="pl-k">String</span>, <span class="pl-v">body</span>: <span class="pl-k">String</span>, <span class="pl-v">tags</span>: <span class="pl-en">List</span>[<span class="pl-en">Tag</span>], <span class="pl-v">comments</span>: <span class="pl-en">List</span>[<span class="pl-en">Comment</span>])
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Comment</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">subject</span>: <span class="pl-k">String</span>, <span class="pl-v">body</span>: <span class="pl-k">String</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">email</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>The same <code>groupBy</code> technique can be used to solve the problem of fetching a <code>Blog</code> in a single query, however you must start over completely to figure out the transformations--and you can trust me in that it will look horribly ugly. This is where the <code>RelationalParser</code> and <code>RowFlattener</code> will come in.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/mhzajac/anorm-relational#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Add the following to your build dependencies in your <code>build.sbt</code> or <code>Build.scala</code> file:</p> 
+  <pre><code>"com.jaroop" %% "anorm-relational" % "0.1.0"
+</code></pre> 
+  <p>For example in your <code>build.sbt</code>:</p> 
+  <pre><code>libraryDependencies ++= Seq(
+    "com.jaroop" %% "anorm-relational" % "0.1.0"
+)
+</code></pre> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/mhzajac/anorm-relational#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Anorm relational uses the "enrich my library" pattern to add an <code>asRelational</code> method to Anorm's <code>SQL</code> and <code>SqlQuery</code>. In any file you wish to use the implicit converters <code>import com.jaroop.anorm.relational._</code> </p> 
+  <p>Using the simpler Blog/Post example, we will need to define a <code>RelationalParser</code> that is composed of <code>RowParser</code>s for the <code>Blog</code> and <code>Post</code> types. A <code>RelationalParser</code> is not an actual type. Instead, it's a collection of helper <code>apply</code> methods that construct special <code>RowParser</code>s which make it easier to unravel multiple relations. The first argument of <code>RelationalParser.apply</code> is the <code>RowParser</code> for the parent object, and the following arguments are the <code>RowParser</code>s for the child objects.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">relationalParser</span> <span class="pl-k">=</span> <span class="pl-en">RelationalParser</span>(<span class="pl-en">Blog</span>.simple, <span class="pl-en">Post</span>.parser)</pre>
+  </div> 
+  <p>Then, we must define an implicit <code>RowFlattener</code>, which is essentially a function that describes how to copy lists of child objects into their parent.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">rf</span> <span class="pl-k">=</span> <span class="pl-en">RowFlattener</span>[<span class="pl-en">Blog</span>, <span class="pl-en">Post</span>] { (blog, posts) <span class="pl-k">=&gt;</span> blog.copy(posts <span class="pl-k">=</span> posts) }</pre>
+  </div> 
+  <p>Now we can re-write <code>Blog.read</code> like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">DB</span>.withConnection { <span class="pl-k">implicit</span> c <span class="pl-k">=&gt;</span>
+        <span class="pl-en">SQL</span>(<span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">            SELECT * FROM blogs b</span>
+<span class="pl-s">            LEFT OUTER JOIN posts p ON(p.blog_id = b.id)</span>
+<span class="pl-s">            WHERE b.id = {id}</span>
+<span class="pl-s">        <span class="pl-pds">"""</span></span>).on(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> id)
+            .asRelational(relationalParser.singleOpt)
+    }
+}</pre>
+  </div> 
+  <p>This looks much cleaner now that <code>groupBy</code> has been swept under the rug. It also allows us to modify <code>Blog.list</code> in a similar way, using <code>asRelational(relationalParser *)</code> instead of 5 lines of difficult logic. All of the code duplication has also vanished.</p> 
+  <p>Handling nested relations that go more than one level deep is also possible, though this requires exposing some of the internals to make it work for now. Consider the (somewhat contrived) case where our <code>Post</code> also has a nested <code>List[Comment]</code>, and we want to select a <code>Blog</code> with all of its nested posts and respective comments. The <code>Post</code> class will now look a little different, and require its own <code>RowFlattener</code> and <code>RelationalParser</code>. </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Post</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>, <span class="pl-v">title</span>: <span class="pl-k">String</span>, <span class="pl-v">body</span>: <span class="pl-k">String</span>, <span class="pl-v">comments</span>: <span class="pl-en">List</span>[<span class="pl-en">Comment</span>])
+
+<span class="pl-k">object</span> <span class="pl-en">Post</span> {
+
+    <span class="pl-k">val</span> <span class="pl-en">simple</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[<span class="pl-en">Post</span>] <span class="pl-k">=</span> {
+        get[<span class="pl-k">Long</span>](<span class="pl-s"><span class="pl-pds">"</span>posts.id<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+        get[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>posts.title<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+        get[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>posts.body<span class="pl-pds">"</span></span>) map {
+            <span class="pl-k">case</span> id<span class="pl-k">~</span>title<span class="pl-k">~</span>body <span class="pl-k">=&gt;</span> <span class="pl-en">Post</span>(id, title, body, <span class="pl-c1">Nil</span>)
+        }
+    }
+
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">RowFlattener</span>[<span class="pl-en">Post</span>, <span class="pl-en">Comment</span>]{ (post, comments) <span class="pl-k">=&gt;</span> post.copy(comments <span class="pl-k">=</span> comments) }
+
+    <span class="pl-k">val</span> <span class="pl-en">relationalParser</span> <span class="pl-k">=</span> <span class="pl-en">RelationalParser</span>(simple, <span class="pl-en">Comment</span>.parser)
+}</pre>
+  </div> 
+  <p>In order to handle another <code>RelationalParser</code> within the <code>Blog</code> <code>RelationalParser</code>, the <code>RowFlattener</code> will need a slight modification using <code>OneToMany.flatten</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">rf</span> <span class="pl-k">=</span> <span class="pl-en">RowFlattener</span>[<span class="pl-en">Blog</span>, <span class="pl-en">Post</span>] { (blog, posts) <span class="pl-k">=&gt;</span> blog.copy(posts <span class="pl-k">=</span> <span class="pl-en">OneToMany</span>.flatten(posts)) }</pre>
+  </div> 
+  <h2><a id="user-content-disclaimer" class="anchor" href="https://github.com/mhzajac/anorm-relational#disclaimer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Disclaimer</h2> 
+  <p>Anorm relational 0.2.0 currently uses Anorm 2.5.0 as a dependency, which may cause it to break on earlier versions. There are currently <code>RowFlattener</code> and <code>RelationalParser</code> classes available for up to 5 one-to-many relations, though this should be more than enough for a reasonable amount of data. Version 0.2.0 is a prototype, so there is a high possibility that breaking changes may be introduced to the API in the future. While it is currently in use on production servers without any known issues, I still advise to proceed at your own risk.</p> 
+  <p>For Play 2.3.x, use version 0.1.0.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/mhzajac/anorm-relational#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Anorm relational is distributed under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache License, Version 2.0</a></p> 
+ </article>
+</div>

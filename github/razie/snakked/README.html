@@ -1,0 +1,202 @@
+<div class="announce instapaper_body markdown" data-path="README.markdown" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <pre><code>/**  ____    __    ____  ____  ____/___      ____  __  __  ____
+ *  (  _ \  /__\  (_   )(_  _)( ___) __)    (  _ \(  )(  )(  _ \
+ *   )   / /(__)\  / /_  _)(_  )__)\__ \     )___/ )(__)(  ) _ &lt;
+ *  (_)\_)(__)(__)(____)(____)(____)___/    (__)  (______)(____/
+ *                      
+ *  Copyright (c) Razvan Cojocaru, 2007+, Creative Commons Attribution 3.0
+ */
+</code></pre> 
+  <p><a href="https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10" target="_blank"><img src="https://camo.githubusercontent.com/3606d0017308983499d121beaf244d8dcfd29ac0/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e72617a69652f736e616b6b65645f322e31302f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10/badge.svg" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-snakking" class="anchor" href="https://github.com/razie/snakked#snakking" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Snakking</h1> 
+  <p>razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats and then access them in a unified manner, based on an addressing sceheme like XPATH.</p> 
+  <p>List of blog titles from an XML and JSON feed: import razie.Snakk._</p> 
+  <pre><code>val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml")
+val jsonFeed = url ("http://blog.razie.com/feeds/posts/default?alt=json")
+
+for (n &lt;- xml(xmlFeed) \ "channel" \ "item" \ "title") println (n.text)
+
+for (n &lt;- json(jsonFeed) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
+</code></pre> 
+  <p>You can easily read from an HTTP POST as well as the GET above:</p> 
+  <pre><code>val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", Map("field1"-&gt;"f1"), "POST")
+</code></pre> 
+  <p>You can easily submit forms as well:</p> 
+  <pre><code>val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").form (Map("name" -&gt; "value"))
+</code></pre> 
+  <p>If you only want to get the body of the server response, wihtout the XPATH wrappers, then</p> 
+  <pre><code>val response = body(xmlFeed)
+</code></pre> 
+  <p>Supports Basic http authentication, as in:</p> 
+  <pre><code>val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").basic ("user", "password")
+</code></pre> 
+  <p>See more examples in core/src/test - some are copied below:</p> 
+  <p>Snakking a bean example:</p> 
+  <pre><code>case class Student (name: String, age: Int)
+case class Class   (name: String, students: Student*)
+case class School  (name: String, classes: Class*)
+
+val school = Snakk bean School("my school",
+  Class("1st grade",
+    Student("Joe", 6),
+    Student("Ann", 7)),
+  Class("2nd grade",
+    Student("Mary", 8),
+    Student("George", 7)))
+
+@Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
+@Test def test12 = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
+</code></pre> 
+  <p>Can snakk a bean by type of attribute - in example below we use C3 class name. Useful when you just don't care and want to find a needle in the haystack.</p> 
+  <pre><code>case class C1 { val c=C2 }
+case class C2 { val c=C3 }
+case class C3 { val c="wow" }
+
+@Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
+</code></pre> 
+  <p>Note that if the expression is dynamic, you can pass it all as an XPATH expression:</p> 
+  <pre><code>school \  "classes/students[age==7]"
+school \@ "classes/students[age==7]/@name"
+</code></pre> 
+  <h2><a id="user-content-more-features" class="anchor" href="https://github.com/razie/snakked#more-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>More features</h2> 
+  <p>The idea of snakking is just rapid sampling of data of all sorts. Here are some, I think cool and helpful, features:</p> 
+  <ul> 
+   <li>Recursivity using the double backslash \\ operator</li> 
+   <li>embedded pattern matching operator ~=</li> 
+   <li>fallback attribute sourcing using OR</li> 
+   <li>in XML snakking, if a requested attribute is missing, we'll fallback on the value of a node with the same name</li> 
+   <li>bean snakking 
+    <ul> 
+     <li>any field or method (for instance apache jxpath will only look at getters, which is not suiteable for snakking scala code)</li> 
+     <li>custom filters for method names (because of the above) with Snakk.bean (root, filters)</li> 
+     <li>careful when using wildcards and recursivity - it will call all sorts of methods if they're not filtered...</li> 
+    </ul></li> 
+  </ul> 
+  <p>Embedded pattern matching operator: </p> 
+  <pre><code>val G = school \\ "students[name~='G.*']" \@@ "name"
+</code></pre> 
+  <p>OR - fallback (the alternative is not evaluated unless the attribute is null/missing)</p> 
+  <pre><code>val someone:String = (school \\ "students[age==7]" \@@ "name") OR ("nobody")
+</code></pre> 
+  <p>XML attribute fallback</p> 
+  <pre><code>i.e. &lt;x name="tutu" /&gt; can also be &lt;x&gt;&lt;name&gt;tutu&lt;name&gt;&lt;/x&gt; and addressed with x \@ "name"
+</code></pre> 
+  <p>Forms with basic authentication:</p> 
+  <pre><code>val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").basic ("user", "password").form (Map("name" -&gt; "value"))
+</code></pre> 
+  <h1><a id="user-content-uses-and-articles" class="anchor" href="https://github.com/razie/snakked#uses-and-articles" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Uses and articles</h1> 
+  <p>This article can shed more details on other uses of snakked: <a href="http://blog.razie.com/2012/05/free-flowing-wiki-domain-models-and.html" target="_blank">http://blog.razie.com/2012/05/free-flowing-wiki-domain-models-and.html</a></p> 
+  <p>Snakked is used in <a href="http://www.racerkidz.com" target="_blank">http://www.racerkidz.com</a></p> 
+  <h1><a id="user-content-naked-objects" class="anchor" href="https://github.com/razie/snakked#naked-objects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Naked Objects</h1> 
+  <p>What naked objects stands for is direct interaction between the users (and developers) and the domain objects. What the users of an application do is manage the objects and their relationships, directly via generated or custom UIs or via APIs.</p> 
+  <p>A naked objects framework should allow for:</p> 
+  <ul> 
+   <li>model/domain definition</li> 
+   <li>simple/default views and interaction</li> 
+   <li>some default support for persistency</li> 
+   <li>custom views</li> 
+   <li>unified access and management interface of (domain) entities</li> 
+   <li>plugin: entity management, interaction etc</li> 
+  </ul> 
+  <p>The first three are, by now, classic. The others are natural extensions.</p> 
+  <h2><a id="user-content-roadmap" class="anchor" href="https://github.com/razie/snakked#roadmap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Roadmap</h2> 
+  <p>Lightly maintained. Original roadmap</p> 
+  <ul> 
+   <li>complete the basis: model and inventories</li> 
+   <li>add little bit UI 
+    <ul> 
+     <li>basic properties and navigation from mutant</li> 
+     <li>tree</li> 
+     <li>table</li> 
+     <li>graph</li> 
+     <li>full graphical UI</li> 
+    </ul></li> 
+   <li>XP extras and snakking 
+    <ul> 
+     <li>snakk sourcing 
+      <ul> 
+       <li>snakk EMF beans</li> 
+       <li>snakk snakks (unify the model here?)</li> 
+       <li>snakk RDB?</li> 
+      </ul></li> 
+     <li>snakk views 
+      <ul> 
+       <li>graph navigation, complete edge implementation</li> 
+       <li>snakked tree view</li> 
+      </ul></li> 
+     <li>snakk mapping</li> 
+    </ul></li> 
+   <li>full workbench</li> 
+  </ul> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/razie/snakked#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use</h2> 
+  <p>The sbt/maven artifact is:</p> 
+  <pre><code>val snakk = "com.razie" %% "snakked" % "0.6.7-SNAPSHOT"
+</code></pre> 
+  <p>Or Maven style:</p> 
+  <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.razie&lt;/groupId&gt;
+    &lt;artifactId&gt;snakked_2.10&lt;/artifactId&gt;
+    &lt;version&gt;0.6.7-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Make sure that, if you use a SNAPSHOT version, the snapshots repository is added to sbt, as in <a href="https://github.com/razie/" target="_blank">https://github.com/razie/</a> scripster/blob/master/project/Build.scala :</p> 
+  <pre><code>resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+                  "releases"  at "http://oss.sonatype.org/content/repositories/releases")
+</code></pre> 
+  <p>Versions</p> 
+  <ul> 
+   <li>0.6.7-SNAPSHOT on 2.10 moved xp and graphs in here</li> 
+   <li>0.6.4-SNAPSHOT is the 2.10.0 build, no other code changes</li> 
+   <li>0.4.3-SNAPSHOT is the last 2.9.1 build</li> 
+  </ul> 
+  <p>See <a href="https://oss.sonatype.org/content/repositories/snapshots/com/razie/snakked_2.10/" target="_blank">https://oss.sonatype.org/content/repositories/snapshots/com/razie/snakked_2.10/</a> for the latest versions.</p> 
+  <h1><a id="user-content-dictionary" class="anchor" href="https://github.com/razie/snakked#dictionary" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dictionary</h1> 
+  <p>Here's the lowdown on the upmove:</p> 
+  <p>snakk, snakking - refers to the actual action of snakking, getting bits of information from a source</p> 
+  <p>snakker - an expression which can snakk some information</p> 
+  <p>snakked - as in "Smile, you've been snakked"</p> 
+  <h1><a id="user-content-architectural-notes" class="anchor" href="https://github.com/razie/snakked#architectural-notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Architectural notes</h1> 
+  <h2><a id="user-content-mixing-pot" class="anchor" href="https://github.com/razie/snakked#mixing-pot" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Mixing pot</h2> 
+  <p>No project is a net new invention, all are built on the shoulders of others. Here's some of the stuff that I remember throwing in this mixing pot.</p> 
+  <ul> 
+   <li>REST - simple entity based addressing and management via HTTP</li> 
+   <li>XCAP - unified access to configuration in an XPath manner</li> 
+   <li>XPATH - well, itself</li> 
+   <li>OSS/J - set of OSS through Java standards - based on a nice common generic entity management API</li> 
+  </ul> 
+  <p>Snakking:</p> 
+  <ol> 
+   <li>snakk java beans (done, needs testing)</li> 
+   <li>snakk EMF beans</li> 
+   <li>snakk adapters</li> 
+  </ol> 
+ </article>
+</div>

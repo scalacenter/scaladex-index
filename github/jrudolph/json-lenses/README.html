@@ -1,0 +1,208 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><em>json-lenses</em> is a library to query and update <a href="http://json.org" target="_blank">JSON</a> data.</p> 
+  <p>It has the following features</p> 
+  <ul> 
+   <li>Create queries similar to xpath in a native Scala DSL</li> 
+   <li>Retrieve selected elements</li> 
+   <li>Easily update selected elements of the immutable spray-json representation</li> 
+   <li>Selected elements can be of several cardinalities: scalar values, optional values, and sequences of values</li> 
+   <li>Experimental support for <a href="http://goessner.net/articles/JsonPath/" target="_blank">json-path</a> syntax</li> 
+  </ul> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/jrudolph/json-lenses#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>If you use SBT you can include <em>json-lenses</em> in your project with</p> 
+  <pre><code>"net.virtual-void" %%  "json-lenses" % "0.6.1"
+</code></pre> 
+  <p>(<em>json-lenses</em> supports spray-json 1.3.x. For support of an older spray-json version use <em>json-lenses</em> 0.5.4. See <a href="https://github.com/jrudolph/json-lenses/tree/v0.5.4-scala-2.11" target="_blank">https://github.com/jrudolph/json-lenses/tree/v0.5.4-scala-2.11</a> for the old documentation).</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/jrudolph/json-lenses#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <p>Given this example json document:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">json</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">{ "store": {</span>
+<span class="pl-s">    "book": [</span>
+<span class="pl-s">      { "category": "reference",</span>
+<span class="pl-s">        "author": "Nigel Rees",</span>
+<span class="pl-s">        "title": "Sayings of the Century",</span>
+<span class="pl-s">        "price": 8.95</span>
+<span class="pl-s">      },</span>
+<span class="pl-s">      { "category": "fiction",</span>
+<span class="pl-s">        "author": "Evelyn Waugh",</span>
+<span class="pl-s">        "title": "Sword of Honour",</span>
+<span class="pl-s">        "price": 12.99,</span>
+<span class="pl-s">        "isbn": "0-553-21311-3"</span>
+<span class="pl-s">      }</span>
+<span class="pl-s">    ],</span>
+<span class="pl-s">    "bicycle": {</span>
+<span class="pl-s">      "color": "red",</span>
+<span class="pl-s">      "price": 19.95</span>
+<span class="pl-s">    }</span>
+<span class="pl-s">  }</span>
+<span class="pl-s">}<span class="pl-pds">"""</span></span>.parseJson</pre>
+  </div> 
+  <p>All authors in this document are addressed by</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">spray.json.lenses.JsonLenses.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">spray.json.DefaultJsonProtocol.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">allAuthors</span> <span class="pl-k">=</span> <span class="pl-en">'store</span> <span class="pl-k">/</span> <span class="pl-en">'book</span> <span class="pl-k">/</span> <span class="pl-k">*</span> <span class="pl-k">/</span> <span class="pl-en">'author</span></pre>
+  </div> 
+  <p>This is called a lens. You can use a lens to retrieve or update the addressed values.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">authorNames</span> <span class="pl-k">=</span> json.extract[<span class="pl-k">String</span>](allAuthors)</pre>
+  </div> 
+  <p>To update values use one of the defined operations. To overwrite a value use <code>set</code>, to change a value based on the previous value use <code>modify</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// overwrite all authors' names to "John Doe"</span>
+<span class="pl-k">val</span> <span class="pl-en">newJson1</span> <span class="pl-k">=</span> json.update(allAuthors <span class="pl-k">!</span> set[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>John Doe<span class="pl-pds">"</span></span>))
+
+<span class="pl-c">// prepend authors' names with "Ms or Mr "</span>
+<span class="pl-k">val</span> <span class="pl-en">newJson2</span> <span class="pl-k">=</span> json.update(allAuthors <span class="pl-k">!</span> modify[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>Ms or Mr <span class="pl-pds">"</span></span> <span class="pl-k">+</span> _))</pre>
+  </div> 
+  <p>Here are other interesting queries on the example data:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// The author of the first book in the store</span>
+<span class="pl-k">val</span> <span class="pl-en">firstAuthor</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>store<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>book<span class="pl-pds">"</span></span> <span class="pl-k">/</span> element(<span class="pl-c1">0</span>) <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>author<span class="pl-pds">"</span></span>
+
+<span class="pl-c">// The titles of books more expensive than $ 10</span>
+<span class="pl-k">val</span> <span class="pl-en">expensiveBookTitles</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>store<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>book<span class="pl-pds">"</span></span> <span class="pl-k">/</span> filter(<span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span>.is[<span class="pl-k">Double</span>](_ <span class="pl-k">&gt;=</span> <span class="pl-c1">10</span>)) <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>
+
+<span class="pl-c">// ISBN of all books that have one</span>
+<span class="pl-k">val</span> <span class="pl-en">allIsbn</span> <span class="pl-k">=</span> <span class="pl-en">'store</span> <span class="pl-k">/</span> <span class="pl-en">'book</span> <span class="pl-k">/</span> <span class="pl-k">*</span> <span class="pl-k">/</span> <span class="pl-en">'isbn</span>.<span class="pl-k">?</span> <span class="pl-c">// not all books have ISBNs, so the selection must be optional</span></pre>
+  </div> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/jrudolph/json-lenses#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <h3><a id="user-content-the-concept" class="anchor" href="https://github.com/jrudolph/json-lenses#the-concept" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The concept</h3> 
+  <p>The concept of lenses is a powerful concept not only applicable to json objects. A lens is an updatable, composable view into a data structure. There are simple lenses which provide just the functionality to "go one level deeper" in the data structure (for json: accessing fields of a json object or elements of a json array) and there are lenses which compose other lenses to allow a deeper view into the data structure.</p> 
+  <p>See <a href="http://stackoverflow.com/a/5597750/7647" target="_blank">this answer</a> on stack overflow and <a href="http://www.cis.upenn.edu/%7Ebcpierce/papers/lenses-etapsslides.pdf" target="_blank">this presentation</a> for more info on the general topic of lenses.</p> 
+  <h4><a id="user-content-the-json-lens" class="anchor" href="https://github.com/jrudolph/json-lenses#the-json-lens" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The json lens</h4> 
+  <p>The json lenses in this project are specialized lenses to extract and update json data. A lens has this form (almost, in reality it's a bit more complicated):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// not the real code</span>
+<span class="pl-k">trait</span> <span class="pl-en">Lens</span> {
+  <span class="pl-k">def</span> <span class="pl-en">retr</span><span class="pl-k">:</span> <span class="pl-en">JsValue</span> <span class="pl-k">=&gt;</span> <span class="pl-en">JsValue</span>
+  <span class="pl-k">def</span> <span class="pl-en">updated</span>(<span class="pl-v">f</span>: <span class="pl-en">JsValue</span> <span class="pl-k">=&gt;</span> <span class="pl-en">JsValue</span>)(<span class="pl-v">parent</span>: <span class="pl-en">JsValue</span>)<span class="pl-k">:</span> <span class="pl-en">JsValue</span>
+}</pre>
+  </div> 
+  <p>It has a method <code>retr</code> which when called with a json value will return the value this lens points to. The other method <code>updated</code> takes a parent json value and returns an updated copy of it with function <code>f</code> applied to the child value this lens points to.</p> 
+  <p>In contrast to a more general lens input and output types of the json lens are fixed: both have to be an instance of <code>JsValue</code>.</p> 
+  <h4><a id="user-content-support-for-multiple-cardinalities" class="anchor" href="https://github.com/jrudolph/json-lenses#support-for-multiple-cardinalities" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Support for multiple cardinalities</h4> 
+  <p>The simple scheme introduced in the last section is actually too simple to support more than the absolute simplest lenses. One basic requirement is to extract a list of values or an optional value. Therefore, lenses are parameterized by the container type for the cardinality of the lens.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// still not the real code</span>
+<span class="pl-k">trait</span> <span class="pl-en">Lens</span>[<span class="pl-en">M</span>[_]] {
+  <span class="pl-k">def</span> <span class="pl-en">retr</span><span class="pl-k">:</span> <span class="pl-en">JsValue</span> <span class="pl-k">=&gt;</span> <span class="pl-en">M</span>[<span class="pl-en">JsValue</span>]
+  <span class="pl-c">// ...</span></pre>
+  </div> 
+  <p>Scalar lenses are of type <code>Lens[Id]</code> (<code>Id</code> being defined as the identity type constructor, so <code>Id[T] == T</code>). Optional lenses are of type <code>Lens[Option]</code>. Lenses returning a sequence of values are of type <code>Lens[Seq]</code>.</p> 
+  <p>It's interesting what happens when two lenses of different cardinality are joined: The rule is to always return a lens of the more general container type, i.e. the one with the greater cardinality. Joining two lenses of sequences of values results in a flattened sequence of all the results. See the source code of <code>JsonLenses.combine</code> and the <code>Join</code> type class to see how this is done.</p> 
+  <h4><a id="user-content-error-handling" class="anchor" href="https://github.com/jrudolph/json-lenses#error-handling" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Error handling</h4> 
+  <p>To support proper error handling and recovery from errors (in some cases) failure is always assumed as a possible outcome. This is reflected by returning an <code>Either</code> value from almost all functions which may fail. The real declaration of the <code>Lens</code> type therefore looks more like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">Validated</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> <span class="pl-en">Either</span>[<span class="pl-en">Exception</span>, <span class="pl-en">T</span>]
+<span class="pl-k">type</span> <span class="pl-en">SafeJsValue</span> <span class="pl-k">=</span> <span class="pl-en">Validated</span>[<span class="pl-en">JsValue</span>]
+
+<span class="pl-k">trait</span> <span class="pl-en">Lens</span>[<span class="pl-en">M</span>[_]] {
+  <span class="pl-k">def</span> <span class="pl-en">retr</span><span class="pl-k">:</span> <span class="pl-en">JsValue</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Validated</span>[<span class="pl-en">M</span>[<span class="pl-en">JsValue</span>]]
+  <span class="pl-k">def</span> <span class="pl-en">updated</span>(<span class="pl-v">f</span>: <span class="pl-en">SafeJsValue</span> <span class="pl-k">=&gt;</span> <span class="pl-en">SafeJsValue</span>)(<span class="pl-v">parent</span>: <span class="pl-en">JsValue</span>)<span class="pl-k">:</span> <span class="pl-en">SafeJsValue</span>
+}</pre>
+  </div> 
+  <p>The result of <code>retr</code> is not always a <code>Right(jsValue)</code> but may fail with <code>Left(exception)</code> as well. The same for <code>updated</code>: the update operation may also fail. However, in the update case there are two other possibilities encoded as well: Retrieval of a value may fail but the update operation <code>f</code> may still succeed (for example, when setting a previously undefined value) or the update operation itself fails in which case the complete update operation fails as well.</p> 
+  <h4><a id="user-content-predefined-lenses" class="anchor" href="https://github.com/jrudolph/json-lenses#predefined-lenses" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Predefined lenses</h4> 
+  <p>When working with lenses you normally don't have to worry about the details but you can just choose and combine lenses from the following list.</p> 
+  <h5><a id="user-content-field-access" class="anchor" href="https://github.com/jrudolph/json-lenses#field-access" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Field access</h5> 
+  <ul> 
+   <li><p><code>field(name: String)</code>: This lens assumes that the target value is a json object and selects the field with the specified name. Because this is the most common lens there are shortcut implicit conversions defined from <code>String</code> and <code>Symbol</code> values.</p></li> 
+   <li><p><code>optionalField(name: String)</code>: This lens assumes a JsObject and tries to select the field of the given name. If the field is missing it just isn't selected. <code>field.?</code> is a shortcut for this lens (where <code>field</code> should be an expression of type Symbol or String).</p></li> 
+  </ul> 
+  <h5><a id="user-content-element-access" class="anchor" href="https://github.com/jrudolph/json-lenses#element-access" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Element access</h5> 
+  <ul> 
+   <li><code>elements</code> or <code>*</code>: This lens selects all the elements of a json array. If you combine this lens with another one you have to make sure that the next lens will match for all the elements of the array, otherwise it is an error. Use <code>allMatching</code> if you want to exclude elements not matching nested lenses.</li> 
+   <li><code>element(idx: Int)</code>: Selects the element of a json array with the given index.</li> 
+   <li><code>find(predicate: JsValue =&gt; Boolean)</code>: Selects all elements of a json array which match a certain predicated. In the common case you don't want to work directly on <code>JsValue</code>s so you can use lenses as well to define the predicate. Use <code>Lens.is[T](pred: T =&gt; Boolean)</code> to lift a predicate from the value level to the <code>JsValue</code> level. E.g. use <code>'fullName.is[String](_ startsWith "Joe")</code> to create a predicate which checks if a value is a json object and its field <code>fullName</code> is a string starting with <code>"Joe"</code>.</li> 
+   <li><code>allMatching(next: Lens)</code>: A combination of <code>combine</code> and <code>elements</code>. Selects elements matching the <code>next</code> lens and then applies the <code>next</code> lens.</li> 
+   <li><code>arrayOrSingletonAsArray</code>: Makes sure that the result is always a json array by interpreting a value that is no array as an singleton array containing just that value.</li> 
+  </ul> 
+  <h5><a id="user-content-combination" class="anchor" href="https://github.com/jrudolph/json-lenses#combination" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Combination</h5> 
+  <ul> 
+   <li><code>combine</code>: This lens combines two lenses by executing the second one on the result of the first one. Use it to access nested elements. Because its use is so common there's a shortcut operator, <code>Lens./</code>, which you can use to 'chain' lenses: e.g. use <code>'abc / 'def</code> access field 'def' inside the object in field 'abc' of the root json value passed to the lens.</li> 
+  </ul> 
+  <h4><a id="user-content-predefined-update-operations" class="anchor" href="https://github.com/jrudolph/json-lenses#predefined-update-operations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Predefined update operations</h4> 
+  <p>Currently, there are these update operations defined:</p> 
+  <ul> 
+   <li><code>set[T: JsonWriter](t: =&gt; T)</code> uses the <code>JsonWriter</code> to set the value to a constant value.</li> 
+   <li><code>modify[T: JsonFormat](f: T =&gt; T)</code> applies an update function to an existing value. The value has to be serializable from and to <code>T</code>.</li> 
+   <li><code>modifyOrDeleteField[T: JsonFormat](f: T =&gt; Option[T])</code> can be used in conjunction with the <code>optionalField</code> lens. It applies an update function to an existing value. If the function returns <code>Some(newValue)</code> the field value will be updated to the new value. If the function returns <code>None</code> the field will be deleted.</li> 
+   <li><code>setOrUpdateField[T: JsonFormat](default: =&gt; T)(f: T =&gt; T)</code> can be used in conjunction with the <code>optionalField</code> lens. It allows to decide which value to set an maybe previously missing value to based on the previous state of the field.</li> 
+  </ul> 
+  <h4><a id="user-content-using-lenses-to-extract-or-update-json-data" class="anchor" href="https://github.com/jrudolph/json-lenses#using-lenses-to-extract-or-update-json-data" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using lenses to extract or update json data</h4> 
+  <p>To extract a value from json data using a lens you can use either <code>lens.get[T](json)</code> or the equivalent <code>json.extract[T](lens)</code> which both throw an exception in case something fails or use <code>lens.tryGet[T](json)</code> which returns an <code>Either</code> value you can match on (or use <code>Either</code>'s functions) to check for errors.</p> 
+  <p>To update a value use either <code>(lens ! operation).apply(json)</code> or <code>json.update(lens ! operation)</code>. You can also use the fancy <code>val newJson = json(lens) = "abc"</code> to set a value if you like that syntax. These operations throw an exception in the error case. Use <code>lens.updated(operation)(json)</code> to get an <code>Either</code> result to process errors.</p> 
+  <h4><a id="user-content-json-path-support" class="anchor" href="https://github.com/jrudolph/json-lenses#json-path-support" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a href="http://goessner.net/articles/JsonPath/" target="_blank">json-path</a> support</h4> 
+  <p>Use <code>JsonLenses.fromPath</code> which tries to create a lens from a json-path expression. Currently not all of the syntax of json-path is supported. Please file an issue if something is missing.</p> 
+  <h2><a id="user-content-api-documentation" class="anchor" href="https://github.com/jrudolph/json-lenses#api-documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API Documentation</h2> 
+  <p>You can find the documentation for the <em>json-lenses</em> API <a href="http://jrudolph.github.com/json-lenses/latest/api" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-whats-missing" class="anchor" href="https://github.com/jrudolph/json-lenses#whats-missing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What's missing</h2> 
+  <ul> 
+   <li>Richer set of operations (e.g. append and delete elements from arrays)</li> 
+   <li>...</li> 
+  </ul> 
+  <p>Please file an issue at the <a href="https://github.com/jrudolph/json-lenses/issues" target="_blank">issue tracker</a> if you need something.</p> 
+  <h2><a id="user-content-mailing-list" class="anchor" href="https://github.com/jrudolph/json-lenses#mailing-list" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Mailing list</h2> 
+  <p>Please use the <a href="http://groups.google.com/group/spray-user/" target="_blank">spray-user</a> mailing list to discuss json-lenses issues.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/jrudolph/json-lenses#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><em>spray-json</em> is licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">APL 2.0</a>.</p> 
+ </article>
+</div>

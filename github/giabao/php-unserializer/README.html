@@ -1,0 +1,78 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-php-unserializer" class="anchor" href="https://github.com/giabao/php-unserializer#php-unserializer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>php-unserializer</h1> 
+  <p>This is a library for parsing <a href="http://php.net/manual/en/function.serialize.php" target="_blank">php-serialized</a> data to <a href="http://scala-lang.org/" target="_blank">scala</a> object.</p> 
+  <p>For <a href="http://www.scala-sbt.org/" target="_blank">SBT</a>, add the following to your build file.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.sandinh<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>php-unserializer<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-sample-usage" class="anchor" href="https://github.com/giabao/php-unserializer#sample-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sample usage</h3> 
+  <p>(This is my real usage)</p> 
+  <p>I have a RESTful service implemented in scala (use <a href="http://www.playframework.com/" target="_blank">Play Framework</a>) that need integrate to an existing website (use <a href="http://xenforo.com/" target="_blank">XenForo</a>) to check if user is logged in &amp; send a validated captcha when call my service.</p> 
+  <p>Captcha correct answers is stored (by XenForo) in a BLOB column in Mysql. The code below will validate if answer is correct:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">blob</span><span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> getDataFromDB()
+
+<span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">PhpUnserializer</span>.parse(blob)
+
+assert(result.<span class="pl-c1">isInstanceOf</span>[<span class="pl-en">Map</span>[_, _]], <span class="pl-s"><span class="pl-pds">"</span>parsed value must be Map<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">expectedAnswers</span> <span class="pl-k">=</span> result.<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, _]]
+
+expectedAnswers should contain value <span class="pl-s"><span class="pl-pds">"</span>cường ẩ ẵ ự:;<span class="pl-cce">\"</span><span class="pl-pds">"</span></span>
+
+<span class="pl-k">def</span> <span class="pl-en">validate</span>(<span class="pl-v">answer</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> expectedAnswers.exists{
+  <span class="pl-k">case</span> (_, <span class="pl-v">s</span>: <span class="pl-k">String</span>) <span class="pl-k">=&gt;</span> answer.equalsIgnoreCase(s)
+  <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">false</span>
+}
+
+assert(validate(<span class="pl-s"><span class="pl-pds">"</span>cƯỜnG Ẩ Ẵ Ự:;<span class="pl-cce">\"</span><span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>@see full test code in <a href="https://github.com/giabao/php-unserializer/blob/master/src/test/scala/com/sandinh/phpparser/PhpUnserializerSpec.scala" target="_blank">PhpUnserializerSpec.scala</a></p> 
+  <h3><a id="user-content-changelogs" class="anchor" href="https://github.com/giabao/php-unserializer#changelogs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelogs</h3> 
+  <p>We use <a href="http://semver.org" target="_blank">Semantic Versioning</a>, so changing in micro version is binary compatible.</p> 
+  <h5><a id="user-content-v104" class="anchor" href="https://github.com/giabao/php-unserializer#v104" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.4</h5> 
+  <ul> 
+   <li>parse large int to Long instead of Double</li> 
+   <li>add more test</li> 
+  </ul> 
+  <h5><a id="user-content-v103" class="anchor" href="https://github.com/giabao/php-unserializer#v103" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.3</h5> 
+  <p>cross compile to scala 2.11 &amp; 2.10</p> 
+  <h5><a id="user-content-v102" class="anchor" href="https://github.com/giabao/php-unserializer#v102" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.2</h5> 
+  <p>Improved exception handling.</p> 
+  <h5><a id="user-content-v101" class="anchor" href="https://github.com/giabao/php-unserializer#v101" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.1</h5> 
+  <p>Add PhpUnserializer#parse(Array[Byte])</p> 
+  <h5><a id="user-content-v100" class="anchor" href="https://github.com/giabao/php-unserializer#v100" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v1.0.0</h5> 
+  <p>First stable release</p> 
+  <h3><a id="user-content-licence" class="anchor" href="https://github.com/giabao/php-unserializer#licence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Licence</h3> 
+  <p>This software is licensed under the Apache 2 license: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Copyright 2013 Sân Đình (<a href="http://sandinh.com" target="_blank">http://sandinh.com</a>)</p> 
+ </article>
+</div>

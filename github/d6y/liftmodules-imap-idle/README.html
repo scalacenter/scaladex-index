@@ -1,0 +1,90 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-imap-idle-lift-module" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#imap-idle-lift-module" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>IMAP IDLE Lift Module</h1> 
+  <p>Provides push-like email: your Lift web application can be notified when email arrives, via the <a href="http://en.wikipedia.org/wiki/IMAP_IDLE" target="_blank">IMAP IDLE</a> feature.</p> 
+  <h2><a id="user-content-using-this-module" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#using-this-module" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using this module</h2> 
+  <ol> 
+   <li><p>Add the following dependency to your SBT project file:</p> <pre><code>// For Lift 2.5.x (Scala 2.9 and 2.10):
+"net.liftmodules" %% "imap-idle_2.5" % "1.0"
+
+// For Lift 2.6.x (Scala 2.10):
+"net.liftmodules" %% "imap-idle_2.6" % "1.1"
+
+// For Lift 3.0.x (Scala 2.10):
+"net.liftmodules" %% "imap-idle_3.5" % "1.0-SNAPSHOT"
+</code></pre></li> 
+   <li><p>Set your IMAP login credentials in your props file, e.g.:</p> <pre><code>$ cat src/main/resources/production.default.props
+imap.idle.mail.user=you@yourdomain.com
+imap.idle.mail.password=trustno1
+imap.idle.mail.host=imap.gmail.com
+</code></pre></li> 
+   <li><p>In your application's Boot.boot code:</p> <pre><code>import net.liftmodules.imapidle._
+ImapIdle.init { m : javax.mail.Message =&gt;
+   println("You've got mail: "+EmailUtils.dump(m))
+   true // delete the email on the server
+}
+</code></pre></li> 
+  </ol> 
+  <p>...which will dump the contents of the email to your console and then delete the mail.</p> 
+  <p>If you're doing persistence in the <code>Message =&gt; Boolean</code> handler, ensure you initialize Record/Mapper before you <code>ImapIdle.init</code> because init will try to connect and start processing any emails that may be waiting.</p> 
+  <h2><a id="user-content-example-scenario" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#example-scenario" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example Scenario</h2> 
+  <p>Using this module you can provide a way for users to email in content via an <a href="http://en.wikipedia.org/wiki/Email_address#Address_tags" target="_blank">address tag</a>. Here's how... listen for messages at a single email address, such as <a href="mailto:account@example.com" target="_blank">account@example.com</a>. Users email content into <a href="mailto:account+UNIQUE_ID@example.com" target="_blank">account+UNIQUE_ID@example.com</a>. In your handler, extract the recipient from the message, parse out the UNIQUE_UD. Finally, do whatever you need to do with the content based on the UNIQUE_ID.</p> 
+  <h2><a id="user-content-gotchas" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#gotchas" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Gotchas</h2> 
+  <ul> 
+   <li><p>For this module to work, the IMAP server must support the IDLE command. Tested servers: Google mail (imap.google.com).</p></li> 
+   <li><p>Your email account must be set to enable IMAP access. In Gmail this is Settings &gt; Forwarding and POP/IMAP.</p></li> 
+   <li><p>If you're deploying under Jetty 6.1.26 or earlier, you will need to replace $JETTY_HOME/lib/naming/mail-1.4.jar with mail-1.4.1.jar or later (1.4.4 is the version that ships with Lift). Or... in some way resolve this w.r.t to <a href="http://docs.codehaus.org/display/JETTY/Classloading" target="_blank">Jetty classloader</a>.</p></li> 
+   <li><p>This code depends on a <code>com.sun</code> class in <code>EmailUtils</code>, meaning it may not work under non-Sun derived JDKs.</p></li> 
+   <li><p>If your application is partitioned from the IMAP server it may take 30 minutes for the IMAP IDLE code to detect this and re-establish a connection to collect messages.</p></li> 
+  </ul> 
+  <h2><a id="user-content-how-this-works" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#how-this-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How this works</h2> 
+  <p>The module creates a Lift actor called <code>EmailReceiver</code>. Set the actor up by sending <code>Credentials</code>, the <code>Callback</code> to execute of type <code>Message =&gt; Boolean</code>, and finally the <code>'startup</code> message. When email arrives, the callback is executed and if it returns true, the email is considered handled and deleted.</p> 
+  <h2><a id="user-content-debugging" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#debugging" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Debugging</h2> 
+  <p>If you want to see what javax.mail is doing, set <code>mail.session.debug=true</code> in your Lift Props file.</p> 
+  <p>If you want to interact with EmailReceiver from the SBT console, here's how:</p> 
+  <pre><code>sbt&gt; console
+
+import net.liftweb.common._
+import net.liftweb.util._
+import net.liftmodules.imapidle._
+
+net.liftweb.util.LoggingAutoConfigurer()()
+
+EmailReceiver ! Credentials("me@mydomain", "letmein", "imap.gmail.com")
+EmailReceiver ! Callback(EmailUtils.noopHandler)
+EmailReceiver ! 'startup
+
+// Interact with EmailReceiver as you like. E.g., perform a manual collection of mail:
+EmailReceiver ! 'collect
+</code></pre> 
+  <h2><a id="user-content-to-build-from-source" class="anchor" href="https://github.com/d6y/liftmodules-imap-idle#to-build-from-source" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>To build from source:</h2> 
+  <p>First <a href="http://www.scala-sbt.org/release/docs/Getting-Started/Setup.html#installing-sbt" target="_blank">Install SBT</a> and then...</p> 
+  <pre><code>$ git clone git://github.com/d6y/liftmodules-imap-idle.git
+$ cd liftmodules-imap-idle
+$ sbt
+&gt; compile
+&gt; publishLocal
+</code></pre> 
+ </article>
+</div>

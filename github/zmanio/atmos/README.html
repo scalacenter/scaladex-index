@@ -1,0 +1,499 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>A <a href="http://www.scala-lang.org/" target="_blank">Scala</a> library for describing retry-on-failure behavior using a concise, literate <a href="http://c2.com/cgi/wiki?EmbeddedDomainSpecificLanguage" target="_blank">embedded DSL</a>.</p> 
+  <p>There are places in most modern software where small, intermittent errors can occur and disrupt the normal flow of execution. Traditionally, a <em>retry loop</em> is used in these situations, with constraints on the number of attempts that can be made and how certain results and errors are handled. A naive retry loop that would make up to three attempts, waiting 100 milliseconds between each attempt and accepting only non-empty results could look like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-k">def</span> <span class="pl-en">doSomethingUntilItWorks</span>()<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">maxAttempts</span> <span class="pl-k">=</span> <span class="pl-c1">3</span>
+  <span class="pl-k">val</span> <span class="pl-en">backoff</span> <span class="pl-k">=</span> <span class="pl-c1">100</span> millis
+  <span class="pl-k">var</span> <span class="pl-en">attempts</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>
+  <span class="pl-k">while</span> (<span class="pl-c1">true</span>) {
+    attempts <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+    <span class="pl-k">try</span> {
+      <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> doSomethingThatMightFail()
+      <span class="pl-k">if</span> (result nonEmpty) {
+        <span class="pl-k">return</span> result
+      } <span class="pl-k">else</span> {
+        println(<span class="pl-s"><span class="pl-pds">"</span>Retrying after empty result<span class="pl-pds">"</span></span>)
+        <span class="pl-en">Thread</span>.sleep(backoff toMillis)
+      }
+      <span class="pl-k">return</span> 
+    } <span class="pl-k">catch</span> {
+      <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SomeImportantException</span> <span class="pl-k">=&gt;</span>
+        println(<span class="pl-s"><span class="pl-pds">"</span>Interrupted by important exception: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> e.getMessage)
+        <span class="pl-k">throw</span> e
+      <span class="pl-k">case</span> <span class="pl-en">NonFatal</span>(e) <span class="pl-k">=&gt;</span>
+        <span class="pl-k">if</span> (attempts <span class="pl-k">&gt;=</span> maxAttempts) {
+          println(<span class="pl-s"><span class="pl-pds">"</span>Aborting after too many attempts: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> e.getMessage)
+          <span class="pl-k">throw</span> e
+        }
+        println(<span class="pl-s"><span class="pl-pds">"</span>Retrying after error: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> e.getMessage)
+        <span class="pl-en">Thread</span>.sleep(backoff toMillis)
+      <span class="pl-k">case</span> e <span class="pl-k">=&gt;</span>
+        println(<span class="pl-s"><span class="pl-pds">"</span>Interrupted by fatal exception: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> e.getMessage)
+        <span class="pl-k">throw</span> e
+    }
+  }
+  sys.error(<span class="pl-s"><span class="pl-pds">"</span>unreachable<span class="pl-pds">"</span></span>)
+}
+
+<span class="pl-k">def</span> <span class="pl-en">doSomethingThatMightFail</span>()<span class="pl-k">:</span> <span class="pl-k">String</span></pre>
+  </div> 
+  <p>Retry loops like the one above have a number of problems:</p> 
+  <ul> 
+   <li><p>They obscure the actual work that the program is trying to do (the lone call to <code>doSomethingThatMightFail()</code> above).</p></li> 
+   <li><p>They are convoluted and tend to contain mutable state, making them hard to reason about and resistant to change.</p></li> 
+   <li><p>They are difficult and tedious to test, possibly leading to undiscovered bugs in the code base.</p></li> 
+  </ul> 
+  <p>With the atmos library, a <em>retry policy</em> can be described using a minimalistic DSL, replacing unreadable retry loops with concise, descriptive text. The above example can be described using atmos like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryFor { <span class="pl-c1">3</span> attempts } using constantBackoff { <span class="pl-c1">100</span> millis } monitorWith <span class="pl-en">System</span>.out onResult {
+  <span class="pl-k">case</span> <span class="pl-v">str</span>: <span class="pl-k">String</span> <span class="pl-k">if</span> str isEmpty <span class="pl-k">=&gt;</span> rejectResult
+} onError {
+  <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">SomeImportantException</span> <span class="pl-k">=&gt;</span> stopRetrying
+}
+
+<span class="pl-k">def</span> <span class="pl-en">doSomethingThatMightFail</span>()<span class="pl-k">:</span> <span class="pl-k">String</span>
+
+<span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> retry() { doSomethingThatMightFail() }</pre>
+  </div> 
+  <p>In addition to making retry behavior easy to understand, atmos provides the ability to customize the strategies that control <a href="https://github.com/zmanio/atmos#termination-policies" target="_blank">loop termination</a>, <a href="https://github.com/zmanio/atmos#backoff-policies" target="_blank">backoff calculation</a>, <a href="https://github.com/zmanio/atmos#event-monitors" target="_blank">event monitoring</a>, <a href="https://github.com/zmanio/atmos#result-classifiers" target="_blank">result acceptance</a>, <a href="https://github.com/zmanio/atmos#error-classifiers" target="_blank">error handling</a>, as well as supporting both <a href="https://github.com/zmanio/atmos#retrying-synchronously" target="_blank">synchronous</a> and <a href="https://github.com/zmanio/atmos#retrying-asynchronously" target="_blank">asynchronous</a> styles of programming. See the <a href="https://github.com/zmanio/atmos#using-the-library" target="_blank">user guide</a> below for information about the wide array of customization options this library supports.</p> 
+  <p><a href="https://github.com/zmanio/atmos" target="_blank">code</a> - <a href="https://github.com/zmanio/atmos/blob/master/LICENSE" target="_blank">licence</a> - <a href="http://zman.io/atmos/api/#atmos.package" target="_blank">api</a> - <a href="https://github.com/zmanio/atmos/blob/master/changelog/" target="_blank">history</a></p> 
+  <p><a href="https://travis-ci.org/zmanio/atmos" target="_blank"><img src="https://camo.githubusercontent.com/8c559020bae6d503aab967717884067d62f9b111/68747470733a2f2f7472617669732d63692e6f72672f7a6d616e696f2f61746d6f732e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/zmanio/atmos.png?branch=master" style="max-width:100%;"></a> <a href="https://coveralls.io/r/zmanio/atmos" target="_blank"><img src="https://camo.githubusercontent.com/01015dc4604e26cb42ee729d6ed242484b8b4255/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f7a6d616e696f2f61746d6f732f62616467652e706e67" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/zmanio/atmos/badge.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-table-of-contents" class="anchor" href="https://github.com/zmanio/atmos#table-of-contents" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Table of Contents</h2> 
+  <ul> 
+   <li><a href="https://github.com/zmanio/atmos#getting-started" target="_blank">Getting Started</a></li> 
+   <li><a href="https://github.com/zmanio/atmos#using-the-library" target="_blank">Using the Library</a> 
+    <ul> 
+     <li><a href="https://github.com/zmanio/atmos#termination-policies" target="_blank">Termination Policies</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#backoff-policies" target="_blank">Backoff Policies</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#event-monitors" target="_blank">Event Monitors</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#result-classifiers" target="_blank">Result Classifiers</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#error-classifiers" target="_blank">Error Classifiers</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#retrying-synchronously" target="_blank">Retrying Synchronously</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#retrying-asynchronously" target="_blank">Retrying Asynchronously</a></li> 
+     <li><a href="https://github.com/zmanio/atmos#retrying-with-actors" target="_blank">Retrying with Actors</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/zmanio/atmos#building-and-testing" target="_blank">Building and Testing</a></li> 
+  </ul> 
+  <p><a name="user-content-getting-started" target="_blank" href=""></a></p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/zmanio/atmos#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <p>Prerequisites:</p> 
+  <ul> 
+   <li><p><a href="http://www.oracle.com/technetwork/java/index.html" target="_blank">Java</a> 1.6+</p></li> 
+   <li><p><a href="http://scala-lang.org/" target="_blank">Scala</a> 2.10.4+ or Scala 2.11.6+</p></li> 
+  </ul> 
+  <p>To use from SBT, add the following to your build.sbt file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.zman<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>atmos<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>For other build systems or to download the jar see <a href="http://mvnrepository.com/artifact/io.zman/atmos_2.11/2.1" target="_blank">atmos in the central repository</a>.</p> 
+  <p><a name="user-content-using-the-library" target="_blank" href=""></a></p> 
+  <h2><a id="user-content-using-the-library" class="anchor" href="https://github.com/zmanio/atmos#using-the-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using the Library</h2> 
+  <p>The atmos library divides the definition of a retry policy into five parts:</p> 
+  <ul> 
+   <li><a href="https://github.com/zmanio/atmos#termination-policies" target="_blank">Termination policies</a> enforce an upper bound on the number of retry attempts.</li> 
+   <li><a href="https://github.com/zmanio/atmos#backoff-policies" target="_blank">Backoff policies</a> calculate the delay that is inserted between retry attempts.</li> 
+   <li><a href="https://github.com/zmanio/atmos#event-monitors" target="_blank">Event monitors</a> are notified of events that occur during a retry operation.</li> 
+   <li><a href="https://github.com/zmanio/atmos#result-classifiers" target="_blank">Result classifiers</a> determine if a result warrants further attempts.</li> 
+   <li><a href="https://github.com/zmanio/atmos#error-classifiers" target="_blank">Error classifiers</a> determine if an error prevents further attempts.</li> 
+  </ul> 
+  <p>Using the naive retry loop from above, we can classify its behavior according to the five elements of a retry policy:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">while</span> (<span class="pl-c1">true</span>) {
+  attempts <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>                                <span class="pl-c">// Termination policy</span>
+  <span class="pl-k">try</span> {
+      <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> doSomethingThatMightFail()
+      <span class="pl-k">if</span> (result.length <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>) {                 <span class="pl-c">// Result classifier</span>
+        <span class="pl-k">return</span> result
+      } <span class="pl-k">else</span> {
+        println(<span class="pl-s"><span class="pl-pds">"</span>Retrying after empty result<span class="pl-pds">"</span></span>) <span class="pl-c">// Event monitor</span>
+        <span class="pl-en">Thread</span>.sleep(backoff toMillis)         <span class="pl-c">// Backoff policy</span>
+      }
+  } <span class="pl-k">catch</span> {
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SomeImportantException</span> <span class="pl-k">=&gt;</span>          <span class="pl-c">// Error classifier</span>
+      println(<span class="pl-s"><span class="pl-pds">"</span>interrupted<span class="pl-pds">"</span></span>)                   <span class="pl-c">// Event monitor</span>
+      <span class="pl-k">throw</span> e
+    <span class="pl-k">case</span> <span class="pl-en">NonFatal</span>(e) <span class="pl-k">=&gt;</span>                        <span class="pl-c">// Error classifier</span>
+      <span class="pl-k">if</span> (attempts <span class="pl-k">&gt;=</span> maxAttempts) {           <span class="pl-c">// Termination policy</span>
+        println(<span class="pl-s"><span class="pl-pds">"</span>aborting<span class="pl-pds">"</span></span>)                    <span class="pl-c">// Event monitor</span>
+        <span class="pl-k">throw</span> e
+      }
+      println(<span class="pl-s"><span class="pl-pds">"</span>retrying<span class="pl-pds">"</span></span>)                      <span class="pl-c">// Event monitor</span>
+      <span class="pl-en">Thread</span>.sleep(backoff toMillis)           <span class="pl-c">// Backoff policy</span>
+    <span class="pl-k">case</span> e <span class="pl-k">=&gt;</span>
+      println(<span class="pl-s"><span class="pl-pds">"</span>interrupted<span class="pl-pds">"</span></span>)                   <span class="pl-c">// Event monitor</span>
+      <span class="pl-k">throw</span> e
+  }
+}</pre>
+  </div> 
+  <p>Atmos decomposes the traditional retry loop into these five, independent strategies and allows you to easily recombine them in whatever fashion you see fit. A reconstructed retry policy is encapsulated in the <a href="http://zman.io/atmos/api/#atmos.RetryPolicy" target="_blank"><code>atmos.RetryPolicy</code></a> class.</p> 
+  <p><a name="user-content-termination-policies" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-termination-policies" class="anchor" href="https://github.com/zmanio/atmos#termination-policies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Termination Policies</h3> 
+  <p>Termination policies determine when a retry operation will make no further attempts. Any type that implements the <a href="http://zman.io/atmos/api/#atmos.TerminationPolicy" target="_blank"><code>atmos.TerminationPolicy</code></a> trait can be used in a retry policy, but the DSL exposes factory methods for creating the most common implementations. DSL methods that define termination policies return a <a href="http://zman.io/atmos/api/#atmos.RetryPolicy" target="_blank"><code>RetryPolicy</code></a> configured with that termination policy and with default values for its other properties.</p> 
+  <p>A default retry policy that limits an operation to 3 attempts can be created with <code>retrying</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Default policy terminates after 3 attempts.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retrying</pre>
+  </div> 
+  <p>Custom termination policies can be specified using <code>retryFor</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Terminate after 5 failed attempts.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryFor { <span class="pl-c1">5</span> attempts }
+
+<span class="pl-c">// Terminate after retrying for at least 5 minutes.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryFor { <span class="pl-c1">5</span> minutes }</pre>
+  </div> 
+  <p>Note that the <code>5 minutes</code> parameter is an instance of <code>scala.concurrent.duration.FiniteDuration</code> and that any instance of that class may be used as a policy in <code>retryFor</code>.</p> 
+  <p>When creating a retry policy using <code>retryFor</code>, parameters can be combined using the <code>&amp;&amp;</code> and <code>||</code> operators to describe complex termination conditions:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Terminate after 5 failed attempts or retrying for at least 5 minutes, whichever comes first.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryFor { <span class="pl-c1">5.</span>attempts <span class="pl-k">||</span> <span class="pl-c1">5.</span>minutes }
+
+<span class="pl-c">// Terminate after at least 5 failed attempts but not before retrying for at least 5 minutes.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryFor { <span class="pl-c1">5.</span>attempts <span class="pl-k">&amp;&amp;</span> <span class="pl-c1">5.</span>minutes }</pre>
+  </div> 
+  <p>Finally, a retry policy that immediately terminates can be created with <code>neverRetry</code> and a retry policy that never terminates (unless directed to by an error classifier) can be created with <code>retryForever</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Immediately terminates.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> neverRetry
+
+<span class="pl-c">// Only terminates if a fatal error is encountered.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryForever</pre>
+  </div> 
+  <p><a name="user-content-backoff-policies" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-backoff-policies" class="anchor" href="https://github.com/zmanio/atmos#backoff-policies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Backoff Policies</h3> 
+  <p>Backoff policies specify the delay before subsequent retry attempts and are configured by calling <code>using</code> on an existing retry policy. Any type that implements the <a href="http://zman.io/atmos/api/#atmos.BackoffPolicy" target="_blank"><code>atmos.BackoffPolicy</code></a> trait can be used in a retry policy, but the DSL exposes factory methods for creating the most common implementations.</p> 
+  <p>There are four basic backoff policies provided by this library:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Wait 5 milliseconds between each attempt.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever using constantBackoff { <span class="pl-c1">5</span> millis }
+
+<span class="pl-c">// Wait 5 seconds after the first attempt, then 10 seconds, then 15 seconds and so on.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryForever using linearBackoff { <span class="pl-c1">5</span> seconds }
+
+<span class="pl-c">// Wait 5 minites after the first attempt, then 10 seconds, then 20 seconds and so on.</span>
+<span class="pl-k">val</span> <span class="pl-en">anotherRetryPolicy</span> <span class="pl-k">=</span> retryForever using exponentialBackoff { <span class="pl-c1">5</span> minutes }
+
+<span class="pl-c">// Wait 5 hours after the first attempt, then repeatedly multiply by the golden ratio after subsequent attempts.</span>
+<span class="pl-k">val</span> <span class="pl-en">yetAnotherRetryPolicy</span> <span class="pl-k">=</span> retryForever using fibonacciBackoff { <span class="pl-c1">5</span> hours }</pre>
+  </div> 
+  <p>For each of the above policy declarations, the parameter list may be omitted and the default backoff duration of 100 milliseconds will be used:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Wait the default 100 milliseconds between each attempt.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever using constantBackoff
+</pre>
+  </div> 
+  <p>Additionally, you can select the type of backoff to use based on the exception that caused the most recent attempt to fail:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Waits longer after attempts that result in a hypothetical rate throttling exception.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever using selectedBackoff {
+  <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">ThrottledException</span> <span class="pl-k">=&gt;</span> constantBackoff { <span class="pl-c1">5</span> seconds }
+  <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> constantBackoff
+}</pre>
+  </div> 
+  <p>Finally, any backoff policy can be configured so that each successive backoff duration is perturbed by a random value:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Randomizes each backoff duration by adding a random duration between 0 milliseconds and 100 milliseconds.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever using { constantBackoff { <span class="pl-c1">1</span> second } randomized <span class="pl-c1">100.</span>millis }
+
+<span class="pl-c">// Randomizes each backoff duration by adding a random duration between -30 seconds and 30 seconds.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryForever using { linearBackoff { <span class="pl-c1">5</span> minutes } randomized <span class="pl-k">-</span><span class="pl-c1">30.</span>seconds <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">30.</span>seconds }</pre>
+  </div> 
+  <p><a name="user-content-event-monitors" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-event-monitors" class="anchor" href="https://github.com/zmanio/atmos#event-monitors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Event Monitors</h3> 
+  <p>Event monitors are notified when retry attempts fail and are configured on a retry policy using <code>monitorWith</code> and <code>alsoMonitorWith</code>. Any type that implements the <a href="http://zman.io/atmos/api/#atmos.EventMonitor" target="_blank"><code>atmos.EventMonitor</code></a> trait can be used in a retry policy, but the DSL exposes factory methods for creating the most common implementations.</p> 
+  <p>Event monitors handle three distinct types of events:</p> 
+  <ul> 
+   <li>Retrying events occur when an attempt has failed but another attempt is going to be made.</li> 
+   <li>Interrupted events occur when an attempt has failed with a fatal error.</li> 
+   <li>Aborted events occur when too many attempts have been made and failed.</li> 
+  </ul> 
+  <p>This library supports using instances of Java's <code>PrintStream</code> and <code>PrintWriter</code> as targets for logging retry events. The specifics of what is printed can be customized for each type of event:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Print information about failed attempts to stderr using the default printing strategies.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith <span class="pl-en">System</span>.err
+
+<span class="pl-c">// Print information about failed attempts to a file, customizing what events get printed and how.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-k">new</span> <span class="pl-en">PrintWriter</span>(<span class="pl-s"><span class="pl-pds">"</span>myFile.log<span class="pl-pds">"</span></span>) onRetrying printNothing onInterrupted printMessage onAborted printMessageAndStackTrace
+}</pre>
+  </div> 
+  <p>Additionally, common logging frameworks can be used as event monitors and can be customized for each type of event:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.logging.</span><span class="pl-v">Logger</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Submit information about failed attempts to the specified instance of `java.util.logging.Logger`.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith <span class="pl-en">Logger</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>MyLoggerName<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// Submit information about failed attempts to the specified instance of `java.util.logging.Logger`, customizing</span>
+<span class="pl-c">// what events get logged and and at what level.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">Logger</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>MyLoggerName<span class="pl-pds">"</span></span>) onRetrying logNothing onInterrupted logWarning onAborted logError
+}
+
+<span class="pl-c">// Submit information about failed attempts to the specified instance of `org.slf4j.Logger`, customizing what</span>
+<span class="pl-c">// events get logged and and at what level.</span>
+<span class="pl-k">import</span> <span class="pl-v">org.slf4j.</span><span class="pl-v">LoggerFactory</span>
+<span class="pl-k">import</span> <span class="pl-v">Slf4jSupport.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">slf4jRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">LoggerFactory</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>MyLoggerName<span class="pl-pds">"</span></span>) onRetrying logNothing onInterrupted logWarning onAborted logError
+}
+
+<span class="pl-c">// Submit information about failed attempts to the specified instance of `akka.event.LoggingAdapter`, customizing</span>
+<span class="pl-c">// what events get logged and and at what level.</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.event.</span><span class="pl-v">Logging</span>
+<span class="pl-k">import</span> <span class="pl-v">AkkaSupport.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">akkaRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">Logging</span>(context.system, <span class="pl-v">this</span>) onRetrying logNothing onInterrupted logWarning onAborted logError
+}</pre>
+  </div> 
+  <p>The behavior of event monitors can be customized based on the outcome of the most recent attempt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.util.</span><span class="pl-v">Failure</span>
+<span class="pl-k">import</span> <span class="pl-v">java.util.logging.</span><span class="pl-v">Logger</span>
+
+<span class="pl-c">// When interrupted, print the error messsage unless the operation failed with a RuntimeException, in which case both</span>
+<span class="pl-c">// the message and stack trace are printed.</span>
+<span class="pl-k">val</span> <span class="pl-en">printingRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">System</span>.err onInterrupted printMessage onInterruptedWhere {
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(<span class="pl-v">e</span>: <span class="pl-en">RuntimeException</span>) <span class="pl-k">=&gt;</span> printMessageAndStackTrace
+  }
+}
+
+<span class="pl-c">// Do the same thing as above but for aborted events and with simpler syntax.</span>
+<span class="pl-k">val</span> <span class="pl-en">similarPrintingRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">System</span>.err onAborted printMessage onAbortedWith [<span class="pl-en">RuntimeException</span>] printMessageAndStackTrace
+}
+
+<span class="pl-c">// It is possible to compose multiple monitoring customizations by chaining outcome analyzers using the `or` version</span>
+<span class="pl-c">//  of the DSL methods. Monitor customizations are also supported on Slf4j and Akka loggers.</span>
+<span class="pl-k">val</span> <span class="pl-en">loggingRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">Logger</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>log<span class="pl-pds">"</span></span>) onRetrying logDebug onRetryingWith [<span class="pl-en">RuntimeException</span>] logInfo orOnRetryingWhere {
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(<span class="pl-v">e</span>: <span class="pl-en">Error</span>) <span class="pl-k">=&gt;</span> logWarning
+  }
+}
+
+<span class="pl-c">// NOTE: In Scala 2.10 the `onXxxWith[Throwable]` methods require chaining method invocations with `.`, `(` and `)`.</span>
+<span class="pl-k">val</span> <span class="pl-en">sameLoggingRetryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith {
+  <span class="pl-en">Logger</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>log<span class="pl-pds">"</span></span>).onRetrying(logDebug).onRetryingWith[<span class="pl-en">RuntimeException</span>](logInfo).orOnRetryingWhere {
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(<span class="pl-v">e</span>: <span class="pl-en">Error</span>) <span class="pl-k">=&gt;</span> logWarning
+  }
+}</pre>
+  </div> 
+  <p>Finally, multiple event monitors can be chained together and each monitor will be notified of every event:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.logging.</span><span class="pl-v">Logger</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Submit information about failed attempts to stderr as well as an instance of `java.util.logging.Logger`.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever monitorWith <span class="pl-en">System</span>.err alsoMonitorWith <span class="pl-en">Logger</span>.getLogger(<span class="pl-s"><span class="pl-pds">"</span>MyLoggerName<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p><a name="user-content-result-classifiers" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-result-classifiers" class="anchor" href="https://github.com/zmanio/atmos#result-classifiers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Result Classifiers</h3> 
+  <p>Results that occur during a retry attempt can be classified as <code>Acceptable</code> or <code>Unaccptable</code>. <code>Acceptable</code> results will be immediately returned by the retry operation. <code>Unaccptable</code> results will be logged or suppressed so that the retry operation can continue if the status associated with the result indicates so. Result classifications are defined in <a href="http://zman.io/atmos/api/#atmos.ResultClassification" target="_blank"><code>atmos.ResultClassification</code></a>.</p> 
+  <p>Result classifiers are simply implementations of <code>PartialFunction</code> that map instances of <code>Any</code> to the desired result classification. In situations where a classifier is not defined for a particular result, any result is considered <code>Acceptable</code>. The appropriate partial function type is defined as <a href="http://zman.io/atmos/api/#atmos.ResultClassifier" target="_blank"><code>atmos.ResultClassifier</code></a> and includes a factory in the companion object.</p> 
+  <p>Result classifiers are configured by calling <code>onResult</code> to replace the classifier on an existing retry policy, or by using <code>orOnResult</code> to chain a result classifier to the one that a retry policy already contains:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Do not accept any empty results.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever onResult { <span class="pl-k">case</span> <span class="pl-v">str</span>: <span class="pl-k">String</span> <span class="pl-k">if</span> str isEmpty <span class="pl-k">=&gt;</span> rejectResult }
+
+<span class="pl-c">// Extend the above policy by silently rejecting whitespace only results but rejecting and loggging all results that are too long.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryPolicy orOnResult {
+  <span class="pl-k">case</span> <span class="pl-v">str</span>: <span class="pl-k">String</span> <span class="pl-k">if</span> str.trim isEmpty <span class="pl-k">=&gt;</span> rejectResult { keepRetryingSilently }
+  <span class="pl-k">case</span> <span class="pl-v">str</span>: <span class="pl-k">String</span> <span class="pl-k">if</span> str.length <span class="pl-k">&gt;</span> maxStringLength <span class="pl-k">=&gt;</span> rejectResult
+}</pre>
+  </div> 
+  <p><a name="user-content-error-classifiers" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-error-classifiers" class="anchor" href="https://github.com/zmanio/atmos#error-classifiers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Error Classifiers</h3> 
+  <p>Errors that occur during a retry attempt can be classified as <code>Fatal</code>, <code>Recoverable</code> or <code>SilentlyRecoverable</code>. <code>Fatal</code> errors will interrupt a retry operation and cause it to immediately fail. <code>Recoverable</code> errors will be logged or suppressed so that the retry operation can continue. <code>SilentlyRecoverable</code> errors will be suppressed without being logged so that the retry operation can continue. Error classifications are defined in <a href="http://zman.io/atmos/api/#atmos.ErrorClassification" target="_blank"><code>atmos.ErrorClassification</code></a>.</p> 
+  <p>Error classifiers are simply implementations of <code>PartialFunction</code> that map instances of <code>Throwable</code> to the desired error classification. In situations where a classifier is not defined for a particular error, <code>scala.util.control.NonFatal</code> is used to classify errors as <code>Fatal</code> or <code>Recoverable</code>. The appropriate partial function type is defined as <a href="http://zman.io/atmos/api/#atmos.ErrorClassifier" target="_blank"><code>atmos.ErrorClassifier</code></a> and includes a factory in the companion object.</p> 
+  <p>Error classifiers are configured by calling <code>onError</code> to replace the classifier on an existing retry policy, or by using <code>orOnError</code> to chain an error classifier to the one that a retry policy already contains:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Stop retrying after any illegal argument exception.</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">retryPolicy</span> <span class="pl-k">=</span> retryForever onError { <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">IllegalArgumentException</span> <span class="pl-k">=&gt;</span> stopRetrying }
+
+<span class="pl-c">// Extend the above policy by loggging all illegal state exceptions but supressing logging for all other runtime exceptions.</span>
+<span class="pl-k">val</span> <span class="pl-en">otherRetryPolicy</span> <span class="pl-k">=</span> retryPolicy orOnError {
+  <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">IllegalStateException</span> <span class="pl-k">=&gt;</span> keepRetrying
+  <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">RuntimeException</span> <span class="pl-k">=&gt;</span> keepRetryingSilently
+}</pre>
+  </div> 
+  <p><a name="user-content-retrying-synchronously" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-retrying-synchronously" class="anchor" href="https://github.com/zmanio/atmos#retrying-synchronously" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Retrying Synchronously</h3> 
+  <p>To retry synchronously you pass a block of code to the <code>retry()</code> method and that block is repeatedly executed until it completes successfully or ultimately fails in accordance with your policy. If a block completes successfully then the value the block evaluates to becomes the return value of <code>retry()</code>. If a block fails to complete successfully, meaning it was interrupted by a fatal error or had to abort after too many attempts, then the most recently thrown exception is thrown from <code>retry()</code>.</p> 
+  <p>Typically, a retry policy is declared as an implicit variable and the <code>retry()</code> method from the DSL is used to execute a synchronous retry operation. However, if you have multiple policies in the same scope (or if you want to avoid using implicit parameters) you can also call <code>retry()</code> directly on the policy object:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">policy</span> <span class="pl-k">=</span> retryForever
+
+<span class="pl-c">// The following two statements are equivalent:</span>
+retry() { doSomething() }
+policy.retry() { doSomething() }</pre>
+  </div> 
+  <p>When calling <code>retry()</code> you have the option of giving the operation a name that is included in any log messages:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">policy</span> <span class="pl-k">=</span> retryForever
+
+<span class="pl-c">// The following two statements will have a custom operation name in log messages:</span>
+retry(<span class="pl-s"><span class="pl-pds">"</span>Doing something<span class="pl-pds">"</span></span>) { doSomething() }
+<span class="pl-k">val</span> <span class="pl-en">result1</span> <span class="pl-k">=</span> retry(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>Getting something<span class="pl-pds">"</span></span>)) { getSomething() }
+
+<span class="pl-c">// The following two statements will have a generic operation name in log messages:</span>
+policy.retry() { doSomethingMysterious() }
+<span class="pl-k">val</span> <span class="pl-en">result2</span> <span class="pl-k">=</span> policy.retry(<span class="pl-c1">None</span>) { getSomethingMysterious() }</pre>
+  </div> 
+  <p>You may optionally define an implicit <code>rummage.Clock</code>, from the <a href="http://zman.io/rummage" target="_blank">rummage</a> project, at the point the retry operation is invoked. This is the component responsible for blocking the calling thread until a backoff duration expires. By default, timing is controlled by a singular, global daemon thread. It is unlikely that you will need to provide a custom clock outside of testing.</p> 
+  <p>It is important to note that synchronous retry operations will block the calling thread while waiting for a backoff duration to expire. Use synchronous retries carefully in situations where you do not control the calling thread.</p> 
+  <p><a name="user-content-retrying-asynchronously" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-retrying-asynchronously" class="anchor" href="https://github.com/zmanio/atmos#retrying-asynchronously" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Retrying Asynchronously</h3> 
+  <p>Atmos supports asynchronous retries using Scala Futures. Asynchronous retries are much more involved than their single-threaded cousins, so care must be taken to understand the retry execution model.</p> 
+  <p>To retry asynchronously you call the <code>retryAsync()</code> method and pass it a block of code that evaluates to a <code>scala.concurrent.Future</code>. A single asyncnhronous attempt consists of executing the block <em>and</em> evaluating the outcome of the resulting future. If either the block or the future fails then the attempt fails and normal retry behavior takes over. The <code>retryAsync()</code> method returns a future that tracks the entire retry operation regardless of how many attempts are made. If any attempt succeeds then the returned future succeeds with the same value, if the operation fails then the returned future fails with the last reported exception.</p> 
+  <p>When retrying asynchronously, certain additional dependencies must be specified:</p> 
+  <ul> 
+   <li>There must be an implicit <code>scala.concurrent.ExecutionContext</code> available at the point the retry operation is invoked. This execution context is where the block provided to <code>retryAsync()</code> will be executed during subsequent retries. This can typically be the same context used to execute your futures (if applicable).</li> 
+   <li>You may optionally define an implicit <code>rummage.Clock</code>, from the <a href="http://zman.io/rummage" target="_blank">rummage</a> project, at the point the retry operation is invoked. This is the component responsible for providing non-blocking, asynchronous callbacks based on when a backoff duration expires. By default, timing is controlled by a singular, global daemon thread. It is unlikely that you will need to provide a custom clock outside of testing unless you are working with <a href="https://github.com/zmanio/atmos#retrying-with-actors" target="_blank">actors</a>.</li> 
+   <li>The atmos DSL provides support for limiting the amount of time that a future is allowed to complete by providing a <code>withDeadline</code> method on <code>scala.concurrent.Future</code>.</li> 
+  </ul> 
+  <p>Asynchronous retries support the same operations as the synchronous form: you may optionally provide an operation name and you can either call this method via the DSL with an implicit retry policy or directly on the retry policy itself.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">policy</span> <span class="pl-k">=</span> retryForever
+
+<span class="pl-c">// The following two statements will have a custom operation name in log messages:</span>
+retryAsync(<span class="pl-s"><span class="pl-pds">"</span>Doing something in the future<span class="pl-pds">"</span></span>) { <span class="pl-en">Future</span> { doSomething() } }
+<span class="pl-k">val</span> <span class="pl-en">futureResult</span> <span class="pl-k">=</span> retryAsync(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>Getting something in the future<span class="pl-pds">"</span></span>)) { <span class="pl-en">Future</span> { getSomething() } }
+
+<span class="pl-c">// The following two statements will have a generic operation name in log messages:</span>
+retryAsync() { <span class="pl-en">Future</span> { doSomethingMysterious() } }
+<span class="pl-k">val</span> <span class="pl-en">futureResult</span> <span class="pl-k">=</span> policy.retryAsync(<span class="pl-c1">None</span>) { <span class="pl-en">Future</span> { getSomethingInTheFuture() } }
+
+<span class="pl-c">// It is possible to limit the amount of time in which a single retry attempt can complete.</span>
+retryAsync() { <span class="pl-en">Future</span> { doSomethingMysterious() } withDeadline <span class="pl-c1">20.</span>seconds }
+<span class="pl-k">val</span> <span class="pl-en">futureResult</span> <span class="pl-k">=</span> policy.retryAsync() { <span class="pl-en">Future</span> { doSomethingMysterious() } withDeadline <span class="pl-c1">20.</span>seconds }
+
+<span class="pl-c">// It is possible to limit the amount of time in which an entire retry operation can complete.</span>
+retryAsync() { <span class="pl-en">Future</span> { doSomethingMysterious() } } withDeadline <span class="pl-c1">20.</span>seconds
+<span class="pl-k">val</span> <span class="pl-en">futureResult</span> <span class="pl-k">=</span> policy.retryAsync() { <span class="pl-en">Future</span> { doSomethingMysterious() } } withDeadline <span class="pl-c1">20.</span>seconds</pre>
+  </div> 
+  <p><a name="user-content-retrying-with-actors" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-retrying-with-actors" class="anchor" href="https://github.com/zmanio/atmos#retrying-with-actors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Retrying with Actors</h3> 
+  <p>The atmos library has built-in support for <a href="http://akka.io/" target="_blank">Akka</a>, specifically for retrying asynchronously when using the ask pattern. To use this library with actors there are only a couple extra steps involved beyond what is described in <a href="https://github.com/zmanio/atmos#retrying-asynchronously" target="_blank">Retrying Asynchronously</a> above.</p> 
+  <p>First, you will want to make sure you have an implicit instance of <code>rummage.Clock</code> from the <a href="http://zman.io/rummage" target="_blank">rummage</a> project in scope, this will make sure that your actor system is the one responsible for scheduling asynchronous backoff timers. This can be accomplished by importing <code>rummage.AkkaClocks._</code> inside an actor or by creating an implicit <code>rummage.AkkaClock</code> yourself. Second, you'll want to make sure and use Akka logging support to keep your entire retry operation non-blocking.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.actor.</span>{ <span class="pl-v">ActorRef</span>, <span class="pl-v">ActorSystem</span> }
+<span class="pl-k">import</span> <span class="pl-v">akka.event.</span><span class="pl-v">Logging</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.pattern.</span>{ <span class="pl-v">ask</span>, <span class="pl-v">pipe</span> }
+<span class="pl-k">import</span> <span class="pl-v">akka.util.</span><span class="pl-v">Timeout</span>
+<span class="pl-k">import</span> <span class="pl-v">rummage.AkkaClock.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">atmos.dsl.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">AkkaSupport.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">actor</span><span class="pl-k">:</span> <span class="pl-en">ActorRef</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">otherActor</span><span class="pl-k">:</span> <span class="pl-en">ActorRef</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">policy</span> <span class="pl-k">=</span> retryForever monitorWith <span class="pl-en">Logging</span>(system, <span class="pl-v">this</span>.getClass)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">context</span> <span class="pl-k">=</span> system.dispatcher
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">clock</span> <span class="pl-k">=</span> <span class="pl-en">AkkaClock</span>(system.scheduler)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">timeout</span> <span class="pl-k">=</span> <span class="pl-en">Timeout</span>(<span class="pl-c1">2</span> seconds)
+
+retryAsync(<span class="pl-s"><span class="pl-pds">"</span>Ask an actor over and over<span class="pl-pds">"</span></span>) { actor <span class="pl-k">?</span> <span class="pl-s"><span class="pl-pds">"</span>Hello!<span class="pl-pds">"</span></span> } pipeTo otherActor</pre>
+  </div> 
+  <p><a name="user-content-building-and-testing" target="_blank" href=""></a></p> 
+  <h2><a id="user-content-building-and-testing" class="anchor" href="https://github.com/zmanio/atmos#building-and-testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building and Testing</h2> 
+  <p>Atmos uses <a href="http://www.scala-sbt.org/" target="_blank">SBT</a>, so kicking off a build or running test cases is nice and straightforward.</p> 
+  <div class="highlight highlight-source-shell">
+   <pre><span class="pl-c"># Clone the repository:</span>
+git clone git@github.com:zmanio/atmos.git
+<span class="pl-c1">cd</span> atmos
+
+<span class="pl-c"># Build and package a jar file:</span>
+sbt package
+
+<span class="pl-c"># Run the test suite</span>
+sbt <span class="pl-c1">test</span>
+
+<span class="pl-c"># Generate test coverage reports:</span>
+sbt scoverage:<span class="pl-c1">test</span></pre>
+  </div> 
+ </article>
+</div>

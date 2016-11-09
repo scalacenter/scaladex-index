@@ -1,0 +1,75 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-binders-cassandra" class="anchor" href="https://github.com/innovaco/binders-cassandra#binders-cassandra" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>binders-cassandra</h1> 
+  <p><a href="https://travis-ci.org/InnovaCo/binders-cassandra" target="_blank"><img src="https://camo.githubusercontent.com/6cccacb2e5913beb930c7c726aeeb7a74201abf8/68747470733a2f2f7472617669732d63692e6f72672f496e6e6f7661436f2f62696e646572732d63617373616e6472612e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/InnovaCo/binders-cassandra.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p><a href="https://oss.sonatype.org/#nexus-search;gav%7Eeu.inn%7Ebinders-cassandra_*%7E%7E%7E" target="_blank"> Latest Releases </a></p> 
+  <p>This is a data binder library for Cassandra written in Scala. Please see more information at <a href="https://github.com/InnovaCo/binders" target="_blank">binders library page</a></p> 
+  <p>Cassandra data using <a href="https://github.com/datastax/java-driver" target="_blank">DataStax Java Driver for Cassandra</a>.</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/innovaco/binders-cassandra#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <p>Here is the sample of Scala class that is initialized with Cassandra session and allows you to do select/insert of some user data.</p> 
+  <pre><code>class Db(session: com.datastax.driver.core.Session) {
+
+  import ExecutionContext.Implicits.global
+
+  implicit val cache = new SessionQueryCache[PlainConverter](session)
+
+  // class for binding input/output parameters
+  case class User(userId: Int, name: String)
+
+  def insertUser(user: User): Future[Unit] = cql"insert into users(userid, name) values (?, ?)".bind(user).execute()
+
+  // returns Future[Iterator[User]]
+  def selectAllUsers: Future[Iterator[User]] = cql"select * from users".all[User]
+
+  // if no user is found will throw NoRowsSelectedException
+  def selectUser(userId: Int) = cql"select * from users where userId = $userId".one[User]
+
+  // if no user is found will return None, otherwise Some(User)
+  def selectUserIfFound(userId: Int) = cql"select * from users where userId = $userId".oneOption[User]
+}
+</code></pre> 
+  <p>And this class could be used like this:</p> 
+  <pre><code>val cluster = Cluster.builder().addContactPoint("127.0.0.1").build()
+val session = cluster.connect("binder_test")
+
+val db = new Db(session)
+
+Await.result(db.insertUser(db.User(9, "John")), 10 seconds)
+
+val users = Await.result(db.selectAllUsers, 10 seconds)
+
+println(users.toList)
+</code></pre> 
+  <p>For the unit tests and sample application working local instance of Cassandra is required. Please see also sample project inside <code>samples/</code> folder and schema in <code>db/dbscript.cql</code></p> 
+  <h2><a id="user-content-sbt" class="anchor" href="https://github.com/innovaco/binders-cassandra#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT</h2> 
+  <p>To use library, add this line to the build.sbt file:</p> 
+  <pre><code>libraryDependencies += "eu.inn" %% "binders-cassandra" % "0.2.5"
+</code></pre> 
+  <h2><a id="user-content-requirements" class="anchor" href="https://github.com/innovaco/binders-cassandra#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h2> 
+  <p>Currently tested and works with:</p> 
+  <ul> 
+   <li>binders-core 0.2.4</li> 
+   <li>Cassandra 2.0.1 (corresponding driver with prepared statements)</li> 
+   <li>Scala 2.11.2, 2.10.4</li> 
+   <li>sbt 0.13</li> 
+   <li>guava from google 16.0.1</li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/innovaco/binders-cassandra#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Product licensed under BSD 3-clause as stated in file LICENSE</p> 
+ </article>
+</div>

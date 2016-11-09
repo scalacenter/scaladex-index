@@ -1,0 +1,310 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/intenthq/pucket" target="_blank"><img src="https://camo.githubusercontent.com/f2fdb2c165477ed3d2d724de4de035881ee28c7a/68747470733a2f2f7472617669732d63692e6f72672f696e74656e7468712f7075636b65742e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/intenthq/pucket.svg?branch=master" style="max-width:100%;"></a></p> 
+  <blockquote> 
+   <p>Parquet + Bucket = Pucket.</p> 
+  </blockquote> 
+  <p>Pucket is Scala library which provides a simple partitioning system for Parquet.</p> 
+  <p>For the latest API documentation please click <a href="https://intenthq.github.io/pucket/latest/api/" target="_blank">here</a></p> 
+  <h2><a id="user-content-sbt-dependencies" class="anchor" href="https://github.com/intenthq/pucket#sbt-dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT Dependencies</h2> 
+  <p>The following top level dependencies are published in Maven central:</p> 
+  <p><strong>Thrift support</strong>:</p> 
+  <pre><code>"com.intenthq.pucket" %% "pucket-thrift" % "1.3.0"
+</code></pre> 
+  <p><strong>Avro support</strong>:</p> 
+  <pre><code>"com.intenthq.pucket" %% "pucket-avro" % "1.3.0"
+</code></pre> 
+  <p><strong>Spark connectors</strong>:</p> 
+  <pre><code>"com.intenthq.pucket" %% "pucket-spark" % "1.3.0"
+</code></pre> 
+  <p><strong>MapReduce integration</strong>:</p> 
+  <pre><code>"com.intenthq.pucket" %% "pucket-mapreduce" % "1.3.0"
+</code></pre> 
+  <p>These dependencies should be combined depending on your usages; for example if you use Thrift and Spark then use the following:</p> 
+  <pre><code>"com.intenthq.pucket" %% "pucket-thrift" % "1.3.0"
+"com.intenthq.pucket" %% "pucket-spark" % "1.3.0"
+</code></pre> 
+  <h2><a id="user-content-pucket-design" class="anchor" href="https://github.com/intenthq/pucket#pucket-design" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pucket Design</h2> 
+  <p>Pucket has been designed to be a simple wrapper around Parquet, following the design principals below</p> 
+  <ul> 
+   <li>Simple programming interface for writing custom partitioning schemes</li> 
+   <li>Functionally orientated - controlled side effects and no mutable state</li> 
+   <li>Limited set of core functionality</li> 
+   <li>Limited abstraction from underlying frameworks - don't attempt to hide necessary complexity</li> 
+  </ul> 
+  <p>With Pucket we aim to provide the following high level features, broken down into single responsibility modules:</p> 
+  <ul> 
+   <li>Simple set of functionality for bucketing data and maintaining schemas</li> 
+   <li>Filesystem level partitioning of Parquet files</li> 
+   <li>Incremental writing of Parquet files with checkpoints</li> 
+   <li>Integration with MapReduce and Spark</li> 
+  </ul> 
+  <h3><a id="user-content-pucket-high-level-concepts-and-usage-considerations" class="anchor" href="https://github.com/intenthq/pucket#pucket-high-level-concepts-and-usage-considerations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pucket High Level Concepts and Usage Considerations</h3> 
+  <p>Pucket's implementation is centered around a few key concepts described below. These may be a one time implementation in the core functionality or is partially implemented and requires specific implementation per data format. Current Pucket supports Avro and Thrift, but can be easily extended to support Protocol Buffers.</p> 
+  <h4><a id="user-content-pucket" class="anchor" href="https://github.com/intenthq/pucket#pucket" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pucket</h4> 
+  <p>(<em>Implementation per format</em>)</p> 
+  <p>This is a partially implemented trait which contains information on the the data in a certain directory (or bucket) on the filesystem. It has a few simple operations for creating a new instance:</p> 
+  <p><strong>Create</strong> - create a new Pucket by writing a descriptor to the filesystem, if a pucket already exists at the location an error will be returned</p> 
+  <p><strong>Find</strong> (apply function) - return a Pucket which is known to be at a certain location on the filesystem, if it does not exist an error will be returned</p> 
+  <p><strong>Find or create</strong> - return an existing Pucket or create a new one, will return an error if the existing Pucket's descriptor does not match the one provided</p> 
+  <p>Once an instance is create the following operations can be performed on it:</p> 
+  <p><strong>Reader</strong> - obtain a reader for the Pucket</p> 
+  <p><strong>Writer</strong> - obtain a simple writer for the Pucket</p> 
+  <p><strong>Absorb</strong> - move another Pucket's data into this one (provided they are the same structure)</p> 
+  <p><strong>List files</strong> - <a href="https://wikipedia.org/en/Does_exactly_what_it_says_on_the_tin" target="_blank">ronseal</a></p> 
+  <p>It also holds configuration for the default Parquet block size: i.e. the amount of data the underlying Parquet writer will hold in memory before flushing it to disk.</p> 
+  <h4><a id="user-content-descriptor" class="anchor" href="https://github.com/intenthq/pucket#descriptor" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Descriptor</h4> 
+  <p>The Pucket descriptor is a class which describes the structure of the partitions and the data within the Pucket. It is written to the filesystem as JSON on creation and read when the Pucket is located. The descriptor on disk contains the following information:</p> 
+  <ul> 
+   <li>Schema format</li> 
+   <li>Compression used</li> 
+   <li>Partitioner (optional)</li> 
+  </ul> 
+  <h4><a id="user-content-partitioner" class="anchor" href="https://github.com/intenthq/pucket#partitioner" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Partitioner</h4> 
+  <p>The partitioner is a trait which describes the partitioning scheme, to be implemented by the user according to the requirements for partitioning their data. The class name of the partitioner is stored in the descriptor, so the implementation can change. While it is not recommended to change the implementation on an existing Pucket, your data will still be accessible for reading in the old scheme.</p> 
+  <h4><a id="user-content-writer" class="anchor" href="https://github.com/intenthq/pucket#writer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writer</h4> 
+  <p>There are a few implementations of writer for Pucket, each performing a different type of writing functionality. Each type is described below and code examples can be seen in the <a href="https://github.com/intenthq/pucket#tldr" target="_blank">TL;DR</a> section.</p> 
+  <p><strong>Simple Writer</strong> (<em>Implementation per format</em>) - a functional wrapper around the standard implementations of Parquet writers</p> 
+  <p><strong>Incremental Writer</strong> - a wrapper around the simple writer which rolls a file when a configured number of objects have been written. Keeps a checkpoint of the point at which a file was last finalised. <strong>It is important to tune the roll limit based on expected size of each data object</strong>, this should be a balance of number of objects you are prepared to lose per checkpoint vs the number of small files on the filesystem, given Hadoop's default block size.</p> 
+  <p><strong>Partitioned Writer</strong> - a wrapper around the simple writer which uses the partitioner implementation to write data out to sub directories of the Pucket. The writer instances are kept in a cache with a configurable size, when the cache is full the least recently used writer will be removed and closed. <strong>It is important to make sure you balance the writer cache size with your memory constraints and number of partitions you expect to be writing to concurrently</strong>, as opening and closing writers is an expensive operation. You should also be aware of the Parquet block size configuration in the Pucket, by default each writer will hold 50mb in memory before flushing to disk.</p> 
+  <p><strong>Incremental Partitioned Writer</strong> - a wrapper around the incremental writer which provides partitioning. The same tuning constraints apply to this as with the incremental and partitioned writers.</p> 
+  <h4><a id="user-content-reader" class="anchor" href="https://github.com/intenthq/pucket#reader" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reader</h4> 
+  <p>On setting out to implement Pucket there were no plans to implement a reader, however the standard Parquet reader cannot read files in subdirectories and assumes that all files in a given directory are Parquet format. Therefore we had to clone the functionality in the main Parquet reader and change it to allow reading of files in subdirectories. <em>Note that the Parquet input format for MapReduce can cope with parquet files in subdirectories so does not need to use this reader</em>.</p> 
+  <p>TL;DR. Show Me Some Code</p> 
+  <ul> 
+   <li>Pucket</li> 
+   <li>PucketDescriptor</li> 
+   <li>Partitioner</li> 
+   <li>Reader</li> 
+   <li>Writer</li> 
+  </ul> 
+  <p>The Scalaz implementation of <code>Either</code>, known as disjunction<a href="https://github.com/intenthq/pucket/blob/master/%60/%60" target="_blank">^4</a>, is used heavily within the Pucket code. This is a proper Monad which allows it to be used in a flat map or for comprehension. This enables a happy path and sad path to be accounted for when performing any side-effecting operation. Every operation requiring interaction with the Hadoop filesystem will return a disjunction.</p> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/intenthq/pucket#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <p>In the examples below disjunction is used with the implicit either class in Scalaz syntax package, which allows <code>.left</code> or <code>.right</code> operations to lift objects into the appropriate side of the disjunction. To use this the following imports must be included in implementing classes:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">\/</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.syntax.either.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <h3><a id="user-content-creating-a-pucket" class="anchor" href="https://github.com/intenthq/pucket#creating-a-pucket" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Creating a Pucket</h3> 
+  <p>The following examples use the imports listed below:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.thrift.</span><span class="pl-v">ThriftPucket</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.thrift.</span><span class="pl-v">ThriftPucketDescriptor</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.avro.</span><span class="pl-v">AvroPucket</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.avro.</span><span class="pl-v">AvroPucketDescriptor</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.parquet.hadoop.metadata.</span><span class="pl-v">CompressionCodecName</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.hadoop.fs.</span>{<span class="pl-v">FileSystem</span>, <span class="pl-v">Path</span>}
+<span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">\/</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.syntax.either.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>You should also make sure you have created the following classes:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">your.thrift.</span><span class="pl-v">ThriftData</span>
+<span class="pl-k">import</span> <span class="pl-v">your.pucket.</span><span class="pl-v">ThriftPartitioner</span>
+<span class="pl-k">import</span> <span class="pl-v">your.avro.</span><span class="pl-v">AvroData</span>
+<span class="pl-k">import</span> <span class="pl-v">your.pucket.</span><span class="pl-v">AvroPartitioner</span></pre>
+  </div> 
+  <p>The following values have also been created:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">fs</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get()
+<span class="pl-k">val</span> <span class="pl-en">path</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/path/to/Pucket<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Create or find a Thrift Pucket:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">thriftDescriptor</span><span class="pl-k">:</span> <span class="pl-en">ThriftPucketDescriptor</span>[<span class="pl-en">ThriftData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">ThriftPucketDescsriptor</span>[<span class="pl-en">ThriftData</span>](<span class="pl-c1">classOf</span>[<span class="pl-en">ThriftData</span>],
+                                      <span class="pl-en">CompressionCodecName</span>.<span class="pl-en">SNAPPY</span>,
+                                      <span class="pl-en">Some</span>(<span class="pl-en">ThriftPartitioner</span>))
+
+<span class="pl-c">// Create a new Pucket on /path/to/Pucket, writing the descriptor in place</span>
+<span class="pl-c">// Operation will fail if a Pucket already exists on that path</span>
+<span class="pl-k">val</span> <span class="pl-en">newThriftPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">ThriftData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">ThriftPucket</span>.create[<span class="pl-en">ThriftData</span>](path, fs, thriftDescriptor)
+
+<span class="pl-c">// Find an existing Pucket at a certain path</span>
+<span class="pl-c">// Operation will fail if no Pucket exists on that path or the schema does not match the one provided</span>
+<span class="pl-k">val</span> <span class="pl-en">existingThriftPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">ThriftData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">ThriftPucket</span>[<span class="pl-en">ThriftData</span>](path, fs, <span class="pl-c1">classOf</span>[<span class="pl-en">ThriftData</span>])
+
+<span class="pl-c">// Find an existing or create a new Pucket on a certain path</span>
+<span class="pl-c">// Operation will fail if the Pucket exists and the Pucket descriptor on the filesystem matches the one provided</span>
+<span class="pl-k">val</span> <span class="pl-en">maybeExistingThriftPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">ThriftData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">ThriftPucket</span>.findOrCreate[<span class="pl-en">ThriftData</span>](path, fs, thriftDescriptor)
+</pre>
+  </div> 
+  <p>Create or find an Avro Pucket:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">avroDescriptor</span><span class="pl-k">:</span> <span class="pl-en">AvroPucketDescriptor</span>[<span class="pl-en">AvroData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">AvroPucketDescriptor</span>[<span class="pl-en">AvroData</span>](<span class="pl-en">AvroData</span>.getClassSchema,
+                                 <span class="pl-en">CompressionCodecName</span>.<span class="pl-en">SNAPPY</span>,
+                                 <span class="pl-en">Some</span>(<span class="pl-en">AvroPartitioner</span>))
+
+<span class="pl-k">val</span> <span class="pl-en">newAvroPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">AvroData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">AvroPucket</span>.create[<span class="pl-en">AvroData</span>](path, fs, avroDescriptor)
+
+<span class="pl-k">val</span> <span class="pl-en">existingAvroPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">AvroData</span>]
+  <span class="pl-en">AvroPucket</span>[<span class="pl-en">AvroData</span>](path, fs, <span class="pl-en">AvroData</span>.getClassSchema)
+
+<span class="pl-k">val</span> <span class="pl-en">maybeExistingAvroPucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">AvroData</span>] <span class="pl-k">=</span>
+  <span class="pl-en">AvroPucket</span>.findOrCreate[<span class="pl-en">AvroData</span>](path, fs, avroDescriptor)
+
+</pre>
+  </div> 
+  <h3><a id="user-content-writing-to-a-pucket" class="anchor" href="https://github.com/intenthq/pucket#writing-to-a-pucket" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing to a Pucket</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Write function which fails fast on error</span>
+<span class="pl-k">def</span> <span class="pl-en">write</span>[<span class="pl-en">Ex</span>](<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-en">T</span>],
+              <span class="pl-v">writer</span>:  <span class="pl-en">Ex</span> \<span class="pl-k">/</span> <span class="pl-en">Writer</span>[<span class="pl-en">T</span>, <span class="pl-en">Ex</span>])<span class="pl-k">:</span> <span class="pl-en">Ex</span> \<span class="pl-k">/</span> <span class="pl-en">Writer</span>[<span class="pl-en">T</span>, <span class="pl-en">Ex</span>] <span class="pl-k">=</span>
+  data.foldLeft(writer)( (w, i) <span class="pl-k">=&gt;</span>
+    w.fold(ex <span class="pl-k">=&gt;</span> <span class="pl-k">return</span> ex.left, _.write(i))
+  )</pre>
+  </div> 
+  <p><strong>Plain Writer</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">writeMeSomeData</span>[<span class="pl-en">T</span>](<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-en">T</span>],
+                       <span class="pl-en">Pucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    p <span class="pl-k">&lt;</span><span class="pl-k">-</span> pucket
+    writer <span class="pl-k">&lt;</span><span class="pl-k">-</span> p.writer
+    finishedWriter <span class="pl-k">&lt;</span><span class="pl-k">-</span> write[<span class="pl-en">Throwable</span>](data, writer)
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> finishedWriter.close
+  } <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <p><strong>Incremental Writer</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">writeMeSomeDataIncrementally</span>[<span class="pl-en">T</span>](<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-en">T</span>],
+                                    <span class="pl-en">Pucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> (<span class="pl-k">Long</span>, <span class="pl-en">Throwable</span>) \<span class="pl-k">/</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    p <span class="pl-k">&lt;</span><span class="pl-k">-</span> pucket.leftMap((<span class="pl-c1">0</span>, _))
+    writer <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">IncrementalWriter</span>(p, <span class="pl-c1">100</span>) <span class="pl-c">// 100 indicates the number of writes before the file is rolled</span>
+    finishedWriter <span class="pl-k">&lt;</span><span class="pl-k">-</span> write[(<span class="pl-k">Long</span>, <span class="pl-en">Throwable</span>)](data, writer)
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> finishedWriter.close
+  } <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <p><strong>Partitioned Writer</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">writeMeSomePartitionedData</span>[<span class="pl-en">T</span>](<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-en">T</span>],
+                                  <span class="pl-en">Pucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    p <span class="pl-k">&lt;</span><span class="pl-k">-</span> pucket
+    writer <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">PartitionedWriter</span>(p).right
+    finishedWriter <span class="pl-k">&lt;</span><span class="pl-k">-</span> write[<span class="pl-en">Throwable</span>](data, writer)
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> finishedWriter.close
+  } <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <p><strong>Incremental Partitioned Writer</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">writeMeSomePartitionedDataIncrementally</span>[<span class="pl-en">T</span>](<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-en">T</span>],
+                                              <span class="pl-en">Pucket</span><span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> (<span class="pl-k">Long</span>, <span class="pl-en">Throwable</span>) \<span class="pl-k">/</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  <span class="pl-k">for</span> {
+    p <span class="pl-k">&lt;</span><span class="pl-k">-</span> pucket.leftMap((<span class="pl-c1">0</span>, _))
+    writer <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">IncrementalPartitionedWriter</span>(p, <span class="pl-c1">100</span>).right
+    finishedWriter <span class="pl-k">&lt;</span><span class="pl-k">-</span> write[<span class="pl-en">Throwable</span>](data, writer)
+    _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> finishedWriter.close
+  } <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <h3><a id="user-content-reading-from-a-pucket" class="anchor" href="https://github.com/intenthq/pucket#reading-from-a-pucket" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reading From a Pucket</h3> 
+  <p>The reader behaves in a similar way to the writer in that each read returns a new instance of the reader with updated state, however as well as a new reader instance, an option of the data item is returned. The example below is an implementation which will read a certain number of records into a scala <code>Seq</code> or fail with a <code>Throwable</code>. If there is an error encountered in the read process then the code will fail fast and return the throwable in the left side of the disjunction. If the output from the pucket is exhausted then it will close the reader and return the result in the right side of the disjunction.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">readData</span>[<span class="pl-en">T</span>](<span class="pl-v">count</span>: <span class="pl-k">Int</span>, <span class="pl-v">pucket</span>: <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Throwable</span> \<span class="pl-k">/</span> <span class="pl-en">Seq</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span>
+  pucket.reader.flatMap(reader <span class="pl-k">=&gt;</span>
+    <span class="pl-c1">0.</span>to(count).foldLeft((<span class="pl-en">Seq</span>[<span class="pl-en">T</span>](), reader).right[<span class="pl-en">Throwable</span>])( (acc, _) <span class="pl-k">=&gt;</span>
+      acc.fold(ex <span class="pl-k">=&gt;</span> <span class="pl-k">return</span> ex.left,
+       dataAndReader <span class="pl-k">=&gt;</span> dataAndReader._2.read.fold(ex <span class="pl-k">=&gt;</span> <span class="pl-k">return</span> ex.left,
+         optionalDataAndReader <span class="pl-k">=&gt;</span> (
+           optionalDataAndReader._1.fold(
+             <span class="pl-c">// if the output is exhausted, then close the reader and return the state</span>
+             <span class="pl-k">return</span> optionalDataAndReader._2.close.map(_ <span class="pl-k">=&gt;</span> dataAndReader._1)  
+              <span class="pl-c">//if the data is present in the output then append the data to the state and include the updated writer state</span>
+            )(dataAndReader._1 <span class="pl-k">++</span> <span class="pl-en">Seq</span>(_)), optionalDataAndReader._2).right[<span class="pl-en">Throwable</span>]
+        )
+      )
+    )
+  ).flatMap(dataAndReader <span class="pl-k">=&gt;</span> dataAndReader._2.close.map(_ <span class="pl-k">=&gt;</span> dataAndReader._1))</pre>
+  </div> 
+  <h3><a id="user-content-working-with-mapreduce" class="anchor" href="https://github.com/intenthq/pucket#working-with-mapreduce" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Working With MapReduce</h3> 
+  <p>Reading data into MapReduce can be done with the standard Parquet input format class, as it is able to traverse subdirectories in a similar way to the Pucket reader. Pucket does provide a MapReduce output format class for use in MapReduce workflows.</p> 
+  <p>To run the upcoming example you will have to import the following dependencies:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.hadoop.fs.</span><span class="pl-v">Path</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.hadoop.mapreduce.</span><span class="pl-v">Job</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.hadoop.mapreduce.lib.input.</span><span class="pl-v">FileInputFormat</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.hadoop.mapreduce.lib.output.</span><span class="pl-v">FileOutputFormat</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.parquet.hadoop.</span><span class="pl-v">ParquetInputFormat</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.thrift.</span><span class="pl-v">ThriftPucketDescriptor</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.mapreduce.</span><span class="pl-v">PucketOutputFormat</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.parquet.hadoop.metadata.</span><span class="pl-v">CompressionCodecName</span></pre>
+  </div> 
+  <p>The example code below will configure a MapReduce job with the Parquet input format class and the Pucket output format class.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">configureJob</span>[<span class="pl-en">T</span>](<span class="pl-v">dir</span>: <span class="pl-en">Path</span>, <span class="pl-v">descriptor</span>: <span class="pl-en">PucketDescriptor</span>[<span class="pl-en">T</span>])<span class="pl-k">:</span> <span class="pl-en">Job</span> <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">job</span> <span class="pl-k">=</span> <span class="pl-en">Job</span>.getInstance()
+  job.setInputFormatClass(<span class="pl-c1">classOf</span>[<span class="pl-en">ParquetInputFormat</span>[<span class="pl-en">T</span>]])
+  <span class="pl-en">FileInputFormat</span>.setInputPaths(job, dir)
+  <span class="pl-en">ParquetInputFormat</span>.setReadSupportClass(job, descriptor.readSupportClass)
+  <span class="pl-en">FileOutputFormat</span>.setOutputPath(job, outputPath)
+  job.setOutputFormatClass(<span class="pl-c1">classOf</span>[<span class="pl-en">PucketOutputFormat</span>[<span class="pl-en">T</span>]])
+
+  job.setOutputKeyClass(<span class="pl-c1">classOf</span>[<span class="pl-en">Void</span>])
+  job.setOutputValueClass(writeClass)
+  <span class="pl-en">PucketOutputFormat</span>.setDescriptor(job.getConfiguration, descriptor)
+  job  
+}</pre>
+  </div> 
+  <h3><a id="user-content-working-with-spark" class="anchor" href="https://github.com/intenthq/pucket#working-with-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Working With Spark</h3> 
+  <p>Pucket also provides RDD extensions for Spark. Two implicit classes allow for a pucket to be transformed into an RDD and an RDD to be saved as a new Pucket. To access the functionality in the example below you must have the following imports in your class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.spark.PucketSparkAdapter.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">SparkContext</span>
+<span class="pl-k">import</span> <span class="pl-v">com.intenthq.pucket.</span><span class="pl-v">Pucket</span></pre>
+  </div> 
+  <p>The example below will import the data in the Pucket as a RDD, then coalesce the data down to 20 partitions an write it out to a new location. The output uses the same descriptor as the input, however this could be different if you want to change the Pucket's configuration such as data type or partitioning scheme.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">copyPucket</span>[<span class="pl-en">T</span>](<span class="pl-v">pucket</span>: <span class="pl-en">Pucket</span>[<span class="pl-en">T</span>], <span class="pl-v">path</span>: <span class="pl-k">String</span>)(<span class="pl-k">implicit</span> <span class="pl-v">sc</span>: <span class="pl-en">SparkContext</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+  pucket.toRDD[<span class="pl-en">T</span>].coalesce(<span class="pl-c1">20</span>).saveAsPucket(path, pucket.descriptor)  
+</pre>
+  </div> 
+ </article>
+</div>

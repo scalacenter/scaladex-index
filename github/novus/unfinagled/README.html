@@ -1,0 +1,94 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-unfinagled" class="anchor" href="https://github.com/novus/unfinagled#unfinagled" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>unfinagled</h1> 
+  <p>Unfinagled is an experimental module for using <a href="https://github.com/unfiltered/unfiltered" target="_blank">unfiltered</a> as a <a href="https://github.com/twitter/finagle" target="_blank">finagle</a> frontend.</p> 
+  <p>Finagle is oriented around the idea of <a href="http://twitter.github.io/finagle/guide/ServicesAndFilters.html#services" target="_blank">services</a> which, as it turns out, are not unlike unfiltered <a href="http://unfiltered.databinder.net/Plans+and+Intents.html" target="_blank">intents</a>. If we treat Finagle as another server runtime, the strategy becomes the transformation of an unfiltered intent into a Finagle service.</p> 
+  <h3><a id="user-content-modules" class="anchor" href="https://github.com/novus/unfinagled#modules" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Modules</h3> 
+  <p>Unfinagled is composed a few modules named similarly to those found in Unfiltered.</p> 
+  <h4><a id="user-content-unfinagled-core" class="anchor" href="https://github.com/novus/unfinagled#unfinagled-core" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>unfinagled-core</h4> 
+  <p>Unfiltered focuses on the processing of HTTP requests and abstracting away their representation; this module is the same. If you have written portable intents, ie, no extractors reach into the request's <code>underlying</code> member or explicitly require a specific representation, then running these within Finagle will be a matter of changing the referenced intent type, at most. This module does use unfiltered's provided <code>unfiltered-netty</code> module for its internal representation and processing, so if you currently use this, nothing changes.</p> 
+  <p>Consider this intent:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">FooIntent</span> {
+  <span class="pl-k">def</span> <span class="pl-en">intent</span><span class="pl-k">:</span> unfiltered.netty.cycle.<span class="pl-en">Plan</span>.<span class="pl-en">Intent</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">GET</span>(<span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)) <span class="pl-k">=&gt;</span> <span class="pl-en">ResponseString</span>(<span class="pl-s"><span class="pl-pds">"</span>Hi<span class="pl-pds">"</span></span>)
+    <span class="pl-k">case</span> <span class="pl-en">GET</span>(<span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/foobar<span class="pl-pds">"</span></span>)) <span class="pl-k">=&gt;</span> <span class="pl-en">ResponseString</span>(<span class="pl-s"><span class="pl-pds">"</span>GOT foobar!<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>Unfinagled provides a function to transform such an intent into a Finagle service: <code>UnfilteredService</code>. It looks like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ufService</span> <span class="pl-k">=</span> <span class="pl-en">UnfilteredService</span>(<span class="pl-en">FooIntent</span>.intent)</pre>
+  </div> 
+  <p>With this in hand, we can now create a Finagle server using unfiltered intents as the request processors:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">server</span><span class="pl-k">:</span> <span class="pl-en">Server</span> <span class="pl-k">=</span>
+  <span class="pl-en">ServerBuilder</span>()
+    .bindTo(address)
+    .name(<span class="pl-s"><span class="pl-pds">"</span>UnfilteredHttpServer<span class="pl-pds">"</span></span>)
+    .codec(<span class="pl-en">UnfilteredCodec</span>())
+    .build(ufService)</pre>
+  </div> 
+  <h5><a id="user-content-futures-support" class="anchor" href="https://github.com/novus/unfinagled#futures-support" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Futures support</h5> 
+  <p>Intents that return Finagle or Scala Futures are also supported:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.twitter.util.</span><span class="pl-v">Future</span>
+<span class="pl-k">object</span> <span class="pl-en">TFIntent</span> {
+  <span class="pl-k">def</span> <span class="pl-en">intent</span><span class="pl-k">:</span> com.novus.unfinagled.<span class="pl-en">TwitterFuturePlan</span>.<span class="pl-en">Intent</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">GET</span>(<span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)) <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span> { <span class="pl-en">ResponseString</span>(<span class="pl-s"><span class="pl-pds">"</span>Hello from the future<span class="pl-pds">"</span></span>) }
+  }
+}
+
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">_</span>
+<span class="pl-k">object</span> <span class="pl-en">SCIntent</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">executionContext</span> <span class="pl-k">=</span> <span class="pl-en">ExecutionContext</span>.<span class="pl-en">Implicits</span>.global
+
+  <span class="pl-k">def</span> <span class="pl-en">intent</span><span class="pl-k">:</span> com.novus.unfinagled.<span class="pl-en">FuturePlan</span>.<span class="pl-en">Intent</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">GET</span>(<span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)) <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span> { <span class="pl-en">ResponseString</span>(<span class="pl-s"><span class="pl-pds">"</span>Hello from the future<span class="pl-pds">"</span></span>) }
+  }
+}</pre>
+  </div> 
+  <h4><a id="user-content-unfinagled-server" class="anchor" href="https://github.com/novus/unfinagled#unfinagled-server" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>unfinagled-server</h4> 
+  <p>The server module provides conveniences for building and running intents as Finagle services. If you prefer to use Finagle's <code>ServerBuilder</code> directly, you have no need of this module. What you get from this module is a slightly more streamlined construction process, a familiar Unfiltered feel, and an implementation of Unfiltered's <code>RunnableServer</code>. This is great for development within sbt as you can easily start and stop your server without killing the sbt session. Usage looks like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Http</span>(<span class="pl-s"><span class="pl-pds">"</span>myservice<span class="pl-pds">"</span></span>, <span class="pl-c1">8080</span>)
+  .service(<span class="pl-en">UnfilteredService</span>(intent))
+  .start()</pre>
+  </div> 
+  <h4><a id="user-content-unfinagled-scalatest" class="anchor" href="https://github.com/novus/unfinagled#unfinagled-scalatest" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>unfinagled-scalatest</h4> 
+  <p>This is a module facilitating integration or black-box testing within ScalaTest. It implements Unfiltered's <code>Hosted</code> trait so you can write tests for Unfinagled just like you would with Unfiltered on jetty or netty. An example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">IntentSpec</span> <span class="pl-k">extends</span> <span class="pl-e">Served</span> <span class="pl-k">with</span> <span class="pl-e">GivenWhenThen</span> <span class="pl-k">with</span> <span class="pl-e">ShouldMatchers</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">intent</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">GET</span>(<span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>/foobar<span class="pl-pds">"</span></span>)) <span class="pl-k">=&gt;</span> <span class="pl-en">ResponseString</span>(<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+  }
+
+  feature(<span class="pl-s"><span class="pl-pds">"</span>Unfiltered front end<span class="pl-pds">"</span></span>) {
+    scenario(<span class="pl-s"><span class="pl-pds">"</span>GET foobar<span class="pl-pds">"</span></span>) {
+      http(host <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>foobar<span class="pl-pds">"</span></span> as_str) should be(<span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)
+    }
+  }
+}</pre>
+  </div> 
+  <p>You provide the intent and you're given a server for each test.</p> 
+ </article>
+</div>

@@ -1,0 +1,73 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sentries" class="anchor" href="https://github.com/erikvanoosten/sentries#sentries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sentries</h1> 
+  <p>Sentries is an out-of-your way Scala library that will handle all the fault-handling around calling resources like databases and remote services.</p> 
+  <p>Sentries is located at: <code>"nl.grons" %% "sentries" % "0.8.0"</code></p> 
+  <p><em>Documentation</em></p> 
+  <ul> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/download.md" target="_blank">Download (Sbt, Maven)</a></li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/sentries.md" target="_blank">Available sentries</a></li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/testing.md" target="_blank">Testing support</a></li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/chaining.md" target="_blank">Advanced sentry chaining</a></li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/metrics.md" target="_blank">Sentries and Metrics</a> TODO</li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/writing-sentries.md" target="_blank">Writing you own Sentry</a> TODO</li> 
+   <li><a href="https://github.com/erikvanoosten/sentries/blob/master/docs/developing-sentries.md" target="_blank">Developing sentries</a></li> 
+  </ul> 
+  <h1><a id="user-content-introduction" class="anchor" href="https://github.com/erikvanoosten/sentries#introduction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introduction</h1> 
+  <blockquote> 
+   <p><strong>sentry</strong> (pl. <strong>sentries</strong>) a soldier stationed to keep guard or to control access to a place.</p> 
+  </blockquote> 
+  <p>Sentries provides known techniques such as the Circuit Breaker, rate limiting, slow ramp up, load balancing (not yet stable) and retries (todo). You select what you need by composing several sentries in a new sentry, a sentry chain. By combining this with metrics and JMX control, Sentries is the ideal wrapper for invoking databases, remote services, etc.</p> 
+  <p>Example usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">DoItAllService</span> <span class="pl-k">extends</span> <span class="pl-e">nl.grons.sentries.support.SentrySupport</span> {
+
+  <span class="pl-c">// withFailLimit == circuit breaker</span>
+  <span class="pl-k">val</span> <span class="pl-en">dbSentry</span> <span class="pl-k">=</span> sentry(<span class="pl-s"><span class="pl-pds">"</span>mysql:localhost:3366<span class="pl-pds">"</span></span>).
+          withMetrics.
+          withFailLimit(failLimit <span class="pl-k">=</span> <span class="pl-c1">5</span>, retryDelay <span class="pl-k">=</span> <span class="pl-c1">500</span> milliseconds)
+  <span class="pl-k">val</span> <span class="pl-en">twitterApiSentry</span> <span class="pl-k">=</span> sentry(<span class="pl-s"><span class="pl-pds">"</span>twitter<span class="pl-pds">"</span></span>).
+          withMetrics.
+          withConcurrencyLimit(<span class="pl-c1">3</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">loadTweetFromDb</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-en">Tweet</span> <span class="pl-k">=</span> dbSentry {
+    database.load(id)
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">getFromTwitter</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-en">Tweet</span> <span class="pl-k">=</span> twitterApiSentry {
+    twitterApi.load(id)
+  }
+}</pre>
+  </div> 
+  <p>See <a href="https://github.com/erikvanoosten/sentries/blob/master/docs/sentries.md" target="_blank">Available sentries</a> for more and <a href="https://github.com/erikvanoosten/sentries/blob/master/src/main/scala/nl/grons/sentries/examples/SentryExampleApp.scala" target="_blank">SentryExampleApp</a> for a more elaborate example.</p> 
+  <h2><a id="user-content-jmx" class="anchor" href="https://github.com/erikvanoosten/sentries#jmx" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JMX</h2> 
+  <p>JMX control is started with the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">new</span> <span class="pl-en">nl.grons.sentries.support.JmxReporter</span>().start()</pre>
+  </div> 
+  <h2><a id="user-content-usage-guidelines" class="anchor" href="https://github.com/erikvanoosten/sentries#usage-guidelines" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage guidelines</h2> 
+  <ul> 
+   <li>Exceptions are always rethrown. (Retry will be an exception to this rule.)</li> 
+   <li>When a sentry needs to throw an exception, it will throw a <code>NotAvailableException</code> or subtype.</li> 
+   <li>Sentries ignore <code>NotAvailableException</code>s from other sentries.</li> 
+   <li>Sentries assume that a <code>ControlThrowable</code> means success. (These are used by Scala to do flow control.)</li> 
+   <li>Sentries are fully multi-thread safe. Coordination with other threads is kept to the minimum. In addition, sentries will never block. If an operation can not be performed immediately, it will throw a <code>NotAvailableException</code>.</li> 
+   <li>Sentries are singletons, the builder checks each sentry against the registry before usage. The registry stores sentries by owner type, resource name and sentry type.</li> 
+   <li>Building a sentry chain is easiest by mixing in <code>SentrySupport</code> and use method <code>sentry</code> as in the example above.</li> 
+   <li>It is permitted to use the same sentry in multiple sentry chains.</li> 
+   <li>The sentry that limits durations should NOT be used from a <code>Future</code> or from an <code>Actor</code>. Futures and actors have other mechanisms to deal with timeouts that are more suited. (If possible this will be resolved in a later version.)</li> 
+  </ul> 
+ </article>
+</div>

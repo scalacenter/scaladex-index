@@ -1,0 +1,328 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-solr" class="anchor" href="https://github.com/codemettle/akka-solr#akka-solr" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-solr</h1> 
+  <p>A Solr5 client built on <a href="http://akka.io" target="_blank">Akka</a> and <a href="http://spray.io" target="_blank">Spray</a> <a href="https://travis-ci.org/CodeMettle/akka-solr" target="_blank"><img src="https://camo.githubusercontent.com/f166c694b4c776a4190f7b4d741a1d5750cbbe2d/68747470733a2f2f7472617669732d63692e6f72672f436f64654d6574746c652f616b6b612d736f6c722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/CodeMettle/akka-solr.svg?branch=master" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/com.codemettle.akka-solr/akka-solr_2.11" target="_blank"><img src="https://camo.githubusercontent.com/2562127d049165617c8ffeba4de60b32ddf99f9a/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e636f64656d6574746c652e616b6b612d736f6c722f616b6b612d736f6c725f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.codemettle.akka-solr/akka-solr_2.11/badge.svg" style="max-width:100%;"></a></p> 
+  <p>The goal of akka-solr is to provide a high-performance, non-blocking, Akka-and-Scala-native interface to <a href="http://lucene.apache.org/solr/" target="_blank">Apache Solr5</a>. The initial implementation provides an interface similar to <code>spray-client</code>'s, with an Akka extension that allows requests to be sent to an actor, or an interface to request a connection actor and send requests to it. Optional builders for requests are provided, but are not required; results from Solr are returned as wrapper objects that provide easier access from Scala to SolrJ objects. Some SolrJ objects are used in the interest of maintainability.</p> 
+  <h4><a id="user-content-note-about-blocking" class="anchor" href="https://github.com/codemettle/akka-solr#note-about-blocking" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Note about blocking:</h4> 
+  <p>In order to keep from reinventing the wheel and then maintaining said wheel, the SolrJ library is used for generating update (add/delete) requests (which could easily be replaced, and actually is buggy) and for parsing results (<code>XMLResponseParser</code>, <code>BinaryResponseParser</code>, <code>StreamingBinaryResponseParser</code>). Since the SolrJ <code>ResponseParser</code>s work from <code>java.io.InputSource</code>s, and akka-solr uses reactive/non-blocking response chunking, blocking calls were added to bridge the <code>InputSource</code> requests into Akka messages. A dedicated, runtime-configurable executor is used for all SolrJ response parsing with the <code>ActorInputStream</code> class and the <code>akkasolr.response-parser-dispatcher</code> config. Any improvements / alternate implementations are welcome. Along the same lines, SolrJ's <code>ZkStateReader</code> class is used for ZooKeeper/SolrCloud support, it has a configurable dispatcher that will be created upon first usage.</p> 
+  <h2><a id="user-content-import" class="anchor" href="https://github.com/codemettle/akka-solr#import" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Import</h2> 
+  <p>akka-solr depends on SolrJ for request generation and response parsing, but the dependency is marked as <code>"provided"</code> so the end user is required to pull the dependency in. After cursory inspections, akka-solr is expected to work with SolrJ versions 4.5 through 4.10. Akka and spray-can are not pulled in as <code>"provided"</code>, this can be changed if feedback demands.</p> 
+  <h4><a id="user-content-add-dependencies" class="anchor" href="https://github.com/codemettle/akka-solr#add-dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Add Dependencies:</h4> 
+  <p>sbt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+    <span class="pl-s"><span class="pl-pds">"</span>com.codemettle.akka-solr<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-solr<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>3.0.0<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>org.apache.solr<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>solr-solrj<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>5.1.0<span class="pl-pds">"</span></span> <span class="pl-c">// later versions should work but are untested</span>
+)</pre>
+  </div> 
+  <p>Maven:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;com.codemettle.akka-solr&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;akka-solr&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;3.0.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;
+&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;org.apache.solr&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;solr-solrj&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;5.1.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/codemettle/akka-solr#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>If you've used the <code>spray-can</code> HTTP client library, you're already familiar with akka-solr's philosophy.</p> 
+  <p>Some scaladocs are provided, open a ticket for anything unclear (or submit a pull request!).</p> 
+  <p>In lieu of detailed documentation, here are a list of examples (using <code>ask</code>/<code>?</code> syntax for clarity and brevity, even though the library is meant to be used from Actors with message passing).</p> 
+  <h3><a id="user-content-bulding-request-strings" class="anchor" href="https://github.com/codemettle/akka-solr#bulding-request-strings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bulding Request Strings:</h3> 
+  <p>A builder is provided as part of akka-solr, any improvements are welcome.</p> 
+  <h4><a id="user-content-building-solr-query-strings" class="anchor" href="https://github.com/codemettle/akka-solr#building-solr-query-strings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building Solr query strings</h4> 
+  <h6><a id="user-content-basic" class="anchor" href="https://github.com/codemettle/akka-solr#basic" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Basic</h6> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.codemettle.akkasolr.querybuilder.SolrQueryStringBuilder.Methods.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> rawQuery(<span class="pl-s"><span class="pl-pds">"</span>my custom query<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> defaultField() <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>wantthis<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> defaultField() <span class="pl-k">:</span><span class="pl-k">!=</span> <span class="pl-s"><span class="pl-pds">"</span>dontwantthis<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> field(<span class="pl-s"><span class="pl-pds">"</span>myfield<span class="pl-pds">"</span></span>) <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>requiredvalue<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> field(<span class="pl-s"><span class="pl-pds">"</span>myfield<span class="pl-pds">"</span></span>) isAnyOf <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> field(<span class="pl-s"><span class="pl-pds">"</span>mylong<span class="pl-pds">"</span></span>) isInRange (<span class="pl-c1">12345</span>, <span class="pl-c1">98765</span>)
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> field(<span class="pl-s"><span class="pl-pds">"</span>requiredField<span class="pl-pds">"</span></span>) exists()
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> field(<span class="pl-s"><span class="pl-pds">"</span>illegalField<span class="pl-pds">"</span></span>) doesNotExist()</pre>
+  </div> 
+  <h6><a id="user-content-andornot" class="anchor" href="https://github.com/codemettle/akka-solr#andornot" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>AND/OR/NOT</h6> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.codemettle.akkasolr.querybuilder.SolrQueryStringBuilder.Methods.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">qs</span> <span class="pl-k">=</span> <span class="pl-en">AND</span> (
+    field (<span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>) <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>y<span class="pl-pds">"</span></span>,
+    defaultField() <span class="pl-k">:</span><span class="pl-k">!=</span> <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>,
+    <span class="pl-en">NOT</span>(field (<span class="pl-s"><span class="pl-pds">"</span>z<span class="pl-pds">"</span></span>) <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">2</span>),
+    <span class="pl-en">OR</span> (
+        rawQuery (<span class="pl-s"><span class="pl-pds">"</span>&lt;my custom query&gt;<span class="pl-pds">"</span></span>),
+        field(<span class="pl-s"><span class="pl-pds">"</span>aa<span class="pl-pds">"</span></span>) <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>,
+        field(<span class="pl-s"><span class="pl-pds">"</span>bb<span class="pl-pds">"</span></span>) isAnyOf <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>)
+    )
+)</pre>
+  </div> 
+  <h6><a id="user-content-options" class="anchor" href="https://github.com/codemettle/akka-solr#options" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Options</h6> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.codemettle.akkasolr.querybuilder.SolrQueryStringBuilder.Methods.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// if both lower and upper are nonempty, then the "time" field will be in the query (Some(field("time").isInRange(lo, hi)))</span>
+<span class="pl-c">// if one or both are empty, then the for comprehension yields a None, and will be dropped at query render time</span>
+<span class="pl-k">def</span> <span class="pl-en">buildQuery</span>(<span class="pl-v">lower</span>: <span class="pl-en">Option</span>[<span class="pl-k">Long</span>], <span class="pl-v">upper</span>: <span class="pl-en">Option</span>[<span class="pl-k">Long</span>]) <span class="pl-k">=</span> {
+  <span class="pl-en">AND</span>(
+    defaultField() <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>xyz<span class="pl-pds">"</span></span>,
+    <span class="pl-k">for</span> (lo <span class="pl-k">&lt;</span><span class="pl-k">-</span> lower; hi <span class="pl-k">&lt;</span><span class="pl-k">-</span> upper) <span class="pl-k">yield</span> field(<span class="pl-s"><span class="pl-pds">"</span>time<span class="pl-pds">"</span></span>) isInRange (lo, hi)
+  )
+}</pre>
+  </div> 
+  <h4><a id="user-content-building-queries-with-options" class="anchor" href="https://github.com/codemettle/akka-solr#building-queries-with-options" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building queries with options</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.codemettle.akkasolr.querybuilder.SolrQueryStringBuilder.Methods.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.codemettle.akkasolr.querybuilder.SolrQueryBuilder.</span><span class="pl-v">FieldStrToSort</span>
+
+<span class="pl-k">val</span> <span class="pl-en">qs</span><span class="pl-k">:</span> <span class="pl-en">QueryPart</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> qs start <span class="pl-c1">50</span> rows <span class="pl-c1">25</span> facets (<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>) fields (<span class="pl-s"><span class="pl-pds">"</span>f1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>f2<span class="pl-pds">"</span></span>) sortBy <span class="pl-s"><span class="pl-pds">"</span>f1<span class="pl-pds">"</span></span>.desc</pre>
+  </div> 
+  <h3><a id="user-content-building-requests" class="anchor" href="https://github.com/codemettle/akka-solr#building-requests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building Requests:</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Ping</span>(action <span class="pl-k">=</span> <span class="pl-c1">None</span>, options <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">RequestOptions</span>(method <span class="pl-k">=</span> <span class="pl-en">RequestMethods</span>.<span class="pl-en">GET</span>, responseType <span class="pl-k">=</span> <span class="pl-en">SolrResponseTypes</span>.<span class="pl-en">XML</span>, requestTimeout <span class="pl-k">=</span> <span class="pl-c1">5.</span>seconds))
+
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Ping</span>()
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Ping</span>(<span class="pl-en">Solr</span>.<span class="pl-en">Ping</span>.<span class="pl-en">Enable</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Commit</span>(waitForSearcher <span class="pl-k">=</span> <span class="pl-c1">false</span>, softCommit <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Optimize</span>(waitForSearcher <span class="pl-k">=</span> <span class="pl-c1">false</span>, maxSegments <span class="pl-k">=</span> <span class="pl-c1">2</span>)
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Rollback</span>(options <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">RequestOptions</span>(actorSystem).copy(method <span class="pl-k">=</span> <span class="pl-en">RequestMethods</span>.<span class="pl-en">POST</span>, responseType <span class="pl-k">=</span> <span class="pl-en">SolrResponseTypes</span>.<span class="pl-en">Binary</span>))
+
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Select</span>(qs)
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Select</span>.<span class="pl-en">Streaming</span>(qs)
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Select</span>(qs).streaming
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Select</span>(qs).streaming withOptions <span class="pl-en">Solr</span>.<span class="pl-en">RequestOptions</span>(actorSystem).copy(requestTimeout <span class="pl-k">=</span> <span class="pl-c1">15.</span>seconds)
+
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span> <span class="pl-en">DeleteById</span> (<span class="pl-s"><span class="pl-pds">"</span>id1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>id2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span>() deleteById <span class="pl-s"><span class="pl-pds">"</span>id1<span class="pl-pds">"</span></span> deleteByQuery (<span class="pl-en">Solr</span>.queryStringBuilder defaultField() <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>blah<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">docs</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">SolrInputDocument</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span> <span class="pl-en">AddSolrDocs</span> (<span class="pl-v">docs</span>: _<span class="pl-k">*</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">docs</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AnyRef</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span> <span class="pl-en">AddDocs</span> (<span class="pl-v">docs</span>: _<span class="pl-k">*</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">doc</span><span class="pl-k">:</span> <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AnyRef</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span>() addDoc doc
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span>() addDoc doc overwrite <span class="pl-c1">false</span>
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span>() addDoc doc commit <span class="pl-c1">true</span>
+<span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Update</span>() addDoc doc commitWithin <span class="pl-c1">42.</span>seconds</pre>
+  </div> 
+  <h3><a id="user-content-sending-requests" class="anchor" href="https://github.com/codemettle/akka-solr#sending-requests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sending Requests:</h3> 
+  <p>A Connection actor is requested with <code>Solr.Client.clientTo()</code>. The connection accepts <code>Solr.SolrOperation</code> messages. <code>Solr.Client.manager</code> can also accept <code>Solr.Request</code> objects which will create connections as needed.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">req</span><span class="pl-k">:</span> <span class="pl-en">Solr</span>.<span class="pl-en">SolrOperation</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">resp</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">SolrQueryResponse</span>] <span class="pl-k">=</span>
+    (<span class="pl-en">Solr</span>.<span class="pl-en">Client</span>.manager <span class="pl-k">?</span> <span class="pl-en">Solr</span>.<span class="pl-en">Request</span>(<span class="pl-s"><span class="pl-pds">"</span>http://mysolrserver:8983/solr/core1<span class="pl-pds">"</span></span>, req)).mapTo[<span class="pl-en">SolrQueryResponse</span>]</pre>
+  </div> 
+  <p>Actor:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Solr</span>.<span class="pl-en">Client</span>.clientTo(<span class="pl-s"><span class="pl-pds">"</span>http://mysolrserver<span class="pl-pds">"</span></span>)
+<span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Solr</span>.<span class="pl-en">SolrConnection</span>(<span class="pl-s"><span class="pl-pds">"</span>http://mysolrserver<span class="pl-pds">"</span></span>, connection) <span class="pl-k">=&gt;</span> <span class="pl-c">// sender() is the same actor as `connection`</span>
+}</pre>
+  </div> 
+  <p>Future:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">connF</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ActorRef</span>] <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Client</span>.clientFutureTo(<span class="pl-s"><span class="pl-pds">"</span>http://mysolrserver<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Connection actor accepts requests and sends back <code>SolrQueryResponse</code> objects</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">responseF</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">SolrQueryResponse</span>] <span class="pl-k">=</span> (connectionActor <span class="pl-k">?</span> req).mapTo[<span class="pl-en">SolrQueryResponse</span>]</pre>
+  </div> 
+  <p>Errors can be raised from Spray (which should be <code>Http.ConnectionException</code> errors) or from akka-solr (which should be <code>Solr.AkkaSolrError</code>s - <code>ParseError</code>, <code>RequestTimedOut</code>, etc)</p> 
+  <p>akka-solr provides an <code>ImperativeWrapper</code> class that can be wrapped around the client <code>ActorRef</code> or requested with:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">connF</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ImperativeWrapper</span>] <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Client</span>.imperativeClientTo(<span class="pl-s"><span class="pl-pds">"</span>http://mysolrserver<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>The purpose of <code>ImperativeWrapper</code> is to provide a vaguely <code>SolrServer</code>-ish interface to akka-solr using Akka <code>ask</code>s. This can be helpful to transition from SolrJ or other imperative clients. All <code>ImperativeWrapper</code> methods return <code>Future[SolrQueryResponse]</code>s.</p> 
+  <h3><a id="user-content-streaming-requests" class="anchor" href="https://github.com/codemettle/akka-solr#streaming-requests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Streaming Requests:</h3> 
+  <p>akka-solr can use Solr's chunking/streaming mechanism to send query results to an actor as they are received and parsed. The behavior is similar to SolrJ's <code>SolrServer.queryAndStreamResponse</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> <span class="pl-en">Solr</span>.<span class="pl-en">Select</span>(qs).streaming
+connection <span class="pl-k">!</span> req
+<span class="pl-c">// or</span>
+<span class="pl-en">Solr</span>.<span class="pl-en">Client</span>.manager <span class="pl-k">!</span> <span class="pl-en">Solr</span>.<span class="pl-en">Request</span>(solrUrl, req)
+<span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">SolrResultInfo</span>(numFound, start, maxScore) <span class="pl-k">⇒</span> <span class="pl-c">// received first</span>
+    <span class="pl-k">case</span> <span class="pl-v">doc</span>: <span class="pl-en">AkkaSolrDocument</span> <span class="pl-k">⇒</span> <span class="pl-c">// documents are received</span>
+    <span class="pl-k">case</span> <span class="pl-v">res</span>: <span class="pl-en">SolrQueryResponse</span> <span class="pl-k">⇒</span> <span class="pl-c">// response is sent last and has no documents; (connection ? req) returns Future[SolrQueryResponse]</span>
+}
+</pre>
+  </div> 
+  <h2><a id="user-content-testability" class="anchor" href="https://github.com/codemettle/akka-solr#testability" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testability</h2> 
+  <p>We have many unit tests which employ Solr's <code>EmbeddedSolrServer</code> to fire up temporary Solr instances that are loaded, queried, updated, and destroyed during testing. I'm sure there's better ways to go about that, but in the interest of maintaining our test setup I've made akka-solr customizable with different connection actors at runtime.</p> 
+  <p>To use a different connection actor, extend the <code>com.codemettle.akkasolr.ext.ConnectionProvider</code> trait and configure the <code>akkasolr.connectionProvider</code> config to point to your implementation. akka-solr provides an <code>HttpSolrServerConnectionProvider</code> in the <code>"tests"</code> jar as an example, which uses the akka-solr-provided <code>SolrServerClientConnection</code> actor to run queries against a SolrJ <code>SolrServer</code>. A simple <code>ConnectionProvider</code> can be created in your test code which uses the same <code>SolrServerClientConnection</code> actor with an <code>EmbeddedSolrServer</code> (example uri: <code>"solr://embedded?options=that&amp;you=need"</code>).</p> 
+  <h2><a id="user-content-plans" class="anchor" href="https://github.com/codemettle/akka-solr#plans" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Plans</h2> 
+  <ul> 
+   <li>Tests - I'm not a unit-testing expert, any help is appreciated</li> 
+   <li>Add more Scala-friendly request/response wrappers as requested. 
+    <ul> 
+     <li>Sub-queries? (can provide queries without using builders)</li> 
+     <li>document field weights? (can provide queries without using builders)</li> 
+     <li>facet dates/ranges, limiting facets (can use original non-Scala-ish response)</li> 
+     <li>spellcheck, highlighting, stats, terms, etc (can use original non-Scala-ish response)</li> 
+    </ul></li> 
+   <li>???</li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/codemettle/akka-solr#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache License, 2.0</a></p> 
+  <h2><a id="user-content-changelog" class="anchor" href="https://github.com/codemettle/akka-solr#changelog" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelog</h2> 
+  <ul> 
+   <li><strong>2.1.0</strong> 
+    <ul> 
+     <li>Upgrade Akka to 2.4</li> 
+    </ul></li> 
+   <li><strong>2.0.1</strong> 
+    <ul> 
+     <li>Same changes as 1.5.1</li> 
+    </ul></li> 
+   <li><strong>2.0.0</strong> 
+    <ul> 
+     <li>Drop support for Solr4, move to Solr 5.1</li> 
+     <li>Drop support for Scala 2.10</li> 
+     <li>Build with Java8</li> 
+     <li><strong>API Change:</strong> change <code>isAnyOf</code> / <code>isNoneOf</code> to take iterables instead of being varargs methods (to cut down on <code>WrappedArray</code> bugs from forgetting <code>: _*</code> vararg conversions)</li> 
+    </ul></li> 
+   <li><strong>1.5.1</strong> 
+    <ul> 
+     <li>Add support to <code>SolrQueryBuilder</code> for shards</li> 
+     <li>Changed <code>SolrQueryBuilder</code> around as its fields were getting out of control, left the API intact, but this could affect users in rare cases - not enough of an issue to bump the minor version number.</li> 
+     <li>Add support to <code>SolrQueryBuilder</code> for Filter Queries </li> 
+    </ul></li> 
+   <li><strong>1.5.0</strong> 
+    <ul> 
+     <li>Version change due to breaking API</li> 
+     <li>Add support for authentication on regular connections, although not supported (yet?) for LoadBalanced/SolrCloud connections</li> 
+    </ul></li> 
+   <li><strong>1.0.1</strong> 
+    <ul> 
+     <li><code>SolrQueryBuilder</code> now supports facet pivots, stats, and grouping</li> 
+     <li><code>isAnyOf</code> now generates more concise queries (<code>key:(v1 OR v2 OR v3)</code> vs <code>(key:v1 OR key:v2 OR key:v3)</code>)</li> 
+     <li><code>Solr.(RequestOptions|UpdateOptions|LBConnectionOptions|SolrCloudConnectionOptions)</code> now all have a <code>.materialize(implicit ActorRefFactory)</code> method to create instances from the ether inside of any actor</li> 
+     <li><code>SolrQueryStringBuilder</code> now has an implicit conversion from <code>Option[QueryPart]</code>s to <code>QueryPart</code>s</li> 
+     <li>Bug Fix - nested AND/ORs:a query like <code>AND(defaultField() := "*", OR(Seq.empty[QueryPart]: _*))</code> would generate <code>(* AND )</code>, now correctly generates <code>*</code></li> 
+    </ul></li> 
+   <li><strong>1.0.0</strong> 
+    <ul> 
+     <li>Update build to build against 2.10.5 and 2.11.6</li> 
+     <li>No code changes, but the project has been in production long enough to mark it as 1.0.</li> 
+    </ul></li> 
+   <li><strong>0.10.2</strong> 
+    <ul> 
+     <li>Support for cursorMark in <code>SolrQueryBuilder</code> and nextCursorMark in <code>SolrQueryResponse</code>. Cursors require Solr 4.7.1, but akka-solr hard-codes the constants from SolrJ's <code>CursorMarkParams</code> to maintain compatibility with SolrJ &lt; 4.7.1</li> 
+     <li><code>SolrQueryBuilder.withSortIfNewField(SortClause)</code></li> 
+    </ul></li> 
+   <li><strong>0.10.1</strong> 
+    <ul> 
+     <li>Bugfix - asking for a SolrCloud/LoadBalanced connection with different options but same address as existing would return the existing connection instead of creating a new connection with different connection options (especially visible for SolrCloud connections with different defaultCollection settings)</li> 
+    </ul></li> 
+   <li><strong>0.10.0</strong> 
+    <ul> 
+     <li><code>SolrQueryBuilder.query</code> is no longer a String, it is a <code>SolrQueryStringBuilder.QueryPart</code> for easier modification of queries</li> 
+     <li>Responses to operations should now come from the Connection actor instead of the transient Request Handler actors</li> 
+     <li>Add the <code>LBClientConnection</code> class that behaves pretty much exactly the same as SolrJ's <code>org.apache.solr.client.solrj.impl.LBHttpSolrServer</code> class 
+      <ul> 
+       <li><code>LBHttpSolrServer</code> attempts to cycle through servers in order (but the order is changed at runtime when failures happen), <code>LBClientConnection</code> uses a random order on every request</li> 
+       <li><code>LBHttpSolrServer.Req</code> (lets the user specify a list of servers to try per request that don't necessarily have to be servers that the connection was configured to handle) is reproduced by sending <code>LBClientConnection.ExtendedRequest</code> messages to the <code>LBClientConnection</code> (<code>LBHttpSolrServer.Rsp</code> -&gt; <code>LBClientConnection.ExtendedResponse</code>)</li> 
+      </ul></li> 
+     <li>Add the <code>SolrCloudConnection</code> class that behaves pretty much exactly the same as SolrJ's <code>org.apache.solr.client.solrj.impl.CloudSolrServer</code> class 
+      <ul> 
+       <li><code>CloudSolrServer</code> has a <code>setDefaultCollection()</code> method to set default collections for requests, <code>SolrCloudConnection</code>s can be created with a default collection by providing a <code>Solr.SolrCloudConnectionOptions</code> instance with <code>defaultCollection</code> set; no runtime changes are currently supported</li> 
+       <li><code>CloudSolrServer</code> looks for a <code>"collection"</code> parameter in requests to override the default (or provide this required piece of data if <code>setDefaultCollection()</code> hasn't been called); <code>SolrCloudConnection</code> accepts <code>SolrCloudConnection.OperateOnCollection</code> messages that provide a per-request collection parameter</li> 
+       <li><code>Solr.Client.solrCloudClientTo</code> and its brethern (imperative client, client future) take a host string in the form "host:port,host:port" and accept <code>SolrCloudConnectionOptions</code> to set the default collection and other configuration</li> 
+       <li><code>Solr.Client.clientTo</code> and its brethern accept connection strings in the form "zk://host:port,host:port" and create a <code>SolrCloudConnection</code>; using this method requires that every request be sent in a <code>SolrCloudConnection.OperateOnCollection</code> message</li> 
+      </ul></li> 
+    </ul></li> 
+   <li><strong>0.9.2</strong> 
+    <ul> 
+     <li>Add support in SolrQueryBuilder for facetLimit, facetMinCount, and facetPrefix</li> 
+    </ul></li> 
+   <li><strong>0.9.1</strong> 
+    <ul> 
+     <li>Bug fixes for empty NOT and IsAnyOf query builders</li> 
+     <li>add isNoneOf query builder method</li> 
+    </ul></li> 
+   <li><strong>0.9.0</strong> 
+    <ul> 
+     <li>Initial Release</li> 
+     <li>Support for major Solr operations in an actor+message passing interface</li> 
+     <li>Support for building immutable messages that represent Solr operations in a Scala-ish manner</li> 
+     <li>Testability support through runtime-configurable connection providers, with a provided implementation that can use <code>EmbeddedSolrServer</code>s</li> 
+     <li>Easier access to Solr output objects through Scala wrappers</li> 
+    </ul></li> 
+  </ul> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/codemettle/akka-solr#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <ul> 
+   <li>Authored by <a href="https://github.com/codingismy11to7" target="_blank">@codingismy11to7</a> for <a href="https://github.com/CodeMettle" target="_blank">@CodeMettle</a> 
+    <ul> 
+     <li>We've used <a href="https://github.com/takezoe" target="_blank">@takezoe</a>'s <a href="https://github.com/takezoe/solr-scala-client" target="_blank">solr-scala-client</a> library extensively in production, and submitted features. akka-solr has no code from solr-scala-client, but there are some superficial similarities. It's a fine library if you need an asynchronous Solr client but don't use Akka.</li> 
+    </ul></li> 
+   <li>Facet pivoting, stats, and grouping <code>SolrQueryBuilder</code> support by <a href="https://github.com/compfix" target="_blank">@compfix</a></li> 
+  </ul> 
+ </article>
+</div>

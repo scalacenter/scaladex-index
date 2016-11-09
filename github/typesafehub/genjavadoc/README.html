@@ -1,0 +1,153 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-genjavadoc" class="anchor" href="https://github.com/typesafehub/genjavadoc#genjavadoc" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GenJavaDoc</h1> 
+  <p><a href="https://travis-ci.org/typesafehub/genjavadoc" target="_blank"><img src="https://camo.githubusercontent.com/9957a12593b29324343d68b43602f8741270936e/68747470733a2f2f7472617669732d63692e6f72672f74797065736166656875622f67656e6a617661646f632e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/typesafehub/genjavadoc.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>This project’s goal is the creation of real JavaDoc for Scala projects. While ScalaDoc—the native API documentation format of Scala—has several benefits over JavaDoc, Java programmers are very much used to having access to API documentation in a syntax matching their programming language of choice. Another motivating factor may be that javadoc-JARs are supported within IDE, e.g. showing tooltip help texts.</p> 
+  <h2><a id="user-content-how-to-use-it" class="anchor" href="https://github.com/typesafehub/genjavadoc#how-to-use-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to Use It</h2> 
+  <p>GenJavaDoc is a Scala compiler plugin which emits structurally equivalent Java code for all Scala sources of a project, keeping the ScalaDoc comments (with a few format adaptions). Integration into an SBT build is quite simple:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">javadocSettings</span> <span class="pl-k">=</span> inConfig(<span class="pl-en">JavaDoc</span>)(<span class="pl-en">Defaults</span>.configSettings) <span class="pl-k">++</span> <span class="pl-en">Seq</span>(
+  addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.typesafe.genjavadoc<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>genjavadoc-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.9<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full),
+  scalacOptions <span class="pl-k">+</span><span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"</span>-P:genjavadoc:out=${target.value}/java<span class="pl-pds">"</span></span>,
+  packageDoc in <span class="pl-en">Compile</span> <span class="pl-k">:</span><span class="pl-k">=</span> (packageDoc in <span class="pl-en">JavaDoc</span>).value,
+  sources in <span class="pl-en">JavaDoc</span> <span class="pl-k">:</span><span class="pl-k">=</span>
+    (target.value <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>java<span class="pl-pds">"</span></span> <span class="pl-k">**</span> <span class="pl-s"><span class="pl-pds">"</span>*.java<span class="pl-pds">"</span></span>).get <span class="pl-k">++</span>
+    (sources in <span class="pl-en">Compile</span>).value.filter(_.getName.endsWith(<span class="pl-s"><span class="pl-pds">"</span>.java<span class="pl-pds">"</span></span>)),
+  javacOptions in <span class="pl-en">JavaDoc</span> <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(),
+  artifactName in packageDoc in <span class="pl-en">JavaDoc</span> <span class="pl-k">:</span><span class="pl-k">=</span> ((sv, mod, art) <span class="pl-k">=&gt;</span>
+    <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span> mod.name <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>_<span class="pl-pds">"</span></span> <span class="pl-k">+</span> sv.binary <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>-<span class="pl-pds">"</span></span> <span class="pl-k">+</span> mod.revision <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>-javadoc.jar<span class="pl-pds">"</span></span>)
+)</pre>
+  </div> 
+  <p>To make it work, you must add the config and the settings to your project. One way to do this is to place the following line in your <code>build.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">root</span> <span class="pl-k">=</span> project.in(file(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>)).configs(<span class="pl-en">JavaDoc</span>).settings(<span class="pl-v">javadocSettings</span>: _<span class="pl-k">*</span>)</pre>
+  </div> 
+  <p>Adding <code>javadocSettings</code> to a <code>Project</code> this way will replace the packaging of the API docs to use the JavaDoc instead of the ScalaDoc (i.e. the <code>XY-javadoc.jar</code> will then contain JavaDoc). The ScalaDoc can still be generated using the normal <code>doc</code> task, whereas the JavaDoc can now be generated using <code>genjavadoc:doc</code>.</p> 
+  <p>GenJavaDoc can also be integrated into a Maven build (inspired by <a href="http://stackoverflow.com/questions/12301620/how-to-generate-an-aggregated-scaladoc-for-a-maven-site/16288487#16288487" target="_blank">this answer on StackOverflow</a>):</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">profile</span>&gt;
+  &lt;<span class="pl-ent">id</span>&gt;javadoc&lt;/<span class="pl-ent">id</span>&gt;
+  &lt;<span class="pl-ent">build</span>&gt;
+    &lt;<span class="pl-ent">plugins</span>&gt;
+      &lt;<span class="pl-ent">plugin</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;net.alchim31.maven&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;scala-maven-plugin&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">executions</span>&gt;
+          &lt;<span class="pl-ent">execution</span>&gt;
+            &lt;<span class="pl-ent">id</span>&gt;doc&lt;/<span class="pl-ent">id</span>&gt;
+            &lt;<span class="pl-ent">phase</span>&gt;generate-sources&lt;/<span class="pl-ent">phase</span>&gt;
+            &lt;<span class="pl-ent">goals</span>&gt;
+              &lt;<span class="pl-ent">goal</span>&gt;compile&lt;/<span class="pl-ent">goal</span>&gt;
+            &lt;/<span class="pl-ent">goals</span>&gt;
+          &lt;/<span class="pl-ent">execution</span>&gt;
+        &lt;/<span class="pl-ent">executions</span>&gt;
+        &lt;<span class="pl-ent">configuration</span>&gt;
+          &lt;<span class="pl-ent">args</span>&gt;
+            &lt;<span class="pl-ent">arg</span>&gt;-P:genjavadoc:out=${project.build.directory}/genjavadoc&lt;/<span class="pl-ent">arg</span>&gt;
+          &lt;/<span class="pl-ent">args</span>&gt;
+          &lt;<span class="pl-ent">compilerPlugins</span>&gt;
+            &lt;<span class="pl-ent">compilerPlugin</span>&gt;
+              &lt;<span class="pl-ent">groupId</span>&gt;com.typesafe.genjavadoc&lt;/<span class="pl-ent">groupId</span>&gt;
+              &lt;<span class="pl-ent">artifactId</span>&gt;genjavadoc-plugin_${scala.binary.full.version}&lt;/<span class="pl-ent">artifactId</span>&gt;
+              &lt;<span class="pl-ent">version</span>&gt;0.9&lt;/<span class="pl-ent">version</span>&gt;
+            &lt;/<span class="pl-ent">compilerPlugin</span>&gt;
+          &lt;/<span class="pl-ent">compilerPlugins</span>&gt;
+        &lt;/<span class="pl-ent">configuration</span>&gt;
+      &lt;/<span class="pl-ent">plugin</span>&gt;
+      &lt;<span class="pl-ent">plugin</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;org.codehaus.mojo&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;build-helper-maven-plugin&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">executions</span>&gt;
+          &lt;<span class="pl-ent">execution</span>&gt;
+            &lt;<span class="pl-ent">phase</span>&gt;generate-sources&lt;/<span class="pl-ent">phase</span>&gt;
+            &lt;<span class="pl-ent">goals</span>&gt;
+              &lt;<span class="pl-ent">goal</span>&gt;add-source&lt;/<span class="pl-ent">goal</span>&gt;
+            &lt;/<span class="pl-ent">goals</span>&gt;
+            &lt;<span class="pl-ent">configuration</span>&gt;
+              &lt;<span class="pl-ent">sources</span>&gt;
+                &lt;<span class="pl-ent">source</span>&gt;${project.build.directory}/genjavadoc&lt;/<span class="pl-ent">source</span>&gt;
+              &lt;/<span class="pl-ent">sources</span>&gt;
+            &lt;/<span class="pl-ent">configuration</span>&gt;
+          &lt;/<span class="pl-ent">execution</span>&gt;
+        &lt;/<span class="pl-ent">executions</span>&gt;
+      &lt;/<span class="pl-ent">plugin</span>&gt;
+      &lt;<span class="pl-ent">plugin</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;org.apache.maven.plugins&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;maven-javadoc-plugin&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">version</span>&gt;2.9&lt;/<span class="pl-ent">version</span>&gt;
+        &lt;<span class="pl-ent">configuration</span>&gt;
+          &lt;<span class="pl-ent">minmemory</span>&gt;64m&lt;/<span class="pl-ent">minmemory</span>&gt;
+          &lt;<span class="pl-ent">maxmemory</span>&gt;2g&lt;/<span class="pl-ent">maxmemory</span>&gt;
+          &lt;<span class="pl-ent">outputDirectory</span>&gt;${project.build.directory}&lt;/<span class="pl-ent">outputDirectory</span>&gt;
+          &lt;<span class="pl-ent">detectLinks</span>&gt;true&lt;/<span class="pl-ent">detectLinks</span>&gt;
+        &lt;/<span class="pl-ent">configuration</span>&gt;
+      &lt;/<span class="pl-ent">plugin</span>&gt;
+    &lt;/<span class="pl-ent">plugins</span>&gt;
+  &lt;/<span class="pl-ent">build</span>&gt;
+&lt;/<span class="pl-ent">profile</span>&gt;</pre>
+  </div> 
+  <h3><a id="user-content-translation-of-scaladoc-comments" class="anchor" href="https://github.com/typesafehub/genjavadoc#translation-of-scaladoc-comments" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Translation of ScalaDoc comments</h3> 
+  <p>Comments found within the Scala sources are transferred to the corresponding Java sources including some modifications. These are necessary since ScalaDoc supports different mark-up elements than JavaDoc. The modifications are:</p> 
+  <ul> 
+   <li><code>{{{ ... }}}</code> is translated to <code>&lt;pre&gt;&lt;code&gt; ... &lt;/code&gt;&lt;/pre&gt;</code>, where within the pre-formatted text the following are represented by their HTML entities: <code>@</code>, <code>&lt;</code>, <code>&gt;</code></li> 
+   <li>typographic quotes (double as well as single) are translated to <code>&amp;rdquo;</code> and friends</li> 
+   <li><code>@see [[ ... ]]</code> is translated to <code>@see ...</code>, but only if on a line on its own</li> 
+   <li><code>[[ ... ]]</code> is translated to <code>{@link ... }</code></li> 
+   <li><code>&lt;p&gt;</code> tokens are placed between paragraphs, collapsing empty lines beforehand</li> 
+   <li>words between backticks are placed between <code>&lt;code&gt; ... &lt;/code&gt;</code> instead</li> 
+  </ul> 
+  <h3><a id="user-content-additional-transformations" class="anchor" href="https://github.com/typesafehub/genjavadoc#additional-transformations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Additional transformations</h3> 
+  <p>Some additional transformations are applied in order to make the generated JavaDoc more useful:</p> 
+  <ul> 
+   <li>if a Scala method or class was marked <code>@scala.annotation.deprecated</code> an equivalent JavaDoc <code>@deprecated</code> comment line will be inserted to the resulting JavaDoc comment.</li> 
+  </ul> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/typesafehub/genjavadoc#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it Works</h2> 
+  <p>ScalaDoc generation is done by a special variant of the Scala compiler, which can in principle emit different output, but the syntax parsed by the ScalaDoc code is the Scala one: the compiler phases which adapt the AST to be more Java-like (to emit JVM byte-code in the end) are not run. On the other hand source comments cannot easily be associated with method signatures parsed from class files, and generating corresponding Java code to be fed into the <code>javadoc</code> tool is also no small task.</p> 
+  <p>The approach taken here is to use the Scala compiler’s support as far as possible and then generate mostly valid Java code corresponding to the AST—but only the class and method structur without implementations. Since the JavaDoc shall contain generic type information, and shall also not be confused by artifacts of Scala’s encoding of traits and other things, the AST must be inspected before the “erasure” phase; due to Java’s flat method parameter lists the other bound on where to hook into the transformation is that it should be after the “uncurry” phase (which transforms <code>def f(x: Int)(s: String)</code> into <code>def f(x: int, s: String)</code>). Luckily there is a gap between those two phases which is just wide enough to squeeze some code in.</p> 
+  <p>One drawback of this choice is that the flattening of classes and companion objects or the mixing-in of method implementations from traits into derived classes happens much later in the transformation pipeline, meaning that the compiler plugin has to do that transformation itself; for this it has the advantage that it does not need to be 100% Scala-correct since the goal is just to document method signatures, not to implement all the intricacies of access widening and so on.</p> 
+  <h2><a id="user-content-known-limitations" class="anchor" href="https://github.com/typesafehub/genjavadoc#known-limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Known Limitations</h2> 
+  <ul> 
+   <li><p>Many ScalaDoc tags and features are simply not supported by the javadoc tool and genjavadoc does not reimplement them:</p> 
+    <ul> 
+     <li><code>@note</code>, <code>@example</code>, <code>@group</code> etc. do not work and are errors in JavaDoc 8, so they cannot be used</li> 
+     <li>links to methods that use the overload disambiguation syntax will not work</li> 
+    </ul></li> 
+   <li><p>Classes and objects nested inside nested objects are emitted by Scalac in such a form that there is no valid Java syntax to produce the same binary names. This is due to differences in name mangling (where javac inserts more dollar signs than scalac does). This means that while JavaDoc is generated for these (in order to guarantee that JavaDoc will find all the types it needs) the precise names are neither correct nor usable in practice.</p></li> 
+  </ul> 
+  <h2><a id="user-content-reporting-bugs" class="anchor" href="https://github.com/typesafehub/genjavadoc#reporting-bugs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reporting Bugs</h2> 
+  <p>If you find errors in the generation process or have suggestions on how to improve the quality of the emitted JavaDoc contents, please report issues on this github project’s issue tracker.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/typesafehub/genjavadoc#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This software is licensed under the Apache 2 license.</p> 
+  <h3><a id="user-content-sponsored-by-lightbend" class="anchor" href="https://github.com/typesafehub/genjavadoc#sponsored-by-lightbend" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sponsored by Lightbend</h3> 
+  <p>Responsible: Dr. Roland Kuhn (<a href="https://github.com/rkuhn" target="_blank">@rkuhn</a>)</p> 
+  <p>Maintained by <a href="https://github.com/orgs/akka/teams/akka-team" target="_blank">Akka Team</a> (mostly by <a href="https://github.com/2m" target="_blank">@2m</a>, <a href="https://github.com/ktoso" target="_blank">@ktoso</a>)</p> 
+  <p>Feel free to ping above maintainers for code review or discussions. Pull requests are very welcome–thanks in advance!</p> 
+ </article>
+</div>

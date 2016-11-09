@@ -1,0 +1,156 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-bonsai" class="anchor" href="https://github.com/stripe/bonsai#bonsai" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bonsai</h1> 
+  <p>Beautiful trees, without the landscaping. Bonsai is a Scala library for transforming arbitrary tree structures into read-only versions that take up a fraction of the space.</p> 
+  <h2><a id="user-content-overview" class="anchor" href="https://github.com/stripe/bonsai#overview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Overview</h2> 
+  <p>Bonsai compresses trees in 2 ways: by using significantly less space to store the tree structure itself (tree compression), and by encoding the node labels in a memory efficient structure (label compression).</p> 
+  <h3><a id="user-content-what-is-a-tree" class="anchor" href="https://github.com/stripe/bonsai#what-is-a-tree" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What is a "Tree"?</h3> 
+  <p>Bonsai works over arbitrary trees, so it assumes a fairly generic interface for interacting with trees. In Bonsai a tree;</p> 
+  <ul> 
+   <li>has 0 or 1 root nodes</li> 
+   <li>each node has 0 or more children</li> 
+   <li>each node has a label attached to it</li> 
+  </ul> 
+  <p>The actual type of the node is unimportant. What is important is the node labels and the relationships between the nodes (parent, child, sibling, etc). This structure is enough to describe most of the types of trees you are familiar with.</p> 
+  <p>Bonsai encodes this notion of trees with the <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/TreeOps.scala" target="_blank">TreeOps type class</a>. Here is a truncated version of the type class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">T</span>] {
+
+<span class="pl-c">  /** The type of the nodes in the tree. */</span>
+  <span class="pl-k">type</span> <span class="pl-en">Node</span>
+
+<span class="pl-c">  /** The type of the label attached to each node. */</span>
+  <span class="pl-k">type</span> <span class="pl-en">Label</span>
+
+<span class="pl-c">  /**</span>
+<span class="pl-c">   * Returns the root node of the tree.</span>
+<span class="pl-c">   */</span>
+  <span class="pl-k">def</span> <span class="pl-en">root</span>(<span class="pl-v">t</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Node</span>]
+
+<span class="pl-c">  /**</span>
+<span class="pl-c">   * Returns all the direct children of the given node. The order may or may</span>
+<span class="pl-c">   * not matter. TreeOps does not provide any guarantees here.</span>
+<span class="pl-c">   */</span>
+  <span class="pl-k">def</span> <span class="pl-en">children</span>(<span class="pl-v">node</span>: <span class="pl-en">Node</span>)<span class="pl-k">:</span> <span class="pl-en">Iterable</span>[<span class="pl-en">Node</span>]
+
+<span class="pl-c">  /**</span>
+<span class="pl-c">   * Returns the label attached to the given node.</span>
+<span class="pl-c">   */</span>
+  <span class="pl-k">def</span> <span class="pl-en">label</span>(<span class="pl-v">node</span>: <span class="pl-en">Node</span>)<span class="pl-k">:</span> <span class="pl-en">Label</span>
+
+  ...
+}</pre>
+  </div> 
+  <p>The type <code>T</code> is our actual tree type. The <code>Node</code> type is the way we reference internal nodes in our tree <code>T</code>. The actual type of <code>Node</code> isn't important, however, and is mostly an implementation detail. The important bit is the <code>Label</code> type, which is the user-facing data associated with each node.</p> 
+  <p>The <code>bonsai-example</code> subproject has <a href="https://github.com/stripe/bonsai/blob/master/bonsai-example/src/main/scala/com/stripe/bonsai/example/Huffman.scala" target="_blank">an example of a Huffman tree</a>. A Huffman tree is used to store a Huffman coding for decoding a compressed message (a bitstring). We decode the bitstring, bit-by-bit, using the tree.</p> 
+  <p>Starting at the root of the tree, we follow the left child if the current bit is a 0 and the right child if it is a 1. We continue until reaching a leaf node, at which poitn we output the symbol associated with it, then start back at the beginning of the tree. When we've exhausted the entire bitstring, we'll have our decoded message.</p> 
+  <p>Here is how we may implement a Huffman tree in Scala:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">HuffmanTree</span>[<span class="pl-k">+</span><span class="pl-en">A</span>]
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Branch</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">zero</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>], <span class="pl-v">one</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">HuffmanTree</span>[<span class="pl-en">A</span>]
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Leaf</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">value</span>: <span class="pl-en">A</span>) <span class="pl-k">extends</span> <span class="pl-e">HuffmanTree</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>And here is how we would implement its <code>TreeOps</code> instance:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">HuffmanTree</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">huffmanTreeOps</span>[<span class="pl-en">A</span>]<span class="pl-k">:</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span>
+    <span class="pl-k">new</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] {
+      <span class="pl-k">type</span> <span class="pl-en">Node</span> <span class="pl-k">=</span> <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]
+      <span class="pl-k">type</span> <span class="pl-en">Label</span> <span class="pl-k">=</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>]
+
+      <span class="pl-k">def</span> <span class="pl-en">root</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> <span class="pl-en">Some</span>(tree)
+      <span class="pl-k">def</span> <span class="pl-en">children</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Iterable</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> tree <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">Branch</span>(l, r) <span class="pl-k">=&gt;</span> l <span class="pl-k">::</span> r <span class="pl-k">::</span> <span class="pl-c1">Nil</span>
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">Nil</span>
+      }
+      <span class="pl-k">def</span> <span class="pl-en">label</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Label</span> <span class="pl-k">=</span> tree <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">Leaf</span>(value) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(value)
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>
+      }
+    }
+}</pre>
+  </div> 
+  <p>As long as we are careful to implement all our operations on a Huffman tree by using its more generic <code>TreeOps</code> interface, rather than <code>HuffmanTree</code> directly, we can then swap out the actual tree data structure, without affecting the code using it.</p> 
+  <p>For example, below we implement a <code>decode</code> operation as an implicit class using just <code>TreeOps</code>.</p> 
+  <p><em>Note that <code>TreeOps.Aux[T, Option[A]]</code> is just a type alias for <code>TreeOps[T] { type Label = Option[A] }</code></em></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">HuffmanTreeOps</span>[<span class="pl-en">T</span>, <span class="pl-en">A</span>](<span class="pl-v">tree</span>: <span class="pl-en">T</span>)(<span class="pl-k">implicit</span> <span class="pl-v">treeOps</span>: <span class="pl-en">TreeOps</span>.<span class="pl-en">Aux</span>[<span class="pl-en">T</span>, <span class="pl-en">Option</span>[<span class="pl-en">A</span>]]) {
+  <span class="pl-c">// Importing treeOps gives us some useful methods on `tree`</span>
+  <span class="pl-k">import</span> <span class="pl-v">treeOps.</span><span class="pl-v">_</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">decode</span>(<span class="pl-v">bits</span>: <span class="pl-en">BitSet</span>, <span class="pl-v">len</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Vector</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">root</span> <span class="pl-k">=</span> tree.root.get
+    <span class="pl-k">val</span> (_, result) <span class="pl-k">=</span> (<span class="pl-c1">0</span> until len)
+      .foldLeft((root, <span class="pl-en">Vector</span>.empty[<span class="pl-en">A</span>])) { <span class="pl-k">case</span> ((node, acc), i) <span class="pl-k">=&gt;</span>
+        node.label <span class="pl-k">match</span> {
+          <span class="pl-k">case</span> <span class="pl-en">Some</span>(value) <span class="pl-k">=&gt;</span> (root, acc <span class="pl-k">:</span><span class="pl-k">+</span> value)
+          <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">if</span> bits(i) <span class="pl-k">=&gt;</span> (node.children.head, acc)
+          <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> (node.children.iterator.drop(<span class="pl-c1">1</span>).next, acc)
+        }
+      }
+    result
+  }
+}</pre>
+  </div> 
+  <p>The goal of this indirection through <code>TreeOps</code> is to let us use a compressed version of the <code>tree</code> instead of an actual <code>HuffmanTree</code>, which will see below.</p> 
+  <h3><a id="user-content-tree-compression" class="anchor" href="https://github.com/stripe/bonsai#tree-compression" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tree Compression</h3> 
+  <p>Bonsai's tree compression is based off of a <a href="https://en.wikipedia.org/wiki/Succinct_data_structure" title="Succinct Data Structures" target="_blank">succinct data structure</a> for binary trees. Bonsai supports k-ary trees by first transforming the original tree into a <a href="https://en.wikipedia.org/wiki/Left-child_right-sibling_binary_tree" target="_blank">left-child right-sibling tree</a>, which preserves all the relationships from the original tree, but ensures we have at most 2 children per node. You can read more about the details of the actual compression algorithm used in <a href="http://www.dcc.uchile.cl/%7Egnavarro/algoritmos/ps/wea05.pdf" target="_blank">"Practical Implementation of Rank and Select Queries"</a>. <strong>The upshot is that we can store the entire structure of a tree in only ~2.73bits per node.</strong> This replaces the normal strategy of using JVM objects for nodes and references to store the relationships.</p> 
+  <p>We actually compress trees by transforming them into <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/Tree.scala" target="_blank">Bonsai <code>Tree</code>s</a>. Bonsai's <code>Tree</code> constructor takes any arbitrary tree <code>T</code> that has a <code>TreeOps[T]</code> available and will return a <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/Tree.scala" target="_blank"><code>Tree</code></a> with the same structure and labels (and <code>Label</code> type) as the original tree. However, the entire structure and labels of the tree will have been compressed, so this new tree requires significantly less space.</p> 
+  <p>In the example in <code>bonsai-example</code>, we use the Huffman encoding described above to construct a simple Huffman tree for the printable ASCII characters (0x20 -&gt; 0x7E) and compress it using Bonsai's <code>Tree</code>. The result is a <strong>11x reduction</strong> in memory requirements. Since our <code>decode</code> operation was implemented using <code>TreeOps</code>, we can use this compressed tree just as we would've used the original tree.</p> 
+  <p>This example is a bit contrived, since the trees are small to begin with, but you can imagine that applying this to a large random forest yields great results.</p> 
+  <h3><a id="user-content-label-compression" class="anchor" href="https://github.com/stripe/bonsai#label-compression" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Label Compression</h3> 
+  <p>Bonsai provides a <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/Layout.scala" target="_blank">Layout</a> type class, along with some simple combinators, for describing how to (de)serialize your labels. At the lowest level are a set of Layout "primitives" that can encode simple data types into compact data structures. The combinators then allow more complex structures to be described (tuples, <code>Either</code>, mappings to case classes, etc), without adding much, if any, overhead.</p> 
+  <p>Here is an example of a <code>Layout</code> for some <code>Widget</code> type we made up:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Widget</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Sprocket</span>(<span class="pl-v">radius</span>: <span class="pl-k">Int</span>, <span class="pl-v">weight</span>: <span class="pl-en">Option</span>[<span class="pl-k">Double</span>]) <span class="pl-k">extends</span> <span class="pl-e">Widget</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Doodad</span>(<span class="pl-v">length</span>: <span class="pl-k">Int</span>, <span class="pl-v">width</span>: <span class="pl-k">Int</span>, <span class="pl-v">weight</span>: <span class="pl-en">Option</span>[<span class="pl-k">Double</span>]) <span class="pl-k">extends</span> <span class="pl-e">Widget</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Widget</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">WidgetLayout</span><span class="pl-k">:</span> <span class="pl-en">Layout</span>[<span class="pl-en">Widget</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">Layout</span>[<span class="pl-en">Either</span>[(<span class="pl-k">Int</span>, <span class="pl-en">Option</span>[<span class="pl-k">Double</span>]), ((<span class="pl-k">Int</span>, <span class="pl-k">Int</span>), <span class="pl-en">Option</span>[<span class="pl-k">Double</span>])]].transform(
+      {
+        <span class="pl-k">case</span> <span class="pl-en">Left</span>((r, wt)) <span class="pl-k">=&gt;</span> <span class="pl-en">Sprocket</span>(r, wt)
+        <span class="pl-k">case</span> <span class="pl-en">Right</span>(((l, w), wt)) <span class="pl-k">=&gt;</span> <span class="pl-en">Doodad</span>(l, w, wt)
+      },
+      {
+        <span class="pl-k">case</span> <span class="pl-en">Sprocket</span>(r, wt) <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>((r, wt))
+        <span class="pl-k">case</span> <span class="pl-en">Doodad</span>(l, w, wt) <span class="pl-k">=&gt;</span> <span class="pl-en">Right</span>(((l, w), wt))
+      }
+    )
+  }
+}</pre>
+  </div> 
+  <p>You can see the <a href="https://github.com/stripe/bonsai/blob/master/bonsai-example/src/main/scala/com/stripe/bonsai/example/Widget.scala" target="_blank">full Widget code/example</a> in the <code>bonsai-example</code> sub project. In that example, we compress a <code>Vector[Option[Widget]]</code> using the layout and end up with over a <strong>6x reduction</strong> in memory requirements.</p> 
+  <p>Currently, Bonsai focuses mainly on compressing the overhead of the structure your data requires (eg options, eithers, tuples), rather than the data itself. This will likely change in future releases, and we'll support better compression for primitive types, as well as things like dictionary encoding for all types.</p> 
+  <h1><a id="user-content-using-bonsai-in-sbt-or-maven" class="anchor" href="https://github.com/stripe/bonsai#using-bonsai-in-sbt-or-maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Bonsai in SBT or Maven</h1> 
+  <p>Bonsai is published on sonatype. To use it in your SBT project, you can add the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.stripe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>bonsai<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h1><a id="user-content-miscellaneous" class="anchor" href="https://github.com/stripe/bonsai#miscellaneous" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Miscellaneous</h1> 
+  <p>Bonsai is Open Source and available under the MIT License.</p> 
+  <p>For more help, feel free to contact the authors or create an issue.</p> 
+ </article>
+</div>

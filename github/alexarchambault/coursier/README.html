@@ -1,0 +1,596 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-coursier" class="anchor" href="https://github.com/alexarchambault/coursier#coursier" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Coursier</h1> 
+  <p><em>Pure Scala Artifact Fetching</em></p> 
+  <p>A Scala library to fetch dependencies from Maven / Ivy repositories</p> 
+  <p><a href="https://travis-ci.org/alexarchambault/coursier" target="_blank"><img src="https://camo.githubusercontent.com/5a8b2ef7e062350c50a86cd18f1446f83ba30764/68747470733a2f2f7472617669732d63692e6f72672f616c657861726368616d6261756c742f636f7572736965722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/alexarchambault/coursier.svg?branch=master" style="max-width:100%;"></a> <a href="https://ci.appveyor.com/project/alexarchambault/coursier" target="_blank"><img src="https://camo.githubusercontent.com/cdc1389b5340fe23847c1bc3bab04ed8d6abb10a/68747470733a2f2f63692e6170707665796f722e636f6d2f6170692f70726f6a656374732f7374617475732f747274756d3562377761736866626a393f7376673d74727565" alt="Build status (Windows)" data-canonical-src="https://ci.appveyor.com/api/projects/status/trtum5b7washfbj9?svg=true" style="max-width:100%;"></a> <a href="https://gitter.im/alexarchambault/coursier?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/alexarchambault/coursier" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/io.get-coursier/coursier_2.11" target="_blank"><img src="https://camo.githubusercontent.com/b459ad6ab10d58e0ba747e03a59357893435f724/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f696f2e6765742d636f7572736965722f636f7572736965725f322e31312e737667" alt="Maven Central" data-canonical-src="https://img.shields.io/maven-central/v/io.get-coursier/coursier_2.11.svg" style="max-width:100%;"></a> <a href="http://javadoc-badge.appspot.com/io.get-coursier/coursier_2.11" target="_blank"><img src="https://camo.githubusercontent.com/2927c37f771efe78a333db4ad52b07434376cfce/687474703a2f2f6a617661646f632d62616467652e61707073706f742e636f6d2f696f2e6765742d636f7572736965722f636f7572736965725f322e31312e7376673f6c6162656c3d7363616c61646f63" alt="Scaladoc" data-canonical-src="http://javadoc-badge.appspot.com/io.get-coursier/coursier_2.11.svg?label=scaladoc" style="max-width:100%;"></a></p> 
+  <p><a href="https://camo.githubusercontent.com/393601a4a82ae2351db536fe9c5f18c0b7cb7a9b/687474703a2f2f692e696d6775722e636f6d2f6c434a396f716c2e676966" target="_blank"><img src="https://camo.githubusercontent.com/393601a4a82ae2351db536fe9c5f18c0b7cb7a9b/687474703a2f2f692e696d6775722e636f6d2f6c434a396f716c2e676966" alt="Demo (courtesy of @paulp)" data-canonical-src="http://i.imgur.com/lCJ9oql.gif" style="max-width:100%;"></a></p> 
+  <p><em>coursier</em> is a dependency resolver / fetcher <em>à la</em> Maven / Ivy, entirely rewritten from scratch in Scala. It aims at being fast and easy to embed in other contexts. Its very core (<code>core</code> module) aims at being extremely pure, and only requires to be fed external data (Ivy / Maven metadata) via a monad.</p> 
+  <p>The <code>cache</code> module handles caching of the metadata and artifacts themselves, and is less so pure than the <code>core</code> module, in the sense that it happily does IO as a side-effect (always wrapped in <code>Task</code>, and naturally favoring immutability for all that's kept in memory).</p> 
+  <p>It handles fancy Maven features like</p> 
+  <ul> 
+   <li><a href="http://books.sonatype.com/mvnref-book/reference/pom-relationships-sect-project-relationships.html#pom-relationships-sect-project-inheritance" target="_blank">POM inheritance</a>,</li> 
+   <li><a href="http://books.sonatype.com/mvnex-book/reference/optimizing-sect-dependencies.html" target="_blank">dependency management</a>,</li> 
+   <li><a href="https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies" target="_blank">import scope</a>,</li> 
+   <li><a href="http://books.sonatype.com/mvnref-book/reference/resource-filtering-sect-properties.html" target="_blank">properties</a>,</li> 
+   <li>etc.</li> 
+  </ul> 
+  <p>and is able to fetch metadata and artifacts from both Maven and Ivy repositories.</p> 
+  <p>Compared to the default dependency resolution of SBT, it adds:</p> 
+  <ul> 
+   <li>downloading of artifacts in parallel,</li> 
+   <li>better offline mode - one can safely work with snapshot dependencies if these are in cache (SBT tends to try and fail if it cannot check for updates),</li> 
+   <li>non obfuscated cache (cache structure just mimics the URL it caches),</li> 
+   <li>no global lock (no "Waiting for ~/.ivy2/.sbt.ivy.lock to be available").</li> 
+  </ul> 
+  <p>From the command-line, it also has:</p> 
+  <ul> 
+   <li>a <a href="https://github.com/alexarchambault/coursier#launch" target="_blank">launcher</a>, able to launch apps distributed via Maven / Ivy repositories,</li> 
+   <li>a <a href="https://github.com/alexarchambault/coursier#bootstrap" target="_blank">bootstrap</a> generator, able to generate stripped launchers of these apps.</li> 
+  </ul> 
+  <p>Lastly, it can be used programmatically via its <a href="https://github.com/alexarchambault/coursier#api" target="_blank">API</a> and has a Scala JS <a href="https://github.com/alexarchambault/coursier#scala-js-demo" target="_blank">demo</a>.</p> 
+  <h2><a id="user-content-table-of-content" class="anchor" href="https://github.com/alexarchambault/coursier#table-of-content" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Table of content</h2> 
+  <ol> 
+   <li><a href="https://github.com/alexarchambault/coursier#quick-start" target="_blank">Quick start</a> 
+    <ol> 
+     <li><a href="https://github.com/alexarchambault/coursier#sbt-plugin" target="_blank">SBT plugin</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#command-line" target="_blank">Command-line</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#api" target="_blank">API</a></li> 
+    </ol></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#why" target="_blank">Why</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#usage" target="_blank">Usage</a> 
+    <ol> 
+     <li><a href="https://github.com/alexarchambault/coursier#sbt-plugin-1" target="_blank">SBT plugin</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#command-line-1" target="_blank">Command-line</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#api-1" target="_blank">API</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#scala-js-demo" target="_blank">Scala JS demo</a></li> 
+    </ol></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#extra-features" target="_blank">Extra features</a> 
+    <ol> 
+     <li><a href="https://github.com/alexarchambault/coursier#printing-trees" target="_blank">Printing trees</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#generating-bootstrap-launchers" target="_blank">Generating bootstrap launchers</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#credentials" target="_blank">Credentials</a></li> 
+     <li><a href="https://github.com/alexarchambault/coursier#extra-protocols" target="_blank">Extra protocols</a></li> 
+    </ol></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#limitations" target="_blank">Limitations</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#faq" target="_blank">FAQ</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#roadmap" target="_blank">Roadmap</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#development-tips" target="_blank">Development tips</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#contributors" target="_blank">Contributors</a></li> 
+   <li><a href="https://github.com/alexarchambault/coursier#projects-using-coursier" target="_blank">Projects using coursier</a></li> 
+  </ol> 
+  <h2><a id="user-content-quick-start" class="anchor" href="https://github.com/alexarchambault/coursier#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick start</h2> 
+  <h3><a id="user-content-sbt-plugin" class="anchor" href="https://github.com/alexarchambault/coursier#sbt-plugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT plugin</h3> 
+  <p>Enable the SBT plugin by adding</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>to <code>~/.sbt/0.13/plugins/build.sbt</code> (enables it globally), or to the <code>project/plugins.sbt</code> file of a SBT project. Tested with SBT 0.13.8 / 0.13.9 / 0.13.11 / 0.13.12.</p> 
+  <h3><a id="user-content-command-line" class="anchor" href="https://github.com/alexarchambault/coursier#command-line" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Command-line</h3> 
+  <p>Download and run its launcher with</p> 
+  <pre><code>$ curl -L -o coursier https://git.io/vgvpD &amp;&amp; chmod +x coursier &amp;&amp; ./coursier --help
+</code></pre> 
+  <p>Alternatively on OS X, install it via <a href="https://github.com/paulp/" target="_blank">@paulp</a>'s homebrew formula,</p> 
+  <pre><code>$ brew install --HEAD paulp/extras/coursier
+</code></pre> 
+  <p>Run an application distributed via artifacts with</p> 
+  <pre><code>$ ./coursier launch com.lihaoyi:ammonite_2.11.8:0.7.0
+</code></pre> 
+  <p>Download and list the classpath of one or several dependencies with</p> 
+  <pre><code>$ ./coursier fetch org.apache.spark:spark-sql_2.11:1.6.1 com.twitter:algebird-spark_2.11:0.12.0
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/com/twitter/algebird-spark_2.11/0.12.0/algebird-spark_2.11-0.12.0.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/com/twitter/algebird-core_2.11/0.12.0/algebird-core_2.11-0.12.0.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/apache/hadoop/hadoop-annotations/2.2.0/hadoop-annotations-2.2.0.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/tukaani/xz/1.0/xz-1.0.jar
+...
+</code></pre> 
+  <h3><a id="user-content-api" class="anchor" href="https://github.com/alexarchambault/coursier#api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API</h3> 
+  <p>Add to your <code>build.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>coursier-cache<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <p>Add an import for coursier,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">coursier.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>To resolve dependencies, first create a <code>Resolution</code> case class with your dependencies in it,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">start</span> <span class="pl-k">=</span> <span class="pl-en">Resolution</span>(
+  <span class="pl-en">Set</span>(
+    <span class="pl-en">Dependency</span>(
+      <span class="pl-en">Module</span>(<span class="pl-s"><span class="pl-pds">"</span>org.scalaz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>scalaz-core_2.11<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>7.2.3<span class="pl-pds">"</span></span>
+    ),
+    <span class="pl-en">Dependency</span>(
+      <span class="pl-en">Module</span>(<span class="pl-s"><span class="pl-pds">"</span>org.typelevel<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>cats-core_2.11<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span>
+    )
+  )
+)</pre>
+  </div> 
+  <p>Create a fetch function able to get things from a few repositories via a local cache,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">repositories</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">Cache</span>.ivy2Local,
+  <span class="pl-en">MavenRepository</span>(<span class="pl-s"><span class="pl-pds">"</span>https://repo1.maven.org/maven2<span class="pl-pds">"</span></span>)
+)
+
+<span class="pl-k">val</span> <span class="pl-en">fetch</span> <span class="pl-k">=</span> <span class="pl-en">Fetch</span>.from(repositories, <span class="pl-en">Cache</span>.fetch())</pre>
+  </div> 
+  <p>Then run the resolution per-se,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">resolution</span> <span class="pl-k">=</span> start.process.run(fetch).run</pre>
+  </div> 
+  <p>That will fetch and use metadata.</p> 
+  <p>Check for errors in</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">errors</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">Dependency</span>, <span class="pl-en">Seq</span>[<span class="pl-k">String</span>])] <span class="pl-k">=</span> resolution.errors</pre>
+  </div> 
+  <p>These would mean that the resolution wasn't able to get metadata about some dependencies.</p> 
+  <p>Then fetch and get local copies of the artifacts themselves (the JARs) with</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.io.</span><span class="pl-v">File</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">\/</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.concurrent.</span><span class="pl-v">Task</span>
+
+<span class="pl-k">val</span> <span class="pl-en">localArtifacts</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">FileError</span> \<span class="pl-k">/</span> <span class="pl-en">File</span>] <span class="pl-k">=</span> <span class="pl-en">Task</span>.gatherUnordered(
+  resolution.artifacts.map(<span class="pl-en">Cache</span>.file(_).run)
+).run</pre>
+  </div> 
+  <p>The default global cache used by coursier is <code>~/.coursier/cache/v1</code>. E.g. the artifact at <code>https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar</code> will land in <code>~/.coursier/cache/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar</code>.</p> 
+  <p>From the SBT plugin, the default repositories are the ones provided by SBT (typically Central or JFrog, and <code>~/.ivy2/local</code>). From the CLI tools, these are Central (<code>https://repo1.maven.org/maven2</code>) and <code>~/.ivy2/local</code>. From the API, these are specified manually - you are encouraged to use those too.</p> 
+  <h2><a id="user-content-why" class="anchor" href="https://github.com/alexarchambault/coursier#why" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why</h2> 
+  <p>The current state of dependency management in Scala suffers several flaws, that prevent applications to fully profit from and rely on dependency management. Coursier aims at addressing these by making it easy to:</p> 
+  <ul> 
+   <li>resolve / download dependencies programmatically,</li> 
+   <li>launch applications distributed via Maven / Ivy artifacts from the command-line,</li> 
+   <li>work offline with artifacts,</li> 
+   <li>sandbox dependency management between projects.</li> 
+  </ul> 
+  <p>As its <a href="https://github.com/alexarchambault/coursier#api" target="_blank">API</a> illustrates, getting artifacts of dependencies is just a matter of specifying these along with a few repositories. You can then straightforwardly get the corresponding artifacts, easily getting precise feedback about what goes on during the resolution.</p> 
+  <p>Launching an application distributed via Maven artifacts is just a command away with the <a href="https://github.com/alexarchambault/coursier#command-line" target="_blank">launcher</a> of coursier. In most cases, just specifying the corresponding main dependency is enough to launch the corresponding application.</p> 
+  <p>If all your dependencies are in cache, chances are coursier will not even try to connect to remote repositories. This also applies to snapshot dependencies of course - these are only updated on demand, not getting constantly in your way like is currently the case by default with SBT.</p> 
+  <p>When using coursier from the command-line or via its SBT plugin, sandboxing is just one command away. Just do <code>export COURSIER_CACHE="$(pwd)/.coursier-cache"</code>, and the cache will become <code>.coursier-cache</code> from the current directory instead of the default global <code>~/.coursier/cache/v1</code>. This allows for example to quickly inspect the content of the cache used by a particular project, in case you have any doubt about what's in it.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/alexarchambault/coursier#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h3><a id="user-content-sbt-plugin-1" class="anchor" href="https://github.com/alexarchambault/coursier#sbt-plugin-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT plugin</h3> 
+  <p>Enable the SBT plugin globally by adding</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>to <code>~/.sbt/0.13/plugins/build.sbt</code></p> 
+  <p>To enable it on a per-project basis, add it only to the <code>project/plugins.sbt</code> of a SBT project. The SBT plugin has been tested only with SBT 0.13.8 / 0.13.9 / 0.13.11 / 0.13.12. It doesn't currently work with the SBT 1.0 milestones.</p> 
+  <p>Once enabled, the <code>update</code>, <code>updateClassifiers</code>, and <code>updateSbtClassifiers</code> commands are taken care of by coursier. These provide more output about what's going on than their default implementations do.</p> 
+  <h3><a id="user-content-command-line-1" class="anchor" href="https://github.com/alexarchambault/coursier#command-line-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Command-line</h3> 
+  <p>Download and run its launcher with</p> 
+  <pre><code>$ curl -L -o coursier https://git.io/vgvpD &amp;&amp; chmod +x coursier &amp;&amp; ./coursier --help
+</code></pre> 
+  <p>The launcher itself weighs only 8 kB and can be easily embedded as is in other projects. It downloads the artifacts required to launch coursier on the first run.</p> 
+  <p>Alternatively on OS X, install it via <a href="https://github.com/paulp/" target="_blank">@paulp</a>'s homebrew formula, that puts the <code>coursier</code> launcher directly in your PATH,</p> 
+  <pre><code>$ brew install --HEAD paulp/extras/coursier
+</code></pre> 
+  <pre><code>$ ./coursier --help
+</code></pre> 
+  <p>lists the available coursier commands. The most notable ones are <code>launch</code>, and <code>fetch</code>. Type</p> 
+  <pre><code>$ ./coursier command --help
+</code></pre> 
+  <p>to get a description of the various options the command <code>command</code> (replace with one of the above command) accepts.</p> 
+  <p>Both commands below can be given repositories with the <code>-r</code> or <code>--repository</code> option, like</p> 
+  <pre><code>-r central
+-r https://oss.sonatype.org/content/repositories/snapshots
+-r "ivy:https://repo.typesafe.com/typesafe/ivy-releases/[organisation]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]"
+</code></pre> 
+  <p><code>central</code> and <code>ivy2local</code> correspond to Maven Central and <code>~/.ivy2/local</code>. These are used by default unless the <code>--no-default</code> option is specified.</p> 
+  <p>Repositories starting with <code>ivy:</code> are assumed to be Ivy repositories, specified with an Ivy pattern, like <code>ivy:https://repo.typesafe.com/typesafe/ivy-releases/[organisation]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]</code>. Else, a Maven repository is assumed.</p> 
+  <p>To set credentials for a repository, pass a user and password in its URL, like</p> 
+  <pre><code>-r https://user:pass@nexus.corp.com/content/repositories/releases
+</code></pre> 
+  <h4><a id="user-content-launch" class="anchor" href="https://github.com/alexarchambault/coursier#launch" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>launch</h4> 
+  <p>The <code>launch</code> command fetches a set of Maven coordinates it is given, along with their transitive dependencies, then launches the "main <code>main</code> class" from it if it can find one (typically from the manifest of the first coordinates). The main class to launch can also be manually specified with the <code>-M</code> option.</p> 
+  <p>For example, it can launch:</p> 
+  <ul> 
+   <li><a href="https://github.com/lihaoyi/Ammonite" target="_blank">Ammonite</a> (enhanced Scala REPL),</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch com.lihaoyi:ammonite_2.11.8:0.7.0
+</code></pre> 
+  <p>along with the REPLs of various JVM languages like</p> 
+  <ul> 
+   <li>Frege,</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch -r central -r https://oss.sonatype.org/content/groups/public \
+    org.frege-lang:frege-repl-core:1.3 -M frege.repl.FregeRepl
+</code></pre> 
+  <ul> 
+   <li>clojure,</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch org.clojure:clojure:1.7.0 -M clojure.main
+</code></pre> 
+  <ul> 
+   <li>jruby,</li> 
+  </ul> 
+  <pre><code>$ wget https://raw.githubusercontent.com/jruby/jruby/master/bin/jirb &amp;&amp; \
+  ./coursier launch org.jruby:jruby:9.0.4.0 -M org.jruby.Main -- -- jirb
+</code></pre> 
+  <ul> 
+   <li>jython,</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch org.python:jython-standalone:2.7.0 -M org.python.util.jython
+</code></pre> 
+  <ul> 
+   <li>Groovy,</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch org.codehaus.groovy:groovy-groovysh:2.4.5 -M org.codehaus.groovy.tools.shell.Main \
+    commons-cli:commons-cli:1.3.1
+</code></pre> 
+  <p>etc.</p> 
+  <p>and various programs, like</p> 
+  <ul> 
+   <li>ProGuard and its utility Retrace,</li> 
+  </ul> 
+  <pre><code>$ ./coursier launch net.sf.proguard:proguard-base:5.2.1 -M proguard.ProGuard
+$ ./coursier launch net.sf.proguard:proguard-retrace:5.2.1 -M proguard.retrace.ReTrace
+</code></pre> 
+  <ul> 
+   <li>Wiremock,</li> 
+  </ul> 
+  <pre><code>./coursier launch com.github.tomakehurst:wiremock:1.57 -- \
+--proxy-all="http://search.twitter.com" --record-mappings --verbose
+</code></pre> 
+  <p>If you wish to pass additional argument to the artifact being launched, separate them from the coursier's parameters list with the "--", just like in the Wiremock example above.</p> 
+  <h4><a id="user-content-fetch" class="anchor" href="https://github.com/alexarchambault/coursier#fetch" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>fetch</h4> 
+  <p>The <code>fetch</code> command simply fetches a set of dependencies, along with their transitive dependencies, then prints the local paths of all their artifacts.</p> 
+  <p>Example</p> 
+  <pre><code>$ ./coursier fetch org.apache.spark:spark-sql_2.11:1.6.1
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/apache/hadoop/hadoop-annotations/2.2.0/hadoop-annotations-2.2.0.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/tukaani/xz/1.0/xz-1.0.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/tachyonproject/tachyon-underfs-s3/0.8.2/tachyon-underfs-s3-0.8.2.jar
+/path/to/.coursier/cache/v1/https/repo1.maven.org/maven2/org/glassfish/grizzly/grizzly-http/2.1.2/grizzly-http-2.1.2.jar
+...
+</code></pre> 
+  <p>By adding the <code>-p</code> option, these paths can be handed over directly to <code>java -cp</code>, like</p> 
+  <pre><code>$ java -cp "$(./coursier fetch -p com.lihaoyi:ammonite_2.11.8:0.7.0)" ammonite.Main
+Loading...
+Welcome to the Ammonite Repl 0.7.0
+(Scala 2.11.8 Java 1.8.0_60)
+@
+</code></pre> 
+  <h3><a id="user-content-bootstrap" class="anchor" href="https://github.com/alexarchambault/coursier#bootstrap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>bootstrap</h3> 
+  <p>The <code>bootstrap</code> generates tiny bootstrap launchers, able to pull their dependencies from repositories on first launch. For example, the launcher of coursier is <a href="https://github.com/alexarchambault/coursier/blob/master/project/generate-launcher.sh" target="_blank">generated</a> with a command like</p> 
+  <pre><code>$ ./coursier bootstrap \
+    io.get-coursier:coursier-cli_2.11:1.0.0-M14 \
+    -b -f -o coursier \
+    -M coursier.cli.Coursier
+</code></pre> 
+  <p>See <code>./coursier bootstrap --help</code> for a list of the available options.</p> 
+  <h3><a id="user-content-api-1" class="anchor" href="https://github.com/alexarchambault/coursier#api-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API</h3> 
+  <p>Add to your <code>build.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>coursier<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>io.get-coursier<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>coursier-cache<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M14<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <p>The first module, <code>"io.get-coursier" %% "coursier" % "1.0.0-M14"</code>, mainly depends on <code>scalaz-core</code> (and only it, <em>not</em> <code>scalaz-concurrent</code> for example). It contains among others, definitions, mainly in <a href="https://github.com/alexarchambault/coursier/blob/master/core/shared/src/main/scala/coursier/core/Definitions.scala" target="_blank"><code>Definitions.scala</code></a>, <a href="https://github.com/alexarchambault/coursier/blob/master/core/shared/src/main/scala/coursier/core/Resolution.scala" target="_blank"><code>Resolution</code></a>, representing a particular state of the resolution, and <a href="https://github.com/alexarchambault/coursier/blob/master/core/shared/src/main/scala/coursier/core/ResolutionProcess.scala" target="_blank"><code>ResolutionProcess</code></a>, that expects to be given metadata, wrapped in any <code>Monad</code>, then feeds these to <code>Resolution</code>, and at the end gives you the final <code>Resolution</code>, wrapped in the same <code>Monad</code> it was given input. This final <code>Resolution</code> has all the dependencies, including the transitive ones.</p> 
+  <p>The second module, <code>"io.get-coursier" %% "coursier-cache" % "1.0.0-M14"</code>, is precisely in charge of fetching these input metadata. It uses <code>scalaz.concurrent.Task</code> as a <code>Monad</code> to wrap them. It also fetches artifacts (JARs, etc.). It caches all of these (metadata and artifacts) on disk, and validates checksums too.</p> 
+  <p>In the code below, we'll assume some imports are around,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">coursier.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>Resolving dependencies involves create an initial resolution state, with all the initial dependencies in it, like</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">start</span> <span class="pl-k">=</span> <span class="pl-en">Resolution</span>(
+  <span class="pl-en">Set</span>(
+    <span class="pl-en">Dependency</span>(
+      <span class="pl-en">Module</span>(<span class="pl-s"><span class="pl-pds">"</span>org.typelevel<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>cats-core_2.11<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span>
+    ),
+    <span class="pl-en">Dependency</span>(
+      <span class="pl-en">Module</span>(<span class="pl-s"><span class="pl-pds">"</span>org.scalaz<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>scalaz-core_2.11<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>7.2.3<span class="pl-pds">"</span></span>
+    )
+  )
+)</pre>
+  </div> 
+  <p>It goes without saying that a <code>Resolution</code> is immutable, as are all the classes defined in the core module. The resolution process will go on by giving successive <code>Resolution</code>s, until the final one.</p> 
+  <p><code>start</code> above is only the initial state - it is far from over, as the <code>isDone</code> method on it tells,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> start.isDone
+res4<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">false</span></pre>
+  </div> 
+  <p>In order for the resolution to go on, we'll need things from a few repositories,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">repositories</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+     <span class="pl-k">|</span>   <span class="pl-en">Cache</span>.ivy2Local,
+     <span class="pl-k">|</span>   <span class="pl-en">MavenRepository</span>(<span class="pl-s"><span class="pl-pds">"</span>https://repo1.maven.org/maven2<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span> )
+repositories<span class="pl-k">:</span> <span class="pl-en">Seq</span>[coursier.core.<span class="pl-en">Repository</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">IvyRepository</span>(<span class="pl-en">Pattern</span>(<span class="pl-en">List</span>(<span class="pl-en">Const</span>(file<span class="pl-k">:</span><span class="pl-c">//), Var(user.home), Const(/local/), Var(organisation), Const(/), Var(module), Const(/), Opt(WrappedArray(Const(scala_), Var(scalaVersion), Const(/))), Opt(WrappedArray(Const(sbt_), Var(sbtVersion), Const(/))), Var(revision), Const(/), Var(type), Const(s/), Var(artifact), Opt(WrappedArray(Const(-), Var(classifier))), Const(.), Var(ext))),None,None,true,true,true,true,None), MavenRepository(https://repo1.maven.org/maven2,None,false,None,Set(org.apache.zookeeper:zookeeper)))</span></pre>
+  </div> 
+  <p>The first one, <code>Cache.ivy2Local</code>, is defined in <code>coursier.Cache</code>, itself from the <code>coursier-cache</code> module that we added above. As we can see, it is an <code>IvyRepository</code>, picking things under <code>~/.ivy2/local</code>. An <code>IvyRepository</code> is related to the <a href="http://ant.apache.org/ivy/" target="_blank">Ivy</a> build tool. This kind of repository involves a so-called <a href="http://ant.apache.org/ivy/history/2.4.0/concept.html#patterns" target="_blank">pattern</a>, with various properties. These are not of very common use in Scala, although SBT uses them a bit.</p> 
+  <p>The second repository is a <code>MavenRepository</code>. These are simpler than the Ivy repositories. They're the ones we're the most used to in Scala. Common ones like <a href="https://repo1.maven.org/maven2" target="_blank">Central</a> like here, or the repositories from <a href="https://oss.sonatype.org/content/repositories/" target="_blank">Sonatype</a>, are Maven repositories. These originate from the <a href="https://maven.apache.org/" target="_blank">Maven</a> build tool. Unlike the Ivy repositories which involve customisable patterns to point to the underlying metadata and artifacts, the paths of these for Maven repositories all look alike, like for any particular version of the standard library, under paths like <a href="http://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.7/" target="_blank">this one</a>.</p> 
+  <p>Both <code>IvyRepository</code> and <code>MavenRepository</code> are case classes, so that it's straightforward to specify one's own repositories.</p> 
+  <p>To set credentials for a <code>MavenRepository</code> or <code>IvyRepository</code>, set their <code>authentication</code> field, like</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">coursier.core.</span><span class="pl-v">Authentication</span>
+<span class="pl-k">import</span> <span class="pl-v">coursier.core.</span><span class="pl-v">Authentication</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-en">MavenRepository</span>(
+     <span class="pl-k">|</span>   <span class="pl-s"><span class="pl-pds">"</span>https://nexus.corp.com/content/repositories/releases<span class="pl-pds">"</span></span>,
+     <span class="pl-k">|</span>   authentication <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">Authentication</span>(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>pass<span class="pl-pds">"</span></span>))
+     <span class="pl-k">|</span> )
+res6<span class="pl-k">:</span> coursier.maven.<span class="pl-en">MavenRepository</span> <span class="pl-k">=</span> <span class="pl-en">MavenRepository</span>(https<span class="pl-k">:</span><span class="pl-c">//nexus.corp.com/content/repositories/releases,None,false,Some(Authentication(user, *******)),Set(org.apache.zookeeper:zookeeper))</span></pre>
+  </div> 
+  <p>Now that we have repositories, we're going to mix these with things from the <code>coursier-cache</code> module, for resolution to happen via the cache. We'll create a function of type <code>Seq[(Module, String)] =&gt; F[Seq[((Module, String), Seq[String] \/ (Artifact.Source, Project))]]</code>. Given a sequence of dependencies, designated by their <code>Module</code> (organisation and name in most cases) and version (just a <code>String</code>), it gives either errors (<code>Seq[String]</code>) or metadata (<code>(Artifact.Source, Project)</code>), wrapping the whole in a monad <code>F</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">fetch</span> <span class="pl-k">=</span> <span class="pl-en">Fetch</span>.from(repositories, <span class="pl-en">Cache</span>.fetch())</pre>
+  </div> 
+  <p>The monad used by <code>Fetch.from</code> is <code>scalaz.concurrent.Task</code>, but the resolution process is not tied to a particular monad - any stack-safe monad would do.</p> 
+  <p>With this <code>fetch</code> method, we can now go on with the resolution. Calling <code>process</code> on <code>start</code> above gives a <a href="https://github.com/alexarchambault/coursier/blob/master/core/shared/src/main/scala/coursier/core/ResolutionProcess.scala" target="_blank"><code>ResolutionProcess</code></a>, that drives the resolution. It is loosely inspired by the <code>Process</code> of scalaz-stream. It is an immutable structure, that represents the various states the resolution process can be in.</p> 
+  <p>Its method <code>current</code> gives the current <code>Resolution</code>. Calling <code>isDone</code> on the latter says whether the resolution is done or not.</p> 
+  <p>The <code>next</code> method, that expects a <code>fetch</code> method like the one above, gives the "next" state of the resolution process, wrapped in the monad of the <code>fetch</code> method. It allows to do one resolution step.</p> 
+  <p>Lastly, the <code>run</code> method runs the whole resolution until its end. It expects a <code>fetch</code> method too, and will make at most <code>maxIterations</code> steps (50 by default), and return the "final" resolution state, wrapped in the monad of <code>fetch</code>. One should check that the <code>Resolution</code> it returns is done (<code>isDone</code>) - the contrary means that <code>maxIterations</code> were reached, likely signaling an issue, unless the underlying resolution is particularly complex, in which case <code>maxIterations</code> could be increased.</p> 
+  <p>Let's run the whole resolution,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">resolution</span> <span class="pl-k">=</span> start.process.run(fetch).run</pre>
+  </div> 
+  <p>To get additional feedback during the resolution, we can give the <code>Cache.default</code> method above a <a href="https://github.com/alexarchambault/coursier/blob/cf269c6895e19f2d590f08811406724304332950/cache/src/main/scala/coursier/Cache.scala#L484-L490" target="_blank"><code>Cache.Logger</code></a>.</p> 
+  <p>By default, downloads happen in a global fixed thread pool (with 6 threads, allowing for 6 parallel downloads), but you can supply your own thread pool to <code>Cache.default</code>.</p> 
+  <p>Now that the resolution is done, we can check for errors in</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">errors</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">Dependency</span>, <span class="pl-en">Seq</span>[<span class="pl-k">String</span>])] <span class="pl-k">=</span> resolution.errors</pre>
+  </div> 
+  <p>These would mean that the resolution wasn't able to get metadata about some dependencies.</p> 
+  <p>We can also check for version conflicts, in</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">conflicts</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">Dependency</span>] <span class="pl-k">=</span> resolution.conflicts</pre>
+  </div> 
+  <p>which are dependencies whose versions could not be unified.</p> 
+  <p>Then, if all went well, we can fetch and get local copies of the artifacts themselves (the JARs) with</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.io.</span><span class="pl-v">File</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">\/</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.concurrent.</span><span class="pl-v">Task</span>
+
+<span class="pl-k">val</span> <span class="pl-en">localArtifacts</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">FileError</span> \<span class="pl-k">/</span> <span class="pl-en">File</span>] <span class="pl-k">=</span> <span class="pl-en">Task</span>.gatherUnordered(
+  resolution.artifacts.map(<span class="pl-en">Cache</span>.file(_).run)
+).run</pre>
+  </div> 
+  <p>We're using the <code>Cache.file</code> method, that can also be given a <code>Logger</code> (for more feedback) and a custom thread pool.</p> 
+  <h3><a id="user-content-scala-js-demo" class="anchor" href="https://github.com/alexarchambault/coursier#scala-js-demo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala JS demo</h3> 
+  <p><em>coursier</em> is also compiled to Scala JS, and can be tested in the browser via its <a href="http://alexarchambault.github.io/coursier/#demo" target="_blank">demo</a>.</p> 
+  <h2><a id="user-content-extra-features" class="anchor" href="https://github.com/alexarchambault/coursier#extra-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Extra features</h2> 
+  <h3><a id="user-content-ttl" class="anchor" href="https://github.com/alexarchambault/coursier#ttl" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TTL</h3> 
+  <p>Changing things in cache are given a time-to-live (TTL) of <strong>24 hours</strong> by default. Changing things are artifacts for versions ending with <code>-SNAPSHOT</code>, Maven metadata files listing available versions, etc.</p> 
+  <p>The most straightforward way of changing that consists in setting <code>COURSIER_TTL</code> in the environment. It's parsed with <code>scala.concurrent.duration.Duration</code>, so that things like <code>24 hours</code>, <code>5 min</code>, <code>10s</code>, or <code>0s</code>, are fine, and it accepts infinity (<code>Inf</code>) as a duration.</p> 
+  <h3><a id="user-content-printing-trees" class="anchor" href="https://github.com/alexarchambault/coursier#printing-trees" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Printing trees</h3> 
+  <p>E.g. to print the dependency tree of <code>io.circe:circe-core:0.4.1</code>,</p> 
+  <pre><code>$ coursier resolve -t io.circe:circe-core_2.11:0.4.1
+  Result:
+└─ io.circe:circe-core_2.11:0.4.1
+   ├─ io.circe:circe-numbers_2.11:0.4.1
+   |  └─ org.scala-lang:scala-library:2.11.8
+   ├─ org.scala-lang:scala-library:2.11.8
+   └─ org.typelevel:cats-core_2.11:0.4.1
+      ├─ com.github.mpilquist:simulacrum_2.11:0.7.0
+      |  ├─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+      |  └─ org.typelevel:macro-compat_2.11:1.1.0
+      |     └─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+...
+</code></pre> 
+  <p>From SBT, with sbt-coursier enabled, the command <code>coursierDependencyTree</code> prints the dependency tree of the various sub-projects,</p> 
+  <pre><code>&gt; coursierDependencyTree
+io.get-coursier:coursier_2.11:1.0.0-SNAPSHOT
+├─ com.lihaoyi:fastparse_2.11:0.3.7
+|  ├─ com.lihaoyi:fastparse-utils_2.11:0.3.7
+|  |  ├─ com.lihaoyi:sourcecode_2.11:0.1.1
+|  |  |  └─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+|  |  └─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+|  ├─ com.lihaoyi:sourcecode_2.11:0.1.1
+|  |  └─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+|  └─ org.scala-lang:scala-library:2.11.7 -&gt; 2.11.8
+├─ org.jsoup:jsoup:1.9.2
+...
+</code></pre> 
+  <p>Note that this command can be scoped to sub-projects, like <code>proj/coursierDependencyTree</code>.</p> 
+  <p>The printed trees highlight version bumps, that only change the patch number, in yellow. The <code>2.11.7 -&gt; 2.11.8</code> above mean that the parent dependency wanted version <code>2.11.7</code>, but version <code>2.11.8</code> landed in the classpath, pulled in this version by other dependencies.</p> 
+  <p>They highlight in red version bumps that may not be binary compatible, changing major or minor version number.</p> 
+  <h3><a id="user-content-generating-bootstrap-launchers" class="anchor" href="https://github.com/alexarchambault/coursier#generating-bootstrap-launchers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Generating bootstrap launchers</h3> 
+  <p>The <code>coursier bootstrap</code> command generates tiny bootstrap launchers (~12 kB). These are able to download their dependencies upon first launch, then launch the corresponding application. E.g. to generate a launcher for scalafmt,</p> 
+  <pre><code>$ coursier bootstrap com.geirsson:scalafmt-cli_2.11:0.2.3 -o scalafmt
+</code></pre> 
+  <p>This generates a <code>scalafmt</code> file, which is a tiny JAR, corresponding to the <code>bootstrap</code> sub-project of coursier. It contains resource files, with the URLs of the various dependencies of scalafmt. On first launch, these are downloaded under <code>~/.coursier/bootstrap/com.geirsson/scalafmt-cli_2.11</code> (following the organization and name of the first dependency - note that this directory can be changed with the <code>-D</code> option). Nothing needs to be downloaded once all the dependencies are there, and the application is then launched straightaway.</p> 
+  <h3><a id="user-content-credentials" class="anchor" href="https://github.com/alexarchambault/coursier#credentials" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credentials</h3> 
+  <p>To use artifacts from repositories requiring credentials, pass the user and password via the repository URL, like</p> 
+  <pre><code>$ coursier fetch -r https://user:pass@company.com/repo com.company:lib:0.1.0
+</code></pre> 
+  <p>From SBT, add the setting <code>coursierUseSbtCredentials := true</code> for sbt-coursier to use the credentials set via the <code>credentials</code> key. This manual step was added in order for the <code>credentials</code> setting not to be checked if not needed, as it seems to acquire some (good ol') global lock when checked, which sbt-coursier aims at avoiding.</p> 
+  <h3><a id="user-content-extra-protocols" class="anchor" href="https://github.com/alexarchambault/coursier#extra-protocols" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Extra protocols</h3> 
+  <p>By default, coursier and sbt-coursier handle the <code>http://</code>, <code>https://</code>, and <code>file://</code> protocols. It should also be fine by protocols supported by <code>java.net.URL</code> (not thoroughly tested). Support for other protocols can be added via plugins. <a href="https://github.com/rtfpessoa/coursier-s3" target="_blank">coursier-s3</a>, a plugin for S3, is under development, and illustrates how to write such plugins.</p> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/alexarchambault/coursier#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <h4><a id="user-content-ivy-support-is-poorly-tested" class="anchor" href="https://github.com/alexarchambault/coursier#ivy-support-is-poorly-tested" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ivy support is poorly tested</h4> 
+  <p>The minimum was made for SBT plugins to be resolved fine (including dependencies between plugins, the possibility that some of them come from Maven repositories, with a peculiarities, classifiers - sources, javadoc - should be fine too). So it is likely that projects relying more heavily on Ivy features could run into the limitations of the current implementation.</p> 
+  <p>Any issue report related to that, illustrated with public Ivy repositories if possible, would be greatly appreciated.</p> 
+  <h4><a id="user-content-important-sbt-plugin-might-mess-with-published-artifacts" class="anchor" href="https://github.com/alexarchambault/coursier#important-sbt-plugin-might-mess-with-published-artifacts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><em>Important</em>: SBT plugin might mess with published artifacts</h4> 
+  <p>SBT seems to require the <code>update</code> command to generate a few metadata files later used by <code>publish</code>. If ever there's an issue with these, this might add discrepancies in the artifacts published with <code>publish</code> or <code>publishLocal</code>. Should you want to use the coursier SBT plugin while publishing artifacts at the same time, I'd recommend an extreme caution at first, like manually inspecting the metadata files and compare with previous ones, to ensure everything's fine.</p> 
+  <p>coursier publishes its artifacts with its own plugin enabled since version <code>1.0.0-M2</code> though, without any apparent problem.</p> 
+  <h4><a id="user-content-no-wait-on-locked-file" class="anchor" href="https://github.com/alexarchambault/coursier#no-wait-on-locked-file" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>No wait on locked file</h4> 
+  <p>If ever resolution or artifact downloading stumbles upon a locked metadata or artifact in the cache, it will just fail, instead of waiting for the lock to be freed.</p> 
+  <h4><a id="user-content-also" class="anchor" href="https://github.com/alexarchambault/coursier#also" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Also</h4> 
+  <p>Plus the inherent amount of bugs arising in a young project :-)</p> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/alexarchambault/coursier#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <h4><a id="user-content-even-though-the-coursier-sbt-plugin-is-enabled-and-some-coursier-keys-can-be-found-from-the-sbt-prompt-dependency-resolution-seems-still-to-be-handled-by-sbt-itself-why" class="anchor" href="https://github.com/alexarchambault/coursier#even-though-the-coursier-sbt-plugin-is-enabled-and-some-coursier-keys-can-be-found-from-the-sbt-prompt-dependency-resolution-seems-still-to-be-handled-by-sbt-itself-why" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Even though the coursier SBT plugin is enabled and some <code>coursier*</code> keys can be found from the SBT prompt, dependency resolution seems still to be handled by SBT itself. Why?</h4> 
+  <p>Check that the default SBT settings (<code>sbt.Defaults.defaultSettings</code>) are not manually added to your project. These define commands that the coursier SBT plugin overrides. Adding them again erases these overrides, effectively disabling coursier.</p> 
+  <h4><a id="user-content-with-spark--15-i-get-some-noverifyerror-exceptions-related-to-jbossnetty-why" class="anchor" href="https://github.com/alexarchambault/coursier#with-spark--15-i-get-some-noverifyerror-exceptions-related-to-jbossnetty-why" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>With spark &gt;= 1.5, I get some <code>NoVerifyError</code> exceptions related to jboss/netty. Why?</h4> 
+  <p>This error originates from the <code>org.jboss.netty:netty:3.2.2.Final</code> dependency to be put in the classpath. Exclude it from your spark dependencies with the exclusion <code>org.jboss.netty:netty</code>.</p> 
+  <p>Coursier tries to follow the Maven documentation to build the full dependency set, in particular some <a href="https://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html#Dependency_Exclusions" target="_blank">points about dependency exclusion</a>. Inspecting the <code>org.apache.spark:spark-core_2.11:1.5.2</code> dependency graph shows that spark-core depends on <code>org.jboss.netty:netty:3.2.2.Final</code> via the following path: <code>org.apache.spark:spark-core_2.11:1.5.2</code> -&gt; <code>org.tachyonproject:tachyon-client:0.7.1</code> -&gt; <code>org.apache.curator:curator-framework:2.4.0</code> -&gt; <code>org.apache.zookeeper:zookeeper:3.4.5</code> -&gt; <code>org.jboss.netty:netty:3.2.2.Final</code>. Even though spark-core tries to exclude <code>org.jboss.netty:netty</code> to land in its classpath via some other dependencies (e.g. it excludes it via its dependencies towards <code>org.apache.hadoop:hadoop-client</code> and <code>org.apache.curator:curator-recipes</code>), it does not via the former path. So it depends on it according to the <a href="https://maven.apache.org/guides/introduction/introduction-to-optional-and-excludes-dependencies.html#Dependency_Exclusions" target="_blank">Maven documentation</a>.</p> 
+  <p>This is likely unintended, as it leads to exceptions like</p> 
+  <pre><code>java.lang.VerifyError: (class: org/jboss/netty/channel/socket/nio/NioWorkerPool, method: createWorker signature: (Ljava/util/concurrent/Executor;)Lorg/jboss/netty/channel/socket/nio/AbstractNioWorker;) Wrong return type in function
+</code></pre> 
+  <p>Excluding <code>org.jboss.netty:netty</code> from the spark dependencies fixes it.</p> 
+  <h4><a id="user-content-on-first-launch-the-coursier-launcher-downloads-a-15-mb-jar-is-it-possible-to-have-a-standalone-launcher-that-would-not-need-to-download-things-on-first-launch" class="anchor" href="https://github.com/alexarchambault/coursier#on-first-launch-the-coursier-launcher-downloads-a-15-mb-jar-is-it-possible-to-have-a-standalone-launcher-that-would-not-need-to-download-things-on-first-launch" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>On first launch, the coursier launcher downloads a 1.5+ MB JAR. Is it possible to have a standalone launcher, that would not need to download things on first launch?</h4> 
+  <p>Run <code>project/generate-launcher.sh -s</code> from the root of the coursier sources. That will generate a new (bigger) <code>coursier</code> launcher, that needs not to download anything on first launch.</p> 
+  <h4><a id="user-content-how-can-the-launcher-be-run-on-windows-or-manually-with-the-java-program" class="anchor" href="https://github.com/alexarchambault/coursier#how-can-the-launcher-be-run-on-windows-or-manually-with-the-java-program" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How can the launcher be run on Windows, or manually with the <code>java</code> program?</h4> 
+  <p>Download it from the same link as the command above. Then run from a console, in the directory where the <code>coursier</code> launcher is,</p> 
+  <pre><code>&gt; java -noverify -jar coursier
+</code></pre> 
+  <p>The <code>-noverify</code> option seems to be required after the proguarding step of the main JAR of coursier.</p> 
+  <h4><a id="user-content-how-to-enable-sandboxing" class="anchor" href="https://github.com/alexarchambault/coursier#how-to-enable-sandboxing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to enable sandboxing?</h4> 
+  <p>Set the <code>COURSIER_CACHE</code> prior to running <code>coursier</code> or SBT, like</p> 
+  <pre><code>$ COURSIER_CACHE=$(pwd)/.coursier-cache coursier
+</code></pre> 
+  <p>or</p> 
+  <pre><code>$ COURSIER_CACHE=$(pwd)/.coursier-cache sbt
+</code></pre> 
+  <h2><a id="user-content-development-tips" class="anchor" href="https://github.com/alexarchambault/coursier#development-tips" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Development tips</h2> 
+  <p>In general, as coursier has a few modules that target either only scala 2.10 or 2.11, it is recommended to systematically force the scala version, with the <code>++2.11.8</code> or <code>++2.10.6</code> commands. The <code>cli</code> module in particular is only built in 2.11, and the <code>plugin</code> one only in 2.10.</p> 
+  <h4><a id="user-content-working-on-the-plugin-module-in-an-ide" class="anchor" href="https://github.com/alexarchambault/coursier#working-on-the-plugin-module-in-an-ide" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Working on the plugin module in an IDE</h4> 
+  <p>Set <code>scalaVersion</code> to <code>2.10.6</code> in <code>build.sbt</code>. Then re-open / reload the coursier project.</p> 
+  <h4><a id="user-content-running-the-scala-js-tests" class="anchor" href="https://github.com/alexarchambault/coursier#running-the-scala-js-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running the Scala JS tests</h4> 
+  <p>They require <code>npm install</code> to have been run once from the <code>coursier</code> directory or a subdirectory of it. They can then be run with <code>sbt testsJS/test</code>.</p> 
+  <h4><a id="user-content-quickly-running-the-cli-app-from-the-sources" class="anchor" href="https://github.com/alexarchambault/coursier#quickly-running-the-cli-app-from-the-sources" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quickly running the CLI app from the sources</h4> 
+  <p>Run</p> 
+  <pre><code>$ sbt "~cli/pack"
+</code></pre> 
+  <p>This generates and updates a runnable distribution of coursier in <code>target/pack</code>, via the <a href="https://github.com/xerial/sbt-pack/" target="_blank">sbt-pack</a> plugin.</p> 
+  <p>It can be run from another terminal with</p> 
+  <pre><code>$ cli/target/pack/bin/coursier
+</code></pre> 
+  <h2><a id="user-content-roadmap" class="anchor" href="https://github.com/alexarchambault/coursier#roadmap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Roadmap</h2> 
+  <p>The first releases were milestones like <code>0.1.0-M?</code>. As a launcher, basic Ivy repositories support, and an SBT plugin, were added in the mean time, coursier is now aiming directly at <code>1.0.0</code>.</p> 
+  <p>The last features I'd like to add until a feature freeze are mainly a better / nicer output, for both the command-line tools and the SBT plugin. These are tracked via GitHub <a href="https://github.com/alexarchambault/coursier/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.0.0" target="_blank">issues</a>, along with other points. Milestones will keep being released until then. Then coursier should undergo <code>RC</code> releases, with no new features added, and only fixes and minor refactorings between them. Once RCs will be considered stable enough, <code>1.0.0</code> should be released.</p> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/alexarchambault/coursier#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <ul> 
+   <li>Erik LaBianca (<a href="https://github.com/easel" target="_blank">@easel</a>)</li> 
+   <li>Han Ju (<a href="https://github.com/darkjh" target="_blank">@darkjh</a>)</li> 
+   <li>Jameel Al-Aziz (<a href="https://github.com/jalaziz" target="_blank">@jalaziz</a>)</li> 
+   <li>joriscode (<a href="https://github.com/joriscode" target="_blank">@joriscode</a>)</li> 
+   <li>Rodrigo Fernandes (<a href="https://github.com/rtfpessoa" target="_blank">@rtfpessoa</a>)</li> 
+   <li>Roman Iakovlev (<a href="https://github.com/RomanIakovlev" target="_blank">@RomanIakovlev</a>)</li> 
+   <li>Simon Ochsenreither (<a href="https://github.com/soc" target="_blank">@soc</a>)</li> 
+   <li>Your name here :-)</li> 
+  </ul> 
+  <p>Don't hesitate to pick an issue to contribute, and / or ask for help for how to proceed on the <a href="https://gitter.im/alexarchambault/coursier" target="_blank">Gitter channel</a>.</p> 
+  <h2><a id="user-content-projects-using-coursier" class="anchor" href="https://github.com/alexarchambault/coursier#projects-using-coursier" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Projects using coursier</h2> 
+  <ul> 
+   <li><a href="https://github.com/larsrh/" target="_blank">Lars Hupel</a>'s <a href="https://github.com/larsrh/libisabelle" target="_blank">libisabelle</a> fetches some of its requirements via coursier,</li> 
+   <li><a href="https://github.com/alexarchambault/jupyter-scala" target="_blank">jupyter-scala</a> is launched and allows to add dependencies in its sessions with coursier (initial motivation for writing coursier),</li> 
+   <li><a href="https://github.com/apache/incubator-toree" target="_blank">Apache Toree</a> - formerly known as <a href="https://github.com/ibm-et/spark-kernel" target="_blank">spark-kernel</a>, is now using coursier to add dependencies on-the-fly (<a href="https://github.com/apache/incubator-toree/pull/4" target="_blank">#4</a>),</li> 
+   <li>Your project here :-)</li> 
+  </ul> 
+  <p>Released under the Apache license, v2.</p> 
+ </article>
+</div>

@@ -1,0 +1,202 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-storehaus-" class="anchor" href="https://github.com/twitter/storehaus#storehaus-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Storehaus <a href="http://travis-ci.org/twitter/storehaus" target="_blank"><img src="https://camo.githubusercontent.com/91fc0c10b711dd19eb459b542b7cf2268a26e741/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f747769747465722f73746f7265686175732e706e67" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/twitter/storehaus.png" style="max-width:100%;"></a></h2> 
+  <p>Storehaus is a library that makes it easy to work with asynchronous key value stores. Storehaus is built on top of Twitter's <a href="https://github.com/twitter/util/blob/master/util-core/src/main/scala/com/twitter/util/Future.scala" target="_blank">Future</a>.</p> 
+  <h3><a id="user-content-storehaus-core" class="anchor" href="https://github.com/twitter/storehaus#storehaus-core" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Storehaus-Core</h3> 
+  <p>Storehaus's core module defines three traits; a read-only <code>ReadableStore</code> a write-only <code>WritableStore</code> and a read-write <code>Store</code>. The traits themselves are tiny:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">com.twitter.storehaus</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.util.</span>{ <span class="pl-v">Closable</span>, <span class="pl-v">Future</span>, <span class="pl-v">Time</span> }
+
+<span class="pl-k">trait</span> <span class="pl-en">ReadableStore</span>[<span class="pl-k">-</span><span class="pl-en">K</span>, <span class="pl-k">+</span><span class="pl-en">V</span>] <span class="pl-k">extends</span> <span class="pl-e">Closeable</span> {
+  <span class="pl-k">def</span> <span class="pl-en">get</span>(<span class="pl-v">k</span>: <span class="pl-en">K</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-en">V</span>]]
+  <span class="pl-k">def</span> <span class="pl-en">multiGet</span>[<span class="pl-en">K1</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">K</span>](<span class="pl-v">ks</span>: <span class="pl-en">Set</span>[<span class="pl-en">K1</span>])<span class="pl-k">:</span> <span class="pl-en">Map</span>[<span class="pl-en">K1</span>, <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-en">V</span>]]]
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">close</span>(<span class="pl-v">time</span>: <span class="pl-en">Time</span>) <span class="pl-k">=</span> <span class="pl-en">Future</span>.<span class="pl-k">Unit</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">WritableStore</span>[<span class="pl-k">-</span><span class="pl-en">K</span>, <span class="pl-k">-</span><span class="pl-en">V</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">put</span>(<span class="pl-v">kv</span>: (<span class="pl-en">K</span>, <span class="pl-en">V</span>))<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> multiPut(<span class="pl-en">Map</span>(kv)).apply(kv._1)
+  <span class="pl-k">def</span> <span class="pl-en">multiPut</span>[<span class="pl-en">K1</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">K</span>](<span class="pl-v">kvs</span>: <span class="pl-en">Map</span>[<span class="pl-en">K1</span>, <span class="pl-en">V</span>])<span class="pl-k">:</span> <span class="pl-en">Map</span>[<span class="pl-en">K1</span>, <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>]] <span class="pl-k">=</span>
+    kvs.map { kv <span class="pl-k">=&gt;</span> (kv._1, put(kv)) }
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">close</span>(<span class="pl-v">time</span>: <span class="pl-en">Time</span>) <span class="pl-k">=</span> <span class="pl-en">Future</span>.<span class="pl-k">Unit</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">Store</span>[<span class="pl-k">-</span><span class="pl-en">K</span>, <span class="pl-en">V</span>] <span class="pl-k">extends</span> <span class="pl-e">ReadableStore</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>] <span class="pl-k">with</span> <span class="pl-e">WritableStore</span>[<span class="pl-en">K</span>, <span class="pl-en">Option</span>[<span class="pl-en">V</span>]]</pre>
+  </div> 
+  <p>The <code>ReadableStore</code> trait uses the <code>Future[Option[V]]</code> return type to communicate one of three states about each value. A value is either</p> 
+  <ul> 
+   <li>definitely present,</li> 
+   <li>definitely missing, or</li> 
+   <li>unknown due to some error (perhaps a timeout, or a downed host).</li> 
+  </ul> 
+  <p>The <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.ReadableStore$" target="_blank"><code>ReadableStore</code></a> and <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.Store$" target="_blank"><code>Store</code></a> companion objects provide a bunch of ways to create new stores. See the linked API documentation for more information.</p> 
+  <h3><a id="user-content-combinators" class="anchor" href="https://github.com/twitter/storehaus#combinators" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Combinators</h3> 
+  <p>Coding with Storehaus's interfaces gives you access to a number of powerful combinators. The easiest way to access these combinators is by wrapping your store in an <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.EnrichedReadableStore" target="_blank"><code>EnrichedReadableStore</code></a> or an <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.EnrichedStore" target="_blank"><code>EnrichedStore</code></a>. Storehaus provides implicit conversions inside of the <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.ReadableStore$" target="_blank"><code>ReadableStore</code></a> and <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.Store$" target="_blank"><code>Store</code></a> objects.</p> 
+  <p>Here's an example of the <code>mapValues</code> combinator, useful for transforming the type of an existing store.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.twitter.storehaus.</span><span class="pl-v">ReadableStore</span>
+<span class="pl-k">import</span> <span class="pl-v">ReadableStore.</span><span class="pl-v">enrich</span>
+
+<span class="pl-c">// Create a ReadableStore from Int -&gt; String:</span>
+<span class="pl-k">val</span> <span class="pl-en">store</span> <span class="pl-k">=</span> <span class="pl-en">ReadableStore</span>.fromMap(<span class="pl-en">Map</span>[<span class="pl-k">Int</span>, <span class="pl-k">String</span>](<span class="pl-c1">1</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>some value<span class="pl-pds">"</span></span>, <span class="pl-c1">2</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>other value<span class="pl-pds">"</span></span>))
+
+<span class="pl-c">// "get" behaves as expected:</span>
+store.get(<span class="pl-c1">1</span>).get
+<span class="pl-c">// res5: Option[String] = Some(some value)</span>
+
+<span class="pl-c">// calling "mapValues" with a function from V =&gt; NewV returns a new ReadableStore[K, NewV]:</span>
+<span class="pl-k">val</span> <span class="pl-en">countStore</span><span class="pl-k">:</span> <span class="pl-en">ReadableStore</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>] <span class="pl-k">=</span> store.mapValues { s <span class="pl-k">=&gt;</span> s.size }
+
+<span class="pl-c">// This new store applies the function to every value on the way out:</span>
+countStore.get(<span class="pl-c1">1</span>).get
+<span class="pl-c">// res6: Option[Int] = Some(10)</span></pre>
+  </div> 
+  <h3><a id="user-content-storehaus-algebra" class="anchor" href="https://github.com/twitter/storehaus#storehaus-algebra" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Storehaus-Algebra</h3> 
+  <p><code>storehaus-algebra</code> module adds the <code>MergeableStore</code> trait. If you're using key-value stores for aggregations, you're going to love <code>MergeableStore</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">com.twitter.storehaus.algebra</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">MergeableStore</span>[<span class="pl-k">-</span><span class="pl-en">K</span>, <span class="pl-en">V</span>] <span class="pl-k">extends</span> <span class="pl-e">Store</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">monoid</span><span class="pl-k">:</span> <span class="pl-en">Monoid</span>[<span class="pl-en">V</span>]
+  <span class="pl-k">def</span> <span class="pl-en">merge</span>(<span class="pl-v">kv</span>: (<span class="pl-en">K</span>, <span class="pl-en">V</span>))<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-en">V</span>]] <span class="pl-k">=</span> multiMerge(<span class="pl-en">Map</span>(kv)).apply(kv._1)
+  <span class="pl-k">def</span> <span class="pl-en">multiMerge</span>[<span class="pl-en">K1</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">K</span>](<span class="pl-v">kvs</span>: <span class="pl-en">Map</span>[<span class="pl-en">K1</span>, <span class="pl-en">V</span>])<span class="pl-k">:</span> <span class="pl-en">Map</span>[<span class="pl-en">K1</span>, <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-en">V</span>]]] <span class="pl-k">=</span> kvs.map { kv <span class="pl-k">=&gt;</span> (kv._1, merge(kv)) }
+}</pre>
+  </div> 
+  <p><code>MergeableStore</code>'s <code>merge</code> and <code>multiMerge</code> are similar to <code>put</code> and <code>multiPut</code>; the difference is that values added with <code>merge</code> are added to the store's existing value and the previous value is returned. Because the addition is handled with a <code>Semigroup[V]</code> or <code>Monoid[V]</code> from Twitter's <a href="https://github.com/twitter/algebird" target="_blank">Algebird</a> project, it's easy to write stores that aggregate <a href="http://twitter.github.com/algebird/#com.twitter.algebird.ListMonoid" target="_blank">Lists</a>, <a href="http://twitter.github.com/algebird/#com.twitter.algebird.DecayedValue" target="_blank">decayed values</a>, even <a href="http://twitter.github.com/algebird/#com.twitter.algebird.HyperLogLog$" target="_blank">HyperLogLog</a> instances.</p> 
+  <p>The <a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.algebra.MergeableStore$" target="_blank"><code>MergeableStore</code></a> object provides a number of combinators on these stores. For ease of use, Storehaus provides an implicit conversion to an enrichment on <code>MergeableStore</code>. Access this by importing <code>MergeableStore.enrich</code>.</p> 
+  <h3><a id="user-content-other-modules" class="anchor" href="https://github.com/twitter/storehaus#other-modules" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Other Modules</h3> 
+  <p>Storehaus provides a number of modules wrapping existing key-value stores. Enriching these key-value stores with Storehaus's combinators has been hugely helpful to us here at Twitter. Writing your jobs in terms of Storehaus stores makes it easy to test your jobs; use an in-memory <code>JMapStore</code> in testing and a <code>MemcacheStore</code> in production.</p> 
+  <ul> 
+   <li><a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.memcache.MemcacheStore" target="_blank">Storehaus-memcache</a> (wraps Twitter's <a href="https://github.com/twitter/finagle/tree/master/finagle-memcachedx" target="_blank">finagle-memcachedx</a> library)</li> 
+   <li><a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.mysql.MySqlStore" target="_blank">Storehaus-mysql</a> (wraps Twitter's <a href="https://github.com/twitter/finagle/tree/master/finagle-mysql" target="_blank">finagle-mysql</a> library)</li> 
+   <li><a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.redis.RedisStore" target="_blank">Storehaus-redis</a> (wraps Twitter's <a href="https://github.com/twitter/finagle/tree/master/finagle-redis" target="_blank">finagle-redis</a> library)</li> 
+   <li><a href="http://twitter.github.com/storehaus/#com.twitter.storehaus.hbase.HBaseStore" target="_blank">Storehaus-hbase</a></li> 
+   <li><a href="https://github.com/twitter/storehaus/tree/develop/storehaus-dynamodb" target="_blank">Storehaus-dynamodb</a></li> 
+   <li><a href="https://github.com/twitter/storehaus/tree/develop/storehaus-leveldb" target="_blank">Storehaus-leveldb</a></li> 
+  </ul> 
+  <h4><a id="user-content-planned-modules" class="anchor" href="https://github.com/twitter/storehaus#planned-modules" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Planned Modules</h4> 
+  <p>Here's a list of modules we plan in implementing, with links to the github issues tracking progress on these modules:</p> 
+  <ul> 
+   <li><a href="https://github.com/twitter/storehaus/issues/52" target="_blank">storehaus-berkeleydb</a></li> 
+  </ul> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/twitter/storehaus#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>To learn more and find links to tutorials and information around the web, check out the <a href="https://github.com/twitter/storehaus/wiki" target="_blank">Storehaus Wiki</a>.</p> 
+  <p>The latest ScalaDocs are hosted on Storehaus's <a href="http://twitter.github.io/storehaus" target="_blank">Github Project Page</a>.</p> 
+  <h2><a id="user-content-contact" class="anchor" href="https://github.com/twitter/storehaus#contact" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contact</h2> 
+  <p>Discussion occurs primarily on the <a href="https://groups.google.com/forum/#!forum/storehaus" target="_blank">Storehaus mailing list</a>. Issues should be reported on the <a href="https://github.com/twitter/storehaus/issues" target="_blank">GitHub issue tracker</a>.</p> 
+  <h2><a id="user-content-get-involved--code-of-conduct" class="anchor" href="https://github.com/twitter/storehaus#get-involved--code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Get Involved + Code of Conduct</h2> 
+  <p>Pull requests and bug reports are always welcome!</p> 
+  <p>We use a lightweight form of project governence inspired by the one used by Apache projects. Please see <a href="https://github.com/twitter/analytics-infra-governance#contributing-and-committership" target="_blank">Contributing and Committership</a> for our code of conduct and our pull request review process. The TL;DR is send us a pull request, iterate on the feedback + discussion, and get a +1 from a <a href="https://github.com/twitter/storehaus/blob/master/COMMITTERS.md" target="_blank">Committer</a> in order to get your PR accepted.</p> 
+  <p>The current list of active committers (who can +1 a pull request) can be found here: <a href="https://github.com/twitter/storehaus/blob/master/COMMITTERS.md" target="_blank">Committers</a></p> 
+  <p>A list of contributors to the project can be found here: <a href="https://github.com/twitter/storehaus/graphs/contributors" target="_blank">Contributors</a></p> 
+  <h2><a id="user-content-maven" class="anchor" href="https://github.com/twitter/storehaus#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h2> 
+  <p>Storehaus modules are available on maven central. The current groupid and version for all modules is, respectively, <code>"com.twitter"</code> and <code>0.13.0</code>.</p> 
+  <p>Current published artifacts are</p> 
+  <ul> 
+   <li><code>storehaus-core_2.11</code></li> 
+   <li><code>storehaus-core_2.10</code></li> 
+   <li><code>storehaus-algebra_2.11</code></li> 
+   <li><code>storehaus-algebra_2.10</code></li> 
+   <li><code>storehaus-memcache_2.11</code></li> 
+   <li><code>storehaus-memcache_2.10</code></li> 
+   <li><code>storehaus-mysql_2.11</code></li> 
+   <li><code>storehaus-mysql_2.10</code></li> 
+   <li><code>storehaus-hbase_2.11</code></li> 
+   <li><code>storehaus-hbase_2.10</code></li> 
+   <li><code>storehaus-redis_2.11</code></li> 
+   <li><code>storehaus-redis_2.10</code></li> 
+   <li><code>storehaus-dynamodb_2.11</code></li> 
+   <li><code>storehaus-dynamodb_2.10</code></li> 
+   <li><code>storehaus-kafka-08_2.11</code></li> 
+   <li><code>storehaus-kafka-08_2.10</code></li> 
+   <li><code>storehaus-mongodb_2.11</code></li> 
+   <li><code>storehaus-mongodb_2.10</code></li> 
+   <li><code>storehaus-elasticsearch_2.11</code></li> 
+   <li><code>storehaus-elasticsearch_2.10</code></li> 
+   <li><code>storehaus-leveldb_2.11</code></li> 
+   <li><code>storehaus-leveldb_2.10</code></li> 
+   <li><code>storehaus-http_2.11</code></li> 
+   <li><code>storehaus-http_2.10</code></li> 
+   <li><code>storehaus-cache_2.11</code></li> 
+   <li><code>storehaus-cache_2.10</code></li> 
+   <li><code>storehaus-testing_2.11</code></li> 
+   <li><code>storehaus-testing_2.10</code></li> 
+  </ul> 
+  <p>The suffix denotes the scala version.</p> 
+  <h2><a id="user-content-testing-notes" class="anchor" href="https://github.com/twitter/storehaus#testing-notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing notes</h2> 
+  <p>We use travis-ci to set up any underlying stores (e.g. MySQL, Redis, Memcached) for the tests. In order for these tests to pass on your local machine, you may need additional setup.</p> 
+  <h3><a id="user-content-mysql-tests" class="anchor" href="https://github.com/twitter/storehaus#mysql-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MySQL tests</h3> 
+  <p>You will need MySQL installed on your local machine. Once installed, run the <code>mysql</code> commands listed in <a href="https://github.com/twitter/storehaus/blob/develop/.travis.yml" target="_blank">.travis.yml</a> file.</p> 
+  <h3><a id="user-content-redis-tests" class="anchor" href="https://github.com/twitter/storehaus#redis-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Redis tests</h3> 
+  <p>You will need <a href="http://redis.io/" target="_blank">redis</a> installed on your local machine. Redis comes bundled with an executable for spinning up a server called <code>redis-server</code>. The Storehaus redis tests expect the factory defaults for connecting to one of these redis server instances, resolvable on <code>localhost</code> port <code>6379</code>.</p> 
+  <h3><a id="user-content-memcached" class="anchor" href="https://github.com/twitter/storehaus#memcached" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Memcached</h3> 
+  <p>You will need <a href="http://memcached.org/" target="_blank">Memcached</a> installed on your local machine and running on the default port <code>11211</code>.</p> 
+  <h2><a id="user-content-authors" class="anchor" href="https://github.com/twitter/storehaus#authors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Authors</h2> 
+  <ul> 
+   <li>Oscar Boykin <a href="https://twitter.com/posco" target="_blank">https://twitter.com/posco</a></li> 
+   <li>Sam Ritchie <a href="https://twitter.com/sritchie" target="_blank">https://twitter.com/sritchie</a></li> 
+  </ul> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/twitter/storehaus#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <p>Here are a few that shine among the many:</p> 
+  <ul> 
+   <li>Ruban Monu <a href="https://twitter.com/rubanm" target="_blank">https://twitter.com/rubanm</a>, for <code>storehaus-mysql</code></li> 
+   <li>Doug Tangren <a href="https://twitter.com/softprops" target="_blank">https://twitter.com/softprops</a>, for <code>storehaus-redis</code></li> 
+   <li>Ryan Weald <a href="https://twitter.com/rweald" target="_blank">https://twitter.com/rweald</a>, for <code>storehaus-dynamodb</code></li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/twitter/storehaus#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2013 Twitter, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+ </article>
+</div>

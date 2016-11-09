@@ -1,0 +1,100 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-akka-dumb-di" class="anchor" href="https://github.com/kadekm/akka-dumbdi#akka-dumb-di" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka Dumb DI</h2> 
+  <p>If you don't want to commit to full blown DI for your actor system, but you'd still like to be able to easily mock services and non-actor dependencies.</p> 
+  <p>You normally specify your dependencies - module only in your test config.</p> 
+  <p>In a config, if dependency path:</p> 
+  <ul> 
+   <li>is not found -&gt; nothing is overriden, and production behaviour is used</li> 
+   <li>is found, but module is not found -&gt; ActorInitializaitonException is thrown</li> 
+   <li>is found, and module specified is found -&gt; module is executed and thus can override depenedncies</li> 
+  </ul> 
+  <h4><a id="user-content-installation" class="anchor" href="https://github.com/kadekm/akka-dumbdi#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h4> 
+  <pre><code>libraryDependencies += "com.marekkadek" %% "akka-dumbdi" % "0.0.2"
+</code></pre> 
+  <h3><a id="user-content-actorwithmodule" class="anchor" href="https://github.com/kadekm/akka-dumbdi#actorwithmodule" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ActorWithModule</h3> 
+  <p>You mix this trait if you want to specify dependancy module equal to deployment path:</p> 
+  <pre><code>akka.actor.dependency {
+    /some-guy = "com.myproject.MyFakeModule"
+    /parent/child = "com.myproject.SomeOtherModule"
+}
+</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">com.myproject</span>
+
+<span class="pl-k">class</span> <span class="pl-en">MyFakeModule</span> <span class="pl-k">extends</span> <span class="pl-e">ActorModuleConfigurable</span> {
+  bind[<span class="pl-en">Service</span>](<span class="pl-k">new</span> <span class="pl-en">FakeService)</span>
+  ...
+}</pre>
+  </div> 
+  <p>Your actor could look like this. The initialize block is executed first.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">SomeGuy</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">ActorWithModule</span> {
+  <span class="pl-k">val</span> <span class="pl-en">service</span><span class="pl-k">:</span> <span class="pl-en">Service</span> <span class="pl-k">=</span> module.get[<span class="pl-en">Service</span>]
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">initialize</span>(<span class="pl-v">module</span>: <span class="pl-en">ActorModuleConfigurable</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    module.bind[<span class="pl-en">Service</span>](<span class="pl-k">new</span> <span class="pl-en">NormalService)</span> <span class="pl-c">// &lt;-- this will be overriden in test, as is specified in cfg</span>
+  }
+  ...
+}</pre>
+  </div> 
+  <p>You can extract the trait to more specific one, to separate module logic, if you wish:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">MyModule</span> <span class="pl-k">extends</span> <span class="pl-e">ActorWithModule</span> { <span class="pl-v">self</span><span class="pl-k">:</span> <span class="pl-en">Actor</span> <span class="pl-k">=&gt;</span>
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">initialize</span>(<span class="pl-v">module</span>: <span class="pl-en">ActorModuleConfigurable</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    module.bind[<span class="pl-en">Service</span>](<span class="pl-k">new</span> <span class="pl-en">NormalService)</span>
+  }
+}
+
+<span class="pl-k">class</span> <span class="pl-en">SomeGuyWithModule</span> <span class="pl-k">extends</span> <span class="pl-e">Actor</span> <span class="pl-k">with</span> <span class="pl-e">MyModule</span> {
+  <span class="pl-k">val</span> <span class="pl-en">service</span><span class="pl-k">:</span> <span class="pl-en">Service</span> <span class="pl-k">=</span> module.get[<span class="pl-en">Service</span>]
+  ...
+}</pre>
+  </div> 
+  <h3><a id="user-content-actorwithmodulenamed" class="anchor" href="https://github.com/kadekm/akka-dumbdi#actorwithmodulenamed" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ActorWithModuleNamed</h3> 
+  <p>If you wish to speficy name yourself, and not derive one from path. Usage is very similar:</p> 
+  <pre><code>akka.actor.dependency {
+    some-guy = "com.myproject.MyFakeModule"
+}
+</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">HisNamedModule</span> <span class="pl-k">extends</span> <span class="pl-e">ActorWithNamedModule</span> { <span class="pl-v">self</span><span class="pl-k">:</span> <span class="pl-en">Actor</span> <span class="pl-k">=&gt;</span>
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">moduleConfigLocation</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-guy<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">initialize</span>(<span class="pl-v">module</span>: <span class="pl-en">ActorModuleConfigurable</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    module.bind[<span class="pl-en">Service</span>](<span class="pl-k">new</span> <span class="pl-en">NormalService)</span>
+  }
+}</pre>
+  </div> 
+  <p>Same as <code>ActorWithModule</code>, you can as well extract it to custom trait.</p> 
+  <h3><a id="user-content-other-info" class="anchor" href="https://github.com/kadekm/akka-dumbdi#other-info" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Other info</h3> 
+  <p>You can't do any more binds outside <code>initialize</code> method (type system won't allow you).</p> 
+  <h3><a id="user-content-todo" class="anchor" href="https://github.com/kadekm/akka-dumbdi#todo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TODO</h3> 
+  <ul> 
+   <li>documentation: update with snapshot changes</li> 
+   <li>documentation: module sigleton</li> 
+   <li>documentation: how to use fakes, mocks, fixtures</li> 
+   <li>production: non trivial binds (multiple of same type, named, scoped)</li> 
+   <li>production: nested modules detection</li> 
+   <li>tests: conditional, smart binds (in objects modules for tests - for mocking, first being different instance than second (for same interface... for example router with three children with same dependency to Service... we want all three different instances of mock)</li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,65 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-postmarkappcom-http-api-client-for-scala" class="anchor" href="https://github.com/nicta/postmarkapp-client#postmarkappcom-http-api-client-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>postmarkapp.com HTTP API client for Scala</h1> 
+  <p><a href="https://travis-ci.org/NICTA/postmarkapp-client" target="_blank"><img src="https://camo.githubusercontent.com/399634c4c4b155b1160f3c4c4d3f60032d2f6fe5/68747470733a2f2f7472617669732d63692e6f72672f4e494354412f706f73746d61726b6170702d636c69656e742e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/NICTA/postmarkapp-client.png?branch=master" style="max-width:100%;"></a></p> 
+  <p>A basic postmarkapp.com HTTP API client for Scala. Uses <a href="http://argonaut.io" target="_blank">Argonaut</a> for JSON encoding/decoding and <a href="http://http://dispatch.databinder.net/" target="_blank">Dispatch</a> for the HTTP calls.</p> 
+  <h2><a id="user-content-sending-emails" class="anchor" href="https://github.com/nicta/postmarkapp-client#sending-emails" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sending emails</h2> 
+  <ol> 
+   <li>Import the library</li> 
+  </ol> 
+  <pre><code>libraryDependencies += "au.com.nicta" %% "postmarkapp-client" % "0.2.0"
+</code></pre> 
+  <ol> 
+   <li>Create your email to send and send away.</li> 
+  </ol> 
+  <pre><code>import au.com.nicta.postmark.sending._
+import scala.concurrent._
+import scala.concurrent.duration._
+
+val email = Email(to=List("myemail@example.com"), subject="Hello", text=Some("My email body"), from="sender@example.com")
+
+val settings = PostmarkSettings.https("your api key")   // Or use a PostmarkSettings.httpsTest to just test hitting the API without sending anything
+
+val emailRequest = PostmarkEmailer.email(email)
+
+val sentTheEmail = PostmarkEmailer.request(settings)(emailRequest)  // This returns a PostmarkResponse that you can parse of success/failure
+
+Await.result(sentTheEmail, 0 nanos) // Get the response from the future
+</code></pre> 
+  <p>PostmarkEmailer has two methods (email and emails) that support sending single and batch emails. Both return a Future (courtesy of dispatch's async HTTP requests).</p> 
+  <p>Just remember the following fields are required for an email:</p> 
+  <ul> 
+   <li>from - this needs to be a registered sender email with Postmark</li> 
+   <li>to - this obviously needs to be set</li> 
+   <li>either the text or html fields need to be non-empty</li> 
+  </ul> 
+  <h2><a id="user-content-receiving-emails" class="anchor" href="https://github.com/nicta/postmarkapp-client#receiving-emails" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Receiving emails</h2> 
+  <p>A basic data type (with JSON codec mappings) for receiving emails from Postmark is in au.com.nicta.postmark.receiving package.</p> 
+  <h2><a id="user-content-testing" class="anchor" href="https://github.com/nicta/postmarkapp-client#testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing</h2> 
+  <p>There are separate unit and integration test trees. Unit tests primarily test the codecs, while the integration tests send requests to Postmark using the test token.</p> 
+  <p>To run the tests, start up SBT (e.g. using the sbt runner in the root directory of this repository), and then run:</p> 
+  <pre><code>test
+it:test
+</code></pre> 
+  <p>There is also a demo application (demo.Sender under src/it/scala) that you can use to send emails from the command line. From SBT:</p> 
+  <pre><code>it:run-main demo.Sender -s -t &lt;your token&gt; &lt;from email address&gt; &lt;to email address&gt; &lt;subject&gt; &lt;html body&gt;
+</code></pre> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/nicta/postmarkapp-client#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p>Shamelessly ported Mark Hibberd's <a href="https://github.com/apiengine/postmark" target="_blank">Haskell client</a></p> 
+ </article>
+</div>

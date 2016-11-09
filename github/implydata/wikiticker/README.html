@@ -1,0 +1,42 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-wikiticker" class="anchor" href="https://github.com/implydata/wikiticker#wikiticker" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>wikiticker</h2> 
+  <p><a href="https://cloud.githubusercontent.com/assets/1214075/9833538/f2dbbed4-594e-11e5-824e-6a309cbd3da9.jpg" target="_blank"><img src="https://cloud.githubusercontent.com/assets/1214075/9833538/f2dbbed4-594e-11e5-824e-6a309cbd3da9.jpg" style="max-width:100%;"></a></p> 
+  <p>This is a Scala library that reads the recent change feeds from <a href="https://meta.wikimedia.org/wiki/IRC/Channels#Raw_feeds" target="_blank">Wikimedia's IRC channels</a>.</p> 
+  <p>Usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.metamx.common.scala.concurrent.</span><span class="pl-v">loggingThread</span>
+<span class="pl-k">import</span> <span class="pl-v">io.imply.wikiticker.</span><span class="pl-v">IrcTicker</span>
+<span class="pl-k">import</span> <span class="pl-v">io.imply.wikiticker.</span><span class="pl-v">Message</span>
+<span class="pl-k">import</span> <span class="pl-v">io.imply.wikiticker.</span><span class="pl-v">MessageListener</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Example</span>
+{
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+    <span class="pl-k">val</span> <span class="pl-en">listener</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MessageListener</span> {
+      <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">process</span>(<span class="pl-v">message</span>: <span class="pl-en">Message</span>) <span class="pl-k">=</span> {
+        println(s<span class="pl-s"><span class="pl-pds">"</span>User[${message.user}] edited page[${message.page}] at[${message.timestamp}].<span class="pl-pds">"</span></span>)
+      }
+    }
+    <span class="pl-k">val</span> <span class="pl-en">wikipedias</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>sv<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>de<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>nl<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>fr<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">ticker</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IrcTicker</span>(
+      <span class="pl-s"><span class="pl-pds">"</span>irc.wikimedia.org<span class="pl-pds">"</span></span>,
+      <span class="pl-s"><span class="pl-pds">"</span>ident<span class="pl-pds">"</span></span>,
+      wikipedias map (x <span class="pl-k">=&gt;</span> s<span class="pl-s"><span class="pl-pds">"</span>#$x.wikipedia<span class="pl-pds">"</span></span>),
+      <span class="pl-en">Seq</span>(listener)
+    )
+    ticker.start()
+    <span class="pl-en">Runtime</span>.getRuntime.addShutdownHook(
+      loggingThread {
+        ticker.stop()
+      }
+    )
+    <span class="pl-en">Thread</span>.currentThread().join()
+  }
+}</pre>
+  </div> 
+ </article>
+</div>

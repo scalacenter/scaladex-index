@@ -1,0 +1,70 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-htmlcheck" class="anchor" href="https://github.com/hmrc/htmlcheck#htmlcheck" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>htmlcheck</h1> 
+  <p><a href="https://travis-ci.org/hmrc/htmlcheck" target="_blank"><img src="https://camo.githubusercontent.com/7e42416c537e8d93e7bdfa519bdab4e1f9aec0ff/68747470733a2f2f7472617669732d63692e6f72672f686d72632f68746d6c636865636b2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/hmrc/htmlcheck.svg?branch=master" style="max-width:100%;"></a> <a href="https://bintray.com/hmrc/releases/htmlcheck/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/3c0a7920af6340560350d3a4eec9d03f9a724957/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f686d72632f72656c65617365732f68746d6c636865636b2f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/hmrc/releases/htmlcheck/images/download.svg" style="max-width:100%;"> </a></p> 
+  <p>This is a scala wrapper over jsoup to access html content in a functional way.</p> 
+  <p>Some examples:</p> 
+  <ul> 
+   <li>this is how to traverse html using <code>flatMap</code></li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.</span><span class="pl-v">Html</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.Html.Implicits.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.elements.ElementAttribute.</span><span class="pl-v">IdAttribute</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.elements.</span>{<span class="pl-v">Div</span>, <span class="pl-v">TextArea</span>}
+
+<span class="pl-k">val</span> <span class="pl-en">html</span> <span class="pl-k">=</span> <span class="pl-en">Html</span>(
+  <span class="pl-s"><span class="pl-pds">"""</span>&lt;div id="div"&gt;</span>
+<span class="pl-s">    | &lt;textarea id="1" class="area-class"&gt;&lt;/textArea&gt;</span>
+<span class="pl-s">    | &lt;p&gt;&lt;/p&gt;</span>
+<span class="pl-s">    | &lt;div id="inner-div"&gt;</span>
+<span class="pl-s">    |   &lt;textarea id="2" class="area-class"&gt;&lt;/textArea&gt;</span>
+<span class="pl-s">    | &lt;/div&gt;</span>
+<span class="pl-s">    |&lt;/div&gt;</span>
+<span class="pl-s">    |<span class="pl-pds">"""</span></span>.stripMargin)
+
+<span class="pl-k">val</span> <span class="pl-en">textArea2</span> <span class="pl-k">=</span> html
+  .findOnlyDescendantBy[<span class="pl-en">IdAttribute</span>, <span class="pl-en">Div</span>](<span class="pl-s"><span class="pl-pds">"</span>div<span class="pl-pds">"</span></span>)
+  .flatMap(_.findFirstChildBy[<span class="pl-en">IdAttribute</span>, <span class="pl-en">Div</span>](<span class="pl-s"><span class="pl-pds">"</span>inner-div<span class="pl-pds">"</span></span>))
+  .flatMap(_.onlyChild[<span class="pl-en">TextArea</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">textArea2Id</span> <span class="pl-k">=</span> textArea2.getOrError.id.asString</pre>
+  </div> 
+  <ul> 
+   <li>and using <code>for</code></li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">cats.data.Xor.</span><span class="pl-v">Right</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.</span><span class="pl-v">Html</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.Html.Implicits.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.elements.ElementAttribute.</span><span class="pl-v">IdAttribute</span>
+<span class="pl-k">import</span> <span class="pl-v">uk.gov.voa.htmlcheck.elements.</span>{<span class="pl-v">Div</span>, <span class="pl-v">TextArea</span>}
+
+<span class="pl-k">val</span> <span class="pl-en">html</span> <span class="pl-k">=</span> <span class="pl-en">Html</span>(
+  <span class="pl-s"><span class="pl-pds">"""</span>&lt;div id="div"&gt;</span>
+<span class="pl-s">    | &lt;textarea id="1" class="area-class"&gt;&lt;/textArea&gt;</span>
+<span class="pl-s">    | &lt;p&gt;&lt;/p&gt;</span>
+<span class="pl-s">    | &lt;div id="inner-div"&gt;</span>
+<span class="pl-s">    |   &lt;textarea id="2" class="area-class"&gt;&lt;/textArea&gt;</span>
+<span class="pl-s">    | &lt;/div&gt; approach</span>
+<span class="pl-s">    |&lt;/div&gt;</span>
+<span class="pl-s">    |<span class="pl-pds">"""</span></span>.stripMargin)
+
+
+<span class="pl-k">val</span> <span class="pl-en">Right</span>((textArea2, id)) <span class="pl-k">=</span> <span class="pl-k">for</span> {
+  div <span class="pl-k">&lt;</span><span class="pl-k">-</span> html.findOnlyDescendantBy[<span class="pl-en">IdAttribute</span>, <span class="pl-en">Div</span>](<span class="pl-s"><span class="pl-pds">"</span>div<span class="pl-pds">"</span></span>)
+  innerDiv <span class="pl-k">&lt;</span><span class="pl-k">-</span> div.findFirstChildBy[<span class="pl-en">IdAttribute</span>, <span class="pl-en">Div</span>](<span class="pl-s"><span class="pl-pds">"</span>inner-div<span class="pl-pds">"</span></span>)
+  textArea2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> innerDiv.onlyChild[<span class="pl-en">TextArea</span>]
+  id <span class="pl-k">&lt;</span><span class="pl-k">-</span> textArea2.id
+} <span class="pl-k">yield</span> textArea2 <span class="pl-k">-</span><span class="pl-k">&gt;</span> id</pre>
+  </div> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/hmrc/htmlcheck#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p>This code is open source software licensed under the Apache 2.0 License.</p> 
+ </article>
+</div>

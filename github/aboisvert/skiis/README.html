@@ -1,0 +1,147 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-skiis-streaming--parallel-collection-for-scala" class="anchor" href="https://github.com/aboisvert/skiis#skiis-streaming--parallel-collection-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Skiis: Streaming + Parallel collection for Scala</h1> 
+  <p>Think "Parallel Skiis"</p> 
+  <p>Skiis are streaming / iterator-like collections that support both "stream fusion" and parallel operations.</p> 
+  <p>Skiis address different needs (and some deficiencies depending on your point of view) than the standard Scala {serial, parallel} collections,</p> 
+  <ul> 
+   <li><p>All operations from <code>Skiis[T]</code> =&gt; <code>Skiis[U]</code> are lazy -- processing happens only on as-needed basis. This applies to both serial (e.g. <code>map</code>) and parallel operations (e.g., <code>parMap</code>)</p></li> 
+   <li><p>Serial/parallel processing are explicit by name (e.g., <code>map</code> vs <code>parMap</code>) -- no guessing how each operation processes the data.</p></li> 
+   <li><p>Streaming-oriented framework is memory-safe -- won't cause bad surprises since none of the operations will suddenly materialize a huge data collection in memory or lead to memory retention as is sometimes the case when handling Streams (i.e., keeping reference to the <code>head</code>). Skiis have fewer operations than Scala collections but those offered are amenable to stream- and/or parallel-processing. You can easily and explicitly convert <code>Skiis[T]</code> to an <code>Iterator[T]</code> if you want to use Scala collections methods -- caveat emptor!</p></li> 
+   <li><p>You can mix serial and parallel processing operations together to tailor the level of parallelism at each stage of your processing pipeline for SEDA-style pull-based streaming architecture.</p></li> 
+   <li><p>Pluggable execution context -- you can easily plug your own <code>Executor</code> (thread pool) and/or use a different <code>Executor</code> for different parallel operations. (Note this deficiency only applies to Scala 2.9.x since 2.10.0 introduced pluggable contexts).</p></li> 
+   <li><p>Beyond pluging-in your own <code>Executor</code>, you can also control the level of 1) parallelism -- number of workers simultaneously submitted to Executor, 2) queuing -- number of work-in-progress elements between parallel operations to balance memory usage against parallelism and 3) batch size -- to balance efficiency/contention against sharing your executor(s)/thread-pool(s) with other tasks (whether they use <code>Skiis</code> or not).</p></li> 
+   <li><p><code>Skiis[T]</code> exposes a <code>Control</code> trait that supports cancellation. (This feature is currently experimental.)</p></li> 
+  </ul> 
+  <p>See <code>CHANGELOG.md</code> for evolution details.</p> 
+  <h3><a id="user-content-performance" class="anchor" href="https://github.com/aboisvert/skiis#performance" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Performance</h3> 
+  <p>Skiis' performance is generally comparable to Scala Parallel Collections -- sometimes better, sometimes worse. It depends on your workload (types of operations), the thread pool you use, the allowable queue depth, worker batch size, and so on.</p> 
+  <p>I have not yet tested Skiis on machines with &gt; 16 CPU cores.</p> 
+  <h3><a id="user-content-examples" class="anchor" href="https://github.com/aboisvert/skiis#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h3> 
+  <p>Launch your Scala REPL,</p> 
+  <pre><code># launch Scala REPL
+buildr shell
+</code></pre> 
+  <p>and you can then interactively try the Skiis[T] collections,</p> 
+  <pre><code>Welcome to Scala version 2.9.1.final (Java HotSpot(TM) 64-Bit Server VM, Java 1.7.0_04).
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala&gt; import skiis2.Skiis
+
+scala&gt; import skiis2.Skiis.DefaultContext
+
+// Define a timing function
+scala&gt; def ptime[A](f: =&gt; A) = {
+     |   val start = System.nanoTime
+     |   val result = f
+     |   printf("Elapsed: %.3f sec\n", (System.nanoTime - start) * 1e-9)
+     |   result
+     | }
+ptime: [A](f: =&gt; A)A
+
+// Stream fusion
+
+scala&gt; ptime {
+     |   Skiis(1 to 20)
+     |     .map (_ * 3)
+     |     .filter (_ % 2 == 0)
+     |     .to[List]
+     | }
+Elapsed: 0.001 sec
+res1: List[Int] = List(6, 12, 18, 24, 30, 36, 42, 48, 54, 60)
+
+// Parallel operations
+// (note unordered nature of the output)
+
+scala&gt; Skiis(1 to 20)
+         .parMap (_ * 3) (DefaultContext)
+         .parFilter (_ % 2 == 0) (DefaultContext)
+         .to[List]
+res3: List[Int] = List(24, 12, 6, 18, 30, 36, 48, 42, 60, 54)
+
+// You can mix &amp; match non-parallel and parallel operations
+// Here the last parallel operation (reduce) "pulls" elements from
+// previous operations in parallel.
+
+scala&gt; ptime {
+ |   Skiis(1 to 20)
+ |     .map (_ * 3)
+ |     .parFilter (_ % 2 == 0) (DefaultContext)
+ |    .to[List]
+ | }
+ Elapsed: 0.003 sec
+ res4: List[Int] = List(18, 12, 6, 24, 36, 30, 42, 48, 54, 60)
+
+
+// compared to Scala parallel collection (we're in the same ballpark)
+
+scala&gt; ptime {
+     | Skiis(1 to 100000)
+     |   .map (_ * 3)
+     |   .filter (_ % 21 == 0)
+     |   .parReduce (_ + _)(DefaultContext)
+     | }
+Elapsed: 0.014 sec
+res5: Int = 2142792855
+
+scala&gt; ptime {
+     | (1 to 100000).par
+     |   .map (_ * 3)
+     |   .filter (_ % 21 == 0)
+     |   .reduce (_ + _)
+     | }
+Elapsed: 0.015 sec
+res5: Int = 2142792855
+
+// compared to Scala "serial" collections
+// (all parallel collections have some overhead)
+
+scala&gt; ptime {
+     | (1 to 100000)
+     |   .map (_ * 3)
+     |   .filter (_ % 21 == 0)
+     |   .reduce (_ + _)
+     | }
+Elapsed: 0.012 sec
+res71: Int = 2142792855
+</code></pre> 
+  <h3><a id="user-content-caveats" class="anchor" href="https://github.com/aboisvert/skiis#caveats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats</h3> 
+  <ul> 
+   <li>Similarly to <code>Iterator</code>, Skiis do not implement content-based equals() or hashCode(). If you want to compare Skiis, first convert them to a specific collection that supports equality, such as <code>Seq</code>.</li> 
+  </ul> 
+  <h3><a id="user-content-building" class="anchor" href="https://github.com/aboisvert/skiis#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h3> 
+  <p>You need Apache Buildr 1.4.x or higher.</p> 
+  <pre><code># compile, test and package .jars
+buildr package
+</code></pre> 
+  <h3><a id="user-content-target-platform" class="anchor" href="https://github.com/aboisvert/skiis#target-platform" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Target platform</h3> 
+  <ul> 
+   <li>Scala 2.10+</li> 
+   <li>JVM 1.6+</li> 
+  </ul> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/aboisvert/skiis#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p>Skiis is is licensed under the terms of the Apache Software License v2.0. <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">http://www.apache.org/licenses/LICENSE-2.0.html</a></p> 
+ </article>
+</div>

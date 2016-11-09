@@ -1,0 +1,65 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-pureimage" class="anchor" href="https://github.com/stephenjudkins/pureimage#pureimage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PureImage</h1> 
+  <p>PureImage is a raster image processing library written in Scala. See slides at [<a href="http://stephenjudkins.github.io/pureimage-presentation/" target="_blank">http://stephenjudkins.github.io/pureimage-presentation/</a>]</p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/stephenjudkins/pureimage#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>Available image processing and manipulation libraries are difficult to use. They feature byzantive and opaque APIs. [<a href="http://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html" target="_blank">http://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html</a>] Or, they require concrete in-memory representations of pixel data in order to perform manipulations. [<a href="http://www.imagemagick.org/script/magick-core.php" target="_blank">http://www.imagemagick.org/script/magick-core.php</a>]</p> 
+  <p>However, images are simple things. We aim to provide a set of tools that operate on a single simple abstraction.</p> 
+  <h2><a id="user-content-api" class="anchor" href="https://github.com/stephenjudkins/pureimage#api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API</h2> 
+  <pre><code>trait Image[A] {
+  def width: Int
+  def height: Int
+  def apply(x: Int, y: Int):A
+}
+</code></pre> 
+  <p>Further, we aim to support image input in a similarly simple manner:</p> 
+  <pre><code>sealed trait LoadedImage
+case class RGBImage(image: Image[RGB]) extends LoadedImage
+case class RGBAImage(image: Image[RGBA]) extends LoadedImage
+case class GrayImage(image: Image[Gray]) extends LoadedImage
+
+sealed trait ReadError
+case object UnsupportedImageType extends ReadError
+case class ReadException(e: Exception) extends ReadError
+
+object Input {
+  def apply(data: Array[Byte]):Either[ReadError, LoadedImage] = ???
+}
+</code></pre> 
+  <p>Output, which may require us to deal with arbitrary output formats and pixel types, sees utility from applying type classes [<a href="http://en.wikipedia.org/wiki/Type_class" target="_blank">http://en.wikipedia.org/wiki/Type_class</a> ]:</p> 
+  <pre><code>trait Output[I, O &lt;: OutputFormat] {
+  def apply(i: Image[I], o: O):Array[Byte]
+}
+
+object Output {
+  def apply[I, O &lt;: OutputFormat](image: Image[I], format: O)(implicit output: Output[I,O]) = ???
+}
+</code></pre> 
+  <p>Likewise, we support common operations on pixel types, both included and user-defined, using type classes:</p> 
+  <pre><code>trait Pixel[A] {
+  def sum(a: A, b: A):A
+  def fade(p: A, f: Float):A
+  def zero: A
+}
+</code></pre> 
+  <p>Included pixel types in include RGB, RGBA, and grayscale. All are represented internally as 32-bit integers. Once certain Scala issues are addressed [<a href="https://issues.scala-lang.org/browse/SI-5611" target="_blank">https://issues.scala-lang.org/browse/SI-5611</a>] specialization should give us fast performance. Currently these representations are boxed at runtime, but performance should be reasonably good for many use cases.</p> 
+  <h2><a id="user-content-getting-pureimage" class="anchor" href="https://github.com/stephenjudkins/pureimage#getting-pureimage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting PureImage</h2> 
+  <p>Add the following to your <code>build.sbt</code>:</p> 
+  <pre><code>resolvers += "stephenjudkins-bintray" at "http://dl.bintray.com/stephenjudkins/maven"
+
+libraryDependencies += "ps.tricerato" %% "pureimage" % "0.1.2"
+</code></pre> 
+ </article>
+</div>

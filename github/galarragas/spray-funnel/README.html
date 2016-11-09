@@ -1,0 +1,230 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-spray-funnel" class="anchor" href="https://github.com/galarragas/spray-funnel#spray-funnel" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spray Funnel</h1> 
+  <p>Spray Client extension to allow limitation of client request frequency and number of parallel requests</p> 
+  <p><a href="http://travis-ci.org/galarragas/spray-funnel" target="_blank"><img src="https://camo.githubusercontent.com/5870a8a30e158fbae6befae17a234eede397d708/68747470733a2f2f6170692e7472617669732d63692e6f72672f67616c617272616761732f73707261792d66756e6e656c2e706e67" alt="Build Status" data-canonical-src="https://api.travis-ci.org/galarragas/spray-funnel.png" style="max-width:100%;"></a></p> 
+  <p><a href="https://github.com/galarragas/spray-funnel/blob/master/funnel.jpg?raw=true" target="_blank"><img src="https://github.com/galarragas/spray-funnel/raw/master/funnel.jpg?raw=true" alt="Image" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-what-is-it" class="anchor" href="https://github.com/galarragas/spray-funnel#what-is-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What is it?</h2> 
+  <p>Spray Funnel is a request throttling system for AKKA actors that has been specifically designed to support HttpRequest - HttpReply interactions. It can be easily extended to support different protocols but at the moment is tested for HTTP-based interactions. It can be seen as an extension of the AKKA Throttler feature (<a href="http://doc.akka.io/docs/akka/snapshot/contrib/throttle.html#introduction" target="_blank">http://doc.akka.io/docs/akka/snapshot/contrib/throttle.html#introduction</a>) supporting Request-Reply patterns in order to provide a slightly wider set of features. It allows to limit:</p> 
+  <ul> 
+   <li>The number of request per specified interval</li> 
+   <li>Number of parallel active requests</li> 
+   <li>Timeout after which an enqueued request has to be discarded</li> 
+   <li>Maximum number of messages enqueued after which new incoming messages are discarded until the queue size decreases (limiting spikes)</li> 
+  </ul> 
+  <p>It supports throttling of Spray Client code and Spray Server code</p> 
+  <h3><a id="user-content-spray-client" class="anchor" href="https://github.com/galarragas/spray-funnel#spray-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spray Client</h3> 
+  <p>The idea is to create a generic mechanism to allow the throttling of all the messages sent and received by a <code>sendReceive</code> Spray pipeline. The work can be easily generalised for different protocols but at the moment I'm using it with for HTTP requests.</p> 
+  <p>As default uses the HTTP transport but offers the possibility of specifying a custom transport</p> 
+  <p>When a client request is discarded because of a timeout or because of too many enqueued requests to be served, a notification is sent to the Actor System <code>eventBus</code> in the form of a <code>DiscardedClientRequest</code> object containing the discarded request and the reason. If a request is not served in the specified request timeout an <code>FailedClientRequest</code> object is published in the Actor System <code>eventBus</code></p> 
+  <h3><a id="user-content-spray-server" class="anchor" href="https://github.com/galarragas/spray-funnel#spray-server" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spray Server</h3> 
+  <p>Spray Funnel can be used to limit the amount of parallel request and the frequency of request to be served by an HTTP Server Request Handler similarly to the Jetty QoS filter (<a href="http://wiki.eclipse.org/Jetty/Reference/QoSFilter" target="_blank">http://wiki.eclipse.org/Jetty/Reference/QoSFilter</a>).</p> 
+  <p>All requests not forwarded to the HTTP Server Request Handler because of timeout or queue threshold limit are rejected with an <code>HttpResponse(BandwidthLimitExceeded)</code>. This will prevent the <code>Timedout</code> notification from Spray. In a similar fashion, all requests not served by the HTTP Server Request Handler within the specified request timeout will be completed with a <code>HttpResponse(InternalServerError)</code> response.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/galarragas/spray-funnel#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h3><a id="user-content-spray-client-1" class="anchor" href="https://github.com/galarragas/spray-funnel#spray-client-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spray Client</h3> 
+  <p>There are two main types of usage of the library: creating a throttling actor during the pipeline definition to wrap the HTTP transport or using AKKA extensions</p> 
+  <h3><a id="user-content-inline-wrapping-of-http-actor-passed-to-sendreceive" class="anchor" href="https://github.com/galarragas/spray-funnel#inline-wrapping-of-http-actor-passed-to-sendreceive" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Inline Wrapping of HTTP Actor Passed to <code>sendReceive</code></h3> 
+  <p>A very simple way of using this library is to specify the throttling setting in the sendReceive pipeline definition like shown below</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">SimpleSprayClient</span>(<span class="pl-v">serverBaseAddress</span>: <span class="pl-k">String</span> <span class="pl-v">timeout</span>: <span class="pl-en">Timeout</span>) {
+  <span class="pl-k">import</span> <span class="pl-v">SimpleClientProtocol.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">com.pragmasoft.reactive.throttling.http.client.HttpClientThrottling.</span><span class="pl-v">_</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>program-info-client<span class="pl-pds">"</span></span>, <span class="pl-en">ConfigFactory</span>.parseResources(<span class="pl-s"><span class="pl-pds">"</span>test.conf<span class="pl-pds">"</span></span>))
+
+  <span class="pl-k">import</span> <span class="pl-v">actorSystem.</span><span class="pl-v">dispatcher</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">apiTimeout</span> <span class="pl-k">:</span> <span class="pl-en">Timeout</span> <span class="pl-k">=</span> timeout
+
+  <span class="pl-k">val</span> <span class="pl-en">pipeline</span> <span class="pl-k">=</span> sendReceive(throttleFrequencyAndParallelRequests(<span class="pl-c1">30</span> perSecond, <span class="pl-c1">10</span>)) <span class="pl-k">~</span><span class="pl-k">&gt;</span> unmarshal[<span class="pl-en">SimpleResponse</span>]
+
+  <span class="pl-k">def</span> <span class="pl-en">callFakeService</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>) <span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">SimpleResponse</span>] <span class="pl-k">=</span> pipeline { <span class="pl-en">Get</span>(s<span class="pl-s"><span class="pl-pds">"</span>$serverBaseAddress/fakeService?$id<span class="pl-pds">"</span></span>) }
+
+
+  <span class="pl-k">def</span> <span class="pl-en">shutdown</span>() <span class="pl-k">=</span> actorSystem.shutdown()
+}</pre>
+  </div> 
+  <p>The object <code>com.pragmasoft.reactive.throttling.client.HttpClientThrottling</code> exports the following methods:</p> 
+  <ul> 
+   <li><code>throttleFrequency</code> to throttle the http traffic frequency only</li> 
+   <li><code>throttleFrequencyAndParallelRequests</code> to throttle the http traffic frequency only</li> 
+   <li><code>throttleWithConfig</code> to specify more complex configuration (see section below about extensions to see a decription of the configuration options)</li> 
+  </ul> 
+  <p>It is also possible to specify a transport different than HTTP with the methods <code>throttleFrequencyWithTransport</code>, <code>throttleFrequencyAndParallelRequestWithTransport</code>, <code>throttleWithConfigAndTransport</code></p> 
+  <h3><a id="user-content-using-akka-extensions" class="anchor" href="https://github.com/galarragas/spray-funnel#using-akka-extensions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using AKKA Extensions</h3> 
+  <p>This mechanism allows the same throttling channel to be shared by different pipelines, thus allowing to limit the throughput of an application talking with destinations shared by different client classes or traits.</p> 
+  <p>To enable this feature you need to create an AKKA extension. This is very simple and is just a matter of implementing two classes as in the example below:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">TestFunneledChannelExtension</span>(<span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ExtendedActorSystem</span>) <span class="pl-k">extends</span> <span class="pl-e">FunneledChannelExtension</span> {
+  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">configRootName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>qos.channels.channel1<span class="pl-pds">"</span></span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">TestFunneledChannel</span> <span class="pl-k">extends</span> <span class="pl-e">ExtensionKey</span>[<span class="pl-en">TestFunneledChannelExtension</span>]</pre>
+  </div> 
+  <p>Having defined the extension the Spray Client code will be written as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">SimpleSprayClient</span>(<span class="pl-v">serverBaseAddress</span>: <span class="pl-k">String</span>, <span class="pl-v">timeout</span> : <span class="pl-en">Timeout</span> ) {
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>simple-spray-client<span class="pl-pds">"</span></span>, <span class="pl-en">ConfigFactory</span>.parseResources(<span class="pl-s"><span class="pl-pds">"</span>test.conf<span class="pl-pds">"</span></span>))
+  <span class="pl-k">import</span> <span class="pl-v">actorSystem.</span><span class="pl-v">dispatcher</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">futureTimeout</span> <span class="pl-k">:</span> <span class="pl-en">Timeout</span> <span class="pl-k">=</span> timeout
+
+  <span class="pl-k">val</span> <span class="pl-en">pipeline</span> <span class="pl-k">=</span> sendReceive(<span class="pl-en">IO</span>(<span class="pl-en">TestFunneledChannel</span>)) <span class="pl-k">~</span><span class="pl-k">&gt;</span> unmarshal[<span class="pl-en">SimpleResponse</span>]
+
+  <span class="pl-k">def</span> <span class="pl-en">callFakeService</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>) <span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">SimpleResponse</span>] <span class="pl-k">=</span> pipeline { <span class="pl-en">Get</span>(s<span class="pl-s"><span class="pl-pds">"</span>$serverBaseAddress/fakeService?$id<span class="pl-pds">"</span></span>) }
+
+  <span class="pl-k">def</span> <span class="pl-en">shutdown</span>() <span class="pl-k">=</span> actorSystem.shutdown()
+}</pre>
+  </div> 
+  <p>The reference to <code>IO(TestFunneledChannel)</code> allows AKKA to retrieve the configuration of your channel and apply it to limit the traffic of your pipeline</p> 
+  <p>The AKKA configuration will be written as follows:</p> 
+  <pre><code>qos.channels {
+    channel1 {
+        frequency {
+            threshold = 5
+            interval = 15 s
+        }
+        requests {
+            # Max number of request active at the same time on this channel
+            # parallel-threshold = infinite disables parallel request limit
+            # When a request times out an event of type FailedClientRequest with parameter reason equal to Timeout
+            # and a copy the discarded request is generated
+            parallel-threshold = 3
+            # Max timeout waiting for the response of any request. Should be a finite value
+            timeout = 45 s
+            # Interval after which not served request will be discarded
+            # When a request is discarded an event of type DiscardedClientRequest with parameter reason equal to Expired
+            # and a copy the discarded request is generated
+            expiry = infinite
+            # If set to a finite value will cause to discard all messages received when the queue of not served
+            # messages is higher than the threshold
+            # When a request is discarded an event of type DiscardedClientRequest with parameter reason equal to QueueThresholdReached
+            # and a copy the discarded request is generated
+            max-queue-size = infinite
+        }
+    }
+}
+</code></pre> 
+  <h4><a id="user-content-handling-failures" class="anchor" href="https://github.com/galarragas/spray-funnel#handling-failures" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Handling failures</h4> 
+  <p>The throttling client generates event when a requests handling has been unsuccessful. In any case spray-funnel will publish an event on the System <code>eventStream</code> with a copy of the failed request and a description of the failure The reason of failure and associated events are:</p> 
+  <ul> 
+   <li>The request failed because of a timeout: In this case an event of type <code>FailedClientRequest</code> with reason <code>Expired</code> is generated</li> 
+   <li>The request has been discarded according to the configuration of the channel throttler. The reasons can be two: 
+    <ul> 
+     <li>Max queue depth reached: In this case an event of type <code>DiscardedClientRequest</code> is generated with reason equal to <code>QueueThresholdReached</code></li> 
+     <li>Request have been in the processing queue more than the configured <code>expiry</code> parameter. In this case an event of type <code>DiscardedClientRequest</code> is generated with reason equal to <code>Expired</code></li> 
+    </ul></li> 
+  </ul> 
+  <h3><a id="user-content-spray-server-1" class="anchor" href="https://github.com/galarragas/spray-funnel#spray-server-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spray Server</h3> 
+  <p>At the moment the only supported pattern is using a singleton handler, since the wrapping funneling actor is only able to serve one target.</p> 
+  <p>A sample usage is:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.pragmasoft.reactive.throttling.http.server.HttpServerThrottling.</span><span class="pl-v">_</span>
+
+<span class="pl-k">class</span> <span class="pl-en">StubServer</span>(<span class="pl-v">interface</span>: <span class="pl-k">String</span>, <span class="pl-v">port</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">Actor</span> {
+  <span class="pl-en">IO</span>(<span class="pl-en">Http</span>).ask(<span class="pl-en">Http</span>.<span class="pl-en">Bind</span>(service, interface, port))(<span class="pl-c1">3.</span>seconds)
+
+  <span class="pl-k">val</span> <span class="pl-en">allConnectionsHandler</span> <span class="pl-k">=</span> throttleFrequencyAndParallelRequests(<span class="pl-c1">30</span> perSecond, <span class="pl-c1">10</span>) { system.actorOf(... my http handler actor props here) }
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">receive</span><span class="pl-k">:</span> <span class="pl-en">Actor</span>.<span class="pl-en">Receive</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Http</span>.<span class="pl-en">Connected</span>(peer, _) <span class="pl-k">⇒</span>
+      log.debug(<span class="pl-s"><span class="pl-pds">"</span>Connected with {}<span class="pl-pds">"</span></span>, peer)
+      sender <span class="pl-k">!</span> <span class="pl-en">Http</span>.<span class="pl-en">Register</span>(allConnectionsHandler)
+  }
+}
+</pre>
+  </div> 
+  <p>The object <code>com.pragmasoft.reactive.throttling.server.HttpServerThrottling</code> exports the following methods:</p> 
+  <ul> 
+   <li><code>throttleFrequency</code> to throttle the http traffic frequency only</li> 
+   <li><code>throttleFrequencyAndParallelRequests</code> to throttle the http traffic frequency only</li> 
+   <li><code>throttleWithConfig</code> to specify more complex configuration (see section about client throttling with AKKA extensions to see a description of the configuration options)</li> 
+  </ul> 
+  <h3><a id="user-content-settings-already-available-in-spray" class="anchor" href="https://github.com/galarragas/spray-funnel#settings-already-available-in-spray" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Settings already available in Spray</h3> 
+  <p>The parallel request limitation can be done in Spray using the <code>spray.can.server.pipelining-limit</code> parameter. This setting will limit the number of active request per connection. The throttling available using spray-funnel instead can be used across connections using the singleton pattern or with more sophisticated logic as for example one throttle per IP address just using different funnels.</p> 
+  <h2><a id="user-content-adding-dependency-to-spray-funnel" class="anchor" href="https://github.com/galarragas/spray-funnel#adding-dependency-to-spray-funnel" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Adding Dependency to Spray Funnel</h2> 
+  <p>Add my Bintray repository to your resolvers:</p> 
+  <pre><code>resolvers += Resolver.bintrayRepo("galarragas", "maven")
+</code></pre> 
+  <p>then add the following dependencies to your sbt configuration</p> 
+  <pre><code>
+libraryDependencies += "com.pragmasoft" %% "spray-funnel" % "1.1"
+
+</code></pre> 
+  <p>This version is not working properly with version 1.3 of spray (see issue #2).</p> 
+  <p>Use version <code>1.1-spray1.3</code> if you are working with Spray 1.3</p> 
+  <pre><code>libraryDependencies += "com.pragmasoft" %% "spray-funnel" % "1.1-spray1.3"
+</code></pre> 
+  <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/galarragas/spray-funnel#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies:</h2> 
+  <p>Runtime:</p> 
+  <ul> 
+   <li>Scala 2.10</li> 
+   <li>Spray Client 1.2.0</li> 
+   <li>Akka 2.2.3</li> 
+  </ul> 
+  <p>Test:</p> 
+  <ul> 
+   <li>Akka_testkit 2.2.3</li> 
+   <li>Specs2 2.2.3</li> 
+  </ul> 
+  <h2><a id="user-content-support-of-spray-13" class="anchor" href="https://github.com/galarragas/spray-funnel#support-of-spray-13" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Support of Spray 1.3</h2> 
+  <p>Current version is not working propery with version 1.3 of spray (see issue #2). Version <code>1.0-RC3-spray1.3</code> has been built with the following dependencies</p> 
+  <ul> 
+   <li>Scala 2.10/Scala 2.11</li> 
+   <li>Spray 1.3.1</li> 
+   <li>Akka 2.3.2</li> 
+  </ul> 
+  <p>To use it please add the following to your sbt file</p> 
+  <pre><code>libraryDependencies += "com.pragmasoft" %% "spray-funnel" % "1.1-spray1.3"
+</code></pre> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/galarragas/spray-funnel#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2014 PragmaSoft Ltd.</p> 
+  <p>Licensed under the Apache License, Version 2.0: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+ </article>
+</div>

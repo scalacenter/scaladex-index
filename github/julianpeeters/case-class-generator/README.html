@@ -1,0 +1,71 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-case-class-generator" class="anchor" href="https://github.com/julianpeeters/case-class-generator#case-class-generator" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Case-Class-Generator</h1> 
+  <p><a href="https://travis-ci.org/julianpeeters/case-class-generator" target="_blank"><img src="https://camo.githubusercontent.com/687e7eb601b395a7d5773d396345d46285e67d24/68747470733a2f2f7472617669732d63692e6f72672f6a756c69616e706565746572732f636173652d636c6173732d67656e657261746f722e7376673f6272616e63683d7363616c615f322e3131" alt="Build Status" data-canonical-src="https://travis-ci.org/julianpeeters/case-class-generator.svg?branch=scala_2.11" style="max-width:100%;"></a></p> 
+  <p>Allows runtime data to serve as Scala case class definitions:</p> 
+  <ul> 
+   <li>Case classes defined and loaded at runtime</li> 
+   <li>Pseudo Type-Provider via type alias</li> 
+  </ul> 
+  <p>Runtime code-generation and evaluation can be accomplished in a <code>scala.tools.reflect.ToolBox</code>, yet only one class per package can be created (see <a href="https://github.com/julianpeeters/toolbox-salat-example/blob/two_classes_error/src/main/scala/Main.scala#L59" target="_blank">this error</a>). So for now I'm using <a href="http://asm.ow2.org/" target="_blank">ASM</a> and <a href="https://github.com/julianpeeters/artisanal-pickle-maker" target="_blank">Artisanal-Pickle-Maker</a> to generate bytecode for case classes, and a custom classloader to load the newly-made classes.</p> 
+  <p>The dynamically generated class can be used to instantiate new objects at runtime, or serve as as a type parameter. Please see warnings below.</p> 
+  <p>Supports generating classes with arbitrary fields of the following datatypes: </p> 
+  <ul> 
+   <li>Byte</li> 
+   <li>Short</li> 
+   <li>Int</li> 
+   <li>Long</li> 
+   <li>Float</li> 
+   <li>Double</li> 
+   <li>Char</li> 
+   <li>String</li> 
+   <li>Boolean</li> 
+   <li>Null</li> 
+   <li>Nothing*</li> 
+   <li>Any</li> 
+   <li>AnyRef</li> 
+   <li>List</li> 
+   <li>Option</li> 
+   <li>user-defined (i.e. other case classes)</li> 
+  </ul> 
+  <p>*All datatypes except Nothing can be used as type-provider.</p> 
+  <h3><a id="user-content-usage" class="anchor" href="https://github.com/julianpeeters/case-class-generator#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage:</h3> 
+  <p>Add the following dependency for Scala 2.11 (please see branches for other supported versions): </p> 
+  <pre><code>"com.julianpeeters" %% "case-class-generator" % "0.7.1"
+</code></pre> 
+  <p>Then get a <code>DynamicCaseClass</code> instance with:</p> 
+  <pre><code>import com.julianpeeters.caseclass.generator._
+
+val name      = ClassName("Person")
+val namespace = ClassNamespace(Some("mypackage"))
+val fieldData = ClassFieldData( List(FieldData("name", typeOf[String]), FieldData("age", typeOf[Int])) )
+val classData = ClassData(namespace, name, fieldData)
+
+val dcc = new DynamicCaseClass(classData)
+</code></pre> 
+  <p>with which you will be a able to:</p> 
+  <ul> 
+   <li><p>Use the <code>newInstance(varargs: Any*)</code> method to get an instance of the newly-generated class: <code>val record = dcc.newInstance("Griselda", 4)</code></p></li> 
+   <li><p>Use a "zero-arg constructor" to get and instance of the newly-generated class with default parameters: <code>val record = dcc.runtimeInstance</code></p></li> 
+   <li><p>Call <code>.type</code> on an instance of the runtime class to use it as a type parameter (doesn't carry a type tag): <code>val x = myParamterizedThing[record.type]</code></p></li> 
+   <li><p>Import the new class' implicits and use the <code>.TYPE</code> type member as a type parameter (carries a type tag/manifest, implicit scoping rules apply):</p> <p><code>import scala.reflect.runtime.universe._</code></p> <p><code>import dcc.implicits.{ tag, manifest }</code></p> <p><code>typeOf[dcc.TYPE]</code></p></li> 
+   <li><p>Retrieve previously generated classes from a <code>Map[Type, DynamicCaseClass]</code> <code>import stores._</code> <code>ClassStore.generatedClasses.get(dcc.tpe)</code></p></li> 
+  </ul> 
+  <h2><a id="user-content-warnings" class="anchor" href="https://github.com/julianpeeters/case-class-generator#warnings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Warnings:</h2> 
+  <p>1) Reflection circumvents type-saftey. If you find yourself here, please consider if you truly need to define classes at runtime. For example, a file that is accessed at runtime is often <em>also</em> accessible at compile-time, and therefore is candidate for a macro, which is type-safe.</p> 
+  <p>2) If you only need a single class per package, please see <a href="https://github.com/julianpeeters/toolbox-type-provider" target="_blank">toolbox-type-provider</a> for a tool that uses the official (yet still experimental) way to generate classes at runtime. Keep an eye on [scala.meta])(<a href="http://scalameta.org/" target="_blank">http://scalameta.org/</a>) to solve the single-class-per-package issue.</p> 
+  <p>3) Only the generation of case classes with fields but without a body are supported. This is due to concerns about hygeine, specifically restricting the generation of anonymous classes that may pollute the namespace. </p> 
+  <p>4) For now only classes with vals can be generated: no vars. It is feasible to add vars in the future, but for them to work, <a href="https://github.com/julianpeeters/artisanal-pickle-maker" target="_blank">Artisanal-Pickle-Maker</a> must be updated as well.</p> 
+  <p>5) ObjectWeb's ASM classwriter, and thus this project, is <em>not</em> thread-safe. Testing with Travis CI is done by using <code>parallelExecution in Test := false</code> in the build file.</p> 
+  <p>Fork away, just make sure the tests pass. Criticism is appreciated.</p> 
+ </article>
+</div>

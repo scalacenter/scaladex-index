@@ -1,0 +1,139 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-slack-scala-client" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#slack-scala-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>slack-scala-client</h1> 
+  <p>A Scala library for interacting with the Slack API and real time messaging interface</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Add SBT dependency:</p> 
+  <pre><code>libraryDependencies += "com.github.gilbertw1" %% "slack-scala-client" % "0.1.8"
+</code></pre> 
+  <h2><a id="user-content-api-client-usage" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#api-client-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>API Client Usage</h2> 
+  <p>There are two different API clients, one exposing an asynchronous interface and the other exposing a synchronous interface. They can be imported from the <code>slack.api</code> package:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">slack.api.</span><span class="pl-v">SlackApiClient          </span><span class="pl-c">// Async</span>
+<span class="pl-k">import</span> <span class="pl-v">slack.api.</span><span class="pl-v">BlockingSlackApiClient  </span><span class="pl-c">// Blocking</span></pre>
+  </div> 
+  <p>Creating an instance of either client simply requires passing in a Slack api token:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">token</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;Your Token Here&gt;<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">SlackApiClient</span>(token)</pre>
+  </div> 
+  <p>Calling any api functions requires an implicit <code>ExecutionContext</code>... the global one can be imported simply:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span></pre>
+  </div> 
+  <p>The async client returns futures as the result of each of its API functions:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">SlackApiClient</span>(token)
+<span class="pl-k">val</span> <span class="pl-en">res</span> <span class="pl-k">=</span> client.listChannels() <span class="pl-c">// =&gt; Future[Seq[Channel]]</span>
+
+res.onComplete {
+    <span class="pl-k">case</span> <span class="pl-en">Success</span>(channels) <span class="pl-k">=&gt;</span>  <span class="pl-c">//...</span>
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(err) <span class="pl-k">=&gt;</span> <span class="pl-c">// ...</span>
+}</pre>
+  </div> 
+  <p>...while the blocking client will block the current thread until the API response has been received:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">BlockingSlackApiClient</span>(token)  <span class="pl-c">// Default timeout of 5 seconds</span>
+<span class="pl-k">val</span> <span class="pl-en">channels</span> <span class="pl-k">=</span> client.listChannels()  <span class="pl-c">// =&gt; Seq[Channel]</span></pre>
+  </div> 
+  <p>The API clients implement the full Slack API. A full list of the available endpoints can be found directly on the classes: <a href="https://github.com/gilbertw1/slack-scala-client/blob/master/src/main/scala/slack/api/SlackApiClient.scala#L83-L507" target="_blank">SlackApiClient</a> and <a href="https://github.com/gilbertw1/slack-scala-client/blob/master/src/main/scala/slack/api/BlockingSlackApiClient.scala#L28-L324" target="_blank">BlockingSlackApiClient</a></p> 
+  <h2><a id="user-content-rtm-client-usage" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#rtm-client-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>RTM Client Usage</h2> 
+  <p>The real time messaging client is implemented using akka and requires having an implicit <code>ActorRefFactory</code> in scope. Either an <code>ActorSystem</code> or <code>ActorContext</code> will work:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">slack.rtm.</span><span class="pl-v">SlackRtmClient</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>slack<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Creating an instance of the RTM client requires an API token, just like the API clients:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">token</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;Your Token Here&gt;<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">SlackRtmClient</span>(token)</pre>
+  </div> 
+  <p>Based on the stream of events coming in, the client maintains active state that contains things like channels and users. It can also be used to look up the ID of a user or channel by name:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">state</span> <span class="pl-k">=</span> client.state
+<span class="pl-k">val</span> <span class="pl-en">selfId</span> <span class="pl-k">=</span> state.<span class="pl-v">self</span>.id
+<span class="pl-k">val</span> <span class="pl-en">chanId</span> <span class="pl-k">=</span> state.getChannelIdForName(<span class="pl-s"><span class="pl-pds">"</span>general<span class="pl-pds">"</span></span>) <span class="pl-c">// =&gt; Option[String]</span></pre>
+  </div> 
+  <p>Sending a message is pretty simple:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">generalChanId</span> <span class="pl-k">=</span> state.getChannelIdForName(<span class="pl-s"><span class="pl-pds">"</span>general<span class="pl-pds">"</span></span>).get
+client.sendMessage(generalChanId, <span class="pl-s"><span class="pl-pds">"</span>Hello!<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Messages can be received very simply as well:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>client.onMessage { message <span class="pl-k">=&gt;</span>
+    println(s<span class="pl-s"><span class="pl-pds">"</span>User: ${message.user}, Message: ${message.text}<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <p>Additionally, the client can be used to receive any event sent from Slack:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>client.onEvent {
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">Message</span> <span class="pl-k">=&gt;</span> ...
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">UserTyping</span> <span class="pl-k">=&gt;</span> ...
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">ChannelDeleted</span> <span class="pl-k">=&gt;</span> ...
+}</pre>
+  </div> 
+  <p>A full list of events can be found in <a href="https://github.com/gilbertw1/slack-scala-client/blob/master/src/main/scala/slack/models/Events.scala" target="_blank">Events.scala</a>. One thing to note is the two above functions return an <code>ActorRef</code> which is a handle to the underlying actor running the above handler function. This can be used to terminate the handler by terminating the actor: <code>system.stop(handler)</code>, or unregistering it as a listener: <code>client.removeEventListener(handler)</code></p> 
+  <p>An Akka actor can be manually registered as an event listener and all events will be sent to that actor:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">actor</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>[<span class="pl-en">SlackEventHandler</span>])
+client.addEventListener(actor)
+<span class="pl-c">// Time Passes...</span>
+client.removeEventListener(actor)</pre>
+  </div> 
+  <p>Finally, an RTM client can easily be terminated and cleaned up by calling close:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>client.close()</pre>
+  </div> 
+  <h2><a id="user-content-simple-bot-example" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#simple-bot-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Simple Bot Example</h2> 
+  <p>This is a full implementation of a Slack bot that will listen for anyone mentioning it in a message and will respond to that user.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">token</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>...<span class="pl-pds">"</span></span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>slack<span class="pl-pds">"</span></span>)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ec</span> <span class="pl-k">=</span> system.dispatcher
+
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">SlackRtmClient</span>(token)
+<span class="pl-k">val</span> <span class="pl-en">selfId</span> <span class="pl-k">=</span> client.state.<span class="pl-v">self</span>.id
+
+client.onMessage { message <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">mentionedIds</span> <span class="pl-k">=</span> <span class="pl-en">SlackUtil</span>.extractMentionedIds(message.text)
+
+  <span class="pl-k">if</span>(mentionedIds.contains(selfId)) {
+    client.sendMessage(message.channel, s<span class="pl-s"><span class="pl-pds">"</span>&lt;@${message.user}&gt;: Hey!<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-websocket-re-connection-behavior" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#websocket-re-connection-behavior" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>WebSocket Re-Connection Behavior</h2> 
+  <p>The WebSocket connection sends a <code>PingFrame</code> every second and if it ever goes more than 10 seconds without receiving a <code>PongFrame</code>, will terminate the WebSocket connection and attempt to establish a new connection. It will continue to do this using an exponential back-off until it is able to successfully reconnect to the RTM WebSocket API.</p> 
+  <h2><a id="user-content-caveat-emptor" class="anchor" href="https://github.com/gilbertw1/slack-scala-client#caveat-emptor" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveat Emptor</h2> 
+  <ul> 
+   <li>The Slack API contains a lot methods and not every implemented API method has been executed (i.e. some may not work; pull requests accepted!)</li> 
+   <li>Responses to RTM messages sent out are not currently checked to verify they were successfully received (Coming Soon!)</li> 
+   <li>Investigate a way to ensure all missed messages are received during a disconnection</li> 
+   <li>A small number of response types have yet to be fleshed out</li> 
+  </ul> 
+ </article>
+</div>

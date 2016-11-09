@@ -1,0 +1,174 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sqlτyped---a-macro-which-infers-scala-types-by-analysing-sql-statements" class="anchor" href="https://github.com/jonifreeman/sqltyped#sqlτyped---a-macro-which-infers-scala-types-by-analysing-sql-statements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sqlτyped - a macro which infers Scala types by analysing SQL statements</h1> 
+  <p><em>Towards a perfect impedance match...</em></p> 
+  <ul> 
+   <li><p>The types and column names are already defined in database schema and SQL query. Why not use those and infer types and accessor functions?</p></li> 
+   <li><p>SQL is a fine DSL for many queries. It is the native DSL of relational databases and wrapping it with another DSL is often unnecessary (SQL sucks when one has to compose queries, or if you have to be database agnostic).</p></li> 
+  </ul> 
+  <p><strong>sqlτyped converts SQL string literals into typed functions at compile time.</strong></p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">select</span> age, name <span class="pl-k">from</span> person <span class="pl-k">where</span> age <span class="pl-k">&gt;</span> ?</pre>
+  </div> 
+  <p>==&gt;</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">Int</span> <span class="pl-k">=&gt;</span> <span class="pl-en">List</span>[{ <span class="pl-v">age</span>: <span class="pl-k">Int</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span> }]</pre>
+  </div> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/jonifreeman/sqltyped#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <p>The following examples use schema and data from <a href="https://github.com/jonifreeman/sqltyped/blob/master/core/src/test/resources/test.sql" target="_blank">test.sql</a></p> 
+  <p>First some boring initialization... </p> 
+  <p>Start console: <code>sbt</code>, then <code>project sqltyped</code> and <code>test:console</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.sql.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">sqltyped.</span><span class="pl-v">_</span>
+<span class="pl-en">Class</span>.forName(<span class="pl-s"><span class="pl-pds">"</span>com.mysql.jdbc.Driver<span class="pl-pds">"</span></span>)
+<span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> <span class="pl-en">DriverManager</span>.getConnection(<span class="pl-s"><span class="pl-pds">"</span>jdbc:mysql://localhost:3306/sqltyped<span class="pl-pds">"</span></span>, 
+                                                <span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Now we are ready to query the data.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select name, age from person<span class="pl-pds">"</span></span>)
+scala<span class="pl-k">&gt;</span> q() map (_ get <span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>)
+res0<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">36</span>, <span class="pl-c1">14</span>)</pre>
+  </div> 
+  <p>Notice how the type of 'age' was infered to be Int.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> q() map (_ get <span class="pl-s"><span class="pl-pds">"</span>salary<span class="pl-pds">"</span></span>)
+&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span><span class="pl-k">:</span> <span class="pl-v">error</span>: <span class="pl-en">No</span> field <span class="pl-k">String</span>(<span class="pl-s"><span class="pl-pds">"</span>salary<span class="pl-pds">"</span></span>) in record ...
+               q() map (_ get <span class="pl-s"><span class="pl-pds">"</span>salary<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Oops, a compilation failure. Can't access 'salary', it was not selected in the query.</p> 
+  <p>Query results are returned as List of type safe records (think <code>List[{name:String, age:Int}]</code>). As the above examples showed a field of a record can be accessed with get function: <code>row.get(name)</code>. Functions <code>values</code> and <code>tuples</code> can be used to drop record names and get just the query values.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> q().values
+res1<span class="pl-k">:</span> <span class="pl-en">List</span>[shapeless.<span class="pl-k">::</span>[<span class="pl-k">String</span>,shapeless.<span class="pl-k">::</span>[<span class="pl-k">Int</span>,shapeless.<span class="pl-en">HNil</span>]]] <span class="pl-k">=</span> 
+  <span class="pl-en">List</span>(joe <span class="pl-k">::</span> <span class="pl-c1">36</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>, moe <span class="pl-k">::</span> <span class="pl-c1">14</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>)
+
+scala<span class="pl-k">&gt;</span> q().tuples
+res2<span class="pl-k">:</span> <span class="pl-en">List</span>[(<span class="pl-k">String</span>, <span class="pl-k">Int</span>)] <span class="pl-k">=</span> <span class="pl-en">List</span>((joe,<span class="pl-c1">36</span>), (moe,<span class="pl-c1">14</span>))</pre>
+  </div> 
+  <p>Input parameters are parsed and typed.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select name, age from person where age &gt; ?<span class="pl-pds">"</span></span>)
+
+scala<span class="pl-k">&gt;</span> q(<span class="pl-s"><span class="pl-pds">"</span>30<span class="pl-pds">"</span></span>) map (_ get <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>)
+&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span><span class="pl-k">:</span> <span class="pl-v">error</span>: <span class="pl-k">type</span> <span class="pl-en">mismatch</span>;
+ <span class="pl-v">found</span>   : <span class="pl-k">String</span>(<span class="pl-s"><span class="pl-pds">"</span>30<span class="pl-pds">"</span></span>)
+ <span class="pl-v">required</span>: <span class="pl-k">Int</span>
+              q(<span class="pl-s"><span class="pl-pds">"</span>30<span class="pl-pds">"</span></span>) map (_ get name)
+
+scala<span class="pl-k">&gt;</span> q(<span class="pl-c1">30</span>) map (_ get <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>)
+res4<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(joe)</pre>
+  </div> 
+  <p>Nullable columns are inferred to be Scala Options.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> sql(<span class="pl-s"><span class="pl-pds">"""</span>select p.name, j.name as employer, j.started, j.resigned </span>
+<span class="pl-s">                      from person p join job_history j on p.id=j.person order by employer<span class="pl-pds">"""</span></span>)
+scala<span class="pl-k">&gt;</span> q().tuples
+res5<span class="pl-k">:</span> <span class="pl-en">List</span>[(<span class="pl-k">String</span>, <span class="pl-k">String</span>, java.sql.<span class="pl-en">Timestamp</span>, <span class="pl-en">Option</span>[java.sql.<span class="pl-en">Timestamp</span>])] <span class="pl-k">=</span> 
+  <span class="pl-en">List</span>((joe,<span class="pl-en">Enron</span>,<span class="pl-c1">2002</span><span class="pl-k">-</span><span class="pl-c1">08</span><span class="pl-k">-</span><span class="pl-c1">02</span> <span class="pl-c1">12</span><span class="pl-k">:</span><span class="pl-c1">00</span><span class="pl-k">:</span><span class="pl-c1">00.0</span>,<span class="pl-en">Some</span>(<span class="pl-c1">2004</span><span class="pl-k">-</span><span class="pl-c1">06</span><span class="pl-k">-</span><span class="pl-c1">22</span> <span class="pl-c1">18</span><span class="pl-k">:</span><span class="pl-c1">00</span><span class="pl-k">:</span><span class="pl-c1">00.0</span>)), 
+       (joe,<span class="pl-en">IBM</span>,<span class="pl-c1">2004</span><span class="pl-k">-</span><span class="pl-c1">07</span><span class="pl-k">-</span><span class="pl-c1">13</span> <span class="pl-c1">11</span><span class="pl-k">:</span><span class="pl-c1">00</span><span class="pl-k">:</span><span class="pl-c1">00.0</span>,<span class="pl-c1">None</span>))</pre>
+  </div> 
+  <p>Functions are supported too. Note how function 'max' is polymorphic on its argument. For String column it is typed as String =&gt; String etc.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select max(name) as name, max(age) as age from person where age &gt; ?<span class="pl-pds">"</span></span>)
+scala<span class="pl-k">&gt;</span> q(<span class="pl-c1">10</span>).tupled
+res6<span class="pl-k">:</span> (<span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-en">Option</span>[<span class="pl-k">Int</span>]) <span class="pl-k">=</span> (<span class="pl-en">Some</span>(moe),<span class="pl-en">Some</span>(<span class="pl-c1">36</span>))</pre>
+  </div> 
+  <h3><a id="user-content-analysis" class="anchor" href="https://github.com/jonifreeman/sqltyped#analysis" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Analysis</h3> 
+  <p>So far all the examples have returned results as Lists of records. But with a little bit of query analysis we can do better. Like, it is quite unnecessary to box the values as records if just one column is selected.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select name from person<span class="pl-pds">"</span></span>).apply
+res7<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(joe, moe)
+
+scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select age from person<span class="pl-pds">"</span></span>).apply
+res8<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">36</span>, <span class="pl-c1">14</span>)</pre>
+  </div> 
+  <p>Then, some queries are known to return just 0 or 1 values, a perfect match for Option type. The following queries return possible result as an Option instead of List. The first query uses a uniquely constraint column in its where clause. The second one explicitly wants at most one row.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select name from person where id=?<span class="pl-pds">"</span></span>).apply(<span class="pl-c1">1</span>)
+res9<span class="pl-k">:</span> <span class="pl-en">Some</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(joe)
+
+scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>select age from person order by age desc limit 1<span class="pl-pds">"</span></span>).apply
+res10<span class="pl-k">:</span> <span class="pl-en">Some</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">36</span>)</pre>
+  </div> 
+  <h3><a id="user-content-inserting-data" class="anchor" href="https://github.com/jonifreeman/sqltyped#inserting-data" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Inserting data</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>insert into person(name, age, salary) values (?, ?, ?)<span class="pl-pds">"</span></span>).apply(<span class="pl-s"><span class="pl-pds">"</span>bill<span class="pl-pds">"</span></span>, <span class="pl-c1">45</span>, <span class="pl-c1">30000</span>)
+res1<span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">1</span></pre>
+  </div> 
+  <p>Return value was 1, which means that one row was added. However, often a more useful return value is the generated primary key. Table 'person' has an autogenerated primary key column named 'id'. To get the generated value use a function <code>sqlk</code> (will be changed to <code>sql(..., keys = true)</code> once <a href="https://issues.scala-lang.org/browse/SI-5920" target="_blank">Scala macros</a> support default and named arguments).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sqlk(<span class="pl-s"><span class="pl-pds">"</span>insert into person(name, age, salary) values (?, ?, ?)<span class="pl-pds">"</span></span>).apply(<span class="pl-s"><span class="pl-pds">"</span>jill<span class="pl-pds">"</span></span>, <span class="pl-c1">45</span>, <span class="pl-c1">30000</span>)
+res2<span class="pl-k">:</span> <span class="pl-k">Long</span> <span class="pl-k">=</span> <span class="pl-c1">3</span></pre>
+  </div> 
+  <p>Inserting multiple values is supported too.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sqlk(<span class="pl-s"><span class="pl-pds">"</span>insert into person(name, age, salary) select name, age, salary from person<span class="pl-pds">"</span></span>).apply
+res3<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Long</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">4</span>, <span class="pl-c1">5</span>, <span class="pl-c1">6</span>)</pre>
+  </div> 
+  <p>Updates work as expected.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> sql(<span class="pl-s"><span class="pl-pds">"</span>update person set name=? where age &gt;= ?<span class="pl-pds">"</span></span>).apply(<span class="pl-s"><span class="pl-pds">"</span>joe2<span class="pl-pds">"</span></span>, <span class="pl-c1">30</span>)
+res4<span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">1</span></pre>
+  </div> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/jonifreeman/sqltyped#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>See <a href="https://github.com/jonifreeman/sqltyped/wiki" target="_blank">wiki</a>.</p> 
+  <p><a href="https://github.com/jonifreeman/sqltyped/tree/master/demo" target="_blank">Demo app</a></p> 
+  <h2><a id="user-content-how-to-try-it" class="anchor" href="https://github.com/jonifreeman/sqltyped#how-to-try-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to try it?</h2> 
+  <h3><a id="user-content-install" class="anchor" href="https://github.com/jonifreeman/sqltyped#install" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h3> 
+  <p>Requires at least Scala 2.10.2 and SBT 0.13.</p> 
+  <p>sqlτyped is published to Sonatype repositories.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>fi.reaktor<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>sqltyped<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-build" class="anchor" href="https://github.com/jonifreeman/sqltyped#build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build</h3> 
+  <pre><code>git clone https://github.com/jonifreeman/sqltyped.git
+cd sqltyped
+</code></pre> 
+  <p>Then either:</p> 
+  <pre><code>mysql -u root -e 'create database sqltyped'
+mysql -u root sqltyped &lt; core/src/test/resources/test.sql
+</code></pre> 
+  <p>or:</p> 
+  <pre><code>sudo -u postgres createuser -P sqltypedtest  // Note, change the password from project/build.scala
+sudo -u postgres createdb -O sqltypedtest sqltyped
+sudo -u postgres psql sqltyped &lt; core/src/test/resources/test-postgresql.sql
+</code></pre> 
+  <p>To run the tests you need to setup both databases.</p> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/jonifreeman/sqltyped#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p><em>(in order of appearance)</em></p> 
+  <ul> 
+   <li>Joni Freeman</li> 
+   <li>Dylan Alex Simon</li> 
+   <li>Vassil Dichev</li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,139 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-libinteractive" class="anchor" href="https://github.com/omegaup/libinteractive#libinteractive" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>libinteractive</h1> 
+  <p><a href="https://travis-ci.org/omegaup/libinteractive" target="_blank"><img src="https://camo.githubusercontent.com/154801c9136ede5d296f7b1c2815dd68716068f9/68747470733a2f2f7472617669732d63692e6f72672f6f6d65676175702f6c6962696e7465726163746976652e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/omegaup/libinteractive.svg" style="max-width:100%;"></a></p> 
+  <p>A tiny IDL translator that creates IPC shims to easily create interactive problems.</p> 
+  <p>You can grab the latest <code>.jar</code> from the <a href="https://github.com/omegaup/libinteractive/releases" target="_blank">Releases page</a></p> 
+  <p>Let's say your problem's name is <code>sum</code>. if you have your validator in <code>Main.cpp</code> and your solution in <code>sum.py</code>, you can do</p> 
+  <div class="highlight highlight-text-shell-session">
+   <pre>$ <span class="pl-s1">ls</span>
+<span class="pl-mo">Main.cpp sum.py sum.idl input</span>
+
+$ <span class="pl-s1">cat Main.cpp</span>
+<span class="pl-mo">#include &lt;stdio.h&gt;</span>
+<span class="pl-mo">#include "sum.h"</span>
+
+<span class="pl-mo">int main(int argc, char* argv[]) {</span>
+<span class="pl-mo">    int a, b;</span>
+<span class="pl-mo">    scanf("%d %d\n", &amp;a, &amp;b);</span>
+<span class="pl-mo">    printf("%d\n", sum(a, b));</span>
+<span class="pl-mo">}</span>
+
+$ <span class="pl-s1">cat sum.py</span>
+<span class="pl-mo">def sum(a, b):</span>
+<span class="pl-mo">    print 'Hello, world!'</span>
+<span class="pl-mo">    return a + b</span>
+
+$ <span class="pl-s1">cat sum.idl</span>
+<span class="pl-mo">interface Main {</span>
+<span class="pl-mo">}</span>
+
+<span class="pl-mo">interface sum {</span>
+<span class="pl-mo">    int sum(int a, int b);</span>
+<span class="pl-mo">}</span>
+
+$ <span class="pl-s1">java -jar libinteractive.jar generate sum.idl cpp py --makefile</span>
+$ <span class="pl-s1">make run <span class="pl-k">&lt;</span> input</span>
+<span class="pl-mo">[Main] 3</span>
+<span class="pl-mo">[ sum] Hello, world!</span>
+
+<span class="pl-mo">Memory:   5.023 MB</span>
+<span class="pl-mo">Time:     0.011 s</span></pre>
+  </div> 
+  <p>You can also add a --verbose flag to libinteractive to print a message every time an IPC call is made.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/omegaup/libinteractive#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>libinteractive parses the .idl file, which is a description of how the problemsetter and contestant's code are to be compiled, and which functions can be used to interact between them. It then generates all the necessary code that allows the code to communicate correctly. libinteractive uses Unix named pipes to send binary messages between the processes, which is much faster than reading and parsing text files.</p> 
+  <p>One advantage of libinteractive is that since it separates the problemsetter and contestant's codes in different processes, they can be written in different programming languages. This means that you as a problemsetter will only need to write one program that reads the input and interacts with the contestant's code, and libinteractive will handle serializing and de-serializing the function calls.</p> 
+  <p>libinteractive will also produce an executable called <code>run</code>, which will create the necessary pipes for communication, execute all the programs, relay the input to the Main program (if needed), and print out any output from the programs. Finally, it will print a summary of the maximum memory and total (user) time consumed by the contestant's code.</p> 
+  <p>Since libinteractive was built with omegaUp in mind, all problems built using libinteractive will be omegaUp-compliant.</p> 
+  <h2><a id="user-content-conventions" class="anchor" href="https://github.com/omegaup/libinteractive#conventions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Conventions</h2> 
+  <ul> 
+   <li>The first interface must be called <code>Main</code>, and the problemsetter's program must be in a file called <code>Main.extension</code>, where <code>extension</code> is one of <code>c</code>, <code>cpp</code>, <code>rb</code>, <code>py</code>, <code>java</code>, <code>pas</code>.</li> 
+   <li>The name of the .idl file must match the name of the contestant's code.</li> 
+   <li>Each interface will produce a separate binary and will run in a different process, which means that they will not be able to share anything.</li> 
+   <li>It is only possible to communicate between all the interfaces and Main, but not amongst them.</li> 
+   <li>Arrays are allowed, but the rules of array bounds in C must be followed: all array dimensions (except the first one) must be integer constants.</li> 
+   <li>Arrays may declare the first dimension to be a variable, but it must be a parameter of the function, and must appear before in the parameter list.</li> 
+  </ul> 
+  <h2><a id="user-content-idl-grammar" class="anchor" href="https://github.com/omegaup/libinteractive#idl-grammar" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>IDL Grammar</h2> 
+  <p>IDL is almost a subset of <a href="http://www.w3.org/TR/2012/WD-WebIDL-20120207/" target="_blank">WebIDL</a>, but with some syntax to help programming contests.</p> 
+  <pre><code>letter
+    = "a" | "b" | ... | "y" | "z"
+    | "A" | "B" | ... | "Y" | "Z"
+    ;
+
+digit
+    = "0" | "1" | ... | "8" | "9"
+    ;
+
+ident
+    = (letter | "_"), { letter | digit | "_" }
+    ;
+
+number
+    = digit, { digit }
+    ;
+
+interface-list
+    = interface, { interface }
+    ;
+
+interface
+    = "interface", ident, "{", { function }, "}", ";"
+    ;
+
+function
+    = return-type, ident, "(", param-list , ")", ";"
+    ;
+
+param-list
+    = [ param, { ",", param } ]
+    ;
+
+type
+    = array | primitive
+    ;
+
+primitive
+    = "bool" | "int" | "short" | "float"
+    | "char" | "string" | "long"
+    ;
+
+array
+    = primitive, "[", expr, "]", { "[", expr, "]" }
+    ;
+
+return-type
+    = primitive | "void"
+    ;
+
+expr
+    = ident | number
+    ;
+
+param
+    = { param-attribute }, type, ident
+    ;
+
+param-attribute
+    = "[", range-attribute, "]"
+    ;
+
+range-attribute
+    = "Range", "(", expression, ",", expression, ")"
+    ;
+</code></pre> 
+ </article>
+</div>

@@ -1,0 +1,239 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-rxscala-reactive-extensions-for-scala" class="anchor" href="https://github.com/reactivex/rxscala#rxscala-reactive-extensions-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>RxScala: Reactive Extensions for Scala</h1> 
+  <p>This is a Scala adapter to <a href="http://github.com/ReactiveX/RxJava" target="_blank">RxJava</a>.</p> 
+  <p>Example usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">o</span> <span class="pl-k">=</span> <span class="pl-en">Observable</span>.interval(<span class="pl-c1">200</span> millis).take(<span class="pl-c1">5</span>)
+o.subscribe(n <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>n = <span class="pl-pds">"</span></span> <span class="pl-k">+</span> n))
+<span class="pl-en">Observable</span>.just(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>, <span class="pl-c1">4</span>).reduce(_ <span class="pl-k">+</span> _)</pre>
+  </div> 
+  <p>For-comprehensions are also supported:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">first</span> <span class="pl-k">=</span> <span class="pl-en">Observable</span>.just(<span class="pl-c1">10</span>, <span class="pl-c1">11</span>, <span class="pl-c1">12</span>)
+<span class="pl-k">val</span> <span class="pl-en">second</span> <span class="pl-k">=</span> <span class="pl-en">Observable</span>.just(<span class="pl-c1">10</span>, <span class="pl-c1">11</span>, <span class="pl-c1">12</span>)
+<span class="pl-k">val</span> <span class="pl-en">booleans</span> <span class="pl-k">=</span> <span class="pl-k">for</span> ((n1, n2) <span class="pl-k">&lt;</span><span class="pl-k">-</span> (first zip second)) <span class="pl-k">yield</span> (n1 <span class="pl-k">==</span> n2)</pre>
+  </div> 
+  <p>Further, this adaptor attempts to expose an API which is as Scala-idiomatic as possible. This means that certain methods have been renamed, their signature was changed, or static methods were changed to instance methods. Some examples:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> <span class="pl-c">// instead of concat:</span>
+<span class="pl-k">def</span> <span class="pl-en">++</span>[<span class="pl-en">U</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">T</span>](<span class="pl-v">that</span>: <span class="pl-en">Observable</span>[<span class="pl-en">U</span>])<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">U</span>]
+
+<span class="pl-c">// instance method instead of static:</span>
+<span class="pl-k">def</span> <span class="pl-en">zip</span>[<span class="pl-en">U</span>](<span class="pl-v">that</span>: <span class="pl-en">Observable</span>[<span class="pl-en">U</span>])<span class="pl-k">:</span> <span class="pl-en">Observable</span>[(<span class="pl-en">T</span>, <span class="pl-en">U</span>)] 
+
+<span class="pl-c">// the implicit evidence argument ensures that dematerialize can only be called on Observables of Notifications:</span>
+<span class="pl-k">def</span> <span class="pl-en">dematerialize</span>[<span class="pl-en">U</span>](<span class="pl-k">implicit</span> <span class="pl-v">evidence</span>: <span class="pl-en">T</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span><span class="pl-k">&lt;</span> <span class="pl-en">Notification</span>[<span class="pl-en">U</span>])<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">U</span>] 
+
+<span class="pl-c">// additional type parameter U with lower bound to get covariance right:</span>
+<span class="pl-k">def</span> <span class="pl-en">onErrorResumeNext</span>[<span class="pl-en">U</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">T</span>](<span class="pl-v">resumeFunction</span>: <span class="pl-en">Throwable</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Observable</span>[<span class="pl-en">U</span>])<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">U</span>] 
+
+<span class="pl-c">// curried in Scala collections, so curry fold also here:</span>
+<span class="pl-k">def</span> <span class="pl-en">fold</span>[<span class="pl-en">R</span>](<span class="pl-v">initialValue</span>: <span class="pl-en">R</span>)(<span class="pl-v">accumulator</span>: (<span class="pl-en">R</span>, <span class="pl-en">T</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">R</span>)<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">R</span>] 
+
+<span class="pl-c">// using Duration instead of (long timepan, TimeUnit duration):</span>
+<span class="pl-k">def</span> <span class="pl-en">sample</span>(<span class="pl-v">duration</span>: <span class="pl-en">Duration</span>)<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">T</span>] 
+
+<span class="pl-c">// called skip in Java, but drop in Scala</span>
+<span class="pl-k">def</span> <span class="pl-en">drop</span>(<span class="pl-v">n</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">T</span>] 
+
+<span class="pl-c">// there's only mapWithIndex in Java, because Java doesn't have tuples:</span>
+<span class="pl-k">def</span> <span class="pl-en">zipWithIndex</span><span class="pl-k">:</span> <span class="pl-en">Observable</span>[(<span class="pl-en">T</span>, <span class="pl-k">Int</span>)] 
+
+<span class="pl-c">// corresponds to Java's toList:</span>
+<span class="pl-k">def</span> <span class="pl-en">toSeq</span><span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">Seq</span>[<span class="pl-en">T</span>]] 
+
+<span class="pl-c">// the implicit evidence argument ensures that switch can only be called on Observables of Observables:</span>
+<span class="pl-k">def</span> <span class="pl-en">switch</span>[<span class="pl-en">U</span>](<span class="pl-k">implicit</span> <span class="pl-v">evidence</span>: <span class="pl-en">Observable</span>[<span class="pl-en">T</span>] <span class="pl-k">&lt;</span><span class="pl-k">:</span><span class="pl-k">&lt;</span> <span class="pl-en">Observable</span>[<span class="pl-en">Observable</span>[<span class="pl-en">U</span>]])<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">U</span>]
+
+<span class="pl-c">// Java's from becomes apply, and we use Scala Range</span>
+<span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">range</span>: <span class="pl-en">Range</span>)<span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-k">Int</span>]
+
+<span class="pl-c">// use Bottom type:</span>
+<span class="pl-k">def</span> <span class="pl-en">never</span><span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-en">Nothing</span>] </pre>
+  </div> 
+  <p>Also, the Scala Observable is fully covariant in its type parameter, whereas the Java Observable only achieves partial covariance due to limitations of Java's type system (or if you can fix this, your suggestions are very welcome).</p> 
+  <p>For more examples, see <a href="https://github.com/ReactiveX/RxScala/blob/0.x/examples/src/test/scala/examples/RxScalaDemo.scala" target="_blank">RxScalaDemo.scala</a>.</p> 
+  <p>Scala code using Rx should only import members from <code>rx.lang.scala</code> and below.</p> 
+  <h2><a id="user-content-master-build-status" class="anchor" href="https://github.com/reactivex/rxscala#master-build-status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Master Build Status</h2> 
+  <p><a href="https://travis-ci.org/ReactiveX/RxScala/builds" target="_blank"><img src="https://camo.githubusercontent.com/28a987e00d939c9a8454abf155897bd015f1c434/68747470733a2f2f7472617669732d63692e6f72672f5265616374697665582f52785363616c612e7376673f6272616e63683d302e78" data-canonical-src="https://travis-ci.org/ReactiveX/RxScala.svg?branch=0.x" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-communication" class="anchor" href="https://github.com/reactivex/rxscala#communication" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Communication</h2> 
+  <p>Since RxScala is part of the RxJava family the communication channels are similar:</p> 
+  <ul> 
+   <li>Google Group: <a href="http://groups.google.com/d/forum/rxjava" target="_blank">RxJava</a></li> 
+   <li>Twitter: <a href="http://twitter.com/RxJava" target="_blank">@RxJava</a></li> 
+   <li><a href="https://github.com/ReactiveX/RxScala/issues" target="_blank">GitHub Issues</a></li> 
+  </ul> 
+  <h2><a id="user-content-versioning" class="anchor" href="https://github.com/reactivex/rxscala#versioning" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Versioning</h2> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>RxScala version</th> 
+     <th>Compatible RxJava version</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>0.26.*</td> 
+     <td>1.0.*</td> 
+    </tr> 
+    <tr> 
+     <td>0.25.*</td> 
+     <td>1.0.*</td> 
+    </tr> 
+    <tr> 
+     <td>0.24.*</td> 
+     <td>1.0.*</td> 
+    </tr> 
+    <tr> 
+     <td>0.23.*<sup>[1]</sup></td> 
+     <td>1.0.*</td> 
+    </tr> 
+    <tr> 
+     <td>0.22.0</td> 
+     <td>1.0.0-rc.5</td> 
+    </tr> 
+    <tr> 
+     <td>0.21.1</td> 
+     <td>1.0.0-rc.3</td> 
+    </tr> 
+    <tr> 
+     <td>0.X.Y (X &lt; 21)<sup>[2]</sup></td> 
+     <td>0.X.Y</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>[1] You can use any release of RxScala 0.23 with any release of RxJava 1.0. E.g, use RxScala 0.23.0 with RxJava 1.0.1 <br> [2] You should use the same version of RxScala with RxJava. E.g, use RxScala 0.20.1 with RxJava 0.20.1</p> 
+  <p>If you are using APIs labeled with <code>Experimental/Beta</code>, or <code>ExperimentalAPIs</code> (deprecated since 0.25.0), which uses RxJava Beta/Experimental APIs, you should use the corresponding version of RxJava as the following table:</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>RxScala version</th> 
+     <th>Compatible RxJava version</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>0.26.4</td> 
+     <td>1.2.2+</td> 
+    </tr> 
+    <tr> 
+     <td>0.26.3</td> 
+     <td>1.2.0+</td> 
+    </tr> 
+    <tr> 
+     <td>0.26.2</td> 
+     <td>1.1.6+</td> 
+    </tr> 
+    <tr> 
+     <td>0.26.1</td> 
+     <td>1.1.1+</td> 
+    </tr> 
+    <tr> 
+     <td>0.26.0</td> 
+     <td>1.1.0+</td> 
+    </tr> 
+    <tr> 
+     <td>0.25.1</td> 
+     <td>1.0.17+</td> 
+    </tr> 
+    <tr> 
+     <td>0.25.0</td> 
+     <td>1.0.11+</td> 
+    </tr> 
+    <tr> 
+     <td>0.24.1</td> 
+     <td>1.0.8+</td> 
+    </tr> 
+    <tr> 
+     <td>0.24.0</td> 
+     <td>1.0.7+</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-full-documentation" class="anchor" href="https://github.com/reactivex/rxscala#full-documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Full Documentation</h2> 
+  <p>RxScala: </p> 
+  <ul> 
+   <li>The API documentation can be found <a href="http://reactivex.io/rxscala/scaladoc/index.html#rx.lang.scala.Observable" target="_blank">here</a>. </li> 
+  </ul> 
+  <p>Note that starting from version 0.15, <code>rx.lang.scala.Observable</code> is not a value class any more. <a href="https://github.com/ReactiveX/RxScala/blob/0.x/Rationale.md" target="_blank">./Rationale.md</a> explains why.</p> 
+  <p>You can build the API documentation yourself by running <code>sbt doc</code> in the RxScala root directory. Open <code>target/scala-2.11/api/index.html</code> to display it.</p> 
+  <p>RxJava:</p> 
+  <ul> 
+   <li><a href="https://github.com/ReactiveX/RxJava/wiki" target="_blank">Wiki</a></li> 
+   <li><a href="http://reactivex.io/RxJava/javadoc/" target="_blank">Javadoc</a></li> 
+  </ul> 
+  <h2><a id="user-content-binaries" class="anchor" href="https://github.com/reactivex/rxscala#binaries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Binaries</h2> 
+  <p>Binaries and dependency information for Maven, Ivy, Gradle and others can be found at <a href="http://search.maven.org/#search%7Cga%7C1%7C%22rxscala%22%20AND%20g%3A%22io.reactivex%22" target="_blank">http://search.maven.org</a>.</p> 
+  <p>Example for sbt/activator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.reactivex<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>rxscala<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>x.y.z<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>and for Maven:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;io.reactivex&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;rxscala_${scala.compat.version}&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;x.y.z&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <p>and for Ivy:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span> <span class="pl-e">org</span>=<span class="pl-s"><span class="pl-pds">"</span>io.reactivex<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>rxscala_${scala.compat.version}<span class="pl-pds">"</span></span> <span class="pl-e">rev</span>=<span class="pl-s"><span class="pl-pds">"</span>x.y.z<span class="pl-pds">"</span></span> /&gt;</pre>
+  </div> 
+  <h2><a id="user-content-build" class="anchor" href="https://github.com/reactivex/rxscala#build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build</h2> 
+  <p>To build you need <a href="http://scala-sbt.org" target="_blank">sbt</a>:</p> 
+  <pre><code>$ git clone git@github.com:ReactiveX/RxScala.git
+$ cd RxScala
+$ TRAVIS_TAG=1.0.0-RC1 sbt package
+</code></pre> 
+  <p>Use <code>TRAVIS_TAG</code> to set the version of the package.</p> 
+  <p>You can also run the examples from within <code>sbt</code>:</p> 
+  <pre><code>$ sbt examples/run
+</code></pre> 
+  <p>When you see the list of available <code>App</code> objects pick the one you want to execute.</p> 
+  <pre><code>Multiple main classes detected, select one to run:
+
+ [1] AsyncWikiErrorHandling
+ [2] SyncObservable
+ [3] AsyncObservable
+ [4] AsyncWiki
+ [5] Transforming
+
+Enter number:
+</code></pre> 
+  <h2><a id="user-content-bugs-and-feedback" class="anchor" href="https://github.com/reactivex/rxscala#bugs-and-feedback" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bugs and Feedback</h2> 
+  <p>For bugs, questions and discussions please use the <a href="https://github.com/ReactiveX/RxScala/issues" target="_blank">Github Issues</a>.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/reactivex/rxscala#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>LICENSE</h2> 
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
+  <p><a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank">https://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>

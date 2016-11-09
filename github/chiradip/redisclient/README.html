@@ -1,0 +1,71 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-redisclient" class="anchor" href="https://github.com/chiradip/redisclient#scala-redisclient" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala RedisClient</h1> 
+  <p>A no nonsense Redis Client using pure scala</p> 
+  <p>The approach is simple - keep interaction with Redis in Red-ish way. That means send simple and pure Redis command and get simple and pure Redis response. Very simple but powerful Scala based Redis client without any thirdparty dependency. Users need not know about any special APIs but know about Redis commands and its responses - thats it. Philosophically converting CLI based interation or dynamic typed style into static is sort of like going backward. This library preserves that dynamic nature of Redis protocol and CLI. It adds asynchronous behavior on top of it without altering Redis single-threaded behavior. That means - your Scala/Java application can do other stuffs while Redis is processing the command(s) sent to it, and once Redis sends the response back, the future gets returned and canbe used by the calling client.</p> 
+  <p>You are encouraged to downlaod the project and try it by following the instructions given. If you want to just embed/use in your project here is the simple thing you need to follow.</p> 
+  <p>For SBT add this to build.sbt</p> 
+  <pre><code>libraryDependencies += "com.chiradip.rediscl" % "redisclient_2.10" % "0.8"
+</code></pre> 
+  <p>You may also need to add the repository in your build file: (Not required anymore since this is available in central maven repository)</p> 
+  <pre><code>resolvers += "Sonatype OSS releases" at "https://oss.sonatype.org/service/local/repositories/releases/content/"
+</code></pre> 
+  <p>For Maven use this dependency:</p> 
+  <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.chiradip.rediscl&lt;/groupId&gt;
+    &lt;artifactId&gt;redisclient_2.10&lt;/artifactId&gt;
+    &lt;version&gt;0.8&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>You may want to add repository in maven like the follows: (Not required anymore since this is available in central maven repository)</p> 
+  <pre><code>&lt;repositories&gt;
+    ....
+    &lt;repository&gt;
+      &lt;id&gt;sonatype_releases&lt;/id&gt;
+      &lt;url&gt;https://oss.sonatype.org/service/local/repositories/releases/content/&lt;/url&gt;
+    &lt;/repository&gt;
+    ....
+ &lt;/repositories&gt;
+</code></pre> 
+  <h1><a id="user-content-you-are-encouraged-to-try-these-before-you--use-in-your-project" class="anchor" href="https://github.com/chiradip/redisclient#you-are-encouraged-to-try-these-before-you--use-in-your-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>You are encouraged to try these before you use in your project</h1> 
+  <p>To run the program quickly - do a git clone and change to directory RedisClient and run sbt - make sure you have sbt 0.12 or higher.</p> 
+  <p>run compile command from sbt shell</p> 
+  <pre><code>SBT&gt; compile 
+SBT&gt; console
+scala&gt; :paste
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
+</code></pre> 
+  <p>You need the above lines in order to run it from sbt/scala console. </p> 
+  <pre><code>scala&gt; :paste
+val c = new com.chiradip.rediscl.RedisClient()
+
+val f = c.send("GET key1")
+
+f onComplete {
+  case Success(resp) =&gt; println(resp)
+  case Failure(t) =&gt; { println("Something failed"); t.getMessage()}
+}
+</code></pre> 
+  <p>And watch it yourself :) </p> 
+  <p>Also look at this optional helper function </p> 
+  <pre><code>def handleResponse(f: Future[String], fun: Any =&gt; Any) {
+    f onComplete {
+      case Success(resp) =&gt; fun(resp)
+      case Failure(t) =&gt; t.getMessage
+    }
+}
+</code></pre> 
+  <p>Think about passing a function which sends the string received as the parameter (of type Any) to an actor. This can be done very easily without making this library dependent on Akka. Enjoy and feel free to enrich this library as long it is kept simple and elegant.</p> 
+  <p>An example of using <code>handleResponse</code></p> 
+  <pre><code>scala&gt; c.handleResponse(f, println)
+</code></pre> 
+ </article>
+</div>

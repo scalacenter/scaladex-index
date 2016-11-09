@@ -1,0 +1,44 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-jndimock4s" class="anchor" href="https://github.com/anirudhvyas/jndimock4s#jndimock4s" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JNDIMock4S</h2> 
+  <p>JNDI mocking for scala integration tests - especially that requires mocking of resources such as connection pool datasource, JMS Queues, Topics etc. For more on JNDI refer to: <a href="http://docs.oracle.com/javase/jndi/tutorial/" target="_blank">http://docs.oracle.com/javase/jndi/tutorial/</a></p> 
+  <h3><a id="user-content-quick-start" class="anchor" href="https://github.com/anirudhvyas/jndimock4s#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick Start</h3> 
+  <p>To use JNDIMock4S - simply add following to your build.sbt file - </p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>( <span class="pl-s"><span class="pl-pds">"</span>com.github.anirudhvyas<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>jndimock4s_2.11<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Next lets build a simple test case with binding of a data source (I have tried to keep it as simple as possible withtout any further complexity). </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">SomeSampleTest</span> {
+  <span class="pl-k">var</span> <span class="pl-en">_ds</span><span class="pl-k">:</span> javax.sql.<span class="pl-en">DataSource</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>  <span class="pl-c">// a JDBC Data source that application persistence tier uses </span>
+  <span class="pl-k">def</span> <span class="pl-en">ds</span> <span class="pl-k">=</span> _ds
+  <span class="pl-k">def</span> <span class="pl-en">ds_=</span>(<span class="pl-v">value</span>: <span class="pl-en">DataSource</span>) <span class="pl-k">=</span> _ds <span class="pl-k">=</span> value
+
+  <span class="pl-k">var</span> <span class="pl-en">_jndiMockFactory</span><span class="pl-k">:</span> <span class="pl-en">JNDIMockFactory</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>  <span class="pl-c">// factory that will bind it.</span>
+  <span class="pl-k">def</span> <span class="pl-en">jndiMockFactory</span> <span class="pl-k">=</span> _jndiMockFactory
+  <span class="pl-k">def</span> <span class="pl-en">jndiMockFactory_=</span>(<span class="pl-v">value</span>: <span class="pl-en">JNDIMockFactory</span>) <span class="pl-k">=</span> _jndiMockFactory <span class="pl-k">=</span> value
+
+  <span class="pl-k">def</span> <span class="pl-en">setUp</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+     println(<span class="pl-s"><span class="pl-pds">"</span>test setup beginning  ...<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">dataSource</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MysqlConnectionPoolDataSource</span>()
+    dataSource.setEmptyStringsConvertToZero(<span class="pl-c1">false</span>)
+    dataSource.setParanoid(<span class="pl-c1">true</span>)
+    dataSource.setUser(<span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>)
+    dataSource.setDatabaseName(<span class="pl-s"><span class="pl-pds">"</span>calculator<span class="pl-pds">"</span></span>)
+    ds <span class="pl-k">=</span> dataSource
+    jndiMockFactory <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">JNDIMockFactory</span>
+    jndiMockFactory.ctx.bind(<span class="pl-s"><span class="pl-pds">"</span>jdbc/calculatorDS<span class="pl-pds">"</span></span>, ds)
+    <span class="pl-en">System</span>.setProperty(javax.naming.<span class="pl-en">Context</span>.<span class="pl-en">INITIAL_CONTEXT_FACTORY</span>, <span class="pl-c1">classOf</span>[<span class="pl-en">JNDIMockFactory</span>].getName)
+    println(<span class="pl-s"><span class="pl-pds">"</span>test setup completed!  ...<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>Past setup you are free to choose framework of your choice below to test stuff that requires database access.</p> 
+ </article>
+</div>

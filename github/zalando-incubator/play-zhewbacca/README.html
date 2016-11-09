@@ -1,0 +1,156 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-play-security-library" class="anchor" href="https://github.com/zalando-incubator/play-zhewbacca#play-security-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Play-security library</h1> 
+  <p>Play! (v2.5) library to protect REST endpoint using OAuth2 token verification. In order to access a protected endpoint clients should pass an <code>Authorization</code> header with the <code>Bearer</code> token in every request. This library is implemented in a non-blocking way and provides two implementations of token verification.</p> 
+  <ul> 
+   <li><code>AlwaysPassAuthProvider</code> implementation is useful for Development environment to bypass a security mechanism. This implementation assumes that every token is valid.</li> 
+   <li><code>OAuth2AuthProvider</code> implementation acquires token information from a 3rd-party endpoint and then verifies this info. Also it applies a <a href="http://doc.akka.io/docs/akka/snapshot/common/circuitbreaker.html" target="_blank">Circuit Breaker</a> pattern.</li> 
+  </ul> 
+  <p>Clients of this library don't need to change their code in order to protect endpoints. All necessary security configurations happen in a separate configuration file.</p> 
+  <h2><a id="user-content-users-guide" class="anchor" href="https://github.com/zalando-incubator/play-zhewbacca#users-guide" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Users guide</h2> 
+  <p>Configure libraries dependencies in your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.zalando<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-zhewbacca<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>To configure Development environment:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">modules</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.google.inject.</span><span class="pl-v">AbstractModule</span>
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.metrics.</span>{<span class="pl-v">NoOpPlugableMetrics</span>, <span class="pl-v">PlugableMetrics</span>}
+
+<span class="pl-k">class</span> <span class="pl-en">DevModule</span> <span class="pl-k">extends</span> <span class="pl-e">AbstractModule</span> {
+  <span class="pl-k">val</span> <span class="pl-en">TestTokenInfo</span> <span class="pl-k">=</span> <span class="pl-en">TokenInfo</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-en">Scope</span>.<span class="pl-en">Default</span>, <span class="pl-s"><span class="pl-pds">"</span>token type<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>user uid<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">configure</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    bind(<span class="pl-c1">classOf</span>[<span class="pl-en">PlugableMetrics</span>]).to(<span class="pl-c1">classOf</span>[<span class="pl-en">NoOpPlugableMetrics</span>])
+    bind(<span class="pl-c1">classOf</span>[<span class="pl-en">AuthProvider</span>]).toInstance(<span class="pl-k">new</span> <span class="pl-en">AlwaysPassAuthProvider</span>(<span class="pl-en">TestTokenInfo</span>))
+  }
+
+}</pre>
+  </div> 
+  <p>For Production environment use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">modules</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.google.inject.</span>{ <span class="pl-v">TypeLiteral</span>, <span class="pl-v">AbstractModule</span> }
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.metrics.</span>{<span class="pl-v">NoOpPlugableMetrics</span>, <span class="pl-v">PlugableMetrics</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+
+<span class="pl-k">class</span> <span class="pl-en">ProdModule</span> <span class="pl-k">extends</span> <span class="pl-e">AbstractModule</span> {
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">configure</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    bind(<span class="pl-c1">classOf</span>[<span class="pl-en">AuthProvider</span>]).to(<span class="pl-c1">classOf</span>[<span class="pl-en">OAuth2AuthProvider</span>])
+    bind(<span class="pl-c1">classOf</span>[<span class="pl-en">PlugableMetrics</span>]).to(<span class="pl-c1">classOf</span>[<span class="pl-en">NoOpPlugableMetrics</span>])
+    bind(<span class="pl-k">new</span> <span class="pl-en">TypeLiteral</span>[(<span class="pl-en">OAuth2Token</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-en">TokenInfo</span>]]]() {}).to(<span class="pl-c1">classOf</span>[<span class="pl-en">IAMClient</span>])
+  }
+
+}</pre>
+  </div> 
+  <p>By default no metrics mechanism is used. User can implement <code>PlugableMetrics</code> to gather some simple metrics. See <code>org.zalando.zhewbacca.IAMClient</code> to learn what can be measured.</p> 
+  <p>You need to include <code>de.zalando.seo.play.security.SecurityFilter</code> into your applications' filters:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">filters</span>
+
+<span class="pl-k">import</span> <span class="pl-v">javax.inject.</span><span class="pl-v">Inject</span>
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.</span><span class="pl-v">SecurityFilter</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.http.</span><span class="pl-v">HttpFilters</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.mvc.</span><span class="pl-v">EssentialFilter</span>
+
+<span class="pl-k">class</span> <span class="pl-en">MyFilters</span> <span class="pl-k">@</span><span class="pl-en">Inject</span>() (<span class="pl-v">securityFilter</span>: <span class="pl-en">SecurityFilter</span>) <span class="pl-k">extends</span> <span class="pl-e">HttpFilters</span> {
+  <span class="pl-k">val</span> <span class="pl-en">filters</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">EssentialFilter</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(securityFilter)
+}</pre>
+  </div> 
+  <p>and then add <code>play.http.filters = filters.MyFilters</code> line to your <code>application.conf</code>. <code>SecurityFilter</code> rejects any requests to any endpoint which does not have a corresponding rule in the <code>security_rules.conf</code> file.</p> 
+  <p>Example of configuration in <code>application.conf</code> file:</p> 
+  <pre><code># Full URL for authorization endpoint
+authorisation.iam.endpoint = "https://info.services.auth.zalando.com/oauth2/tokeninfo"
+
+# Maximum number of failures before opening the circuit
+authorisation.iam.cb.maxFailures = 4
+
+# Duration of time in milliseconds after which to consider a call a failure
+authorisation.iam.cb.callTimeout = 2000
+
+# Duration of time in milliseconds after which to attempt to close the circuit
+authorisation.iam.cb.resetTimeout = 60000
+
+# IAMClient depends on Play internal WS client so it also has to be configured.
+# The maximum time to wait when connecting to the remote host.
+# Play's default is 120 seconds
+play.ws.timeout.connection = 2000
+
+# The maximum time the request can stay idle when connetion is established but waiting for more data
+# Play's default is 120 seconds
+play.ws.timeout.idle = 2000
+
+# The total time you accept a request to take. It will be interrupted, whatever if the remote host is still sending data.
+# Play's default is none, to allow stream consuming.
+play.ws.timeout.request = 2000
+
+play.http.filters = filters.MyFilters
+
+play.modules.enabled += "modules.ProdModule"
+</code></pre> 
+  <p>By default this library reads the security configuration from the <code>conf/security_rules.conf</code> file. You can change the file name by specifying a value for the key <code>authorisation.rules.file</code> in your <code>application.conf</code> file.</p> 
+  <pre><code># This is an example of production-ready configuration security configuration.
+# You can copy it from here and paste right into your `conf/security_rules.conf` file.
+rules = [
+    # All GET requests to /api/my-resource has to have a valid OAuth2 token for scopes: uid, scop1, scope2, scope3
+    {
+        method: GET
+        pathRegex: "/api/my-resource/.*"
+        scopes: ["uid", "scope1", "scope2", "scope3"]
+    }
+
+    # POST requests to /api/my-resource require only scope2.write scope
+    {
+        method: POST
+        pathRegex: "/api/my-resource/.*"
+        scopes: ["scope2.write"]
+    }
+
+    # GET requests to /bar resources allowed to be without OAuth2 token
+    {
+        method: GET
+        pathRegex: /bar
+        allowed: true
+    }
+
+    # 'Catch All' rule will immidiately reject all requests for all other endpoints
+    {
+        method: GET
+        pathRegex: "/.*"
+        allowed: false      // this is an example of inline comment
+    }
+]
+</code></pre> 
+  <p>The following example demonstrates how you can get access to the Token Info object inside your controller:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">controllers</span>
+
+<span class="pl-k">import</span> <span class="pl-v">javax.inject.</span><span class="pl-v">Inject</span>
+
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.TokenInfoConverter.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.zalando.zhewbacca.</span><span class="pl-v">TokenInfo</span>
+
+<span class="pl-k">class</span> <span class="pl-en">SeoDescriptionController</span> <span class="pl-k">@</span><span class="pl-en">Inject</span>() <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">create</span>(<span class="pl-v">uid</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Action</span>[<span class="pl-en">AnyContent</span>] <span class="pl-k">=</span> <span class="pl-en">Action</span> { request <span class="pl-k">=&gt;</span>
+    <span class="pl-k">val</span> <span class="pl-en">tokenInfo</span><span class="pl-k">:</span> <span class="pl-en">TokenInfo</span> <span class="pl-k">=</span> request.tokenInfo
+    <span class="pl-c">// do something with token info. For example, read user's UID: tokenInfo.userUid</span>
+  }
+}
+</pre>
+  </div> 
+ </article>
+</div>

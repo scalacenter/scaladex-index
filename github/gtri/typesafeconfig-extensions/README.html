@@ -1,0 +1,174 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-typesafe-config-extensions" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#typesafe-config-extensions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Typesafe Config Extensions</h1> 
+  <p>Libraries supporting <a href="https://github.com/typesafehub/config" target="_blank">Typesafe Config</a>.</p> 
+  <p>This project's release artifacts are available in the Maven <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3Aedu.gatech.gtri.typesafeconfig-extensions" target="_blank">Central Repository</a>.</p> 
+  <h2><a id="user-content-components" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#components" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Components</h2> 
+  <h3><a id="user-content-factory" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#factory" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Factory</h3> 
+  <p><strong>typesafeconfig-factory</strong> provides a <code>ConfigFactory</code> class with which you can clearly and concisely express how you want all sources of configuration data to be aggregated.</p> 
+  <pre><code>import edu.gatech.gtri.typesafeconfigextensions.factory.*;
+import static edu.gatech.gtri.typesafeconfigextensions.factory.ConfigFactory.*;
+</code></pre> 
+  <p>A standard configuration loader can be defined as follows.</p> 
+  <pre><code>ConfigFactory standard = emptyConfigFactory()
+     .bindDefaults()
+     .withSources(
+         classpathResource("reference"),
+         classpathResource("application"),
+         systemProperties()
+     ).fromLowestToHighestPrecedence();
+</code></pre> 
+  <p><code>reference.conf</code> classpath resources are overridden by <code>application.conf</code>, and both are overridden by system properties.</p> 
+  <p>Suppose we also want to load configuration from <code>/etc/exampleApp.conf</code>, sandwiched in the precedence order between the classpath configs and the system properties. The previous factory can be adapted to this requirement.</p> 
+  <pre><code>java.nio.file.Path path = java.nio.file.Paths.get("/etc/exampleApp");
+
+ConfigFactory custom = standard
+    .insertSource(configFile().byPath(path))
+    .withHigherPrecedenceThan(classpathResource("application"));
+</code></pre> 
+  <p>Suppose we don't want to use a fixed filesystem path, but would rather let the user of our application decide where to put their config file.</p> 
+  <p>To support this scenario, <code>ConfigFactory</code> repeats its loading process twice so that values from the first <code>Config</code> can be used to load <em>even more configuration</em> on the second go. This allows us to load a file <em>by key</em>:</p> 
+  <pre><code>ConfigFactory custom2 = standard
+    .insertSource(configFile().byKey("exampleApp.config.file"))
+    .withHigherPrecedenceThan(classpathResource("application"));
+</code></pre> 
+  <p>Now someone can launch your application with the JVM flag <code>-DexampleApp.config.file=$HOME/myAppSettings</code>, and the contents of <code>$HOME/myAppSettings.conf</code> will be loaded into the configuration.</p> 
+  <h4><a id="user-content-maven-dependency" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#maven-dependency" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven dependency</h4> 
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;edu.gatech.gtri.typesafeconfig-extensions&lt;/groupId&gt;
+  &lt;artifactId&gt;typesafeconfig-factory&lt;/artifactId&gt;
+  &lt;version&gt;1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <h3><a id="user-content-jndi" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#jndi" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JNDI</h3> 
+  <p><strong>typesafeconfig-jndi</strong> converts a JNDI context into a <code>Config</code> object so you'll never have to deal with the <code>javax.naming</code> API again.</p> 
+  <pre><code>import javax.naming.Context;
+import static edu.gatech.gtri.typesafeconfigextensions.jndi.JndiContexts.*;
+</code></pre> 
+  <p>To convert from <code>javax.naming.Context</code> to <code>Config</code>:</p> 
+  <pre><code>Context someContext = /* ... */;
+Config config = context(someContext).toConfig();
+</code></pre> 
+  <p>To just retrieve a JNDI variable named <code>abc</code> from the initial context:</p> 
+  <pre><code>String configValue = jndiContext().toConfig().getString("abc");
+</code></pre> 
+  <h4><a id="user-content-maven-dependency-1" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#maven-dependency-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven dependency</h4> 
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;edu.gatech.gtri.typesafeconfig-extensions&lt;/groupId&gt;
+  &lt;artifactId&gt;typesafeconfig-jndi&lt;/artifactId&gt;
+  &lt;version&gt;1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <h3><a id="user-content-for-webapps" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#for-webapps" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>For Webapps</h3> 
+  <p><strong>typesafeconfig-for-webapps</strong> defines a standard <code>ConfigFactory</code> for servlet-based web applications.</p> 
+  <pre><code>import edu.gatech.gtri.typesafeconfigextensions.forwebapps.WebappConfigs.*;
+</code></pre> 
+  <pre><code>ServletContext servletContext = /* ... */;
+ConfigFactory factory = webappConfigFactory(servletContext);
+</code></pre> 
+  <p>This factory loads these configuration sources, in order from highest to lowest precedence:</p> 
+  <ul> 
+   <li>System properties</li> 
+   <li>File: <code>JNDI(webapp.config.directory)/[servlet context path]</code></li> 
+   <li>File: <code>${webapp.config.directory}/[servlet context path]</code></li> 
+   <li>File: <code>JNDI(webapp.config.file)</code></li> 
+   <li>File: <code>${webapp.config file}</code></li> 
+   <li>Classpath resource: <code>application.conf</code></li> 
+   <li>Classpath resource: <code>reference.conf</code></li> 
+  </ul> 
+  <p><code>JNDI(x)</code> refers to the JNDI variable named <code>x</code>, <code>[servlet context path]</code> is the value of <code>servletContext.getContextPath()</code>, and <code>${x}</code> denotes the value of the <code>Config</code> at path <code>x</code>.</p> 
+  <p>You might set up <code>server.xml</code> in a Tomcat installation like this, for example:</p> 
+  <pre><code>&lt;Context path="/myApplication/apiServer" docBase="/users/chris/myAppApiServer"&gt;
+  &lt;Environment name="webapp.config.directory" type="java.lang.String" value="${CATALINA_BASE}/conf"/&gt;
+&lt;/Context&gt;
+</code></pre> 
+  <p>(<code>CATALINA_BASE</code> is an environment variable pointing to the path of the Tomcat installation.)</p> 
+  <p>This web application's <code>ConfigFactory</code> would then include configuration loaded from <code>$CATALINA_BASE/conf/myApplication/apiServer.conf</code>.</p> 
+  <h4><a id="user-content-maven-dependency-2" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#maven-dependency-2" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven dependency</h4> 
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;edu.gatech.gtri.typesafeconfig-extensions&lt;/groupId&gt;
+  &lt;artifactId&gt;typesafeconfig-for-webapps&lt;/artifactId&gt;
+  &lt;version&gt;1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <h3><a id="user-content-for-scala" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>For Scala</h3> 
+  <p><strong>typesafeconfig-for-scala</strong> adds some sugar to help use the Config library in Scala.</p> 
+  <pre><code>import edu.gatech.gtri.typesafeconfigextensions.forscala._
+</code></pre> 
+  <pre><code>val a = "A { B: C }, D: E".toConfig          // A { B: C }, D: E
+val b = ("A" -&gt; 7).toConfig                  // A: 7
+val c = Seq("A" -&gt; 4, "B" -&gt; "C").toConfig   // A: 4, B: C
+val d = c ++ b                               // A: 7, B: C
+val e = b + ("F" -&gt; "G")                     // A: 7, F: G
+val f = a - "A"                              // D: E
+</code></pre> 
+  <h4><a id="user-content-sbt-dependency" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#sbt-dependency" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT dependency</h4> 
+  <pre><code>libraryDependencies += "edu.gatech.gtri.typesafeconfig-extensions" %
+                       "typesafeconfig-for-scala_2.10" % "1.1"
+</code></pre> 
+  <h2><a id="user-content-information-for-developers" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#information-for-developers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Information for developers</h2> 
+  <h3><a id="user-content-build-scripts" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#build-scripts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build scripts</h3> 
+  <p><code>./sbt</code> to launch the build tool (SBT).</p> 
+  <p><code>./checkstyle</code> to run Checkstyle.</p> 
+  <h3><a id="user-content-deploying" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#deploying" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Deploying</h3> 
+  <h4><a id="user-content-setting-up-sbt" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#setting-up-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setting up SBT</h4> 
+  <p>Add your Sonatype login to <code>~/.sbt/0.13/sonatype.sbt</code>:</p> 
+  <pre><code>credentials += Credentials(
+  "Sonatype Nexus Repository Manager", "oss.sonatype.org",
+  "your-username", "your-password")
+</code></pre> 
+  <p>Optionally, include the passphrase for the PGP key.</p> 
+  <pre><code>pgpPassphrase := Some("your-pgp-passphrase".toArray)
+</code></pre> 
+  <h4><a id="user-content-publishing-to-sonatype" class="anchor" href="https://github.com/gtri/typesafeconfig-extensions#publishing-to-sonatype" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing to Sonatype</h4> 
+  <p><code>./sbt publish</code></p> 
+  <p>This creates a staging repository at <a href="https://oss.sonatype.org/index.html#stagingRepositories" target="_blank">https://oss.sonatype.org/index.html#stagingRepositories</a></p> 
+  <p><em>Close</em> the staging repository.</p> 
+  <p>If all is well, you can then <em>Release</em> the repository.</p> 
+ </article>
+</div>

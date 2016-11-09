@@ -1,0 +1,432 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text"> 
+  <p><strong>Table of Contents</strong> <em>generated with <a href="https://github.com/thlorenz/doctoc" target="_blank">DocToc</a></em></p> 
+  <ul> 
+   <li><a href="https://github.com/mnubo/dbevolv#dbevolv" target="_blank">dbevolv</a> 
+    <ul> 
+     <li><a href="https://github.com/mnubo/dbevolv#supported-data-stores" target="_blank">Supported data stores</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/mnubo/dbevolv#usage" target="_blank">Usage</a> 
+    <ul> 
+     <li><a href="https://github.com/mnubo/dbevolv#writing-database-migrations" target="_blank">Writing database migrations</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#building-more-complex-upgrade--downgrade-scripts" target="_blank">Building more complex upgrade / downgrade scripts</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#migration-design-guidelines" target="_blank">Migration design guidelines</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#rebasing-a-database" target="_blank">Rebasing a database</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#getting-the-list-of-tenants" target="_blank">Getting the list of tenants</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#computing-the-database-name--schema-name--index-name--keyspace-depending-on-underlying-db-kind" target="_blank">Computing the database name / schema name / index name / keyspace (depending on underlying db kind)</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#testing-your-newly-added-script-locally-before-committing" target="_blank">Testing your newly added script locally before committing</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#project-examples" target="_blank">Project examples</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#upgrading--downgrading-a-database" target="_blank">Upgrading / downgrading a database</a> 
+      <ul> 
+       <li><a href="https://github.com/mnubo/dbevolv#behaviour" target="_blank">Behaviour</a></li> 
+       <li><a href="https://github.com/mnubo/dbevolv#common-errors" target="_blank">Common errors</a></li> 
+      </ul></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#inspecting-the-migrations-inside-a-schema-manager" target="_blank">Inspecting the migrations inside a schema manager</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#getting-the-list-of-already-installed-migrations-in-a-database" target="_blank">Getting the list of already installed migrations in a database</a></li> 
+     <li><a href="https://github.com/mnubo/dbevolv#using-a-test-instance-in-automated-tests" target="_blank">Using a test instance in automated tests</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/mnubo/dbevolv#development" target="_blank">Development</a></li> 
+  </ul> 
+  <h1><a id="user-content-dbevolv" class="anchor" href="https://github.com/mnubo/dbevolv#dbevolv" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>dbevolv</h1> 
+  <p>Allows to evolve data store instances. Supports automatic testing, multi-tenancy, test database generation, custom scripts, big data stores.</p> 
+  <h2><a id="user-content-supported-data-stores" class="anchor" href="https://github.com/mnubo/dbevolv#supported-data-stores" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported data stores</h2> 
+  <ul> 
+   <li>cassandra</li> 
+   <li>elasticsearch</li> 
+   <li>mysql</li> 
+  </ul> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/mnubo/dbevolv#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <h2><a id="user-content-writing-database-migrations" class="anchor" href="https://github.com/mnubo/dbevolv#writing-database-migrations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing database migrations</h2> 
+  <p>Create a git repo with the following structure:</p> 
+  <pre><code>/db.conf
+/build.sbt
+/version.sbt
+/.gitignore
+/project/plugins.sbt
+        /build.properties
+/migrations/0010/
+           /0020/
+           /0030/
+           /0040/
+           /0050/
+</code></pre> 
+  <p>The <code>db.conf</code> should contain the description of the data store schema. You must also specify the connection strings for all the environments. For example:</p> 
+  <pre><code>database_kind = cassandra
+has_instance_for_each_tenant = true
+schema_name = reverse_geo
+app_name = reverse_geo-schema-manager
+create_database_statement = "CREATE KEYSPACE @@DATABASE_NAME@@ WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }"
+
+test_configurations = [
+  {
+    tenant = "mycustomer1"
+  },
+  {
+    tenant = "mycustomer2"
+  }
+]
+
+dev {
+  host = "my-dev-cassandra-host1,my-dev-cassandra-host2,my-dev-cassandra-host3"
+  schema_version = "0050"
+}
+qa {
+  host = "&lt;the qa host&gt;"
+  schema_version = "0040"
+}
+preprod {
+  host = "&lt;the preprod host&gt;"
+  schema_version = "0030"
+}
+sandbox {
+  host = "&lt;the sandbox host&gt;"
+  create_database_statement = "CREATE KEYSPACE @@DATABASE_NAME@@ WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }"
+  schema_version = "0030"
+}
+prod {
+  host = "&lt;the prod host&gt;"
+  create_database_statement = "CREATE KEYSPACE @@DATABASE_NAME@@ WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 }"
+  schema_version = "0030"
+}
+</code></pre> 
+  <p>Here are the different parameters you can configure:</p> 
+  <ul> 
+   <li><strong>database_kind</strong>: which kind of data store we are targeting. See "Supported data stores" for valid values.</li> 
+   <li><strong>schema_name</strong>: the logical name of this database schema.</li> 
+   <li><strong>app_name</strong>: the name of this schema manager (required by <a href="http://git-lab1.mtl.mnubo.com/mnubo/app-util/tree/master" target="_blank">app-util</a>).</li> 
+   <li><strong>schema_version</strong>: the migration version the given environment is supposed to be at. If not specified, all migrations will be applied. Specifying it is mandatory for dev, qa, preprod, sandbox, and prod.</li> 
+   <li><strong>docker_namespace</strong>: optional. The namespace under which the various docker images will be tagged. Ex: if set to myregistry, the docker images will be tagged as myregistry/xyz.</li> 
+   <li><strong>host</strong>: the host or hosts name(s) to connect to.</li> 
+   <li><strong>port</strong>: the port to connect to. Leave empty for default port.</li> 
+   <li><strong>create_database_statement</strong>: The CQL / SQL / HQL statement to use if the database does not even exists when running the schema manager. The <code>@@DATABASE_NAME@@</code> place holder will automatically be replaced by the actual schema / keyspace name (see also "Computing the database name / schema name / index name / keyspace" below).</li> 
+   <li><strong>name_provider_class</strong>: See "Computing the database name / schema name / index name / keyspace" below.</li> 
+   <li><strong>test_configurations</strong>: configurations for which to generate test instances during the <code>buildTestContainer</code> task. This allows you to have various keyspaces / indices / databases within the test containers.</li> 
+  </ul> 
+  <p>For multi-tenant databases:</p> 
+  <ul> 
+   <li><strong>has_instance_for_each_tenant</strong>: whether this database have a distinct instance for each of your tenants. Default is 'false' (the database is a 'global' one).</li> 
+   <li><strong>tenant_repository_class</strong>: when <code>has_instance_for_each_tenant</code> is true, you must supply a tenant repository. See 'Getting the list of tenants' below.</li> 
+   <li><strong>tenant_configuration_provider_class</strong>: when <code>has_instance_for_each_tenant</code> is true, you can supply an optional configuration provider that will inject a different property depending of the tenant. See 'Tenant specific configuration' below.</li> 
+   <li><strong>tenant</strong>: only used within <code>test_configurations</code>, defines a tenant name for which a test db instance should be created.</li> 
+  </ul> 
+  <p>For Cassandra stores only:</p> 
+  <ul> 
+   <li><strong>max_schema_agreement_wait_seconds</strong>: sets the maximum time to wait for schema agreement before returning from a DDL query (default: 30).</li> 
+  </ul> 
+  <p>For Elasticsearch stores only:</p> 
+  <ul> 
+   <li><strong>shard_number</strong>: how many shards the index should have.</li> 
+   <li><strong>replica_number</strong>: in how many additional replicas each shard should be replicated (0 means no replication).</li> 
+  </ul> 
+  <p>For MySQL stores only:</p> 
+  <ul> 
+   <li><strong>username</strong>: the username to use to connect to the data store instance.</li> 
+   <li><strong>password</strong>: the password to use to connect to the data store instance.</li> 
+  </ul> 
+  <p>Note: most of the settings can have a default value at the top, but can be overriden for a given environment. See for example <code>create_database_statement</code> in the above example.</p> 
+  <p>The <code>build.sbt</code> file should activate the <code>Dbevolv</code> SBT plugin that will take care of everything:</p> 
+  <pre><code>enablePlugins(DbevolvPlugin)
+
+organization := "your organization name"
+</code></pre> 
+  <p>The <code>version.sbt</code> file should contain the initial version of this particular schema manager. Always 1.0.0 for new project, this will be automatically managed in Jenkins after each build:</p> 
+  <pre><code>version in ThisBuild := "1.0.0"
+</code></pre> 
+  <p>The <code>build.properties</code> file should contain which SBT version to use:</p> 
+  <pre><code>sbt.version=0.13.11
+</code></pre> 
+  <p>The <code>plugins.sbt</code> should point to this plugin on Artifactory (the funky piece of code make sure to always use the latest version available from Artifactory):</p> 
+  <pre><code>addSbtPlugin("com.mnubo" % "dbevolv-sbt-plugin" % "1.0.11")
+</code></pre> 
+  <p>The directories names in <code>/migrations</code> constitute the migration versions. Migrations will be applied in the lexical order of those directory names. Ex: when asking dbevolv to upgrade to version '0002' in the above example, '0001' will be executed first, then '0002'.</p> 
+  <p>Migration directories must contain 2 files named <code>upgrade.???</code> and <code>downgrade.???</code>. The extension depend on the data store type. For example, for Cassandra:</p> 
+  <pre><code>/migrations/0001/upgrade.cql
+                /downgrade.cql
+</code></pre> 
+  <p>The upgrade file should contain what it takes to upgrade a given database to the given version. The downgrade file should contain what it takes to downgrade from the given version to the previous version.</p> 
+  <p>Each statement can be laid out on multiple lines, and be terminated by a ';' character. Lines starting with a '#' character will be considered as comments and will be ignored. Empty lines are ignored.</p> 
+  <h2><a id="user-content-building-more-complex-upgrade--downgrade-scripts" class="anchor" href="https://github.com/mnubo/dbevolv#building-more-complex-upgrade--downgrade-scripts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building more complex upgrade / downgrade scripts</h2> 
+  <p>If you need complex logic, you can create a custom Java / Scala class and reference it as if it was a statement, with the '@@' keyword at the begining of the line. Example:</p> 
+  <pre><code>CREATE TABLE .... ;
+# Some comment
+@@com.mnubo.platform_cassandra.UpgradeFields;
+</code></pre> 
+  <p>Your class should be located at the usual Maven/SBT location. In this example: src/main/scala/com/mnubo/platform_cassandra/UpgradeFields.java. It must have a constructor with no parameters, and an execute method taking a 2 parameters.</p> 
+  <p>1) the connection to the database. Exact type of the connection depends on the data store type. 2) the name of the database (postgres) / schema (mysql) / keyspace (cassandra) / index (elasticsearch)</p> 
+  <p>Example:</p> 
+  <pre><code>package com.mnubo.platform_cassandra;
+
+public class UpgradeFields {
+    public void execute(com.datastax.driver.core.Session connection, String dataseName) {
+      // Your upgrade logic here
+    }
+}
+</code></pre> 
+  <p>Note: you can also use this trick in downgrade scripts.</p> 
+  <p>If your custom script needs additional dependencies, you can add them in a <code>build.sbt</code> file through the libraryDependencies SBT key. See <a href="http://www.scala-sbt.org/0.13/docs/Library-Management.html" target="_blank">SBT documentation</a></p> 
+  <h2><a id="user-content-migration-design-guidelines" class="anchor" href="https://github.com/mnubo/dbevolv#migration-design-guidelines" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration design guidelines</h2> 
+  <p>You migrations MUST be (and will be tested for):</p> 
+  <ul> 
+   <li><strong>Idempotency</strong>. The schema manager <em>must</em> be able to run a migration twice without any effect on the end result. This is critical when something goes wrong during the application on a migration in production. We must be able to retry a fixed version of a faulty migration, or the same migration after a corruption is fixed.</li> 
+   <li><strong>Perfect rollback</strong>. When we have dozens of namespaces, the likelyhood of failure in one of them is great. In that case, the schema manager <em>must</em> be able to rollback all the already migrated namespaces to stay consistent. Even if the upgrades involved a loss of information. In that situation, the upgrade must store the lost information somewhere to be able to retrieve it when rolling back.</li> 
+   <li><strong>Immutable in production</strong>. Once a migration has been applied to production, you cannot modify the migration anymore. If you do, the schema manager will refuse to execute any further migrations.</li> 
+   <li><strong>Forward compatible for the application in production</strong>. Obviously, it must not break the current version of the application. In other words, your migration must support both the new and the old version of your application.</li> 
+  </ul> 
+  <h2><a id="user-content-rebasing-a-database" class="anchor" href="https://github.com/mnubo/dbevolv#rebasing-a-database" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Rebasing a database</h2> 
+  <p>Sometimes, especially when a database came through a lot of migrations, you are in a situation where lots of databases and columns are created in earlier migrations to be removed in later migrations, making the database quite long to create. This is especially problematic in multi-tenant databases that gets created for a new tenant. It can also happen that there is too many migrations, and that makes the build pretty long.</p> 
+  <p>A solution to that problem is to 'rebase' the migrations. It means taking the result of all of those migrations, and make a single script having the same end result as them. dbevolv helps you do that in a safe way.</p> 
+  <p>Begin by creating a new migration directory, with a new version number. Put a single script <code>rebase.*ql</code> in it. Do not create a <code>rollback.*ql</code> file, rolling back a rebase migration is not supported. Ex:</p> 
+  <pre><code>/migrations/2000/rebase.cql
+</code></pre> 
+  <p>dbevolv does not support the automatic filling of that script right now. So you will have to use the existing data store tools to forge it for you from the latest test image (see below).</p> 
+  <p>As always, you can test locally that your rebase script is sound by running:</p> 
+  <pre><code>sbt buildTestContainer
+</code></pre> 
+  <p>Rebase migrations are treated a bit differently than the others. Lets take an example where we do have the following migrations: </p> 
+  <pre><code>0010
+0020
+0030
+0100 (rebase)
+0110
+0200 (rebase)
+0210
+</code></pre> 
+  <ul> 
+   <li>first, dbevolv will make sure that the database resulting from a rebase script is the same as the one resulting from all the previous migrations.</li> 
+   <li>your rebase migrations do not need to be idempotent.</li> 
+   <li>when applied on an existing database (version &lt;= <code>0030</code> in our example), the rebase scripts will not be applied, but all metadata about previous migrations up to the rebase will be erased. This is done for each rebase encountered along the way. For example, if the database had these migrations installed before: <code>[0010, 0020]</code>, then after running the schema manager it would have <code>[0200, 0210]</code>.</li> 
+   <li>when applied on a new database, dbevolv will start at the latest rebase, and only apply further migrations. In our example, it would apply only <code>0200</code> and <code>0210</code> because <code>200</code> is the latest migration of type <code>rebase</code>.</li> 
+   <li><strong>WARNING!</strong>: once rebased, you cannot go back to previous migrations anymore. Which means that rolling back a database will only bring you to the previous rebase, even if you asked to rollback to a previous migration. For example, if a database is at version <code>0210</code> in our example, rolling back to <code>0030</code> will actually only bring the database to <code>0200</code>.</li> 
+  </ul> 
+  <p><strong>Cleanup</strong>: after a given <code>rebase</code> migration has been applied to all environments, you can safely delete the previous migration directories from the build.</p> 
+  <h2><a id="user-content-getting-the-list-of-tenants" class="anchor" href="https://github.com/mnubo/dbevolv#getting-the-list-of-tenants" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting the list of tenants</h2> 
+  <p>In order for dbevolv to know for which tenants to create and maintain a database instance, you need to provide a class implementing TenantRepository. You can place the class in <code>src/main/java/...</code> or <code>src/main/scala/...</code>, or just reference the jar in the dependencies in your <code>build.sbt</code>:</p> 
+  <pre><code>libraryDependencies += "mycompany" % "mytenantrepo" % "1.0.0"
+</code></pre> 
+  <p>The constructor must have one and one argument only, which is the typesafe config loaded from the <code>db.conf</code> file. This allows you to configure your class easily.</p> 
+  <pre><code>package mycompany.tenants
+
+import com.mnubo.dbevolv._
+
+class MyTenantRepository(config: Config) extends TenantRepository {
+  // Configuration specific to this particular repository
+  private val host = config.getString("tenantdb.host")
+  private val port = config.getInt("tenantdb.port")
+  private val dbConnectionPool = ...
+
+  override def fetchTenants = {
+    using(dbConnectionPool) { connection =&gt;
+      // Pseudo JDBC like API
+      connection
+        .execute("SELECT customer_name FROM customer")
+        .map(row =&gt; row.getString("customer_name"))
+        .sorted
+    }
+  }
+}
+</code></pre> 
+  <p>Then, you could add your repository specific configuration in the <code>db.conf</code> file. In the previous fictitious example, it would look like:</p> 
+  <pre><code>has_instance_for_each_tenant = true
+tenant_repository_class = "mycompany.tenants.MyTenantRepository"
+tenantdb.host = "mydbhost"
+tenantdb.port = 3306
+</code></pre> 
+  <h2><a id="user-content-tenant-specific-configuration" class="anchor" href="https://github.com/mnubo/dbevolv#tenant-specific-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tenant specific configuration</h2> 
+  <p>Sometimes, you need specific configuration for certain tenant. For example, large customer might require more Elasticsearch shards in their indices. You can achieve that by supplying a configuration provider. As for the tenant repository, you can reference the jar with your class in the dependencies:</p> 
+  <pre><code>libraryDependencies += "mycompany" % "mytenantconfigprovider" % "1.0.0"
+</code></pre> 
+  <p>The constructor must have one and one argument only, which is the typesafe config loaded from the <code>db.conf</code> file.</p> 
+  <pre><code>package mycompany.tenants
+
+import com.mnubo.dbevolv._
+
+class MyTenantConfiguration(config: Config) extends TenantConfigurationProvider {
+  override def configFor(tenant: String) = {
+    // load config from a database or a config file for this particular tenant
+  }
+
+  override def close() = ...
+}
+</code></pre> 
+  <p>Then, you could reference this class in the <code>db.conf</code> file. In the previous fictitious example, it would look like:</p> 
+  <pre><code>has_instance_for_each_tenant = true
+tenant_configuration_provider_class = "mycompany.tenants.MyTenantConfiguration"
+</code></pre> 
+  <p>Note: you can provide an empty config for a given tenant. dbevolv will simply apply the default configuration from the <code>db.conf</code> file for this tenant.</p> 
+  <h2><a id="user-content-computing-the-database-name--schema-name--index-name--keyspace-depending-on-underlying-db-kind" class="anchor" href="https://github.com/mnubo/dbevolv#computing-the-database-name--schema-name--index-name--keyspace-depending-on-underlying-db-kind" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Computing the database name / schema name / index name / keyspace (depending on underlying db kind)</h2> 
+  <p>The actual database / keyspace name will be computed the following way:</p> 
+  <ul> 
+   <li><strong>for global databases</strong>: the logical schema_name will be used. 
+    <ul> 
+     <li>Ex: myappdb</li> 
+    </ul></li> 
+   <li><strong>for databases per tenant</strong>: the name will be suffixed with the customer's / tenant name. 
+    <ul> 
+     <li>Ex: myappdb_mycustomer</li> 
+    </ul></li> 
+  </ul> 
+  <p>Sometimes, this is not suitable. For example, QA keyspace names might be totally custom. Or historical keyspaces might be jammed together. For all these use cases, you can customize the keyspace name provider. For example:</p> 
+  <pre><code>package com.mnubo.ingestion
+
+import com.typesafe.config.Config
+
+class LegacyDatabaseNameProvider extends DatabaseNameProvider {
+  private val default = new DefaultDatabaseNameProvider
+
+  def computeDatabaseName(schemaLogicalName: String, tenant: Option[String], config: Config) =
+    tenant
+}
+</code></pre> 
+  <p>And then, in your <code>db.conf</code> file, you need to override the default database name provider in the relevant environments:</p> 
+  <pre><code>prod {
+  host = "&lt;the prod host&gt;"
+  name_provider_class = "com.mnubo.ingestion.LegacyDatabaseNameProvider"
+}
+</code></pre> 
+  <h2><a id="user-content-testing-your-newly-added-script-locally-before-committing" class="anchor" href="https://github.com/mnubo/dbevolv#testing-your-newly-added-script-locally-before-committing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing your newly added script locally before committing</h2> 
+  <p>Just run:</p> 
+  <pre><code>sbt buildTestContainer
+</code></pre> 
+  <p>This will build the test container, through all the migration scripts. You can then look at 'Using a test instance in automated tests' to connect to this instance and verify it is working well.</p> 
+  <h2><a id="user-content-project-examples" class="anchor" href="https://github.com/mnubo/dbevolv#project-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Project examples</h2> 
+  <ul> 
+   <li><a href="http://git-lab1.mtl.mnubo.com/mnubo/cassandra-reverse-geocoder/tree/master" target="_blank">cassandra-reverse-geocoding</a></li> 
+   <li><a href="http://git-lab1.mtl.mnubo.com/mnubo/elasticsearch-analytics-basic-index/tree/master" target="_blank">elasticsearch-analytics-basic-index</a></li> 
+  </ul> 
+  <h2><a id="user-content-upgrading--downgrading-a-database" class="anchor" href="https://github.com/mnubo/dbevolv#upgrading--downgrading-a-database" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Upgrading / downgrading a database</h2> 
+  <p>To get usage:</p> 
+  <pre><code>docker run -it --rm -e ENV=&lt;environment name&gt; &lt;schema_name&gt;-mgr:latest --help
+</code></pre> 
+  <p>This should result to something like:</p> 
+  <pre><code>Upgrades / downgrades the mydatabase database to the given version for all the tenants.
+Usage: docker run -it --rm -v $HOME/.docker/:/root/.docker/ -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):$(which docker) -e ENV=&lt;environment name&gt; mydatabase-mgr:latest [options]
+
+  -v &lt;value&gt; | --version &lt;value&gt;
+        The version you want to upgrade / downgrade to. If not specified, will upgrade to latest version.
+  -t &lt;value&gt; | --tenant &lt;value&gt;
+        The tenant you want to upgrade / downgrade to. If not specified, will upgrade all tenants.
+  --history
+        Display history of database migrations instead of migrating the database.
+  --help
+        Display this schema manager usage.
+
+Note: 
+  the volume mounts are only necessary when upgrading a schema. You can omit them when downgrading, getting help, or display the history.
+
+Example:
+  docker run -it --rm -v $HOME/.docker/:/root/.docker/ -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):$(which docker) -e ENV=dev mydatabase:latest --version 0004
+</code></pre> 
+  <p>Note: the help message is slightly different for the databases that don't have one instance by tenant (global databases).</p> 
+  <h3><a id="user-content-behaviour" class="anchor" href="https://github.com/mnubo/dbevolv#behaviour" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Behaviour</h3> 
+  <p>The schema manager will upgrade one tenant at a time. For each tenant, it will apply (or downgrade) all the necessary migration to reach the target version. If one of the tenants upgrade fail, it stopped. It is recommended to rollback all tenants to the origin version immediately, so the faulty migration could be fixed and reapplied to all of the migrations. Since migrations are checksumed, you cannot have a system with different flavours of the same migrations. This would make any subsequent upgrades or downgrades to fail immediately.</p> 
+  <p>The schema manager will also perform some validation before starting to upgrade. It will check that the schema of the target instance match the expected schema (tables, columns, types).</p> 
+  <h3><a id="user-content-common-errors" class="anchor" href="https://github.com/mnubo/dbevolv#common-errors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Common errors</h3> 
+  <p>If the database has been corrupted so that smooth migration is impossible, you will see a message explaining the issue(s) encountered and how to fix it:</p> 
+  <pre><code>18:10:04.988 [main] ERROR com.mnubo.dbevolv.Table - Table mytable does not contain a column somecolumn (type = text)
+18:10:04.989 [main] ERROR com.mnubo.dbevolv.Table - Table mytable does not contain a column someothercolumn (type = double)
+Exception in thread "main" java.lang.Exception: Oops, it seems the target schema of orb3a1 is not what it should be... Please call your dearest developer for helping de-corrupting the database.
+        at com.mnubo.dbevolv.DatabaseMigrator$.upgrade(DatabaseMigrator.scala:91)
+        at com.mnubo.dbevolv.DatabaseMigrator$.migrate(DatabaseMigrator.scala:69)
+        ...
+</code></pre> 
+  <p>In this particular example, to repair the database, you need to create the <code>objectmodel</code> and <code>hdfs_import_period_sec</code> columns in the <code>odainterpolationparams</code> table. You should then be able to restart the upgrade.</p> 
+  <h2><a id="user-content-inspecting-the-migrations-inside-a-schema-manager" class="anchor" href="https://github.com/mnubo/dbevolv#inspecting-the-migrations-inside-a-schema-manager" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Inspecting the migrations inside a schema manager</h2> 
+  <pre><code>docker run -it --rm --entrypoint=/bin/bash &lt;schema_name&gt;-mgr:latest
+ls -la /app/migrations
+</code></pre> 
+  <h2><a id="user-content-getting-the-list-of-already-installed-migrations-in-a-database" class="anchor" href="https://github.com/mnubo/dbevolv#getting-the-list-of-already-installed-migrations-in-a-database" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting the list of already installed migrations in a database</h2> 
+  <pre><code>docker run -it --rm -e ENV=&lt;environment name&gt; &lt;schema_name&gt;-mgr:latest --history
+</code></pre> 
+  <p>Example output in dev on the mydatabase Cassandra database:</p> 
+  <pre><code>History of myfirstcustomer @ host1,host2,host3:
+
+         Version                       Date                           Checksum
+            0010   2015-05-11T00:00:00.000Z   555f57888cf9bea47e97bf6c9b7e9d3f
+            0020   2015-05-11T00:00:00.000Z   c123fc10e716daf6275dfe67efa1efac
+History of mysecondcustomer @ host1,host2,host3:
+
+         Version                       Date                           Checksum
+            0010   2015-05-11T00:00:00.000Z   555f57888cf9bea47e97bf6c9b7e9d3f
+            0020   2015-05-11T00:00:00.000Z   c123fc10e716daf6275dfe67efa1efac
+History of mythirdcustomer @ host1,host2,host3:
+
+         Version                       Date                           Checksum
+            0010   2015-05-11T00:00:00.000Z   555f57888cf9bea47e97bf6c9b7e9d3f
+            0020   2015-05-11T00:00:00.000Z   c123fc10e716daf6275dfe67efa1efac
+</code></pre> 
+  <h2><a id="user-content-using-a-test-instance-in-automated-tests" class="anchor" href="https://github.com/mnubo/dbevolv#using-a-test-instance-in-automated-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using a test instance in automated tests</h2> 
+  <p>Each time a new migration is pushed to Gitlab, Jenkins will generate a test database instance with all the tables up to date. To start it:</p> 
+  <pre><code>docker run -dt -p &lt;database kind standard port&gt;:&lt;desired_port&gt; test-&lt;schema_name&gt;:latest
+</code></pre> 
+  <p>For example, with the Cassandra reverse_geo database:</p> 
+  <pre><code>docker run -dt -p 40155:9042 test-reverse_geo:latest
+</code></pre> 
+  <p>This will start a Cassandra instance, with a <code>reverse_geo</code> keyspace (the logical database name) containing all the reverse_geo tables up to date. You can point your tests to use the 40155 port on the DOCKER_HOST in order to create a session.</p> 
+  <h1><a id="user-content-development" class="anchor" href="https://github.com/mnubo/dbevolv#development" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Development</h1> 
+  <p>The schema manager builder is actually a SBT plugin. To test the sbt plugin, we are using the scripted sbt plugin (yes, a pluging to test a plugin...). To launch the (quite long) tests, do:</p> 
+  <pre><code>sbt library/publishLocal dbevolvElasticsearch/publishLocal dbevolvElasticsearch2/publishLocal scripted
+</code></pre> 
+  <p>And go fetch a cup of coffee, you'll have time.</p> 
+  <p>If you want to runs tests only on one kind of data store, specify the test build directory you want to fire (relative to src/sbt-test:</p> 
+  <pre><code>sbt library/publishLocal dbevolvElasticsearch/publishLocal dbevolvElasticsearch2/publishLocal "scripted schema-manager-generator/cassandradb"
+</code></pre> 
+  <p>Documentation for the scripted plugin is not the best. You can find a tutorial here: <a href="http://eed3si9n.com/testing-sbt-plugins" target="_blank">Testing SBT plugins</a></p> 
+ </article>
+</div>

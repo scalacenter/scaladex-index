@@ -1,0 +1,179 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-pact-jvm-provider-spring-mvc" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#pact-jvm-provider-spring-mvc" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>pact-jvm-provider-spring-mvc</h1> 
+  <p>A test runner to help to write provider pact tests with spring mvc, followed <a href="https://github.com/bethesque/pact-specification" target="_blank">pact spec</a>.</p> 
+  <p>There are already several projects help to write provider test in <a href="https://github.com/DiUS/pact-jvm" target="_blank">pact-jvm</a> repository, e.g. gradle, maven, sbt, specs2, but we can't find a convenient way to write for spring-mvc projects.</p> 
+  <p>Spring mvc has already provide a test framework to help to write integration test, the API is like:</p> 
+  <div class="highlight highlight-source-java">
+   <pre>when(myResponse<span class="pl-k">.</span>getStatusCode())<span class="pl-k">.</span>thenReturn(<span class="pl-smi">HttpStatus</span><span class="pl-c1"><span class="pl-k">.</span>OK</span>);
+when(myService<span class="pl-k">.</span>signInWithToken(any(<span class="pl-smi">String</span><span class="pl-k">.</span>class)))<span class="pl-k">.</span>thenReturn(myResponse);
+
+standaloneSetup(<span class="pl-k">new</span> <span class="pl-smi">MyController</span>(myService))
+        .build()
+        .perform(
+            get(<span class="pl-s"><span class="pl-pds">"</span>/my/users/current<span class="pl-pds">"</span></span>)
+                .contentType(<span class="pl-smi">MediaType</span><span class="pl-c1"><span class="pl-k">.</span>APPLICATION_JSON</span>)
+                .header(<span class="pl-s"><span class="pl-pds">"</span>token<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>validToken<span class="pl-pds">"</span></span>))
+        .andExpect(status()<span class="pl-k">.</span>isOk());</pre>
+  </div> 
+  <p>You can see it used provided <code>standaloneSetup</code> method to wrap a controller to perform request and valid response, without starting a real server. In this case, we can easily mocking dependencies and do the testing.</p> 
+  <p>Since pact provider test also needs some preparing tasks (mocking), we can follow the same approach to make thing easier (compared to starting a real server).</p> 
+  <h2><a id="user-content-how-to-use-it" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#how-to-use-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use it</h2> 
+  <p>This project provides a junit test runner: <code>PactRunner</code>, and also some helper annotations.</p> 
+  <p>An example:</p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">import static</span> <span class="pl-smi">org.mockito.Matchers.eq</span>;
+<span class="pl-k">import static</span> <span class="pl-smi">org.mockito.Mockito.when</span>;
+
+<span class="pl-k">import static</span> <span class="pl-smi">com.reagroup.pact.provider.PactRunner.uriPathEq</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">java.io.File</span>;
+<span class="pl-k">import</span> <span class="pl-smi">java.io.IOException</span>;
+<span class="pl-k">import</span> <span class="pl-smi">java.io.InputStreamReader</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">org.junit.Before</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.junit.runner.RunWith</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.beans.factory.annotation.Autowired</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.beans.factory.annotation.Qualifier</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.core.io.FileSystemResource</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.http.*</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.mock.web.MockHttpServletRequest</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.test.context.ContextConfiguration</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.util.FileCopyUtils</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.springframework.web.client.RestTemplate</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">com.reagroup.pact.provider.PactFile</span>;
+<span class="pl-k">import</span> <span class="pl-smi">com.reagroup.pact.provider.PactRunner</span>;
+<span class="pl-k">import</span> <span class="pl-smi">com.reagroup.pact.provider.ProviderState</span>;
+<span class="pl-k">import</span> <span class="pl-smi">controller.MyController</span>;
+
+<span class="pl-k">@RunWith</span>(<span class="pl-smi">PactRunner</span><span class="pl-k">.</span>class)
+<span class="pl-k">@ContextConfiguration</span>(<span class="pl-c1">locations</span> <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">"</span>classpath:applicationContextPactTest.xml<span class="pl-pds">"</span></span>})
+<span class="pl-k">@PactFile</span>(<span class="pl-s"><span class="pl-pds">"</span>file:src/pactProviderTest/resources/consumer-project-provider-project.json<span class="pl-pds">"</span></span>)
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">ProviderPactTest</span> {
+
+    <span class="pl-k">@Autowired</span>
+    <span class="pl-k">private</span> <span class="pl-smi">MyController</span> myController;
+
+    <span class="pl-k">@Autowired</span>
+    <span class="pl-k">private</span> <span class="pl-smi">RestTemplate</span> restTemplateMock;
+
+    <span class="pl-k">@ProviderState</span>(<span class="pl-s"><span class="pl-pds">"</span>my-service forbids a request with invalid token<span class="pl-pds">"</span></span>)
+    <span class="pl-k">public</span> <span class="pl-smi">MyController</span> <span class="pl-en">myServiceForbidsARequestWithInvalidToken</span>() <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
+        <span class="pl-k">HttpEntity&lt;<span class="pl-smi">String</span>&gt;</span> myRequest <span class="pl-k">=</span> createRequest(<span class="pl-s"><span class="pl-pds">"</span>request-invalid-token-1.json<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>invalid-token<span class="pl-pds">"</span></span>);
+        when(restTemplateMock<span class="pl-k">.</span>exchange(uriPathEq(<span class="pl-s"><span class="pl-pds">"</span>/my-service<span class="pl-pds">"</span></span>), eq(<span class="pl-smi">HttpMethod</span><span class="pl-c1"><span class="pl-k">.</span>PUT</span>), eq(myRequest), eq(<span class="pl-smi">String</span><span class="pl-k">.</span>class)))
+                .thenReturn(<span class="pl-k">new</span> <span class="pl-k">ResponseEntity&lt;&gt;</span>(<span class="pl-smi">HttpStatus</span><span class="pl-c1"><span class="pl-k">.</span>FORBIDDEN</span>));
+        <span class="pl-k">return</span> myController;
+    }
+
+    <span class="pl-k">private</span> <span class="pl-k">HttpEntity&lt;<span class="pl-smi">String</span>&gt;</span> <span class="pl-en">createRequest</span>(<span class="pl-smi">String</span> <span class="pl-v">file</span>, <span class="pl-smi">String</span> <span class="pl-v">token</span>) {
+        <span class="pl-k">return</span> <span class="pl-k">new</span> <span class="pl-k">HttpEntity&lt;&gt;</span>(readTrimmedPactFixture(file), createHeadersWithToken(token));
+    }
+
+    <span class="pl-k">private</span> <span class="pl-smi">HttpHeaders</span> <span class="pl-en">createHeadersWithToken</span>(<span class="pl-smi">String</span> <span class="pl-v">token</span>) {
+        <span class="pl-smi">HttpHeaders</span> headers <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">HttpHeaders</span>();
+        headers<span class="pl-k">.</span>setContentType(<span class="pl-smi">MediaType</span><span class="pl-c1"><span class="pl-k">.</span>APPLICATION_JSON</span>);
+        headers<span class="pl-k">.</span>add(<span class="pl-s"><span class="pl-pds">"</span>token<span class="pl-pds">"</span></span>, token);
+        <span class="pl-k">return</span> headers;
+    }
+
+    <span class="pl-k">private</span> <span class="pl-smi">String</span> <span class="pl-en">readTrimmedPactFixture</span>(<span class="pl-smi">String</span> <span class="pl-v">fileName</span>) {
+        <span class="pl-k">try</span> {
+            <span class="pl-smi">String</span> path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>src/pactProviderTest/resources/fixtures/<span class="pl-pds">"</span></span> <span class="pl-k">+</span> fileName;
+            <span class="pl-k">return</span> <span class="pl-smi">FileCopyUtils</span><span class="pl-k">.</span>copyToString(<span class="pl-k">new</span> <span class="pl-smi">InputStreamReader</span>(<span class="pl-k">new</span> <span class="pl-smi">FileSystemResource</span>(<span class="pl-k">new</span> <span class="pl-smi">File</span>(path))<span class="pl-k">.</span>getInputStream(), <span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>))<span class="pl-k">.</span>trim();
+        } <span class="pl-k">catch</span> (<span class="pl-smi">IOException</span> e) {
+            <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-smi">RuntimeException</span>(e);
+        }
+    }
+
+}</pre>
+  </div> 
+  <h3><a id="user-content-runwithpactrunnerclass" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#runwithpactrunnerclass" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>@RunWith(PactRunner.class)</h3> 
+  <p>Use <code>PactRunner</code> to run this test case, which will do the following:</p> 
+  <ol> 
+   <li>parse the data from the pact json file specified by <code>@PactFile</code>, get the all the interactions</li> 
+   <li>find all methods annotated with <code>ProviderState</code>, which is used for mocking dependencies and finding the controllers to test</li> 
+   <li>for each interaction, <code>PactRunner</code> will do the preparing based on provider state, <code>standaloneSetup</code> the controller, perform the request, and compare the response</li> 
+  </ol> 
+  <h3><a id="user-content-contextconfigurationlocations--classpathapplicationcontextpacttestxml" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#contextconfigurationlocations--classpathapplicationcontextpacttestxml" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>@ContextConfiguration(locations = {"classpath:applicationContextPactTest.xml"})</h3> 
+  <p>Tells spring where the context file is. Notice we can override some beans in the <code>...PactTest.xml</code> by some mocking beans, e.g. <code>restTemplateMock</code></p> 
+  <h3><a id="user-content-pactfilefilesrcpactprovidertestresourcesconsumer-project-provider-projectjson" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#pactfilefilesrcpactprovidertestresourcesconsumer-project-provider-projectjson" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>@PactFile("file:src/pactProviderTest/resources/consumer-project-provider-project.json")</h3> 
+  <p>Tells <code>PactRunner</code> where the pact file (upload by consumer) is. Alternatively one can use the <code>@PactFolder</code> to point the runner towards a directory containing all the pact files, that should be used for the execution.</p> 
+  <h3><a id="user-content-providerstatemy-service-forbids-a-request-with-invalid-token" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#providerstatemy-service-forbids-a-request-with-invalid-token" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>@ProviderState("my-service forbids a request with invalid token")</h3> 
+  <p>Mark a method as a preparing method for a specified provider state. The method will do 2 things:</p> 
+  <ol> 
+   <li>Do some mocking in the body</li> 
+   <li>Return the controller which will be tested against</li> 
+  </ol> 
+  <p>The content of <code>@ProviderState</code> should be exactly the same as one of the provider state in the pact JSON file, otherwise an error will be thrown.</p> 
+  <p>If your method in controller returns a <code>DeferredResponse</code> instead of immediate response like <code>EntityResponse</code>, you need to add <code>deferredResponseInMillis</code> with a value greater than <code>0</code> in <code>ProviderState</code>, like:</p> 
+  <pre><code>@ProviderState("my-service forbids a request with invalid token", deferredResponseInMillis = 1000)
+</code></pre> 
+  <h3><a id="user-content-uripatheq" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#uripatheq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>uriPathEq</h3> 
+  <p>You can use the <code>uriPathEq</code> exposed by object <code>PactRunner</code> to check if two URIs path equal to each other without the host part, which may be useful when writing mocking methods.</p> 
+  <p>Say: <code>http://aaa.com:8888/hello/world</code> are equal to <code>https://bbb.com:9999/hello/world</code> with <code>uriPathEq</code></p> 
+  <h3><a id="user-content-providercontextpath" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#providercontextpath" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>@ProviderContextPath</h3> 
+  <p>If the container uses a non-null context path, you can use this annotation to specify it so that MockMvc will be instrumented accordingly.</p> 
+  <h2><a id="user-content-run-the-test" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#run-the-test" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Run the test</h2> 
+  <p>Just run the test as normal junit test, you will get the reports.</p> 
+  <h2><a id="user-content-a-live-demo" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#a-live-demo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>A live demo</h2> 
+  <p>See the file: <a href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc/blob/17c22bde4ff82776dbed7cab8b332cec20ae4986/src/test/java/com/reagroup/pact/provider/PactExampleTest.java" target="_blank">https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc/blob/17c22bde4ff82776dbed7cab8b332cec20ae4986/src/test/java/com/reagroup/pact/provider/PactExampleTest.java</a></p> 
+  <h1><a id="user-content-for-developers" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#for-developers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>For Developers</h1> 
+  <h2><a id="user-content-developing" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#developing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Developing</h2> 
+  <p>Before submitting a pull request, make sure the tests pass by running:</p> 
+  <p><code>./sbt clean test</code></p> 
+  <h2><a id="user-content-how-to-upload-to-sonatype" class="anchor" href="https://github.com/realestate-com-au/pact-jvm-provider-spring-mvc#how-to-upload-to-sonatype" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to upload to sonatype</h2> 
+  <ol> 
+   <li><p>Import PGP keys from <a href="https://rattic.eqx.realestate.com.au/cred/detail/2842/" target="_blank">https://rattic.eqx.realestate.com.au/cred/detail/2842/</a>, follow the description there</p></li> 
+   <li><p>Get the token from <a href="https://rattic.eqx.realestate.com.au/cred/detail/2828/" target="_blank">https://rattic.eqx.realestate.com.au/cred/detail/2828/</a>, which is used for publishing only</p></li> 
+   <li><p>Create <code>~/.sbt/0.13/sonatype.sbt</code>, fill content:</p> <pre><code>credentials += Credentials("Sonatype Nexus Repository Manager",
+        "oss.sonatype.org",
+        "&lt;token_username&gt;",
+        "&lt;token_password&gt;")
+</code></pre> <p>The <code>token_username</code> and <code>token_password</code> is coming from step 2</p></li> 
+   <li><p>When you modified the code, don't forget increase the <code>version</code> from <code>build.sbt</code></p></li> 
+   <li><p>run under sbt: <code>+publishSigned</code> (don't miss the <code>+</code>, which means cross-building)</p></li> 
+   <li><p>release all published jars: <code>sonatypeReleaseAll</code></p></li> 
+   <li><p>wait for several hours before it appears on maven central</p></li> 
+  </ol> 
+ </article>
+</div>

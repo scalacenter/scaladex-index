@@ -1,0 +1,73 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>Reactive programming and locking patterns don't go together? Think again. ReactiveLock, as the name might suggest, is a Reactive Lock. I.e. it is a construct that allows you to employ patterns similar to classic thread/lock concurrency without actually blocking any threads, thus making it possible to use efficient small thread pools.</p> 
+  <p>It's great for transitioning a codebase from a classic threads &amp; locks pattern to a more reactive environment and it's also great for transitioning a skill set from those classic patterns.</p> 
+  <p>Even with perfectly thread safe code a <code>ReactiveLock</code> can come in really handy to simply throttle a piece of code. There are many scenarios where reducing concurrency can actually increase throughput, e.g. when competing for IO resources.</p> 
+  <p>There are quite a few parallels to Actors here, but the mental model is simpler (even if arguably less powerful) especially if coming from Java.</p> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/kifi/reactivelock#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <h3><a id="user-content-creation" class="anchor" href="https://github.com/kifi/reactivelock#creation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Creation</h3> 
+  <p>Creating a lock is dead simple</p> 
+  <p>A lock that will let only one thread execute code in it at a time:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">lock</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ReactiveLock</span>() <span class="pl-c">//Allow only one thread at a time</span></pre>
+  </div> 
+  <p>A lock that will let a specified number of threads execute under the lock:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">lock</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ReactiveLock</span>(<span class="pl-v">concurrency</span>: <span class="pl-k">Int</span>) <span class="pl-c">//Allow only one threads actually executing at a time</span></pre>
+  </div> 
+  <p>A lock that will let a specified number of threads execute under the lock, and will only allow up to <code>limit</code> waiting future. Additional entries into the lock will throw a <code>ReactiveLockTaskQueueFullException</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">lock</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ReactiveLock</span>(<span class="pl-v">concurrency</span>: <span class="pl-k">Int</span>, <span class="pl-v">limit</span>: <span class="pl-k">Int</span>) </pre>
+  </div> 
+  <h3><a id="user-content-locking" class="anchor" href="https://github.com/kifi/reactivelock#locking" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Locking</h3> 
+  <p>Suppose you have a function </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">reallyNotReetrant</span>(...)<span class="pl-k">:</span> <span class="pl-en">T</span> <span class="pl-k">=</span> {
+    <span class="pl-c">//some not thread safe computation</span>
+    <span class="pl-c">//or an expensive computation that needs to be throttled</span>
+}</pre>
+  </div> 
+  <p>which needs concurrency control. In a classic setting you might do something like this</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">reallyNotReetrant</span>(...)<span class="pl-k">:</span> <span class="pl-en">T</span> <span class="pl-k">=</span> <span class="pl-k">synchronized</span> { ... }</pre>
+  </div> 
+  <p>So, while the function is running every new thread calling it will block. This is bad if you have a small thread pool - which is generally desireable - as it can quickly lead to starvation if this function gets called a lot, thus breaking possibly completely unrelated parts of your code because no threads are available. With a <code>ReactiveLock</code> this becomes something like this</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">reallyNotReetrant</span>(...)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> lock.withLock { ... }</pre>
+  </div> 
+  <p>Calls to <code>reallyNotReentrant</code> will now <strong>return immeditaly</strong> with a Future, however, that <strong>Future will only actually execute when the lock is available</strong>.</p> 
+  <p>Note that this only controlls the concurrency of the thread executing the function. Just as with classic locks, if more concurrency is created, e.g. by spawning another future, that is not under the lock.</p> 
+  <p>If you have a function returning a future, like so</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">asyncFun</span>(...)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> { <span class="pl-c">/*some code*/</span> }</pre>
+  </div> 
+  <p>and you would like to not only control the concurrency of the function returning the future, but also of the future itself, you can use</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">asyncFun</span>(...)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> lock.withLockFuture { <span class="pl-c">/*some code*/</span> }</pre>
+  </div> 
+  <p>So the reactive lock nicely integrates as a concurrency control in (some) existing reactive patterns.</p> 
+  <p>Note that both <code>withLock</code> and <code>withLockFuture</code> require an implicit execution context in scope.</p> 
+  <h3><a id="user-content-utilities" class="anchor" href="https://github.com/kifi/reactivelock#utilities" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Utilities</h3> 
+  <p>A <code>ReactiveLock</code> instance has <code>waiting</code> and <code>running</code> properties (both <code>Int</code>) for monitoring. You can also <code>clear()</code> the lock, causing all waiting futures to be completed with a <code>ReactiveLockTaskQueueClearedException</code>. Particularly useful in testing.</p> 
+  <h1><a id="user-content-installation" class="anchor" href="https://github.com/kifi/reactivelock#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h1> 
+  <p>You can get ReactiveLock from maven central. The artifact is <code>reactivelock_2.11</code> and the group id is <code>com.kifi</code>.<br> The current version is <code>1.0.0</code>. For example, if you are using <strong>sbt</strong>, just add this to your dependencies:</p> 
+  <pre><code>"com.kifi" % "reactivelock_2.11" % "1.0.0"
+</code></pre> 
+  <p>All classes are in in <code>com.kifi.reactivelock</code>.</p> 
+ </article>
+</div>

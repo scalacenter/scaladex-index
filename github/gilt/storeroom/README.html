@@ -1,0 +1,56 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-storeroom" class="anchor" href="https://github.com/gilt/storeroom#storeroom" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Storeroom</h1> 
+  <p>Storeroom is a general interface to key-value stores. It is inspired by Twitter's <a href="https://github.com/twitter/storehaus" target="_blank">Storehaus</a> library, but uses standard Scala Futures (and supports a substantially smaller number of back-end implementations).</p> 
+  <h2><a id="user-content-storeroom-core" class="anchor" href="https://github.com/gilt/storeroom#storeroom-core" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>storeroom-core</h2> 
+  <p>The primary abstractions are ReadableStore, WriteableStore, and the combined read-write Store:</p> 
+  <pre><code>trait ReadableStore[K, +V] extends Closeable {
+  def get(k: K): Future[Option[V]]
+  def multiGet[K](ks: Set[K]): Map[K, Future[Option[V]]]
+  def close()
+}
+
+trait WritableStore[K, -V] extends Closeable {
+  def put(kv: (K, V)): Future[Unit]
+  def multiPut[K](kvs: Map[K, V]): Map[K, Future[Unit]]
+  def close()
+}
+
+trait Store[K, V] extends ReadableStore[K, V] with WritableStore[K, Option[V]]
+</code></pre> 
+  <p>For backing stores which support it, it's also possible to iterate over all the entries in the store:</p> 
+  <pre><code>trait IterableStore[K, V] extends Store[K,V] {
+  def getAll(limit: Int = Int.MaxValue, offset: Int = 0): Future[List[(K,V)]]
+}
+</code></pre> 
+  <h2><a id="user-content-implementations" class="anchor" href="https://github.com/gilt/storeroom#implementations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>implementations</h2> 
+  <p>Currently only two implementations are provided:</p> 
+  <ul> 
+   <li>InMemoryStore - for simple caches, etc</li> 
+   <li>DynamoStore</li> 
+  </ul> 
+  <h2><a id="user-content-storeroom-dynamodb" class="anchor" href="https://github.com/gilt/storeroom#storeroom-dynamodb" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>storeroom-dynamodb</h2> 
+  <p>To use the DynamoDB implementation, add to your dependencies:</p> 
+  <pre><code>"com.gilt" %% "storeroom-dynamodb" % "0.0.1"
+</code></pre> 
+  <p>and instantiate with your table details:</p> 
+  <pre><code>object DynamoStore {
+    def apply(client: AmazonDynamoDBClient, tableName: String, primaryKeyColumn: String, valueColumn: String): DynamoStore
+}
+</code></pre> 
+  <p>If your AWS credentials are available in the environment, as described <a href="http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/AmazonDynamoDBClient.html#AmazonDynamoDBClient()" target="_blank">here</a>, you may omit <code>client</code>.</p> 
+  <p>Note that when running the dynamodb tests, your credentials must be provided by your environment. The test will fail if acceptable credentials aren't available. Running the tests will cost you money (albeit a very small amount).</p> 
+ </article>
+</div>

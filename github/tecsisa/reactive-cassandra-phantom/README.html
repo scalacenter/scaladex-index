@@ -1,0 +1,167 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><em>This project has been discontinued as this feature has been roughly <a href="https://github.com/websudos/phantom/pull/348" target="_blank">included</a> in the phantom project itself.</em></p> 
+  <h1><a id="user-content-reactive-cassandra-with-phantom-dsl" class="anchor" href="https://github.com/tecsisa/reactive-cassandra-phantom#reactive-cassandra-with-phantom-dsl" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reactive Cassandra (with Phantom DSL)</h1> 
+  <p><a href="https://travis-ci.org/Tecsisa/reactive-cassandra-phantom" target="_blank"><img src="https://camo.githubusercontent.com/d5b84966d2820f395a15c2e868747d610083dbb1/68747470733a2f2f7472617669732d63692e6f72672f546563736973612f72656163746976652d63617373616e6472612d7068616e746f6d2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/Tecsisa/reactive-cassandra-phantom.svg?branch=master" style="max-width:100%;"></a> <a href="https://coveralls.io/github/Tecsisa/reactive-cassandra-phantom?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/89e89e7836e060e4fa51230213a76d8242c6814e/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f546563736973612f72656163746976652d63617373616e6472612d7068616e746f6d2f62616467652e7376673f6272616e63683d6d617374657226736572766963653d676974687562" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/Tecsisa/reactive-cassandra-phantom/badge.svg?branch=master&amp;service=github" style="max-width:100%;"></a></p> 
+  <p>A <a href="http://www.reactive-streams.org/" target="_blank">reactive streams</a> compatible subscriber for Cassandra. This is a <a href="https://github.com/websudos/phantom" target="_blank">phantom</a> based effort and it's strongly influenced by <a href="https://github.com/sksamuel/elastic4s" target="_blank">elastic4s</a>.</p> 
+  <p>The idea behind this library is to provide a reactive streams subscriber (and maybe a publisher later) for working with Cassandra database and, at the same time, taking advantage of phantom dsl to build CQL3 statements idiomatically with Scala. Every element that downstreams to this subscriber can be turn into a new statement that will be added to a batch query.</p> 
+  <p>This library leverages the <a href="http://danielwestheide.com/blog/2013/02/06/the-neophytes-guide-to-scala-part-12-type-classes.html" target="_blank">typeclass pattern</a> in order to keep separate both the streaming logic and the query statements itself that remain under the responsibility of programmers. An implicit class enables Phantom CassandraTable to be enhanced with streaming capabilities so that integration with phantom legacy code is simple and straightforward.</p> 
+  <p>The library is published on <a href="https://bintray.com/tecsisa/maven-bintray-repo" target="_blank">Tecsisa's bintray</a> and it's currently on version 0.0.8.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/tecsisa/reactive-cassandra-phantom#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>In order to use this library, just add the Tecsisa bintray repository to the resolvers list in your build.sbt file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.url(<span class="pl-s"><span class="pl-pds">"</span>bintray-tecsisa-repo<span class="pl-pds">"</span></span>,
+                                     url(<span class="pl-s"><span class="pl-pds">"</span>http://dl.bintray.com/tecsisa/maven-bintray-repo<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>Or if you're using the <a href="https://github.com/softprops/bintray-sbt" target="_blank">bintray-sbt</a> plugin:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>tecsisa<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>maven-bintray-repo<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>And then, just import the dependency:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.tecsisa<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>reactive-cassandra-phantom<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.8<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-examples-of-use" class="anchor" href="https://github.com/tecsisa/reactive-cassandra-phantom#examples-of-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples of use</h3> 
+  <p>Let's suppose that we're requesting a list of Wagner's operas via a reactive stream. In this case, the element streamed could be modeled as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Opera</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>Following phantom's dsl we could model a Cassandra table to persist all this data as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">OperaTable</span> <span class="pl-k">extends</span> <span class="pl-e">CassandraTable</span>[<span class="pl-en">OperaTable</span>, <span class="pl-en">Opera</span>] <span class="pl-k">with</span> <span class="pl-e">SimpleCassandraConnector</span> {
+  <span class="pl-k">object</span> <span class="pl-en">name</span> <span class="pl-k">extends</span> <span class="pl-e">StringColumn</span>(<span class="pl-v">this</span>) <span class="pl-k">with</span> <span class="pl-e">PartitionKey</span>[<span class="pl-k">String</span>]
+  <span class="pl-k">def</span> <span class="pl-en">fromRow</span>(<span class="pl-v">row</span>: <span class="pl-en">Row</span>)<span class="pl-k">:</span> <span class="pl-en">Opera</span> <span class="pl-k">=</span> {
+    <span class="pl-en">Opera</span>(name(row))
+  }
+  <span class="pl-k">def</span> <span class="pl-en">count</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-k">Long</span>]] <span class="pl-k">=</span> {
+    select.count().one()
+  }
+}</pre>
+  </div> 
+  <p>Please, refer to phantom's documentation for further explanation. Of course, you'll also need a Cassandra connector in place:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">private</span> <span class="pl-k">object</span> <span class="pl-en">Defaults</span> {
+  <span class="pl-k">def</span> <span class="pl-en">getDefaultConnector</span>(<span class="pl-v">host</span>: <span class="pl-k">String</span>, <span class="pl-v">port</span>: <span class="pl-k">Int</span>, <span class="pl-v">keySpace</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">KeySpaceDef</span> <span class="pl-k">=</span> {
+    <span class="pl-en">ContactPoints</span>(<span class="pl-en">Seq</span>(host), port).keySpace(keySpace)
+  }
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">SimpleCassandraConnector</span> {
+
+  <span class="pl-k">private</span>[<span class="pl-v">this</span>] <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">connector</span> <span class="pl-k">=</span> <span class="pl-en">Defaults</span>.getDefaultConnector(host, port, keySpace.name)
+
+  <span class="pl-k">def</span> <span class="pl-en">host</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">def</span> <span class="pl-en">port</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">9142</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">keySpace</span><span class="pl-k">:</span> <span class="pl-en">KeySpace</span>
+
+  <span class="pl-k">implicit</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">session</span><span class="pl-k">:</span> <span class="pl-en">Session</span> <span class="pl-k">=</span> connector.session
+
+  <span class="pl-k">def</span> <span class="pl-en">cassandraVersion</span><span class="pl-k">:</span> <span class="pl-en">VersionNumber</span> <span class="pl-k">=</span> connector.cassandraVersion
+
+  <span class="pl-k">def</span> <span class="pl-en">cassandraVersions</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">VersionNumber</span>] <span class="pl-k">=</span> connector.cassandraVersions
+}</pre>
+  </div> 
+  <p>And some data:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">object</span> <span class="pl-en">OperaData</span> {
+
+  <span class="pl-c">// Yes, you know... I like Wagner a lot :-)</span>
+  <span class="pl-k">val</span> <span class="pl-en">operas</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>(
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Das Rheingold<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Die Walküre<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Die Sieger<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Tristan und Isolde<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Die Meistersinger von Nürnberg<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Luthers Hochzeit<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Siegfried<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Götterdämmerung<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Eine Kapitulation<span class="pl-pds">"</span></span>),
+    <span class="pl-en">Opera</span>(<span class="pl-s"><span class="pl-pds">"</span>Parsifal<span class="pl-pds">"</span></span>),
+    ........
+  )
+}</pre>
+  </div> 
+  <p>So far, all this is phantom stuff. Now, you'll need to bring some implicits to scope:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  com.tecsisa.streams.cassandra.<span class="pl-en">ReactiveCassandra</span>._</pre>
+  </div> 
+  <p>This implicit will put your cassandra table on steroids and you'll be able to build your subscriber easily:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">subscriber</span> <span class="pl-k">=</span> <span class="pl-en">OperaTable</span>.subscriber(<span class="pl-c1">50</span>, <span class="pl-c1">4</span>, completionFn <span class="pl-k">=</span> () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>streaming finished!<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>In order to get this up and running, you'll need to bring some implicit context in scope:</p> 
+  <ul> 
+   <li>an Akka actor system reference</li> 
+   <li>the Cassandra session and keyspace</li> 
+   <li>and one implementation of the RequestBuilder typeclass that contains the statement to be invoked once for streamed element.</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">import</span> <span class="pl-v">OperaTable.</span>{ <span class="pl-v">keySpace</span>, <span class="pl-v">session</span> }
+
+  <span class="pl-k">object</span> <span class="pl-en">OperaTable</span> <span class="pl-k">extends</span> <span class="pl-e">OperaTable</span> <span class="pl-k">with</span> <span class="pl-e">SimpleCassandraConnector</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">keySpace</span><span class="pl-k">:</span> <span class="pl-en">KeySpace</span> <span class="pl-k">=</span> <span class="pl-en">KeySpace</span>(<span class="pl-s"><span class="pl-pds">"</span>streams<span class="pl-pds">"</span></span>)
+  }
+
+  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">OperaRequestBuilder</span> <span class="pl-k">extends</span> <span class="pl-e">RequestBuilder</span>[<span class="pl-en">OperaTable</span>, <span class="pl-en">Opera</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">request</span>(<span class="pl-v">ct</span>: <span class="pl-en">OperaTable</span>, <span class="pl-v">t</span>: <span class="pl-en">Opera</span>)<span class="pl-k">:</span> <span class="pl-en">ExecutableStatement</span> <span class="pl-k">=</span>
+      ct.insert().value(_.name, t.name)
+  }  </pre>
+  </div> 
+  <p>In this case, we'll make an insert for every element streamed.</p> 
+  <p>This subscriber can take part of standard reactive streams pipelines being connected to some publisher:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-en">OperaPublisher</span>.subscribe(subscriber)
+
+  <span class="pl-k">object</span> <span class="pl-en">OperaPublisher</span> <span class="pl-k">extends</span> <span class="pl-e">Publisher</span>[<span class="pl-en">Opera</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">subscribe</span>(<span class="pl-v">s</span>: <span class="pl-en">Subscriber</span>[_ <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">Opera</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+      <span class="pl-k">var</span> <span class="pl-en">remaining</span> <span class="pl-k">=</span> <span class="pl-en">OperaData</span>.operas
+      s.onSubscribe(<span class="pl-k">new</span> <span class="pl-en">Subscription</span> {
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">cancel</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ()
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">request</span>(<span class="pl-v">l</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+          remaining.take(l.toInt).foreach(s.onNext)
+          remaining <span class="pl-k">=</span> remaining.drop(l.toInt)
+          <span class="pl-k">if</span> (remaining.isEmpty)
+            s.onComplete()
+        }
+      })
+    }
+  }</pre>
+  </div> 
+  <p>Of course, it's also possible to use this subscriber with Akka streams pipelines following the integration guidelines provided in the <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/scala/stream-integrations.html#Integrating_with_Reactive_Streams" target="_blank">Akka Streams documentation</a>.</p> 
+  <p>Currently, three kinds of CQL3 batches can be carried out:</p> 
+  <ul> 
+   <li>Logged</li> 
+   <li>Unlogged</li> 
+   <li>Counter</li> 
+  </ul> 
+  <p>Please, refer to the <a href="http://docs.datastax.com/en/cql/3.1/cql/cql_reference/batch_r.html" target="_blank">CQL3 documentation</a> for further explanation.</p> 
+  <h2><a id="user-content-next-steps" class="anchor" href="https://github.com/tecsisa/reactive-cassandra-phantom#next-steps" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Next Steps</h2> 
+  <ul> 
+   <li>A proper publisher to face the other side of the problem.</li> 
+   <li>Incorporate prepared statements as soon as they're available in phantom. This addition should improve the streaming performance greatly.</li> 
+  </ul> 
+  <h2><a id="user-content-related-work" class="anchor" href="https://github.com/tecsisa/reactive-cassandra-phantom#related-work" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Related Work</h2> 
+  <ul> 
+   <li><a href="https://github.com/sksamuel/elastic4s" target="_blank">elastic4s - Elasticsearch Scala Client</a></li> 
+   <li><a href="https://github.com/thiagoandrade6/cassandra-phantom" target="_blank">Cassandra + Phantom Example</a></li> 
+  </ul> 
+ </article>
+</div>

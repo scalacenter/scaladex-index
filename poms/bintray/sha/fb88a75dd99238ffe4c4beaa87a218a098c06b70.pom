@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-provider_2.11</artifactId>
+  <version>2.4.4</version>
+  <name>pact-jvm-provider_2.11</name>
+  <description>Pact provider
+=============
+
+sub project of https://github.com/DiUS/pact-jvm
+
+The pact provider is responsible for verifying that an API provider adheres to a number of pacts authored by its clients
+
+This library provides the basic tools required to automate the process, and should be usable on its own in many instances.
+
+Framework and build tool specific bindings will be provided in separate libraries that build on top of this core functionality.
+
+### Running Pacts
+
+Main takes 2 arguments:
+
+The first is the root folder of your pact files
+(all .json files in root and subfolders are assumed to be pacts)
+
+The second is the location of your pact config json file.
+
+### Pact config
+
+
+The pact config is a simple mapping of provider names to endpoint url's
+paths will be appended to endpoint url's when interactions are attempted
+
+for an example see: https://github.com/DiUS/pact-jvm/blob/master/pact-jvm-provider/src/test/resources/pact-config.json
+
+### Provider State
+
+Before each interaction is executed, the provider under test will have the opportunity to enter a state.
+Generally the state maps to a set of fixture data for mocking out services that the provider is a consumer of (they will have their own pacts)
+
+The pact framework will instruct the test server to enter that state by sending:
+
+    POST "${config.stateChangeUrl.url}/setup" { "state" : "${interaction.stateName}" }
+
+
+### An example of running provider verification with junit
+
+This example uses java, junit and hamcrest matchers to run the provider verification. 
+As the provider service is a DropWizard application, it uses the DropwizardAppRule to startup the service before running any test.
+
+Warning: It only grabs the first interaction from the pact file with the consumer, where there could be many. (This could possibly be solved with a parameterized test)
+
+```java
+public class PactJVMProviderJUnitTest {
+
+    @ClassRule
+    public static TestRule startServiceRule = new DropwizardAppRule&lt;DropwizardAppConfig>(DropwizardApp.class, "config.yml");
+
+    private static ProviderInfo serviceProvider;
+    private static Pact testConsumerPact;
+    
+    @BeforeClass
+    public static void setupProvider() {
+        serviceProvider = new ProviderInfo("Dropwizard App");
+        serviceProvider.setProtocol("http");
+        serviceProvider.setHost("localhost");
+        serviceProvider.setPort(8080);
+        serviceProvider.setPath("/");
+        
+        ConsumerInfo consumer = new ConsumerInfo();
+        consumer.setName("test_consumer");
+        consumer.setPactFile(new File("target/pacts/ping_client-ping_service.json"));
+        
+    //  serviceProvider.getConsumers().add(consumer);
+        testConsumerPact = (Pact) new PactReader().loadPact(consumer.getPactFile());
+    }
+    
+    @Test
+    @SuppressWarnings("unchecked")
+    public void runConsumerPacts() {
+
+        //grab the first interaction from the pact with consumer
+        List&lt;Interaction> interactions = scala.collection.JavaConversions.seqAsJavaList(testConsumerPact.interactions());
+        Interaction interaction1 = interactions.get(0);
+        
+        //setup any provider state
+
+        //setup the client and interaction to fire against the provider
+        ProviderClient client = new ProviderClient();
+        client.setProvider(serviceProvider);
+        client.setRequest(interaction1.request());
+        Map&lt;String, Object> clientResponse = (Map&lt;String, Object>) client.makeRequest();
+        Map&lt;String, Object> result = (Map&lt;String, Object>) ResponseComparison.compareResponse(interaction1.response(), 
+                clientResponse, (int) clientResponse.get("statusCode"), (Map) clientResponse.get("headers"), (String) clientResponse.get("data"));
+
+        //assert all good
+        assertThat(result.get("method"), is(true)); // method type matches
+        
+        Map headers = (Map) result.get("headers"); //headers match
+        headers.forEach( (k, v) -> 
+            assertThat(format("Header: [%s] does not match", k), v, org.hamcrest.Matchers.equalTo(true))
+        );
+        
+        assertThat((Collection&lt;Object>)((Map)result.get("body")).values(), org.hamcrest.Matchers.hasSize(0)); // empty list of body mismatches
+    }
+}
+```
+    
+### An example of running provider verification with spock
+
+This example uses groovy and spock to run the provider verification. 
+Again the provider service is a DropWizard application, and is using the DropwizardAppRule to startup the service.
+
+This example runs all interactions using spocks Unroll feature
+
+```groovy
+class PactJVMProviderSpockSpec extends Specification {
+
+    @ClassRule @Shared
+    TestRule startServiceRule = new DropwizardAppRule&lt;DropwizardAppConfig>(DropwizardApp.class, "config.yml");
+
+    @Shared
+    ProviderInfo serviceProvider
+    @Shared
+    Pact testConsumerPact
+
+    def setupSpec() {
+        serviceProvider = new ProviderInfo("Dropwizard App")
+        serviceProvider.protocol = "http"
+        serviceProvider.host = "localhost"
+        serviceProvider.port = 8080;
+        serviceProvider.path = "/"
+        def consumer = serviceProvider.hasPactWith("ping_consumer", {
+            pactFile = new File('target/pacts/ping_client-ping_service.json')
+        })
+
+        testConsumerPact = (Pact) new PactReader().loadPact(consumer.getPactFile());
+    }
+
+    def cleanup() {
+        //cleanup provider state
+        //ie. db.truncateAllTables()
+    }
+
+    def cleanupSpec() {
+        //cleanup provider
+    }
+
+    @Unroll
+    def "Provider Pact - With Consumer"() {
+        given:
+        //setup provider state
+        // ie.    db.setupRecords()
+        //        serviceProvider.requestFilter = { req ->
+        //            req.addHeader('Authorization', token)
+        //        }
+
+        when:
+        ProviderClient client = new ProviderClient(provider: serviceProvider, request: interaction.request())
+        Map clientResponse = (Map) client.makeRequest()
+        Map result = (Map) ResponseComparison.compareResponse(interaction.response(),
+                clientResponse, clientResponse.statusCode, clientResponse.headers, clientResponse.data)
+
+        then:
+
+        // method matches
+        result.method == true
+
+        // headers all match, spock needs the size checked before
+        // asserting each result
+        if (result.headers.size() > 0) {
+            result.headers.each() { k, v ->
+                assert v == true
+            }
+        }
+
+        // empty list of body mismatches
+        result.body.size() == 0
+
+        where:
+        interaction &lt;&lt; scala.collection.JavaConversions.seqAsJavaList(testConsumerPact.interactions())
+    }
+}
+```
+    
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+    <developer>
+      <id>kenbot</id>
+      <name>Ken Scambler</name>
+      <email>ken.scambler@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.googlecode.java-diff-utils</groupId>
+      <artifactId>diffutils</artifactId>
+      <version>1.3.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-model_2.11</artifactId>
+      <version>2.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.11</artifactId>
+      <version>2.2.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-core_2.11</artifactId>
+      <version>3.6.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>2.11.7</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-matchers_2.11</artifactId>
+      <version>2.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.jansi</groupId>
+      <artifactId>jansi</artifactId>
+      <version>1.11</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>0.9.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy.modules.http-builder</groupId>
+      <artifactId>http-builder</artifactId>
+      <version>0.7.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>1.0-groovy-2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version>3.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.7</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-junit_2.11</artifactId>
+      <version>3.6.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.11.7</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

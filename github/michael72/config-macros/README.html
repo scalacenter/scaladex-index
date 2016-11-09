@@ -1,0 +1,92 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-config-macros" class="anchor" href="https://github.com/michael72/config-macros#config-macros" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>config-macros</h1> 
+  <p>Scala macros to provide a wrapper for typesafe configurations that are mapped to key/value pairs as strings. The macros makes it easy to access a configuration in a direct and typesafe way and perform the conversions from and to string.</p> 
+  <h1><a id="user-content-motivation" class="anchor" href="https://github.com/michael72/config-macros#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h1> 
+  <p>Storing and restoring properties can usually not be done in a typesafe way. Consider <code>java.util.Properties</code>. Here the properties are usually set and retrieved by String values. However what about Int or Boolean values - they have to be converted. Also try to save files or list of files. There is no generic way to do so.</p> 
+  <p>Now, wouldn't it be nice to handle settings directly in the following way?</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>config.port <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+config.host <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>
+config.autoConnect <span class="pl-k">=</span> <span class="pl-k">!</span>config.autoConnect
+config.lastFiles <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">java.io.File</span>(raw<span class="pl-s"><span class="pl-pds">"</span>C:<span class="pl-cce">\t</span>emp<span class="pl-cce">\t</span>est<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Or even listen to property changes</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>config.bindTo(config.port) {
+  (oldPort, newPort) <span class="pl-k">=&gt;</span>
+    println(s<span class="pl-s"><span class="pl-pds">"</span>port changed from ${oldPort} to ${newPort}<span class="pl-pds">"</span></span>)
+}
+<span class="pl-c">/* Simplified version of binding where the old value is neglected. */</span>
+config.bindToValue(config.autoConnect) {
+  autoConnect <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>autoConnect is set to <span class="pl-pds">"</span></span> <span class="pl-k">+</span> autoConnect)
+}</pre>
+  </div> 
+  <p>This is the aim of config-macros: to provide an easy-to-use way to save and restore application settings.</p> 
+  <h1><a id="user-content-sbt-configuration" class="anchor" href="https://github.com/michael72/config-macros#sbt-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT configuration</h1> 
+  <p>Currently scala 2.10 and 2.11 are supported with version 1.2.0. add the following lines to your build.sbt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.11.7<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+ <span class="pl-s"><span class="pl-pds">"</span>org.jaylib.scala.config<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>configbase<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.2.0<span class="pl-pds">"</span></span>,
+ <span class="pl-s"><span class="pl-pds">"</span>org.jaylib.scala.config<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>configmacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.2.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>compile<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/michael72/config-macros#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <p>To use the macros simply define a trait (extending <a href="https://github.com/michael72/config-macros/blob/master/config/src/main/scala/org/jaylib/scala/config/ObservableConfig.scala" target="_blank">ObservableConfig</a> if you want to use the bind features):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Config</span> <span class="pl-k">extends</span> <span class="pl-e">ObservableConfig</span> {
+  <span class="pl-k">var</span> <span class="pl-en">lastDirectory</span><span class="pl-k">:</span> <span class="pl-en">File</span>
+  <span class="pl-k">var</span> <span class="pl-en">lastFiles</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">File</span>]
+  <span class="pl-k">var</span> <span class="pl-en">host</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+  <span class="pl-k">var</span> <span class="pl-en">port</span><span class="pl-k">:</span> <span class="pl-k">Int</span>
+  <span class="pl-k">var</span> <span class="pl-en">autoConnect</span><span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+}</pre>
+  </div> 
+  <p>The default values for the config are defined in a Map:</p> 
+  <pre><code>val defaults = Map("lastDirectory" -&gt; ".", "host" -&gt; "localhost", "port" -&gt; "8080", "autoConnect" -&gt; "false")
+</code></pre> 
+  <p>To use the macro a getter and a setter for the values has to be provided. In this case, I use <a href="https://github.com/michael72/config-macros/blob/master/config/src/main/scala/org/jaylib/scala/config/properties/PropertiesConfig.scala" target="_blank">PropertiesConfig</a> to save the settings to a properties file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">props</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PropertiesConfig</span>(<span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-en">System</span>.getenv(<span class="pl-s"><span class="pl-pds">"</span>APPDATA<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>MyProduct<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>MyApp.properties<span class="pl-pds">"</span></span>), defaults)</pre>
+  </div> 
+  <p>before exiting the <code>store</code> method has to be called:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>props.store</pre>
+  </div> 
+  <p>Alternatively to saving the config to a properties file it could also be stored to the (user-)preferences <a href="https://github.com/michael72/config-macros/blob/master/config/src/main/scala/org/jaylib/scala/config/preferences/PreferencesConfig.scala" target="_blank">PreferencesConfig</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">props</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PreferencesConfig</span>(<span class="pl-c1">classOf</span>[<span class="pl-en">Config</span>], defaults)</pre>
+  </div> 
+  <p>Then we can use <a href="https://github.com/michael72/config-macros/blob/master/macros/src/main/scala/org/jaylib/scala/config/macros/ConfigMacros.scala" target="_blank">ConfigMacros</a> to generate getters and setters for the Config-trait above. I also provide own <a href="https://github.com/michael72/config-macros/blob/master/config/src/main/scala/org/jaylib/scala/config/convert/TypeConversions.scala" target="_blank">TypeConversions</a> for java.io.File to save the file as absolute path:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">ConfigMacros</span>.wrap(<span class="pl-c1">classOf</span>[<span class="pl-en">Config</span>], props.getProperty, props.setProperty, <span class="pl-k">new</span> <span class="pl-en">TypeConversions</span> {
+  <span class="pl-k">def</span> <span class="pl-en">create_File</span>(<span class="pl-v">filename</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">File</span>(filename)
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">appendString</span>(<span class="pl-v">any</span>: <span class="pl-en">Any</span>, <span class="pl-v">buf</span>: <span class="pl-en">StringBuilder</span>) {
+    any <span class="pl-k">match</span> {
+      <span class="pl-k">case</span> <span class="pl-v">file</span>: <span class="pl-en">File</span> <span class="pl-k">=&gt;</span> buf.append(file.getAbsolutePath)
+      <span class="pl-k">case</span> any        <span class="pl-k">=&gt;</span> <span class="pl-v">super</span>.appendString(any, buf)
+    }
+  }
+})</pre>
+  </div> 
+  <p>Now the config can be used as described in the code at the beginning.</p> 
+  <h1><a id="user-content-sample-project" class="anchor" href="https://github.com/michael72/config-macros#sample-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sample project</h1> 
+  <p>You will find a sample project including the sbt files in <a href="https://github.com/michael72/config-macros/blob/master/sampleconfig" target="_blank">sampleconfig</a> - the contained <a href="https://github.com/michael72/config-macros/blob/master/sampleconfig/src/main/scala/org/jaylib/scala/config/macros/SampleConfig.scala" target="_blank">SampleConfig.scala</a> is the complete example from above. The Scalatest <a href="https://github.com/michael72/config-macros/blob/master/macrotests/src/test/scala/org/jaylib/scala/config/macros/ConfigMacrosTest.scala" target="_blank">ConfigMacrosTest</a> should also give a good overview of what is already possible with the configmacros.</p> 
+ </article>
+</div>

@@ -1,0 +1,282 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-bingerator" class="anchor" href="https://github.com/dbarowy/bingerator#bingerator" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bingerator</h1> 
+  <p>or "why the heck is it so hard to issue web queries in a program?"</p> 
+  <p><code>Bingerator</code> is an easy-to-use library for doing Bing web and image queries in Scala.</p> 
+  <h2><a id="user-content-downloading" class="anchor" href="https://github.com/dbarowy/bingerator#downloading" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Downloading</h2> 
+  <p>The easiest way to get Bingerator is via Maven. If you're using SBT, you can simply add the following to your <code>build.sbt</code>:</p> 
+  <pre><code>libraryDependencies += "net.ettinsmoor" %% "bingerator" % "0.2.4"
+</code></pre> 
+  <p>If you need a differently-configured build, or if binary releases bounce off of your tinfoil hat, I suggest that you <a href="https://github.com/dbarowy/bingerator#source" target="_blank">checkout a copy of the source</a> and <a href="https://github.com/dbarowy/bingerator#building" target="_blank">see the build instructions</a>.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/dbarowy/bingerator#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p><code>Bingerator</code> is very simple to use. It works much like an ordinary collection object in Scala. Specifically, a <code>Stream</code> collection. First, include Bingerator into your scope:</p> 
+  <pre><code>import net.ettinsmoor.Bingerator
+</code></pre> 
+  <p>Next, create a <code>Bingerator</code> object with your API key and then call the search function. The following example</p> 
+  <pre><code>val results1 = new Bingerator(key).SearchWeb("cowboy").take(150)
+</code></pre> 
+  <p>returns 150 search results (a <code>Stream[WebResult]</code>), where <code>key</code> is your Bing API key. Note that <code>Bingerator</code> performs the minimum amount of communication with Bing (a single transaction in the smallest case) required to satisfy your query because <code>Stream</code> is <em>lazy</em>. By contrast,</p> 
+  <pre><code>val results2 = new Bingerator(key).SearchWeb("cowboy").take(150).toList
+</code></pre> 
+  <p><em>immediately</em> (i.e., "<em>eagerly</em>") calls Bing and returns 150 results (because we called <code>toList</code> at the end). The previous incantation will not call Bing until you read <code>results1</code>. <code>Bingerator</code>'s <em>laziness</em> allows you to express a search result simply, without needing to worry about how big the collection should be until you use the results. <code>Bingerator</code> also <em>caches</em> results so that re-reading previous-retrieved results does not again retrieve new results. This is important because Bing counts each and every transaction against your monthly quota. <code>Bingerator</code> is presently configured to retrieve the maximum number of results per transaction (50) for maximum savings.</p> 
+  <h4><a id="user-content-i-dont-get-it-can-you-show-me-how-to-use-bingerator-in-a-for-loop" class="anchor" href="https://github.com/dbarowy/bingerator#i-dont-get-it-can-you-show-me-how-to-use-bingerator-in-a-for-loop" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>I Don't Get It. Can You Show Me How to use Bingerator in a <code>for</code> loop?</h4> 
+  <p>Sure.</p> 
+  <pre><code>val b = new Bingerator(key)
+val results = b.SearchWeb("The Lone Gunmen").take(5)
+for (r &lt;- results) {
+  println("Result is: " + r.url)
+}
+</code></pre> 
+  <p>Note that if you don't specify the number of search results using <code>take</code>, <code>Bingerator</code> will return up to 5000 results (the current cap). This is probably not what you want, since you have to pay for all 100 of those transactions. Only <code>take</code> what you need!</p> 
+  <h2><a id="user-content-getting-the-source-" class="anchor" href="https://github.com/dbarowy/bingerator#getting-the-source-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting the Source <a name="user-content-source" target="_blank" href=""></a></h2> 
+  <p>There is nothing special here. I.e.,</p> 
+  <pre><code>git clone git@github.com:dbarowy/bingerator.git
+</code></pre> 
+  <h2><a id="user-content-building-the-library-" class="anchor" href="https://github.com/dbarowy/bingerator#building-the-library-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building the Library <a name="user-content-building" target="_blank" href=""></a></h2> 
+  <p><code>Bingerator</code> uses Scala's <a href="http://www.scala-sbt.org/" target="_blank">Simple Build Tool</a>. Please make sure that you <a href="http://www.scala-sbt.org/release/docs/Getting-Started/Setup.html" target="_blank">have SBT installed</a> prior to following these directions. <code>Bingerator</code> has no dependencies other than Scala and Java.</p> 
+  <p>To build a JAR that you can import into your Java/Scala classpath, <code>cd</code> into the <code>bingerator</code> folder and type</p> 
+  <pre><code>sbt package
+</code></pre> 
+  <p>On my machine, SBT creates the following JAR:</p> 
+  <pre><code>bingerator/target/scala-2.10/bingerator_2.10-0.2.0.jar
+</code></pre> 
+  <p>If you need to modify the build, e.g., to change the required Scala version, see the <code>build.sbt</code> buildfile.</p> 
+  <h2><a id="user-content-note-on-bing-account-keys" class="anchor" href="https://github.com/dbarowy/bingerator#note-on-bing-account-keys" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Note on Bing Account Keys</h2> 
+  <p>Bing requires that users of the search API have Bing developer accounts. You will need to create one and give it to <code>Bingerator</code> when you ask for results. Microsoft uses this account to bill you for your usage. Note that as I write this (Jan 2, 2014), the lowest tier (fewer than 5000 transactions/mo) is free, but you do still need an account.</p> 
+  <p>You can <a href="http://datamarket.azure.com/dataset/bing/search" target="_blank">sign up here</a>.</p> 
+  <h2><a id="user-content-webresult-object" class="anchor" href="https://github.com/dbarowy/bingerator#webresult-object" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>WebResult</code> object</h2> 
+  <p>The return type of <code>SearchWeb</code> is a <code>WebResult</code>. <code>WebResult</code> has the following fields:</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>field name</th> 
+     <th>type</th> 
+     <th>description</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td><code>description</code></td> 
+     <td><code>String</code></td> 
+     <td>The short caption that Bing provides for a result.</td> 
+    </tr> 
+    <tr> 
+     <td><code>display_url</code></td> 
+     <td><code>String</code></td> 
+     <td>The same as <code>url</code>, except without the scheme name (e.g., <code>http</code>) and <code>://</code> separator.</td> 
+    </tr> 
+    <tr> 
+     <td><code>id</code></td> 
+     <td><code>String</code></td> 
+     <td>The Bing <a href="http://msdn.microsoft.com/en-us/library/system.guid%28v=vs.110%29.aspx" target="_blank">GUID</a> identifying the result.</td> 
+    </tr> 
+    <tr> 
+     <td><code>title</code></td> 
+     <td><code>String</code></td> 
+     <td>The name of the result.</td> 
+    </tr> 
+    <tr> 
+     <td><code>url</code></td> 
+     <td><code>String</code></td> 
+     <td>The URL of the search result.</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-imageresult-object" class="anchor" href="https://github.com/dbarowy/bingerator#imageresult-object" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>ImageResult</code> object</h2> 
+  <p>The return type of <code>SearchImage</code> is an <code>ImageResult</code>. <code>ImageResult</code> has the following fields:</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>field name</th> 
+     <th>type</th> 
+     <th>description</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td><code>content_type</code></td> 
+     <td><code>ContentType</code></td> 
+     <td>A ContentType case class.</td> 
+    </tr> 
+    <tr> 
+     <td><code>display_url</code></td> 
+     <td><code>String</code></td> 
+     <td>The same as <code>media_url</code>, except without the scheme name (e.g., <code>http</code>) and <code>://</code> separator.</td> 
+    </tr> 
+    <tr> 
+     <td><code>file_size</code></td> 
+     <td><code>long</code></td> 
+     <td>The size, in bytes, of the file located at <code>media_url</code></td> 
+    </tr> 
+    <tr> 
+     <td><code>height</code></td> 
+     <td><code>int</code></td> 
+     <td>The height of the image, in pixels.</td> 
+    </tr> 
+    <tr> 
+     <td><code>id</code></td> 
+     <td><code>String</code></td> 
+     <td>The Bing <a href="http://msdn.microsoft.com/en-us/library/system.guid%28v=vs.110%29.aspx" target="_blank">GUID</a> identifying the result.</td> 
+    </tr> 
+    <tr> 
+     <td><code>media_url</code></td> 
+     <td><code>String</code></td> 
+     <td>The direct URL of the image file itself.</td> 
+    </tr> 
+    <tr> 
+     <td><code>source_url</code></td> 
+     <td><code>String</code></td> 
+     <td>The URL of the page that hosts the image file.</td> 
+    </tr> 
+    <tr> 
+     <td><code>title</code></td> 
+     <td><code>String</code></td> 
+     <td>The name of the result.</td> 
+    </tr> 
+    <tr> 
+     <td><code>width</code></td> 
+     <td><code>int</code></td> 
+     <td>The width of the image, in pixels.</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p><code>ImageResult</code> also has some helper methods to make it easy to work with image data. Note that <code>getImage</code> and <code>saveImageFile</code> share an image data cache.</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>method name</th> 
+     <th>arguments</th> 
+     <th>return type</th> 
+     <th>description</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td><code>getImage</code></td> 
+     <td>none</td> 
+     <td><code>java.awt.image.BufferedImage</code></td> 
+     <td>This method will download the file and return it as a <code>BufferedImage</code>. Note that repeated calls to <code>getImage</code> return the same, cached image data.</td> 
+    </tr> 
+    <tr> 
+     <td><code>saveImageFile</code></td> 
+     <td>an output file base name</td> 
+     <td><code>java.io.File</code></td> 
+     <td>This method will save the file using the user-supplied base name and return a <code>java.io.File</code> object. The file extension (e.g., ".jpg") is determined dynamically, based on the image's <code>content_type</code>. Note that <code>saveImageFile</code> will also download the file if needed, caching the image data as does <code>getImage</code>.</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/dbarowy/bingerator#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <h4><a id="user-content-why-dont-you-support-other-bing-sourcetypes-like-news" class="anchor" href="https://github.com/dbarowy/bingerator#why-dont-you-support-other-bing-sourcetypes-like-news" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why Don't You Support Other Bing SourceTypes, like News?</h4> 
+  <p>I plan to. I'll add them to this library as I need them.</p> 
+  <h4><a id="user-content-why-cant-i-specify-bing-search-options-like-image-size" class="anchor" href="https://github.com/dbarowy/bingerator#why-cant-i-specify-bing-search-options-like-image-size" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why Can't I Specify Bing Search Options Like Image Size?</h4> 
+  <p>I'm busy. Patches are always welcome, by the way.</p> 
+  <h4><a id="user-content-why-bing--why-not-google-web-search" class="anchor" href="https://github.com/dbarowy/bingerator#why-bing--why-not-google-web-search" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why Bing? Why Not Google Web Search?</h4> 
+  <p>Good question. I initially intended to build this tool against Google's Custom Search API. However, I eventually opted for Bing for the following reasons:</p> 
+  <ol> 
+   <li>Google's SDK is poorly documented.</li> 
+   <li>Google Custom Search can search the entire web (<a href="https://support.google.com/customsearch/answer/1210656?hl=en" target="_blank">really</a>!), but is extremely limited: only 100 queries per day.</li> 
+   <li>Opting to <em>pay</em> to upgrade to Google Site Search, which lifts the number of transactions you can perform, <a href="https://support.google.com/customsearch/answer/72326?hl=en" target="_blank">removes your ability to search the entire web</a>.</li> 
+   <li>The old <a href="https://developers.google.com/web-search/" target="_blank">Google Web Search API</a>, which actually does do what I want, is deprecated.</li> 
+  </ol> 
+  <p>I could have worked around #1 by using the web API instead, which does come with acceptable documentation, but #2, #3, and #4 were dealbreakers for me. Bing's only shortcoming is that the MSDN documentation is kind of a mess, since it refers to previous versions of the Bing API. I eventually discovered <a href="http://datamarket.azure.com/dataset/bing/search" target="_blank">the following page</a> which contains the correct documentation, but puzzlingly, this documentation is in Microsoft Word format. You win some, you lose some, I suppose.</p> 
+  <p>If Google changes #2, #3, and #4, I will happily add support for Google web search.</p> 
+  <h2><a id="user-content-troubleshooting" class="anchor" href="https://github.com/dbarowy/bingerator#troubleshooting" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Troubleshooting</h2> 
+  <p>If you're having difficulty with <code>Bingerator</code>, you can run its test suite to try to diagnose the problem. If you encounter a problem, please open a GitHub issue that includes the output of the test suite.</p> 
+  <pre><code>sbt test
+</code></pre> 
+  <p>Note that the test suite requires the presence of a file called <code>BingAccount.properties</code> that contains your Bing account key in the following form:</p> 
+  <pre><code>key = 34hKZ87Aab2JJj8abz10MM0jh2sIU806fFXXkacveT4
+</code></pre> 
+  <p><em>Be careful not to add <code>BingAccount.properties</code> to your git projects, otherwise others will know your secret key!</em></p> 
+  <p>If you find a bug in <code>Bingerator</code>, and you're adept at writing ScalaTest tests, you will maximize your chances of me fixing the problem if your GitHub issue includes a new test.</p> 
+  <h2><a id="user-content-notes" class="anchor" href="https://github.com/dbarowy/bingerator#notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Notes</h2> 
+  <p><code>Bingerator</code> is designed to work with Scala, and it depends on the Scala <code>Stream</code> library. <code>Stream</code> provides quite a bit more functionality than the Java <code>iterator</code>. This may mean that you cannot use <code>Bingerator</code> with Java. I honestly don't know. If you figure, it out, <a href="http://people.cs.umass.edu/%7Edbarowy" target="_blank">send me a note</a>, but I am otherwise uninterested in porting <code>Bingerator</code> to Java.</p> 
+  <h2><a id="user-content-change-log" class="anchor" href="https://github.com/dbarowy/bingerator#change-log" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change Log</h2> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>version</th> 
+     <th>changes</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>0.2.4</td> 
+     <td>Support for image/animatedgif.</td> 
+    </tr> 
+    <tr> 
+     <td>0.2.3</td> 
+     <td>Support for Scala 2.11, otherwise no changes.</td> 
+    </tr> 
+    <tr> 
+     <td>0.2.2</td> 
+     <td>Now available via Maven. No real changes.</td> 
+    </tr> 
+    <tr> 
+     <td>0.2.1</td> 
+     <td>Added helper methods to allow easy downloading/saving of Bing image searches.</td> 
+    </tr> 
+    <tr> 
+     <td>0.2.0</td> 
+     <td>Added support for Bing image searches.</td> 
+    </tr> 
+    <tr> 
+     <td>0.1.1</td> 
+     <td>README updates.</td> 
+    </tr> 
+    <tr> 
+     <td>0.1.0</td> 
+     <td>Initial release.</td> 
+    </tr> 
+   </tbody>
+  </table> 
+ </article>
+</div>

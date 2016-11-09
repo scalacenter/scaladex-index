@@ -1,0 +1,55 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-jar-loader" class="anchor" href="https://github.com/avast/jarloader#jar-loader" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JAR loader</h1> 
+  <p>This library servers for dynamic loading of JARs with miscellaneous content. Typical usage is in project with time-various decision making function. In order to not recompile and restart the service each time this function is changed, the new function implementation can be loaded from separate JAR via this library.</p> 
+  <p>The library is implemented in Scala, but is prepared for usage both in Scala and Java - the main class <code>JarLoader</code> implements <code>AbstractJarLoader</code> Scala trait and <code>IJarLoader</code> Java interface at the same time and it's up to you which you will use. Methods in both interfaces are equal, but the Scala trait uses some <code>Option</code> parameters, instead of Java overloading. This is very basic usage:</p> 
+  <pre><code>    public class JarLoaderDemo {
+        IJarLoader&lt;IDemoFunction&gt; loader = new JarLoader&lt;IDemoFunction&gt;("Demo loader", new File("/root/functions")) {
+            @Override
+            public void onLoad(IDemoFunction instance, int version, String className, FileSystem fs, Map&lt;String, String&gt; attributes) {
+                System.out.println("New function loaded, class " + className + ", version " + version);
+            }
+        };
+
+        public JarLoaderDemo() {
+            loader.search(10000);
+        }
+
+        public static void main(String[] args) {
+            new JarLoaderDemo();
+        }
+    }
+</code></pre> 
+  <p>This code means the loader will look for new function implementations in <code>/root/functions</code> dir every 10 seconds. By default, it accepts only newer implementations then is the current one - this is recognized by version, provided in JARs manifest. In the manifest has to be also the main class of the JAR (the one, which implements the <code>IDemoFunction</code> interface). Minimum manifest content is this:</p> 
+  <pre><code>Main-Class: com.avast.project.DefaultFunction
+Implementation-Version: 3
+</code></pre> 
+  <p>The <code>onLoad</code> methods offers you following parameters:</p> 
+  <ul> 
+   <li>instance of loaded class</li> 
+   <li>version of implementation (from the manifest)</li> 
+   <li>fully classified name of loaded class (as stated in the manifest)</li> 
+   <li>FileSystem, which you can use for some following initialization - access into the loaded JAR</li> 
+   <li>attributes, loaded from properties file (see below)</li> 
+  </ul> 
+  <h1><a id="user-content-properties-file" class="anchor" href="https://github.com/avast/jarloader#properties-file" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Properties file</h1> 
+  <p>Optional content of the JAR is properties file (format: <code>{fileNameOfJarWithoutExtension}.properties</code>), containing some parameters for initialization. This properties file is loaded and passed to the <code>onLoad</code> method as <code>attributes</code> parameter.</p> 
+  <h1><a id="user-content-loading-options" class="anchor" href="https://github.com/avast/jarloader#loading-options" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Loading options</h1> 
+  <p>The demo above shows the very basic usage. On the other hand, you can specify prefix and/or suffix of the JARs name by passing these parameters to the <code>search</code> method. Additionally, the constructor can accept also minimal and maximal version, which can be loaded (this is useful for compatibility issues). You can also specify (by <code>acceptOnlyNewer</code> method) that you want to load also older versions then is the current one.</p> 
+  <p>It is expected in the given root dir will be multiple JARs with functions implementation. While loading a new one, all files (satisfying given prefix and suffix, if set) are sorted by comparator and the first one is loaded. The default comparator is <code>TimeFileComparator</code> (descending, so the winner is the newest file - mTime is used), but you can use also <code>AplhaFileComparator</code> (descending too, alphabetically sorted last file wins) or any other comparator, implementing <code>Comparator&lt;File&gt;</code> interface.</p> 
+  <h1><a id="user-content-runtime-configuration" class="anchor" href="https://github.com/avast/jarloader#runtime-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Runtime configuration</h1> 
+  <p>The loader is exposed to JMX view, if possible. You can see currently loaded class and its version, history of loaded implementations (last 100). Available operations are <code>load</code>, <code>saveHistoryToCsv</code>,<code>search</code> and <code>stopSearching</code>. The loaders JMX name is <code>JarLoader[{nameGivenInConstructor}]</code>, or <code>JarLoader[{currentMillis}]</code> if no name is provided. All loaders are placed (in JMX) in the same package as the class which owns (or extends) it.</p> 
+ </article>
+</div>

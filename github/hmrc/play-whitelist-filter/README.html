@@ -1,0 +1,62 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-play-whitelist-filter" class="anchor" href="https://github.com/hmrc/play-whitelist-filter#play-whitelist-filter" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>play-whitelist-filter</h1> 
+  <p>This library includes a <code>Filter</code> for the Play! framework which can be used to block users whose IP addresses are not on a predetermined whitelist.</p> 
+  <p>Currently the only implementation of whitelisting available uses the IP from the <code>True-Client-IP</code> header provided by Akamai.</p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/hmrc/play-whitelist-filter#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <ol> 
+   <li><p>Import the library:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>hmrc<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>)
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>uk.gov.hmrc<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-whitelist-filter<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.0<span class="pl-pds">"</span></span>
+)</pre>
+    </div></li> 
+   <li><p>Implement the filter trait, for example:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">object</span> <span class="pl-en">WhitelistFilter</span> <span class="pl-k">extends</span> <span class="pl-e">AkamaiWhitelistFilter</span> {
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">whitelist</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>)
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">destination</span><span class="pl-k">:</span> <span class="pl-en">Call</span> <span class="pl-k">=</span> <span class="pl-en">Call</span>(<span class="pl-s"><span class="pl-pds">"</span>GET<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>https://www.gov.uk<span class="pl-pds">"</span></span>)
+}</pre>
+    </div></li> 
+   <li><p>Add the filter to your <code>Application</code>'s list of filters, for example:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">object</span> <span class="pl-en">MyGlobal</span> <span class="pl-k">extends</span> <span class="pl-e">WithFilters</span>(<span class="pl-en">WhitelistFilter</span>)</pre>
+    </div></li> 
+   <li><p>Done</p></li> 
+  </ol> 
+  <hr> 
+  <p>Bear in mind that as this uses the Akamai <code>True-Client-IP</code> header, you may wish to exclude the filter from pre-live environments. There are various ways to do this such as only including the filter based on some config field:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">TestGlobal</span> <span class="pl-k">extends</span> <span class="pl-e">GlobalSettings</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">myFilters</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Filter</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">Seq</span>(<span class="pl-en">SomeFilter</span>, <span class="pl-en">AnotherFilter</span>) <span class="pl-k">++</span>
+    <span class="pl-en">Play</span>.configuration.getBoolean(<span class="pl-s"><span class="pl-pds">"</span>shouldWhitelist<span class="pl-pds">"</span></span>).map {
+      _ <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>(<span class="pl-en">WhitelistFilter</span>)
+    }.getOrElse(<span class="pl-en">Seq</span>.empty)
+  }
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">doFilter</span>(<span class="pl-v">next</span>: <span class="pl-en">EssentialAction</span>)<span class="pl-k">:</span> <span class="pl-en">EssentialAction</span> <span class="pl-k">=</span> {
+    <span class="pl-en">Filters</span>(<span class="pl-v">super</span>.doFilter(next), <span class="pl-v">myFilters</span>: _<span class="pl-k">*</span>)
+  }
+}</pre>
+  </div> 
+  <p>You may also wish to exlude certain paths in your application from being filtered such as healthcheck routes. This can be done by implementing the <code>excludedPaths: Seq[Call]</code> field in the filter:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">WhitelistFilter</span> <span class="pl-k">extends</span> <span class="pl-e">AkamaiWhitelistFilter</span> {
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">whitelist</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>)
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">destination</span><span class="pl-k">:</span> <span class="pl-en">Call</span> <span class="pl-k">=</span> <span class="pl-en">Call</span>(<span class="pl-s"><span class="pl-pds">"</span>GET<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>https://www.gov.uk<span class="pl-pds">"</span></span>)
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">excludedPaths</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Call</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-en">Call</span>(<span class="pl-s"><span class="pl-pds">"</span>GET<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>/healthcheck<span class="pl-pds">"</span></span>))
+}</pre>
+  </div> 
+  <h1></h1> 
+  <p><a href="https://travis-ci.org/hmrc/play-whitelist-filter" target="_blank"><img src="https://camo.githubusercontent.com/ecf012a6a2192934ea57c55f35ff5f44c4b204d8/68747470733a2f2f7472617669732d63692e6f72672f686d72632f706c61792d77686974656c6973742d66696c7465722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/hmrc/play-whitelist-filter.svg?branch=master" style="max-width:100%;"></a> <a href="https://bintray.com/hmrc/releases/play-whitelist-filter/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/5ad17dea821d8a679f68fd0d849e2269a4d03392/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f686d72632f72656c65617365732f706c61792d77686974656c6973742d66696c7465722f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/hmrc/releases/play-whitelist-filter/images/download.svg" style="max-width:100%;"> </a></p> 
+ </article>
+</div>

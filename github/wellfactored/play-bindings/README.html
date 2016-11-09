@@ -1,0 +1,80 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://circleci.com/gh/WellFactored/play-bindings" target="_blank"><img src="https://camo.githubusercontent.com/d735fc7d649b820185b26ba13d86dc637b5c7d05/68747470733a2f2f636972636c6563692e636f6d2f67682f57656c6c466163746f7265642f706c61792d62696e64696e67732e7376673f7374796c653d737667" alt="CircleCI" data-canonical-src="https://circleci.com/gh/WellFactored/play-bindings.svg?style=svg" style="max-width:100%;"></a> <a href="https://waffle.io/WellFactored/play-bindings" target="_blank"><img src="https://camo.githubusercontent.com/3c97d819b95f2f7c1dfbe8aa55ca527d387569e2/68747470733a2f2f62616467652e776166666c652e696f2f57656c6c466163746f7265642f706c61792d62696e64696e67732e706e673f6c6162656c3d7265616479267469746c653d5265616479" alt="Stories in Ready" data-canonical-src="https://badge.waffle.io/WellFactored/play-bindings.png?label=ready&amp;title=Ready" style="max-width:100%;"></a> <a href="https://travis-ci.org/WellFactored/play-bindings" target="_blank"><img src="https://camo.githubusercontent.com/ced247c3e1ed6e72891d5ef6bf1668c56b34ab96/68747470733a2f2f7472617669732d63692e6f72672f57656c6c466163746f7265642f706c61792d62696e64696e67732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/WellFactored/play-bindings.svg?branch=master" style="max-width:100%;"></a> <a href="https://www.codacy.com/app/doug/play-bindings?utm_source=github.com&amp;amp;utm_medium=referral&amp;amp;utm_content=WellFactored/play-bindings&amp;amp;utm_campaign=Badge_Grade" target="_blank"><img src="https://camo.githubusercontent.com/286c8b196bf187482905d55d7b3c7ebc537153ae/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f6262643833346530323064373465666162656537383664373638633264363039" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/bbd834e020d74efabee786d768c2d609" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/com.wellfactored/play-bindings_2.11" target="_blank"><img src="https://camo.githubusercontent.com/9928c4ab51345fd558cc3426f3b46b3c81b58f84/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e77656c6c666163746f7265642f706c61792d62696e64696e67735f322e31312f62616467652e706e67" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.wellfactored/play-bindings_2.11/badge.png" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-play-bindings" class="anchor" href="https://github.com/wellfactored/play-bindings#play-bindings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>play-bindings</h1> 
+  <p>A value class is a case class, of type <code>W</code>, that wraps a single value, of type <code>V</code> and optionally extends <code>AnyVal</code>. Value classes are a really convenient and lightweight way of strongly typing primitive values to avoid passing them to functions incorrectly. However, when you want to convert to/from JSON then the default implementations that <code>Json.format[W]</code> provides will generate or require an extra level of structure that is usually undesirable.</p> 
+  <p>For example, given:</p> 
+  <pre><code>case class PersonId(id: Long) extends AnyVal
+case class Person(id:PersonId, name:String)
+</code></pre> 
+  <p>then the default JSON would look like</p> 
+  <pre><code>    {
+        "id": {
+            "id": 1
+        },
+        "name": "Fred"
+    }
+</code></pre> 
+  <p>when we'd rather just have</p> 
+  <pre><code>    {
+        "id": 1,
+        "name": "Fred"
+    }
+</code></pre> 
+  <p>To do this you need to manually implement the JSON formatters that wrap and unwrap the structure. You need to implement similar boilerplate to be able to use the value classes in urls. This is a pain and adds significant friction to using value classes.</p> 
+  <p><code>play-bindings</code> make use of the <a href="https://github.com/WellFactored/value-wrapper" target="_blank"><code>value-wrapper</code></a> library to generate all of this boilerplate for you seamlessly. Given <code>PersonId</code> as defined above then extending the appropriate traits or importing the contents of the relevant objects will let the compiler automatically provide instances of the following type classes:</p> 
+  <ul> 
+   <li><code>Reads[PersonId]</code> - wraps a <code>Long</code> in a <code>PersonId</code> when reading from Json</li> 
+   <li><code>Writes[PersonId]</code> - unwraps the <code>Long</code> when writing to Json</li> 
+   <li><code>PathBindable[PersonId]</code> - decodes a <code>Long</code> from a url path segment into a <code>PersonId</code></li> 
+   <li><code>QueryStringBindable</code> - takes a <code>Long</code> value from a query parameter and converts it to a <code>PersonId</code></li> 
+  </ul> 
+  <p>The value type, <code>V</code>, must itself already have a type class instance in scope. Play provides instances of all four type classes for all the primitive types.</p> 
+  <h2><a id="user-content-creating-the-binding-instances" class="anchor" href="https://github.com/wellfactored/play-bindings#creating-the-binding-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Creating the binding instances</h2> 
+  <p>There are individual traits that contain implicit functions that will generate the relevant type classes:</p> 
+  <ul> 
+   <li><code>trait ValueClassReads</code></li> 
+   <li><code>trait ValueClassWrites</code></li> 
+   <li><code>trait ValueClassPathBindable</code></li> 
+   <li><code>trait ValueClassQueryStringBindable</code></li> 
+  </ul> 
+  <p>There are also some traits and objects that combine the base traits in useful ways:</p> 
+  <ul> 
+   <li><code>trait ValueClassFormats extends ValueClassReads with ValueClassWrites</code></li> 
+   <li><code>object ValueClassFormats extends ValueClassFormats</code></li> 
+   <li><code>trait ValueClassUrlBinders extends ValueClassPathBindable with ValueClassQueryStringBindable</code></li> 
+   <li><code>object ValueClassUrlBinders extends ValueClassUrlBinders</code></li> 
+  </ul> 
+  <p>If you add the following to the <code>build.sbt</code> for your play project:</p> 
+  <pre><code>routesImport += "com.wellfactored.playbinders.ValueClassUrlBinders._"
+</code></pre> 
+  <p>then you can bind path elements and query parameters to value classes in your controller methods without writing any further boilerplate code.</p> 
+  <p>In the code where you are reading and writing JSON values you can either extend the relevant traits or use <code>import com.wellfactored.playbindings.ValueClassFormats._</code> as you prefer.</p> 
+  <h2><a id="user-content-validation-and-normalisation-of-values" class="anchor" href="https://github.com/wellfactored/play-bindings#validation-and-normalisation-of-values" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Validation and Normalisation of values</h2> 
+  <p>Sometimes you want to validate the value before allowing the value class to be created. <code>value-wrapper</code> provides a type class called <code>Validator[W, V]</code> that will let you do this. For example, we might want to ensure that the <code>Long</code> being used to construct a <code>UserId</code> must be non-negative. We could provide an instance of <code>Validator[W, V]</code> that looks like this:</p> 
+  <pre><code>implicit val vl = new Validator[UserId, Long] {
+  override def validate(l: Long): Either[String, Long] = if (l &gt;= 0) Right(l) else Left(s"Id must be non-negative ($l)")
+}
+</code></pre> 
+  <p>If this validator is in implicit scope at the point where the compile is instantiating a <code>ValueClassReads</code>, <code>ValueClassPathBindable</code> or <code>ValueClassQueryStringBindable</code> for <code>UserId</code> then it will get picked up and used as part of the code that constructs the instance of <code>W</code>.</p> 
+  <p>Looking at the declaration of <code>validate</code> there are a couple of things to note:</p> 
+  <ul> 
+   <li>If validation is successful then it returns a <code>Right[V]</code>, not a <code>Right[W]</code>. The purpose of <code>validate</code> is to validate the value of type <code>V</code> <em>in the context of</em> the type <code>W</code>, not to construct the instance of <code>W</code>. This allows us to have different validation applied to a primitive type, say <code>Long</code> depending on the type it is going to be wrapped in.</li> 
+   <li><p>The value wrapped in the <code>Right[V]</code> is the value that will be used by the binders to construct the instance of <code>W</code>. This gives us the chance to change the value as part of the validation. For example, we might want to normalise strings by stripping whitespace like this:</p> <pre><code>case class Foo(s:String)
+
+implicit val vl = new Validator[Foo, String] {
+ override def validate(s:String): Either[String, String] = Right(s.trim)
+}
+</code></pre></li> 
+  </ul> 
+ </article>
+</div>

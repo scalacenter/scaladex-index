@@ -1,0 +1,90 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><strong>PC Plod is a testing library for macro and compiler plugin authors</strong> to make assertions of their libraries in the <a href="http://scala-ide.org/docs/dev/architecture/presentation-compiler.html#scalapresentationcompiler" target="_blank">Presentation Compiler</a>, i.e. <a href="http://ensime.org" target="_blank">ENSIME</a> and <a href="http://scala-ide.org/" target="_blank">Scala IDE</a>.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/ensime/pcplod#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Published as a regular artefact, the sbt installation is easy, but require a few more steps than just adding a regular library:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.ensime<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>pcplod<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>,
+
+<span class="pl-c">// WORKAROUND https://github.com/ensime/pcplod/issues/12</span>
+fork in <span class="pl-en">Test</span> <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">true</span>,
+
+javaOptions in <span class="pl-en">Test</span> <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  s<span class="pl-s"><span class="pl-pds">"""</span>-Dpcplod.settings=${(scalacOptions in Test).value.mkString(",")}<span class="pl-pds">"""</span></span>,
+  s<span class="pl-s"><span class="pl-pds">"""</span>-Dpcplod.classpath=${(fullClasspath in Test).value.map(_.data).mkString(",")}<span class="pl-pds">"""</span></span>
+)</pre>
+  </div> 
+  <p>The <code>dependencyOverrides</code> feature of SBT is recommended to ensure that the correct version of the scala compiler is used</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>dependencyOverrides <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.scala-lang<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-compiler<span class="pl-pds">"</span></span> <span class="pl-k">%</span> scalaVersion.value</pre>
+  </div> 
+  <p>If you are testing a compiler plugin you may already be aware that you must add something like the following to your test configuration</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scalacOptions in <span class="pl-en">Test</span> <span class="pl-k">++</span><span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">jar</span> <span class="pl-k">=</span> (packageBin in <span class="pl-en">Compile</span>).value
+  <span class="pl-en">Seq</span>(s<span class="pl-s"><span class="pl-pds">"</span>-Xplugin:${jar.getAbsolutePath}<span class="pl-pds">"</span></span>, s<span class="pl-s"><span class="pl-pds">"</span>-Jdummy=${jar.lastModified}<span class="pl-pds">"</span></span>) <span class="pl-c">// ensures recompile</span>
+}</pre>
+  </div> 
+  <h2><a id="user-content-how-to-use-it" class="anchor" href="https://github.com/ensime/pcplod#how-to-use-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use it</h2> 
+  <p>PC Plod uses the <em>loan pattern</em> to let you write tests in whatever testing framework you want.</p> 
+  <h3><a id="user-content-loading-scala-sources" class="anchor" href="https://github.com/ensime/pcplod#loading-scala-sources" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Loading Scala Sources</h3> 
+  <p>Since you're simulating a scala developer who is using your macro / plugin to write scala code, you put the code that you want to test into the <code>test/resources</code> folder of your project (not <code>test/scala</code>). Add source resources as needed</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.ensime.pcplod.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>withPcPlod { pc <span class="pl-k">=&gt;</span>
+  pc.loadScala(<span class="pl-s"><span class="pl-pds">"</span>path/to/package/foo.scala<span class="pl-pds">"</span></span>)
+  <span class="pl-c">// your tests here</span>
+  pc.loadScala(<span class="pl-s"><span class="pl-pds">"</span>path/to/package/bar.scala<span class="pl-pds">"</span></span>)
+  pc.unloadScala(<span class="pl-s"><span class="pl-pds">"</span>path/to/package/foo.scala<span class="pl-pds">"</span></span>)
+  <span class="pl-c">// more tests here</span>
+}</pre>
+  </div> 
+  <p>there is also a simplified variant (Mr Plod) which only supports one source (a simpler assertion API)</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>withMrPlod(<span class="pl-s"><span class="pl-pds">"</span>path/to/package/foo.scala<span class="pl-pds">"</span></span>) { mr <span class="pl-k">=&gt;</span>
+  <span class="pl-c">// your tests here</span>
+}</pre>
+  </div> 
+  <h3><a id="user-content-making-assertions" class="anchor" href="https://github.com/ensime/pcplod#making-assertions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Making Assertions</h3> 
+  <p>The <code>PcPlod</code> instance has the following main assertions:</p> 
+  <ul> 
+   <li><code>symbolAtPoint(res: String, p: Point): Option[String]</code> - the name of the symbol at point.</li> 
+   <li><code>typeAtPoint(res: String, p: Point): Option[String]</code> - the return type of the symbol at the point.</li> 
+   <li><code>messages: List[PcMessage]</code></li> 
+  </ul> 
+  <p>Typically if <code>symbolAtPoint</code> or <code>typeAtPoint</code> do not work (or there are any errors) then your code is not expected to work in the presentation compiler.</p> 
+  <p>A variant of <code>typeAtPoint</code> and <code>symbolAtPoint</code> without the <code>res</code> is provided for <code>withMrPlod</code>.</p> 
+  <p>An implicit conversion for Point means that any of the following can be provided in its place:</p> 
+  <ul> 
+   <li><code>Int</code> the number of characters</li> 
+   <li><code>(Int, Int)</code> the line and column</li> 
+   <li><code>Symbol</code> corresponding to <em>noddy syntax</em></li> 
+  </ul> 
+  <p>with all counting from zero.</p> 
+  <h3><a id="user-content-noddy-syntax" class="anchor" href="https://github.com/ensime/pcplod#noddy-syntax" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Noddy Syntax</h3> 
+  <p>Instead of having to manually count the location in the source, you can augment your test sources with a <code>@noddy_syntax@</code> that will be stripped and treated as meta data when loaded:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">F@foo@oo</span> {
+  <span class="pl-k">def</span> <span class="pl-en">bar</span>(a<span class="pl-k">@</span>input_a<span class="pl-k">@:</span> <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+}</pre>
+  </div> 
+  <p>in this case, the symbol <code>'foo</code> will refer to the letter <code>F</code> of <code>Foo</code> and the symbol <code>'input_a</code> will refer to the parameter <code>a</code> of <code>bar</code> (i.e. the character immediately before the marker). Noddy names can only be alphanumeric or underscore.</p> 
+ </article>
+</div>

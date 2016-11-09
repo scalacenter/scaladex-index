@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.atlassian.pom</groupId>
+        <artifactId>atlassian-public-pom</artifactId>
+        <version>29.6</version>
+    </parent>
+
+    <groupId>com.atlassian.activeobjects</groupId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+    <artifactId>activeobjects-scala_${scala.version.base}</artifactId>
+
+    <properties>
+        <ao.version>0.19.16</ao.version>
+        <scala.version.base>2.10</scala.version.base>
+        <scala.version>${scala.version.base}.2</scala.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.atlassian.sal</groupId>
+            <artifactId>sal-api</artifactId>
+            <version>2.6.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.atlassian.activeobjects</groupId>
+            <artifactId>activeobjects-plugin</artifactId>
+            <version>${ao.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.atlassian.activeobjects</groupId>
+            <artifactId>activeobjects-test</artifactId>
+            <version>${ao.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.2.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.6.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2_${scala.version.base}</artifactId>
+            <version>2.2.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+
+                <!--
+                    See http://davidb.github.io/scala-maven-plugin/index.html for full details
+                 -->
+
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.1.6</version>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <args>
+                        <!-- to avoid 'error: File name too long' in Linux/ecryptfs file system -->
+                        <arg>-Xmax-classfile-name</arg>
+                        <arg>143</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <!--<arg>-explaintypes</arg>-->
+                        <arg>-feature</arg>
+                        <arg>-language:_</arg>
+                        <arg>-target:jvm-1.6</arg>
+                    </args>
+                    <!--
+                        we don't want the scala compiler to go into GC catalepsy,
+                        it's slow enough as it is. running in-process causes classpath problems.
+
+                        Taken from Soke POM scala config
+                    -->
+                    <jvmArgs>
+                        <param>-server</param>
+                        <!--grabbing memory up front saves us 2 seconds-->
+                        <param>-Xms1024M</param>
+                        <param>-Xmx1024M</param>
+
+                        <param>-XX:+PrintGC</param>
+                        <param>-XX:+PrintGCDetails</param>
+                        <param>-XX:+PrintGCTimeStamps</param>
+                        <param>-XX:+DisableExplicitGC</param>
+                        <param>-XX:+UseParallelOldGC</param>
+                    </jvmArgs>
+
+                    <!--
+
+                    Seems to really increase compile speed.  A lot!!!
+
+                    -->
+                    <recompileMode>incremental</recompileMode>
+                    <javacArgs>
+                        <javacArg>-Xlint:unchecked</javacArg>
+                        <javacArg>-Xlint:deprecation</javacArg>
+                    </javacArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <scm>
+        <connection>scm:git:git@bitbucket.org:atlassian/atlassian-scala-ao.git</connection>
+        <developerConnection>scm:git:git@bitbucket.org:atlassian/atlassian-scala-ao.git</developerConnection>
+        <url>https://bitbucket.org/atlassian/atlassian-scala-ao</url>
+    </scm>
+
+</project>

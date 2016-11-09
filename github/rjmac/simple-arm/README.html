@@ -1,0 +1,68 @@
+<div class="announce instapaper_body markdown" data-path="README.markdown" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-simple-arm" class="anchor" href="https://github.com/rjmac/simple-arm#simple-arm" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>simple-arm</h1> 
+  <p><code>simple-arm</code> is based on the <code>Managed</code> typeclass, which opens and closes resources. There are three ways to use it: for-comprehensions, the <code>using</code> function, and <code>ResourceScope</code>s:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.rojoma.simplearm.util.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">linesCopied</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+  in <span class="pl-k">&lt;</span><span class="pl-k">-</span> managed(<span class="pl-k">new</span> <span class="pl-en">java.io.FileReader</span>(inName))
+  out <span class="pl-k">&lt;</span><span class="pl-k">-</span> managed(<span class="pl-k">new</span> <span class="pl-en">java.io.FileWriter</span>(outName))
+} {
+  copyLines(in, out)
+}
+
+<span class="pl-k">val</span> <span class="pl-en">linesCopied</span> <span class="pl-k">=</span> using(<span class="pl-k">new</span> <span class="pl-en">java.io.FileReader</span>(inName), <span class="pl-k">new</span> <span class="pl-en">java.io.FileWriter</span>(outName)) { (in, out) <span class="pl-k">=&gt;</span>
+  copyLines(in, out)
+}
+
+<span class="pl-c">// return an iterator which is managed by the given ResourceScope.</span>
+<span class="pl-c">// Closing the iterator through the scope will also ensure the</span>
+<span class="pl-c">// underlying Source is closed.</span>
+<span class="pl-k">def</span> <span class="pl-en">fileAsIterator</span>(<span class="pl-v">in</span>: <span class="pl-en">File</span>, <span class="pl-v">rs</span>: <span class="pl-en">ResourceScope</span>)<span class="pl-k">:</span> <span class="pl-en">Iterator</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> rs.open(<span class="pl-en">Source</span>.fromFile(in))
+  rs.openUnmanaged(source.getLines(), transitiveClose <span class="pl-k">=</span> <span class="pl-en">List</span>(source))
+}</pre>
+  </div> 
+  <p>The first two are almost completely equivalent; the <code>for</code>-comprehension requires using <code>managed</code> but the <code>using</code> function separates the resource from its name. In a <code>for</code>-comprehension, earlier resources are available at the time later ones are initialized, of course.</p> 
+  <p><code>Managed</code> is a monad; invoking <code>flatMap</code> or <code>map</code> on it will produce a new <code>Managed</code>. To actually cause the effects to occur, <code>run</code> or <code>foreach</code> must be used. This is a change from simple-arm 1, where <code>Managed</code> supported the for-comprehension syntactic sugar without actually being a monad. <code>foreach</code> and <code>run</code> are synonyms; in particular, <code>foreach</code> will return the result of the function it is passed:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">x</span> <span class="pl-k">=</span> <span class="pl-k">for</span>(r <span class="pl-k">&lt;</span><span class="pl-k">-</span> managed(...)) <span class="pl-k">yield</span> <span class="pl-c1">5</span> <span class="pl-c">// x is Managed[Int]</span>
+<span class="pl-k">val</span> <span class="pl-en">y</span> <span class="pl-k">=</span> <span class="pl-k">for</span>(r <span class="pl-k">&lt;</span><span class="pl-k">-</span> managed(...)) <span class="pl-c1">5</span> <span class="pl-c">// y is Int</span></pre>
+  </div> 
+  <h2><a id="user-content-getting-it" class="anchor" href="https://github.com/rjmac/simple-arm#getting-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting it</h2> 
+  <p>SBT:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.rojoma<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>simple-arm-v2<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>While for Maven, the pom snippets are:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependencies</span>&gt;
+  &lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;com.rojoma&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;simple-arm-v2_${scala.version}&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;2.1.0&lt;/<span class="pl-ent">version</span>&gt;
+  &lt;/<span class="pl-ent">dependency</span>&gt;
+&lt;/<span class="pl-ent">dependencies</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-details" class="anchor" href="https://github.com/rjmac/simple-arm#details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Details</h2> 
+  <p>Resource-management is defined as follows:</p> 
+  <ol> 
+   <li>Create the resouce by evaluating the by-name parameter passed to <code>managed</code> or <code>using</code>.</li> 
+   <li>Open the resource by calling the <code>openPreTry</code> method on the typeclass instance with it. By default, this is a no-op. If the open returns normally, the resource is considered to be under management and will be closed.</li> 
+   <li>Open the resource by calling the <code>openPostTry</code> method on the typeclass instance. By default, this is a no-op.</li> 
+   <li>Do whatever is required with this resource.</li> 
+   <li>If the "whatever" returns normally ("normally" includes via <code>ControlThrowable</code>), invoke <code>close</code> on the typeclass instance with it. Otherwise, invoke <code>closeAbormally</code> with both the resource object and the exception. By default, this simply defers to <code>close</code>. If <code>closeAbnormally</code> throws a non-<code>ControlThrowable</code> exception, it is added to the original exception's suppressed list.</li> 
+  </ol> 
+  <p>Resources in <code>using</code> are acquired in left-to-right order and released in the opposite order. <code>ResourceScope</code> will, unless resources are explicitly closed early, also close resources in the opposite order from which they were added. Note that transferring resources between <code>ResourceScopes</code> may not preserve the exact order. Instead, it uses <em>some</em> order consistent with the DAG produced by resources' <code>transitiveClose</code> parameters.</p> 
+ </article>
+</div>

@@ -1,0 +1,86 @@
+<div class="announce instapaper_body rst" data-path="README.rst" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>Sclasner is a classpath scanner written in Scala.</p> 
+  <p>It is intended as a replacement of <a href="https://github.com/xitrum-framework/annovention" target="_blank">Annovention</a> and mainly used for standalone JVM applications. If you want a more complex solution, please see <a href="http://code.google.com/p/reflections/" target="_blank">Reflections</a>.</p> 
+  <p>With Sclasner, you can:</p> 
+  <ul> 
+   <li>Scan all .class files (including those inside .jar files in classpath), then use <a href="http://www.javassist.org/" target="_blank">Javassist</a> or <a href="http://asm.ow2.org/" target="_blank">ASM</a> to extract annotations</li> 
+   <li>Load all <a href="https://github.com/xitrum-framework/scaposer" target="_blank">.po files</a></li> 
+   <li>etc.</li> 
+  </ul> 
+  <a name="user-content-scan" target="_blank" href=""></a> 
+  <h2><a id="user-content-scan" class="anchor" href="https://github.com/ngocdaothanh/sclasner#scan" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scan</h2> 
+  <p>See <a href="http://xitrum-framework.github.io/sclasner/" target="_blank">Scaladoc</a>.</p> 
+  <p>For example, if you want to load all .txt files:</p> 
+  <pre>import java.io.File
+import sclasner.{FileEntry, Scanner}
+
+// We define a callback to process each FileEntry:
+// - The 1st argument is an accumulator to gather process results for each entry.
+// - The 2nd argument is each entry.
+// - The result of this callback will be passed to as the accumulator (the
+//   1st argument) to the next call.
+// - When all entries have been visited, the accumulator will be returned.
+def entryProcessor(acc: Seq[(String, String)], entry: FileEntry): Seq[(String, String)] = {
+  if (entry.relPath.endsWith(".txt")) {
+    val fileName = entry.relPath.split(File.pathSeparator).last
+    val body     = new String(entry.bytes)
+    acc :+ (fileName, body)
+  } else {
+    acc
+  }
+}
+
+// We actually do the scan:
+// - The 1st argument is the initial value of the accumulator.
+// - The 2nd argument is the callback above.
+val acc = Scanner.foldLeft(Seq.empty, entryProcessor)
+</pre> 
+  <p>Things in <code>FileEntry</code>:</p> 
+  <ul> 
+   <li><code>container: File</code>, may be a directory or a JAR file in classpath. You may call <code>container.isDirectory</code> or <code>container.isFile</code>. Inside each container, there may be multiple items, represented by the two below.</li> 
+   <li><code>relPath: String</code>, path to the file you want to check, relative to the <code>container</code> above.</li> 
+   <li><code>bytes: Array[Byte]</code>, body of the file the <code>relPath</code> above points to. This is a lazy val, accessing the first time will actually read the file from disk. Because reading from disk is slow, you should avoid accessing <code>bytes</code> if you don't have to.</li> 
+  </ul> 
+  <p>Signature of <code>Scanner.foldLeft</code>:</p> 
+  <pre>foldLeft[T](acc: T, entryProcessor: (T, FileEntry) =&gt; T): T
+</pre> 
+  <a name="user-content-cache" target="_blank" href=""></a> 
+  <h2><a id="user-content-cache" class="anchor" href="https://github.com/ngocdaothanh/sclasner#cache" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cache</h2> 
+  <p>One scan may take 10-15 seconds, depending things in your classpath and your computer spec etc. Fortunately, because things in classpath do not change frequently, you may cache the result to a file and load it later.</p> 
+  <p>You provide the cache file name to <code>foldLeft</code>:</p> 
+  <pre>// You can use File instead of file name
+val acc = Scanner.foldLeft("sclasner.cache", Seq.empty, entryProcessor)
+</pre> 
+  <p>If sclasner.cache exists, <code>entryProcessor</code> will not be run. Otherwise, <code>entryProcessor</code> will be run and the result will be serialized to the file. If you want to force <code>entryProcessor</code> to run, just delete the cache file.</p> 
+  <p>If the cache file cannot be successfully deserialized (for example, serialized classes are older than the current version of the classes), it will be automatically deleted and updated (<code>entryProcessor</code> will be run).</p> 
+  <p>For the result of <code>entryProcessor</code> to be written to file, it must be serializable.</p> 
+  <a name="user-content-cache-in-development-mode" target="_blank" href=""></a> 
+  <h2><a id="user-content-cache-in-development-mode" class="anchor" href="https://github.com/ngocdaothanh/sclasner#cache-in-development-mode" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cache in development mode</h2> 
+  <p>Suppose you are using SBT, Maven, or Gradle.</p> 
+  <p>While developing, you normally do not want to cache the result of processing the directory <code>target</code> (SBT, Maven) or <code>build</code> (Gradle) in the current working directory.</p> 
+  <p>Sclasner's behavior:</p> 
+  <ul> 
+   <li>If <code>container</code> is a subdirectory of <code>target</code> or <code>build</code>, the result of processing that <code>container</code> will not be cached.</li> 
+   <li>When loading the cache file, if a <code>container</code> is a subdirectory of <code>target</code> or <code>build</code>, <code>entryProcessor</code> will be run for that <code>container</code>.</li> 
+  </ul> 
+  <a name="user-content-use-with-sbt" target="_blank" href=""></a> 
+  <h2><a id="user-content-use-with-sbt" class="anchor" href="https://github.com/ngocdaothanh/sclasner#use-with-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Use with SBT</h2> 
+  <p>Supported Scala versions: 2.11.x, 2.10.x</p> 
+  <pre>libraryDependencies += "tv.cntt" %% "sclasner" % "1.7.0"
+</pre> 
+  <p>Sclasner is used in <a href="https://github.com/xitrum-framework/xitrum" target="_blank">Xitrum</a>.</p> 
+ </article>
+</div>

@@ -1,0 +1,165 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-effectful-" class="anchor" href="https://github.com/pelotom/effectful#effectful-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Effectful <a href="https://travis-ci.org/pelotom/effectful" target="_blank"><img src="https://camo.githubusercontent.com/7c87c328c923909d7da9d5e13be2807857048806/68747470733a2f2f7472617669732d63692e6f72672f70656c6f746f6d2f65666665637466756c2e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/pelotom/effectful.png?branch=master" style="max-width:100%;"></a></h1> 
+  <blockquote> 
+   <p>If we want to rationalize the notational impact of all these structures, perhaps we should try to recycle the notation we already possess.</p> 
+  </blockquote> 
+  <p>- McBride, Paterson, <a href="http://www.soi.city.ac.uk/%7Eross/papers/Applicative.html" target="_blank"><em>Applicative programming with effects</em></a></p> 
+  <hr> 
+  <p>Effectful is a small macro library that allows you to write monadic code in a more natural style than that afforded by <code>for</code>-comprehensions, embedding effectful expressions in other effectful expressions rather than explicitly naming intermediate results. The idea is similar to that of the <a href="https://github.com/scala/async" target="_blank">Scala Async</a> library, but generalized to arbitrary monads (not just <code>Future</code>).</p> 
+  <h2><a id="user-content-introduction" class="anchor" href="https://github.com/pelotom/effectful#introduction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introduction</h2> 
+  <p>The Effectful library provides two basic dual operations: <code>effectfully: A =&gt; M[A]</code> and <code>unwrap: M[A] =&gt; A</code> (there is also <code>!</code>, a postfix version of <code>unwrap</code>). Intuitively, within an <code>effectfully</code> block, we are allowed to treat impure (or <em>effectful</em>) values as if they were pure. If you think about it, this is exactly what it's like to program in a standard imperative programming language. For example, take this hypothetical code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">if</span> (<span class="pl-k">!</span>db.lookup(key).isDefined)
+  db.add(key, value);</pre>
+  </div> 
+  <p>where <code>db.lookup</code> and <code>db.add</code> do the obvious side-effectful things of interacting with a remote database. In order to reify the side-effects of this snippet in the type system, we can define a monad for our database type (or just use <a href="https://github.com/scalaz/scalaz/blob/scalaz-seven/effect/src/main/scala/scalaz/effect/IO.scala" target="_blank"><code>IO</code></a>). Then, in Scala we could write something like this instead:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+  optVal <span class="pl-k">&lt;</span><span class="pl-k">-</span> db.lookup(key)
+  _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> optVal map (db.add(key, _)) getOrElse db.pure(())
+} <span class="pl-k">yield</span> ()</pre>
+  </div> 
+  <p>But this seems to have lost something of the perspicuity of the original. Effectful lets us write it in the original style but with all effects documented in the type system:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>effectfully {
+  <span class="pl-k">if</span> (<span class="pl-k">!</span>db.lookup(key).<span class="pl-k">!</span>.isDefined)
+    db.add(key, value).<span class="pl-k">!</span>
+}</pre>
+  </div> 
+  <p>Notice the use of the postfix <code>!</code> operator to indicate where effects are happening.</p> 
+  <h2><a id="user-content-quick-start" class="anchor" href="https://github.com/pelotom/effectful#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick start</h2> 
+  <p>In your <code>build.sbt</code>, add a dependency like so:</p> 
+  <pre><code>libraryDependencies += "org.pelotom" %% "effectful" % "1.0.1"
+</code></pre> 
+  <p>Now write some code using Effectful:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">Scalaz.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">effectful.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">language.</span><span class="pl-v">postfixOps</span>
+
+<span class="pl-k">val</span> <span class="pl-en">xs</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">1</span>,<span class="pl-c1">2</span>,<span class="pl-c1">3</span>)
+<span class="pl-k">val</span> <span class="pl-en">ys</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">true</span>,<span class="pl-c1">false</span>)
+
+effectfully { (xs<span class="pl-k">!</span>, ys<span class="pl-k">!</span>) }
+
+<span class="pl-c">// ==&gt; List((1,true), (1,false), (2,true), (2,false), (3,true), (3,false))</span></pre>
+  </div> 
+  <p>Here, the "effect" in question is nondeterminism.</p> 
+  <h2><a id="user-content-nested-effects" class="anchor" href="https://github.com/pelotom/effectful#nested-effects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Nested effects</h2> 
+  <p>In Scala we have <code>for</code>-comprehensions as an imperative-looking syntax for writing monadic code, e.g.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+  x <span class="pl-k">&lt;</span><span class="pl-k">-</span> foo
+  y <span class="pl-k">&lt;</span><span class="pl-k">-</span> bar(x)
+  z <span class="pl-k">&lt;</span><span class="pl-k">-</span> baz
+} <span class="pl-k">yield</span> (y, z)</pre>
+  </div> 
+  <p>Each monadic assignment <code>a &lt;- ma</code> <em>unwraps</em> a pure value <code>a: A</code> from a monadic value <code>ma: M[A]</code> so that it can be used later in the computation. But this is a little less convenient than one might hope--frequently we would like to make use of an unwrapped value without having to explicitly name it. With Effectful we can write it <em>inline</em>, like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>effectfully { (unwrap(bar(unwrap(foo))), unwrap(baz)) }</pre>
+  </div> 
+  <p>or using <code>!</code>, simply</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>effectfully { (bar(foo<span class="pl-k">!</span>)<span class="pl-k">!</span>, baz<span class="pl-k">!</span>) }</pre>
+  </div> 
+  <h3><a id="user-content-effects-within-conditionals" class="anchor" href="https://github.com/pelotom/effectful#effects-within-conditionals" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Effects within conditionals</h3> 
+  <p>Writing conditional expressions in <code>for</code> comprehensions can get hairy fast:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">for</span> {
+  x <span class="pl-k">&lt;</span><span class="pl-k">-</span> foo
+  result <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-k">if</span> (x <span class="pl-k">&gt;</span> <span class="pl-c1">12</span>) {
+    <span class="pl-k">for</span> {
+      a1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> bar
+      a2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> baz(a1)
+    } <span class="pl-k">yield</span> a2
+  } <span class="pl-k">else</span> {
+    <span class="pl-k">for</span> {
+      b1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> boz
+      b2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> biz
+    } <span class="pl-k">yield</span> b1 <span class="pl-k">*</span> b2
+  }
+} <span class="pl-k">yield</span> result</pre>
+  </div> 
+  <p>With Effectful we can write this as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>effectfully {
+  <span class="pl-k">if</span> (foo.<span class="pl-k">!</span> <span class="pl-k">&gt;</span> <span class="pl-c1">12</span>)
+    baz(bar<span class="pl-k">!</span>)<span class="pl-k">!</span>
+  <span class="pl-k">else</span> 
+    (boz.<span class="pl-k">!</span> <span class="pl-k">*</span> biz.<span class="pl-k">!</span>)
+}</pre>
+  </div> 
+  <p>Monadic <code>match</code>/<code>case</code> expressions are similarly easier to express with Effectful.</p> 
+  <h3><a id="user-content-effects-within-for-loops-and--comprehensions" class="anchor" href="https://github.com/pelotom/effectful#effects-within-for-loops-and--comprehensions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Effects within <code>for</code>-loops and -comprehensions</h3> 
+  <p>We can even <code>unwrap</code> monadic values within loops; here's an example using the <a href="http://www.haskell.org/haskellwiki/State_Monad" target="_blank"><code>State</code> monad</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>effectfully {
+  <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> xs; j <span class="pl-k">&lt;</span><span class="pl-k">-</span> ys)
+    put(get[<span class="pl-k">Int</span>].<span class="pl-k">!</span> <span class="pl-k">+</span> <span class="pl-c1">2</span> <span class="pl-k">*</span> i).<span class="pl-k">!</span>
+}.run(n)</pre>
+  </div> 
+  <p>Compare with a traditional imperative loop that does the same thing, but with side-effects:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">var</span> <span class="pl-en">v</span> <span class="pl-k">=</span> n
+<span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> xs; j <span class="pl-k">&lt;</span><span class="pl-k">-</span> ys)
+  v <span class="pl-k">=</span> v <span class="pl-k">+</span> <span class="pl-c1">2</span> <span class="pl-k">*</span> i</pre>
+  </div> 
+  <p>Similarly, a <code>for</code>-comprehension containing <code>unwrap</code>s will sequence the effects of each monadic action it encounters, yielding all the results:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">fib</span>(<span class="pl-v">n</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> effectfully {
+  <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">1</span> to n) <span class="pl-k">yield</span> {
+    <span class="pl-k">val</span> (x, y) <span class="pl-k">=</span> get[(<span class="pl-k">Int</span>, <span class="pl-k">Int</span>)].<span class="pl-k">!</span> <span class="pl-c">// unfortunately we need to remind `get` what type of state it's dealing with</span>
+    put((y, x <span class="pl-k">+</span> y)).<span class="pl-k">!</span>
+    x
+  }
+} eval (<span class="pl-c1">1</span>, <span class="pl-c1">1</span>)
+
+<span class="pl-c">// fib(20) ==&gt; List(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765)</span></pre>
+  </div> 
+  <p><a href="https://gist.github.com/pelotom/5474817" target="_blank">Here's an alternate version</a> of the same function using Effectful with the <a href="http://www.haskell.org/haskellwiki/Monad/ST" target="_blank"><code>ST</code> monad</a>.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/pelotom/effectful#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>Just as <code>for</code>-comprehensions transform your code into <code>flatMap</code>s and <code>map</code>s behind the scenes, <code>effectfully</code> is a macro which transforms code using <code>unwrap</code> / <code>!</code> into calls to <code>bind</code> and <code>pure</code> from Scalaz's <code>Monad</code> type class. So Effectful only works with instances of <code>Monad</code> (at the moment; there is <a href="https://github.com/pelotom/effectful/issues/2" target="_blank">a proposal</a> to allow using superclasses of <code>Monad</code> where only their limited functionality is needed).</p> 
+  <p>The transformation of <code>for</code>-loops and -comprehensions requires that your "iterable" type be an instance of the Scalaz <code>Traverse</code> type class. Then, the idea is that "effectful" loops and comprehensions (those which contain <code>unwrap</code> invocations) are transformed in the following way:</p> 
+  <ul> 
+   <li><code>t map (x =&gt; ...)</code> becomes <code>unwrap(t traverse (x =&gt; effectfully { ... }))</code> </li> 
+   <li><code>t flatMap (x =&gt; ...)</code> becomes <code>unwrap(t traverse (x =&gt; effectfully { ... }) map (_.join))</code></li> 
+   <li><code>t foreach (x =&gt; ...)</code> becomes <code>unwrap(t traverse (x =&gt; effectfully { ... }) map (_ =&gt; ()))</code></li> 
+   <li><code>t withFilter {x =&gt; ...}</code> becomes <code>unwrap(t filterM (x =&gt; effectfully { ... }))</code></li> 
+  </ul> 
+  <p>The <code>flatMap</code> case implicitly adds the additional requirement that the "iterable" type have a <code>Monad</code> instance, which it ought to since you're <code>flatMap</code>ping it! And the <code>withFilter</code> case just requires that you be traversing a type which has a <code>filterM</code> method with the appropriate type; Scalaz defines this for <code>List</code> and, if you <code>import scalaz.std.indexedSeq.indexedSeqSyntax._</code>, any subtype of <code>scala.collection.immutable.IndexedSeq</code>.</p> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/pelotom/effectful#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <p>Within the lexical scope of a <code>effectfully</code> block, not all invocations of <code>unwrap</code> / <code>!</code> are valid; in particular:</p> 
+  <ul> 
+   <li>Function bodies cannot contain <code>unwrap</code> calls except in certain limited cases (anonymous functions passed to <code>map</code>, <code>flatMap</code>, <code>foreach</code> and <code>withFilter</code>).</li> 
+   <li>By-name arguments cannot contain <code>unwrap</code> calls; these are essentially the same as function bodies.</li> 
+   <li>It makes no sense to use <code>unwrap</code> outside of an <code>effectfully</code> block.</li> 
+  </ul> 
+  <p>When <code>unwrap</code> is used in an unsupported position, it will be flagged with an error.</p> 
+ </article>
+</div>

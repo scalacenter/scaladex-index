@@ -1,0 +1,126 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-common" class="anchor" href="https://github.com/evgenyigumnov/scala-common#scala-common" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-common</h1> 
+  <p>Common Scala Library: JSON, ORM and WebServer (MVC, Rest)</p> 
+  <pre><code>libraryDependencies += "com.igumnov.scala" % "scala-common_2.11" % "0.5"
+</code></pre> 
+  <p>JSON usage</p> 
+  <pre><code>// File: SampleEntity.scala
+import com.igumnov.scala.JSON
+import com.igumnov.scala.JSON._
+class SampleEntity extends JSON [SampleEntity]{
+  var name: String = _
+  var value: Int = _
+}
+object SampleEntity extends SampleEntity
+
+// File: usage.scala
+import com.igumnov.scala._
+val jsonString = """{ "name": "JSON source", "value": 1 }"""
+val myObject = SampleEntity.fromJson(jsonString)
+val myObject2 = new SampleEntity()
+myObject2.name="Some name"
+myObject2.value=100
+val jsonString2 = myObject2.toJson
+val jsonStringArray =  toJson(Array(myObject,myObject2))
+val exampleArray = fromJson[Array[SampleEntity]](jsonStringArray)
+</code></pre> 
+  <p>WebServer usage</p> 
+  <pre><code>import com.igumnov.scala.WebServer._
+import com.igumnov.scala.webserver.User
+
+setPoolSize(1, 20)
+init("localhost", 8888)
+https("localhost", 8889, "src/test/resources/key.jks", "storepwd", "keypwd")
+
+loginService((name) =&gt; {
+  if (name == "admin") {
+    Option(new User("admin", "CRYPT:adpexzg3FUZAk", Option(Array[String]("user"))))
+  } else {
+    Option(null)
+  }
+})
+
+securityPages("/login", "/login", "/logout")
+
+addStringController("/login", (rq, rs) =&gt; {
+  "&lt;form method='POST' action='/j_security_check'&gt;" + "&lt;input type='text' name='j_username'/&gt;" +
+    "&lt;input type='password' name='j_password'/&gt;" + "&lt;input type='submit' value='Login'/&gt;&lt;/form&gt;"
+})
+
+
+addRestController[SampleEntity]("/rest", (rq, rs, obj) =&gt; {
+  rq.getMethod match {
+    case "GET" =&gt; {
+      val ret = new SampleEntity()
+      ret.name = "test"
+      ret.value = 1
+      ret
+    }
+    case "POST" =&gt; {
+      obj.get
+    }
+  }
+})
+
+
+addRestErrorHandler((rq: HttpServletRequest, rs: HttpServletResponse, e: Exception) =&gt; {
+  val ret = new ErrorEntity()
+  ret.message = e.getMessage
+  ret
+})
+
+val langs = Map[String, String]("ru" -&gt; "tmp/locale_ru.properties",
+  "en" -&gt; "tmp/locale_en.properties")
+
+locale(langs, (rq,rs)=&gt;{
+  "en"
+})
+
+templates("pages",0)
+
+start
+</code></pre> 
+  <p>ORM usage</p> 
+  <pre><code>// ObjectDTO.scala
+import com.igumnov.scala.orm.Id
+class ObjectDTO {
+    @Id(autoIncremental = true)
+    var id:Long = _
+    var name:String = _
+    var salary: Int = _
+}
+
+
+// ORMTest.scala
+import com.igumnov.scala.ORM._
+import com.igumnov.scala._
+
+
+ORM.connectionPool("org.h2.Driver", "jdbc:h2:mem:test", "SA", "", 10, 30)
+FileOps.writeString("CREATE TABLE ObjectDTO (id BIGINT AUTO_INCREMENT PRIMARY KEY)\n", "tmp/sql_folder/1.sql")
+FileOps.appendLine("ALTER TABLE ObjectDTO ADD name VARCHAR(255)", "tmp/sql_folder/1.sql")
+ORM.applyDDL("tmp/sql_folder")
+
+FileOps.writeString("ALTER TABLE ObjectDTO ADD salary INT", "tmp/sql_folder/2.sql")
+ORM.applyDDL("tmp/sql_folder")
+
+transaction {
+  var obj = new ObjectDTO()
+  obj.name = "aaa"
+  obj = insert[ObjectDTO](obj)
+  val ret = findOne[ObjectDTO](obj.id)
+
+  obj.name="b"
+  update[ObjectDTO](obj)
+
+  val retList = findAll[ObjectDTO]
+  val retList2 = findBy[ObjectDTO]("name=?","b")
+  delete(obj)
+}
+</code></pre> 
+ </article>
+</div>

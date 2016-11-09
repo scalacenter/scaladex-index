@@ -1,0 +1,228 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sphonic-phantom" class="anchor" href="https://github.com/sphonic/sphonic-phantom#sphonic-phantom" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sphonic-phantom</h1> 
+  <p>Replacements for the official phantom-zookeeper and phantom-test artifacts</p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/sphonic/sphonic-phantom#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>This project aims to offer replacements for the official <code>phantom-zookeeper</code> and <code>phantom-test</code> artifacts. The problems with the design and implementation of these modules are severe enough to warrant a complete rewrite. The replacements aim to solve the following issues with the original modules:</p> 
+  <ul> 
+   <li>Make it easier to externalize configuration</li> 
+   <li>Make it easier to use different configurations in test and production environments</li> 
+   <li>Make it easier to configure the underlying Cassandra driver</li> 
+   <li>Avoid fragile magic that has proven to not work reliably in the old modules (e.g. the attempts to detect a running Cassandra)</li> 
+   <li>Avoid unnecessary dependencies (e.g. the old modules always pull in Zookeeper dependencies, no matter if you actually want to use it)</li> 
+   <li>Avoid code quality issues of the original modules, namely: 
+    <ul> 
+     <li>Messy naming and packaging</li> 
+     <li>Unnecessary mutability</li> 
+     <li>Broken lifecycle management (e.g. in broken logic to attempt to recreate a closed Cluster instance)</li> 
+     <li>Broken contracts (e.g. each Connector trait allows to define a keySpace, but only one of them will "win")</li> 
+     <li>Both too much and too little separation of concerns in various parts of the old modules (e.g. too much in extensive delegation between multiple trait hierarchies that primarily deal with simply providing a Session, too little in entangling Zookeeper lookup logic with general Cluster creation) </li> 
+     <li>Dead code</li> 
+    </ul></li> 
+  </ul> 
+  <h2><a id="user-content-the-basics" class="anchor" href="https://github.com/sphonic/sphonic-phantom#the-basics" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The Basics</h2> 
+  <p>Every well-behaved application stores a bunch of Foos and Bars. With the new connector module you define tables the same way as before:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span> (<span class="pl-v">id</span>: <span class="pl-en">UUID</span>, <span class="pl-v">value</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Foos</span> <span class="pl-k">extends</span> <span class="pl-e">CassandraTable</span>[<span class="pl-en">Foos</span>, <span class="pl-en">Foo</span>] <span class="pl-k">with</span> <span class="pl-e">Connector</span> {
+
+  <span class="pl-k">object</span> <span class="pl-en">id</span> <span class="pl-k">extends</span> <span class="pl-e">UUIDColumn</span>(<span class="pl-v">this</span>) <span class="pl-k">with</span> <span class="pl-e">PartitionKey</span>[<span class="pl-en">UUID</span>]
+  <span class="pl-k">object</span> <span class="pl-en">value</span> <span class="pl-k">extends</span> <span class="pl-e">StringColumn</span>(<span class="pl-v">this</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">fromRow</span>(<span class="pl-v">row</span>: <span class="pl-en">Row</span>)<span class="pl-k">:</span> <span class="pl-en">Foo</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(id(row), value(row))
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">store</span>(<span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> {
+    insert
+      .value(_.id, foo.id)
+      .value(_.value, foo.value)
+      .consistencyLevel_<span class="pl-k">=</span>(<span class="pl-en">ConsistencyLevel</span>.<span class="pl-en">LOCAL_QUORUM</span>)
+      .execute() map (_ <span class="pl-k">=&gt;</span> ())
+  }
+
+}</pre>
+  </div> 
+  <p>The class mixes in the abstract <code>Connector</code> trait which provides an implicit <code>Session</code> to the operations you define in this class. Let's assume the Bars table class looks almost identical.</p> 
+  <p>If you want to use these two tables in your application, you can simply mix in a fully configured <code>Connector</code> trait like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
+<span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
+  </div> 
+  <p>Creating the traits dynamically allows for more flexibility, in particular when it is desired to externalize the configuration or instantiate the tables with different connectors for test and production environments, as demonstrated in the following sections.</p> 
+  <p>Note that the otherwise equally valid syntax:</p> 
+  <pre><code>val foos = new Foos with keySpace.Connector
+val bars = new Bars with keySpace.Connector
+</code></pre> 
+  <p>does not work due to the way how the <code>CassandraTable</code> implementation determines the table name by reflection.</p> 
+  <h2><a id="user-content-externalizing-configuration" class="anchor" href="https://github.com/sphonic/sphonic-phantom#externalizing-configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Externalizing Configuration</h2> 
+  <p>In most applications you want to externalize the configuration which is specific to the environment, like the contact points shown in the previous section.</p> 
+  <p>To make this more convenient, you can wrap the table creation in a container class that expects the fully configured <code>KeySpace</code> as a parameter:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyTables</span> (<span class="pl-v">keySpace</span>: <span class="pl-en">KeySpace</span>) {
+
+  <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
+  <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
+
+}</pre>
+  </div> 
+  <p>And then use it like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">tables</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyTables</span>(keySpace)
+
+tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>.randomUUID, <span class="pl-s"><span class="pl-pds">"</span>value<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>The connector module does not prescribe a particular model here, but in most cases you want to separate the plumbing of Connector mixin (which always stays the same) from the dynamic keySpace creation (which depends on the environment).</p> 
+  <h2><a id="user-content-configuring-the-driver" class="anchor" href="https://github.com/sphonic/sphonic-phantom#configuring-the-driver" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuring the Driver</h2> 
+  <p>The previous examples only showed how to define the initial contact points for the driver. The API offers additional hooks for configuring a keySpace:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Not using the default port:</span>
+<span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">port</span> <span class="pl-k">=</span> <span class="pl-c1">9099</span>
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts, port).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// Embedded Cassandra for testing</span>
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoint</span>.embedded.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp-test<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Additionally the API exposes the original <code>Cluster.Builder</code> API from the Java driver for further configuration:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts).withClusterBuilder(
+  _.withRetryPolicy(<span class="pl-en">DowngradingConsistencyRetryPolicy</span>.<span class="pl-en">INSTANCE</span>)
+   .withReconnectionPolicy(<span class="pl-k">new</span> <span class="pl-en">ConstantReconnectionPolicy</span>(<span class="pl-c1">100L</span>))
+).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>It does not wrap any Scala-sugar around this part of the API as the gain would be minimal in this case.</p> 
+  <h2><a id="user-content-using-multiple-keyspaces" class="anchor" href="https://github.com/sphonic/sphonic-phantom#using-multiple-keyspaces" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Multiple KeySpaces</h2> 
+  <p>In the rare event of combining multiple keySpaces in your application, you just need to prepare the table container class to expect two different <code>KeySpace</code> instances:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyTables</span> (<span class="pl-v">fooSpace</span>: <span class="pl-en">KeySpace</span>, <span class="pl-v">barSpace</span>: <span class="pl-en">KeySpace</span>) {
+
+  <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">fooSpace.Connector</span>
+  <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">barSpace.Connector</span>
+
+}</pre>
+  </div> 
+  <p>And then use this container like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">builder</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts)
+<span class="pl-k">val</span> <span class="pl-en">fooSpace</span> <span class="pl-k">=</span> builder.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myFoos<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">barSpace</span> <span class="pl-k">=</span> builder.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myBars<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">tables</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyTables</span>(fooSpace, barSpace)</pre>
+  </div> 
+  <p>Just make sure that you create all keySpaces from the same builder, to let them share the underlying Cassandra <code>Cluster</code> instance.</p> 
+  <h2><a id="user-content-using-zookeeper-to-look-up-contact-points" class="anchor" href="https://github.com/sphonic/sphonic-phantom#using-zookeeper-to-look-up-contact-points" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Zookeeper to look up Contact Points</h2> 
+  <p>There is now a separate module <code>phantom-zookeeper</code> that you can use in addition to the <code>phantom-connector</code> module described in the previous sections. This module replicates most of the functionality of the original <code>phantom-zookeeper</code> module, but is focused on retro-fitting the old functionality on top of the new connector module and thus become a very tiny module with just the logic which is specific to Zookeeper.</p> 
+  <p>It is debatable how much value the lookup of contact points via Zookeeper adds. First, the contact points you pass to the Cassandra driver are just the initial set of hosts to try to connect to. Only a single contact point is required, but it is usually a good idea to provide more in case one node is temporarily down. But once the driver has connected to one node, it retrieves the addresses of all other nodes. Therefore you can easily add and remove nodes to your cluster without updating the phantom configuration unless one of the specified contact points gets removed. Secondly, the new connector module makes it quite easy to externalize this configuration, minimizing the value the zookeeper module adds to the connector.</p> 
+  <p>But in case you want to continue using Zookeeper for lookup, the API is very similar to that of the connector module:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Using localhost:2181</span>
+<span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ZkContactPointLookup</span>.local.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
+<span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
+  </div> 
+  <p>Or providing the Zookeeper connection explicitly:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ZkContactPointLookup</span>(<span class="pl-s"><span class="pl-pds">"</span>37.0.0.5<span class="pl-pds">"</span></span>, <span class="pl-c1">2282</span>).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
+<span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
+  </div> 
+  <h2><a id="user-content-using-the-sbt-plugin" class="anchor" href="https://github.com/sphonic/sphonic-phantom#using-the-sbt-plugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using the sbt Plugin</h2> 
+  <p>The new sbt plugin starts Cassandra in embedded mode whenever the sbt test task is run. This allows to run a test suite that uses phantom without the need to manually start a Cassandra server upfront.</p> 
+  <p>First the plugin must be included in your <code>plugins.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.sphonic<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>phantom-sbt<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.1<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Then you can apply its default settings in <code>build.sbt</code> like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">PhantomPlugin</span>.defaults</pre>
+  </div> 
+  <p>In a multi-project Scala build, you also need to add the import:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.sphonic.phantom.sbt.PhantomSbtPlugin.</span><span class="pl-v">_</span>
+
+[...]
+
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">fooProject</span> <span class="pl-k">=</span> <span class="pl-en">Project</span>(
+  id <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>,
+  base <span class="pl-k">=</span> file(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>),
+  settings <span class="pl-k">=</span> someSharedSettings <span class="pl-k">++</span> <span class="pl-en">PhantomPlugin</span>.defaults
+).settings(
+  libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+    [...]
+  )
+)</pre>
+  </div> 
+  <p>Once the default settings have been added, the plugin does the following things:</p> 
+  <ul> 
+   <li>Automatically starts Cassandra in embedded mode whenever the test task is run</li> 
+   <li>Forces the tests for the projects that include the settings to always run in a forked JVM as this is the only way to make parallel tests using phantom work. (This is not caused by the implementation of this plugin or the new connector or zookeeper artifacts, this is caused by implementation details in the official <code>phantom-dsl</code> artifact, mainly the use of reflection which is not thread-safe in Scala 2.10)</li> 
+  </ul> 
+  <p>If you want to specify a custom Cassandra configuration, you can do that with a setting:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">PhantomKeys</span>.cassandraConfig <span class="pl-k">:</span><span class="pl-k">=</span> baseDirectory.value <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>config<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>cassandra.yaml<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-design-guidelines-for-testing" class="anchor" href="https://github.com/sphonic/sphonic-phantom#design-guidelines-for-testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Design Guidelines for Testing</h2> 
+  <p>When designing a test suite that uses phantom, you should be aware of the three levels of parallelism that exist when tests are run by sbt and ScalaTest:</p> 
+  <ul> 
+   <li><p><strong>Running tests for multiple projects in a single build</strong>: Parallelism is controlled by sbt. Projects always build in parallel (unless they depend on each other), per default within a single JVM, but with different ClassLoaders, alternatively in a separate JVM if you set <code>fork := true</code> in your build.</p></li> 
+   <li><p><strong>Running multiple suites in a single project</strong>: Parallelism is controlled by ScalaTest. By default suites run in parallel. When sequential execution is needed (which should be a rare case) ScalaTest offers a <code>Sequential</code> class that allows to define a list of suites that need to run sequentially.</p></li> 
+   <li><p><strong>Running multiple tests in a single suite</strong>: Parallelism is controlled by ScalaTest. Here, by default the tests within a suite run sequentially. When parallel execution is desired, ScalaTest offers a <code>ParallelTestExecution</code> trait that can be mixed into your suite.</p></li> 
+  </ul> 
+  <p>With these options in mind, the following guidelines apply for writing tests for phantom's sbt plugin that uses Cassandra in embedded mode:</p> 
+  <ul> 
+   <li><p>The plugin forces the tests to run in a forked JVM (you do not have to explicitly set this option yourself). This is solely due to implementation details of the main <code>phantom-dsl</code> artifact, that uses runtime reflection to determine things like the table name or the columns defined for a table. Since reflection is not thread-safe in Scala 2.10, phantom uses a lock for these lookups, but when the tests are not forked, the fact that sbt runs multiple projects in a separate ClassLoader circumnavigates the locks causing intermittent exceptions in the reflection code. </p></li> 
+   <li><p>For all other levels of parallelism there are no restrictions, but you need to keep in mind that all projects and all suites run against the same instance of embedded Cassandra. Therefore, if you use the same table within multiple suites, it is recommended to shield them from each other through the use of different keyspaces, which is easy to do with the new phantom-connector API. The names of the keyspaces for tests can be hardcoded within the suites as they do not depend on the environment.</p></li> 
+   <li><p>If you code a single suite with the default (tests run sequentially) and you use all test data in read-mode only, you can populate the tables in a <code>beforeAll</code> method and then use them in all tests. If the tests write data, you can truncate tables before each test method.</p></li> 
+  </ul> 
+  <h2><a id="user-content-background-on-design-decisions-for-testing" class="anchor" href="https://github.com/sphonic/sphonic-phantom#background-on-design-decisions-for-testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Background on Design Decisions for Testing</h2> 
+  <p>The old <code>phantom-testing</code> module was relying on checks for a running Cassandra server that involved either checking available ports or checking Unix processes. These checks have proven to be unreliable as they opened doors for all sorts of race conditions, in particular when using phantom in a multi-project build.</p> 
+  <p>An alternative approach had been tested that involved running all projects in a single JVM and having traits mixed into the test classes that start the embedded Cassandra server only once, controlled by a JVM-wide singleton object and without even trying to look for an existing Cassandra server.</p> 
+  <p>Unfortunatley this approach does not work for the following two reasons:</p> 
+  <ul> 
+   <li><p>phantom uses Scala SDK reflection that does not work reliably when running tests with multiple ClassLoaders as described above.</p></li> 
+   <li><p>For the same reason (sbt using multiple ClassLoaders) there is also no way to have a TestSuite mixin delegate to a global stateful singleton, as each project with its own ClassLoader gets its own singleton instance. So there is no way from within test helpers to manage state globally for the whole JVM.</p></li> 
+  </ul> 
+  <p>The only approach for running embedded Cassandra that appeared to be working in multiple tests with the existing Eris Analytics project has been to let sbt manage the embedded Cassandra (as an sbt Task that gets triggered before the test task is run). When run as an sbt task, a singleton is really global for the whole build as the build classes do not get loaded multiple times.</p> 
+ </article>
+</div>

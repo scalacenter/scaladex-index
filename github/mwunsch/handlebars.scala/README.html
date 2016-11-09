@@ -1,0 +1,196 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>A Scala implementation of <a href="http://handlebarsjs.com/" target="_blank">Handlebars</a>, an extension to and superset of the <a href="http://mustache.github.com/" target="_blank">Mustache</a> templating language. Currently implements version <a href="https://github.com/wycats/handlebars.js/tree/1.0.0" target="_blank">1.0.0</a> of the JavaScript version.</p> 
+  <p>This project began as an attempt to learn Scala and to experiment with Scala's <a href="http://www.scala-lang.org/api/current/index.html#scala.util.parsing.combinator.Parsers" target="_blank">Parser Combinators</a> in an attempt to get handlebars.js templates working in Scala.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/mwunsch/handlebars.scala#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>If you're using SBT you can add this line to your build.sbt file.</p> 
+  <pre><code>libraryDependencies += "com.gilt" %% "handlebars-scala" % "2.1.1"
+</code></pre> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/mwunsch/handlebars.scala#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Given a template:</p> 
+  <pre><code>val template = """
+  &lt;p&gt;Hello, my name is {{name}}. I am from {{hometown}}. I have {{kids.length}} kids:&lt;/p&gt;
+  &lt;ul&gt;
+    {{#kids}}&lt;li&gt;{{name}} is {{age}}&lt;/li&gt;{{/kids}}
+  &lt;/ul&gt;
+"""
+</code></pre> 
+  <p>And an arbitrary Scala object:</p> 
+  <pre><code>object Guy {
+  val name = "Alan"
+  val hometown = "Somewhere, TX"
+  val kids = Seq(Map(
+    "name" -&gt; "Jimmy",
+    "age" -&gt; "12"
+  ), Map(
+    "name" -&gt; "Sally",
+    "age" -&gt; "4"
+  ))
+}
+</code></pre> 
+  <p>Pass those into Handlebars like so:</p> 
+  <pre><code>scala&gt; import com.gilt.handlebars.scala.binding.dynamic._
+import com.gilt.handlebars.scala.binding.dynamic._
+
+scala&gt; import com.gilt.handlebars.scala.Handlebars
+import com.gilt.handlebars.scala.Handlebars
+
+scala&gt; val t = Handlebars(template)
+t: com.gilt.handlebars.scala.Handlebars = com.gilt.handlebars.scala.Handlebars@496d864e
+
+scala&gt; t(Guy)
+res0: String =
+"
+      &lt;p&gt;Hello, my name is Alan. I am from Somewhere, TX. I have 2 kids:&lt;/p&gt;
+      &lt;ul&gt;
+        &lt;li&gt;Jimmy is 12&lt;/li&gt;&lt;li&gt;Sally is 4&lt;/li&gt;
+      &lt;/ul&gt;
+    "
+</code></pre> 
+  <p>Handlebars.scala will work just fine for <a href="http://mustache.github.com/mustache.5.html" target="_blank">Mustache</a> templates, but includes features such as Paths and Helpers.</p> 
+  <p>The example above demonstrates the <code>apply</code> method of a <code>Handlebars</code> instance, which should be familiar to Scala-fans. <code>apply</code> takes additional optional arguments:</p> 
+  <ul> 
+   <li><code>data</code> additional custom data to be referenced by @variable private variables.</li> 
+   <li><code>partials</code> custom partials in addition to the globally defined ones. These partials will override the globally provided ones.</li> 
+   <li><code>helpers</code> custom helpers in addition to the globally defined ones. These helpers will override the globally provided ones.</li> 
+  </ul> 
+  <p>The signature for apply looks like this:</p> 
+  <pre><code>def apply[T](context: T,
+      data: Map[String, Binding[T]] = Map.empty,
+      partials: Map[String, Handlebars[T]] = Map.empty,
+      helpers: Map[String, Helper[T]] = Map.empty): String
+</code></pre> 
+  <h2><a id="user-content-bindings" class="anchor" href="https://github.com/mwunsch/handlebars.scala#bindings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bindings</h2> 
+  <p>In order to facilitate multiple ways of interacting with data, Handlebars provides a data-binding facility. Handlebars ships with a default binding strategy, DynamicBinding, which uses Scala reflection to work with scala standard-library data structures and primitives. You can implement your own Binding strategies by implementing the following traits:</p> 
+  <ul> 
+   <li><code>com.gilt.handlebars.scala.binding.FullBinding</code></li> 
+   <li><code>com.gilt.handlebars.scala.binding.BindingFactory</code></li> 
+  </ul> 
+  <p>Provide the implicit BindingFactory which uses your new binding. If you need an example, see the source code in <code>binding/dynamic/DynamicBinding.scala</code>.</p> 
+  <h3><a id="user-content-binding-interface" class="anchor" href="https://github.com/mwunsch/handlebars.scala#binding-interface" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Binding Interface</h3> 
+  <ul> 
+   <li><code>def get: T</code> - Retrieve the contents of the binding. Throws runtime exception if in the void.</li> 
+   <li><code>def getOrElse(default: =&gt; T): T</code> - Get the contents of the binding if full; else is VoidBinding return default</li> 
+   <li><code>def toOption: Option[T]</code> - Similar to the Option constructor, returns Some(value) where value is defined</li> 
+   <li><code>def render: String</code> - Returns a string representation for the object, returning empty string where value is not defined.</li> 
+   <li><p><code>def traverse(key: String, args: List[Binding[T]] = List.empty): Binding[T]</code> For dictionaries / objects, traverse into named key, returning a binding for the matched value, VoidBinding if key is not declared.</p> <p>Important! Take note of the difference here:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">binding</span> <span class="pl-k">=</span> <span class="pl-en">DynamicBinding</span>(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">null</span>))
+binding.traverse(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>) <span class="pl-c">// =&gt; DynamicBinding(null)</span>
+binding.traverse(<span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>) <span class="pl-c">// =&gt; VoidBinding</span></pre>
+    </div></li> 
+   <li><p><code>def isTruthy: Boolean</code> - Returns whether the bound value evaluate to truth in handlebars if expressions?</p></li> 
+   <li><code>def isCollection: Boolean</code> - Returns whether the bound value is an iterable (and not a dictionary)</li> 
+   <li><code>def isDictionary: Boolean</code> - Returns whether the bound value is a dictionary</li> 
+   <li><p><code>def isPrimitive</code> - Returns whether bound value is neither collection or dictionary</p></li> 
+   <li><p><code>def asOption: Option[Binding[T]]</code> - If value is defined, returns Some(this), else None</p></li> 
+   <li><code>def asCollection: Iterable[Binding[T]]</code> - Returns List of bindings if isCollection; else empty List</li> 
+   <li><code>def asDictionaryCollection: Iterable[(String, Binding[T])]</code> - returns List of key-value tuples if isDictionary; else empty list</li> 
+  </ul> 
+  <h3><a id="user-content-unit-vs-null-vs-none-vs-voidbinding" class="anchor" href="https://github.com/mwunsch/handlebars.scala#unit-vs-null-vs-none-vs-voidbinding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>Unit</code> vs <code>null</code> vs <code>None</code> vs <code>VoidBinding</code></h3> 
+  <p>In order to preserve the signal of "a value was defined in your model", vs., "you traversed outside the space covered by your model", bindings are monadic and capture whether they've a value from your model or not: a <code>FullBinding</code> if bound against a value from your model, a <code>VoidBinding</code> is you traversed outside the space of your model.</p> 
+  <p>If the model contained a <code>null</code>, <code>Unit</code>, or <code>None</code></p> 
+  <p><code>isDefined</code> is <code>true</code> if the bound value is within the space of the model, and it evaluates to some value other than . <code>VoidBinding</code> is, naturally, never defined, and always returns <code>isDefined</code> as <code>false</code>.</p> 
+  <h3><a id="user-content-pattern-matching-value-extraction" class="anchor" href="https://github.com/mwunsch/handlebars.scala#pattern-matching-value-extraction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pattern matching value extraction</h3> 
+  <p>You can extract the bound value by matching <code>FullBinding</code>, like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">DynamicBinding</span>(<span class="pl-c1">1</span>) <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-en">FullBinding</span>(value) <span class="pl-k">=&gt;</span> value
+  <span class="pl-k">case</span> <span class="pl-en">VoidBinding</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>
+}</pre>
+  </div> 
+  <h2><a id="user-content-helpers" class="anchor" href="https://github.com/mwunsch/handlebars.scala#helpers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Helpers</h2> 
+  <p>The trait for a helper looks like this:</p> 
+  <pre><code>trait Helper[Any] {
+  def apply(binding: Binding[Any], options: HelperOptions[Any]): String
+}
+</code></pre> 
+  <ul> 
+   <li><code>binding</code> the binding for the model in the context from which the helper was called.</li> 
+   <li><code>options</code> provides helper functions to interact with the context and evaluate the body of the helper, if present.</li> 
+  </ul> 
+  <p>You can define a new helper by extending the trait above, or you can use companion obejct apply method to define one on the fly:</p> 
+  <pre><code>val fullNameHelper = Helper[Any] {
+  (binding, options) =&gt;
+    "%s %s".format(options.lookup("firstName").renderString, options.lookup("lastName").renderString)
+}
+</code></pre> 
+  <p>If you know that the information you need is on <code>binding</code>, you can do the same thing by accessing first and last name on the data directly. However, you will be responsible for casting model to the correct type.</p> 
+  <pre><code>val fullNameHelper = Helper[Any] {
+  (binding, options) =&gt;
+    val person = binding.get.asInstanceOf[Person]
+    "%s %s".format(person.firstName, person.lastName)
+}
+</code></pre> 
+  <h3><a id="user-content-helperoptions" class="anchor" href="https://github.com/mwunsch/handlebars.scala#helperoptions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HelperOptions</h3> 
+  <p>The <code>HelperOption[T]</code> object gives you the tools you need to get things done in your helper. The primary methods are:</p> 
+  <ul> 
+   <li><code>def argument(index: Int): Binding[T]</code> Retrieve an argument from the list provided to the helper by its index.</li> 
+   <li><code>def data(key: String): Binding[T]</code> Retrieve data provided to the Handlebars template by its key.</li> 
+   <li><code>def visit(binding: Binding[T]): String</code> Evaluates the body of the helper using a context with the provided binding.</li> 
+   <li><code>def inverse(binding: Binding[T]): String</code> Evaluate the inverse of body of the helper using the provided model as a context.</li> 
+   <li><code>def lookup(path: String): Binding[T]</code> Look up a value for a path in the the current context. The one in which the helper was called.</li> 
+  </ul> 
+  <h2><a id="user-content-caveats-when-using-dynamicbinding" class="anchor" href="https://github.com/mwunsch/handlebars.scala#caveats-when-using-dynamicbinding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats when using DynamicBinding</h2> 
+  <p><strong>Implicit conversions will not work in a template</strong>. Because Handlebars.scala makes heavy use of reflection. Bummer, I know. This leads me too...</p> 
+  <p><strong>Handlebars.scala makes heavy use of reflection</strong>. This means that there could be unexpected behavior. Method overloading will behave in bizarre ways. There is likely a performance penalty. I'm not sophisticated enough in the arts of the JVM to know the implications of this.</p> 
+  <p><strong>Not everything from the JavaScript handlebars is supported</strong>. See <a href="https://github.com/mwunsch/handlebars.scala/blob/master/NOTSUPPORTED.md" target="_blank">NOTSUPPORTED</a> for a list of the unsupported features. There are some things JavaScript can do that simply does not make sense to do in Scala.</p> 
+  <h3><a id="user-content-play-json-integration" class="anchor" href="https://github.com/mwunsch/handlebars.scala#play-json-integration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Play-Json integration</h3> 
+  <p>If you wish for more type-safety, Handlebars-scala comes with integration for play-json. Using PlayJson AST data structures with handlebars provides identical truthy / collection / traversal behavior that you would find using JavaScript values in handlebars-js.</p> 
+  <p>To use:</p> 
+  <pre><code>libraryDependencies += "com.gilt" %% "handlebars-scala-play-json" % "2.1.1"
+</code></pre> 
+  <p><a href="https://github.com/mwunsch/handlebars.scala/blob/master/addons/play-json/README.md" target="_blank">Example / usage</a></p> 
+  <h2><a id="user-content-thanks" class="anchor" href="https://github.com/mwunsch/handlebars.scala#thanks" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Thanks</h2> 
+  <p>Special thanks to the fine folks working on <a href="http://scalate.fusesource.org/" target="_blank">Scalate</a> whose Mustache parser was my primary source of inspiration. Tom Dale and Yehuda Katz who inceptioned the idea of writing a Handlebars implementation for the JVM. The UI team at Gilt who insisted on using Handlebars and not Mustache for client-side templating. And finally, the denizens of the Scala 2.9.1 chat room at Gilt for answering my questions with enthusiastic aplomb.</p> 
+  <h2><a id="user-content-build" class="anchor" href="https://github.com/mwunsch/handlebars.scala#build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build</h2> 
+  <p>The project uses <a href="https://github.com/harrah/xsbt/wiki" target="_blank">sbt</a>. Assuming you have sbt you can clone the repo, and run:</p> 
+  <pre><code>sbt test
+</code></pre> 
+  <p><a href="http://travis-ci.org/mwunsch/handlebars.scala" target="_blank"><img src="https://camo.githubusercontent.com/4ef35a1be2c4f222dfbab7d07f70cf4edfbd9694/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f6d77756e7363682f68616e646c65626172732e7363616c612e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/mwunsch/handlebars.scala.png?branch=master" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-copyright-and-license" class="anchor" href="https://github.com/mwunsch/handlebars.scala#copyright-and-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright and License</h2> 
+  <p>Copyright 2014 Mark Wunsch and Gilt Groupe, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
+  <p><a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>

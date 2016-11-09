@@ -1,0 +1,578 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-redshift-data-source-for-apache-spark" class="anchor" href="https://github.com/databricks/spark-redshift#redshift-data-source-for-apache-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Redshift Data Source for Apache Spark</h1> 
+  <p><a href="https://travis-ci.org/databricks/spark-redshift" target="_blank"><img src="https://camo.githubusercontent.com/6ee47652b9bc5e2683dc78179b6ffbca3c467f53/68747470733a2f2f7472617669732d63692e6f72672f64617461627269636b732f737061726b2d72656473686966742e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/databricks/spark-redshift.svg?branch=master" style="max-width:100%;"></a> <a href="http://codecov.io/github/databricks/spark-redshift?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/249d163e7e2da0fc712106ecb8fb1d2ae6c69fb0/687474703a2f2f636f6465636f762e696f2f6769746875622f64617461627269636b732f737061726b2d72656473686966742f636f7665726167652e7376673f6272616e63683d6d6173746572" alt="codecov.io" data-canonical-src="http://codecov.io/github/databricks/spark-redshift/coverage.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>A library to load data into Spark SQL DataFrames from Amazon Redshift, and write them back to Redshift tables. Amazon S3 is used to efficiently transfer data in and out of Redshift, and JDBC is used to automatically trigger the appropriate <code>COPY</code> and <code>UNLOAD</code> commands on Redshift.</p> 
+  <p>This library is more suited to ETL than interactive queries, since large amounts of data could be extracted to S3 for each query execution. If you plan to perform many queries against the same Redshift tables then we recommend saving the extracted data in a format such as Parquet.</p> 
+  <ul> 
+   <li><a href="https://github.com/databricks/spark-redshift#installation" target="_blank">Installation</a></li> 
+   <li>Usage: 
+    <ul> 
+     <li>Data sources API: <a href="https://github.com/databricks/spark-redshift#scala" target="_blank">Scala</a>, <a href="https://github.com/databricks/spark-redshift#python" target="_blank">Python</a>, <a href="https://github.com/databricks/spark-redshift#sql" target="_blank">SQL</a>, <a href="https://github.com/databricks/spark-redshift#r" target="_blank">R</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#hadoop-inputformat" target="_blank">Hadoop InputFormat</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#configuration" target="_blank">Configuration</a> 
+    <ul> 
+     <li><a href="https://github.com/databricks/spark-redshift#authenticating-to-s3-and-redshift" target="_blank">Authenticating to S3 and Redshift</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#encryption" target="_blank">Encryption</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#parameters" target="_blank">Parameters</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#additional-configuration-options" target="_blank">Additional configuration options</a> 
+    <ul> 
+     <li><a href="https://github.com/databricks/spark-redshift#configuring-the-maximum-size-of-string-columns" target="_blank">Configuring the maximum size of string columns</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#setting-a-custom-column-type" target="_blank">Setting a custom column type</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#configuring-column-encoding" target="_blank">Configuring column encoding</a></li> 
+     <li><a href="https://github.com/databricks/spark-redshift#setting-descriptions-on-columns" target="_blank">Setting descriptions on columns</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#transactional-guarantees" target="_blank">Transactional Guarantees</a></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#common-problems-and-solutions" target="_blank">Common problems and solutions</a> 
+    <ul> 
+     <li><a href="https://github.com/databricks/spark-redshift#s3-bucket-and-redshift-cluster-are-in-different-aws-regions" target="_blank">S3 bucket and Redshift cluster are in different AWS regions</a></li> 
+    </ul></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#migration-guide" target="_blank">Migration Guide</a></li> 
+  </ul> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/databricks/spark-redshift#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>This library requires Apache Spark 2.0+ and Amazon Redshift 1.0.963+.</p> 
+  <p>For version that works with Spark 1.x, please check for the <a href="https://github.com/databricks/spark-redshift/tree/branch-1.x" target="_blank">1.x branch</a>.</p> 
+  <p>You may use this library in your applications with the following dependency information:</p> 
+  <p><strong>Scala 2.10</strong></p> 
+  <pre><code>groupId: com.databricks
+artifactId: spark-redshift_2.10
+version: 3.0.0-preview1
+</code></pre> 
+  <p><strong>Scala 2.11</strong></p> 
+  <pre><code>groupId: com.databricks
+artifactId: spark-redshift_2.11
+version: 3.0.0-preview1
+</code></pre> 
+  <p>You will also need to provide a JDBC driver that is compatible with Redshift. Amazon recommend that you use <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-connection.html" target="_blank">their driver</a>, which is distributed as a JAR that is hosted on Amazon's website. This library has also been successfully tested using the Postgres JDBC driver.</p> 
+  <p><strong>Note on Hadoop versions</strong>: This library depends on <a href="https://github.com/databricks/spark-avro" target="_blank"><code>spark-avro</code></a>, which should automatically be downloaded because it is declared as a dependency. However, you may need to provide the corresponding <code>avro-mapred</code> dependency which matches your Hadoop distribution. In most deployments, however, this dependency will be automatically provided by your cluster's Spark assemblies and no additional action will be required.</p> 
+  <p><strong>Note on Amazon SDK dependency</strong>: This library declares a <code>provided</code> dependency on components of the AWS Java SDK. In most cases, these libraries will be provided by your deployment environment. However, if you get ClassNotFoundExceptions for Amazon SDK classes then you will need to add explicit dependencies on <code>com.amazonaws.aws-java-sdk-core</code> and <code>com.amazonaws.aws-java-sdk-s3</code> as part of your build / runtime configuration. See the comments in <code>project/SparkRedshiftBuild.scala</code> for more details.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/databricks/spark-redshift#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h3><a id="user-content-data-sources-api" class="anchor" href="https://github.com/databricks/spark-redshift#data-sources-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Data Sources API</h3> 
+  <p>Once you have <a href="https://github.com/databricks/spark-redshift#aws-credentials" target="_blank">configured your AWS credentials</a>, you can use this library via the Data Sources API in Scala, Python or SQL, as follows:</p> 
+  <h4><a id="user-content-scala" class="anchor" href="https://github.com/databricks/spark-redshift#scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> <span class="pl-c">// existing SparkContext</span>
+<span class="pl-k">val</span> <span class="pl-en">sqlContext</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SQLContext</span>(sc)
+
+<span class="pl-c">// Get some data from a Redshift table</span>
+<span class="pl-k">val</span> <span class="pl-en">df</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> sqlContext.read
+    .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>)
+    .load()
+
+<span class="pl-c">// Can also load data from a Redshift query</span>
+<span class="pl-k">val</span> <span class="pl-en">df</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> sqlContext.read
+    .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>select x, count(*) my_table group by x<span class="pl-pds">"</span></span>)
+    .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>)
+    .load()
+
+<span class="pl-c">// Apply some transformations to the data as per normal, then you can use the</span>
+<span class="pl-c">// Data Source API to write the data back to another table</span>
+
+df.write
+  .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table_copy<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>)
+  .mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>)
+  .save()
+
+<span class="pl-c">// Using IAM Role based authentication</span>
+df.write
+  .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table_copy<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>aws_iam_role<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>arn:aws:iam::123456789000:role/redshift_iam_role<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>)
+  .mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>)
+  .save()</pre>
+  </div> 
+  <h4><a id="user-content-python" class="anchor" href="https://github.com/databricks/spark-redshift#python" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Python</h4> 
+  <div class="highlight highlight-source-python">
+   <pre><span class="pl-k">from</span> pyspark.sql <span class="pl-k">import</span> SQLContext
+
+sc <span class="pl-k">=</span> <span class="pl-c"># existing SparkContext</span>
+sql_context <span class="pl-k">=</span> SQLContext(sc)
+
+<span class="pl-c"># Read data from a table</span>
+df <span class="pl-k">=</span> sql_context.read \
+    .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>) \
+    .load()
+
+<span class="pl-c"># Read data from a query</span>
+df <span class="pl-k">=</span> sql_context.read \
+    .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>select x, count(*) my_table group by x<span class="pl-pds">"</span></span>) \
+    .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>) \
+    .load()
+
+<span class="pl-c"># Write back to a table</span>
+df.write \
+  .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table_copy<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>) \
+  .mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>) \
+  .save()
+
+<span class="pl-c"># Using IAM Role based authentication</span>
+df.write \
+  .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>my_table_copy<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>) \
+  .option(<span class="pl-s"><span class="pl-pds">"</span>aws_iam_role<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>arn:aws:iam::123456789000:role/redshift_iam_role<span class="pl-pds">"</span></span>) \
+  .mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>) \
+  .save()</pre>
+  </div> 
+  <h4><a id="user-content-sql" class="anchor" href="https://github.com/databricks/spark-redshift#sql" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SQL</h4> 
+  <p>Reading data using SQL:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">my_table</span>
+USING <span class="pl-c1">com</span>.<span class="pl-c1">databricks</span>.<span class="pl-c1">spark</span>.<span class="pl-c1">redshift</span>
+OPTIONS (
+  dbtable <span class="pl-s"><span class="pl-pds">'</span>my_table<span class="pl-pds">'</span></span>,
+  tempdir <span class="pl-s"><span class="pl-pds">'</span>s3n://path/for/temp/data<span class="pl-pds">'</span></span>,
+  url <span class="pl-s"><span class="pl-pds">'</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">'</span></span>
+);</pre>
+  </div> 
+  <p>Writing data using SQL:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-c">-- Create a new table, throwing an error if a table with the same name already exists:</span>
+<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">my_table</span>
+USING <span class="pl-c1">com</span>.<span class="pl-c1">databricks</span>.<span class="pl-c1">spark</span>.<span class="pl-c1">redshift</span>
+OPTIONS (
+  dbtable <span class="pl-s"><span class="pl-pds">'</span>my_table<span class="pl-pds">'</span></span>,
+  tempdir <span class="pl-s"><span class="pl-pds">'</span>s3n://path/for/temp/data<span class="pl-pds">'</span></span>
+  url <span class="pl-s"><span class="pl-pds">'</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">'</span></span>
+)
+<span class="pl-k">AS</span> <span class="pl-k">SELECT</span> <span class="pl-k">*</span> <span class="pl-k">FROM</span> tabletosave;</pre>
+  </div> 
+  <p>Note that the SQL API only supports the creation of new tables and not overwriting or appending; this corresponds to the default save mode of the other language APIs.</p> 
+  <h4><a id="user-content-r" class="anchor" href="https://github.com/databricks/spark-redshift#r" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>R</h4> 
+  <p>Reading data using R:</p> 
+  <div class="highlight highlight-source-r">
+   <pre><span class="pl-smi">df</span> <span class="pl-k">&lt;-</span> read.df(
+   <span class="pl-c1">NULL</span>,
+   <span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>,
+   <span class="pl-v">tempdir</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>s3n://path/for/temp/data<span class="pl-pds">"</span></span>,
+   <span class="pl-v">dbtable</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my_table<span class="pl-pds">"</span></span>,
+   <span class="pl-v">url</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:redshift://redshifthost:5439/database?user=username&amp;password=pass<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h3><a id="user-content-hadoop-inputformat" class="anchor" href="https://github.com/databricks/spark-redshift#hadoop-inputformat" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Hadoop InputFormat</h3> 
+  <p>The library contains a Hadoop input format for Redshift tables unloaded with the ESCAPE option, which you may make direct use of as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.databricks.spark.redshift.</span><span class="pl-v">RedshiftInputFormat</span>
+
+<span class="pl-k">val</span> <span class="pl-en">records</span> <span class="pl-k">=</span> sc.newAPIHadoopFile(
+  path,
+  <span class="pl-c1">classOf</span>[<span class="pl-en">RedshiftInputFormat</span>],
+  <span class="pl-c1">classOf</span>[java.lang.<span class="pl-k">Long</span>],
+  <span class="pl-c1">classOf</span>[<span class="pl-en">Array</span>[<span class="pl-k">String</span>]])</pre>
+  </div> 
+  <h2><a id="user-content-configuration" class="anchor" href="https://github.com/databricks/spark-redshift#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h2> 
+  <h3><a id="user-content-authenticating-to-s3-and-redshift" class="anchor" href="https://github.com/databricks/spark-redshift#authenticating-to-s3-and-redshift" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Authenticating to S3 and Redshift</h3> 
+  <p>The use of this library involves several connections which must be authenticated / secured, all of which are illustrated in the following diagram:</p> 
+  <pre><code>                            ┌───────┐
+       ┌───────────────────▶│  S3   │◀─────────────────┐
+       │    IAM or keys     └───────┘    IAM or keys   │
+       │                        ▲                      │
+       │                        │ IAM or keys          │
+       ▼                        ▼               ┌──────▼────┐
+┌────────────┐            ┌───────────┐         │┌──────────┴┐
+│  Redshift  │            │   Spark   │         ││   Spark   │
+│            │◀──────────▶│  Driver   │◀────────▶┤ Executors │
+└────────────┘            └───────────┘          └───────────┘
+               JDBC with                  Configured
+               username /                     in
+                password                    Spark
+            (can enable SSL)
+</code></pre> 
+  <p>This library reads and writes data to S3 when transferring data to/from Redshift. As a result, it requires AWS credentials with read and write access to a S3 bucket (specified using the <code>tempdir</code> configuration parameter).</p> 
+  <blockquote> 
+   <p><strong>
+     <g-emoji alias="warning" fallback-src="https://assets-cdn.github.com/images/icons/emoji/unicode/26a0.png" ios-version="6.0">
+      ⚠️
+     </g-emoji> Note</strong>: This library does not clean up the temporary files that it creates in S3. As a result, we recommend that you use a dedicated temporary S3 bucket with an <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html" target="_blank">object lifecycle configuration</a> to ensure that temporary files are automatically deleted after a specified expiration period. See the <a href="https://github.com/databricks/spark-redshift#encryption" target="_blank"><em>Encryption</em></a> section of this document for a discussion of how these files may be encrypted.</p> 
+  </blockquote> 
+  <p>The following describes how each connection can be authenticated:</p> 
+  <ul> 
+   <li><p><strong>Spark driver to Redshift</strong>: The Spark driver connects to Redshift via JDBC using a username and password. Redshift does not support the use of IAM roles to authenticate this connection. This connection can be secured using SSL; for more details, see the Encryption section below.</p></li> 
+   <li><p><strong>Spark to S3</strong>: S3 acts as a middleman to store bulk data when reading from or writing to Redshift. Spark connects to S3 using both the Hadoop FileSystem interfaces and directly using the Amazon Java SDK's S3 client.</p> <p>This connection can be authenticated using either AWS keys or IAM roles (DBFS mountpoints are not currently supported, so Databricks users who do not want to rely on AWS keys should use cluster IAM roles instead).</p> <p>There are multiple ways of providing these credentials:</p> 
+    <ol> 
+     <li><p><strong>Default Credential Provider Chain (best option for most users):</strong> AWS credentials will automatically be retrieved through the <a href="http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html#id6" target="_blank">DefaultAWSCredentialsProviderChain</a>.</p> <p>If you use IAM instance roles to authenticate to S3 (e.g. on Databricks, EMR, or EC2), then you should probably use this method.</p> <p>If another method of providing credentials is used (methods 2 or 3), then that will take precedence over this default.</p></li> 
+     <li><p><strong>Set keys in Hadoop conf:</strong> You can specify AWS keys via <a href="https://github.com/apache/hadoop/blob/trunk/hadoop-tools/hadoop-aws/src/site/markdown/tools/hadoop-aws/index.md" target="_blank">Hadoop configuration properties</a>. For example, if your <code>tempdir</code> configuration points to a <code>s3n://</code> filesystem then you can set the <code>fs.s3n.awsAccessKeyId</code> and <code>fs.s3n.awsSecretAccessKey</code> properties in a Hadoop XML configuration file or call <code>sc.hadoopConfiguration.set()</code> to mutate Spark's global Hadoop configuration.</p> <p>For example, if you are using the <code>s3n</code> filesystem then add</p> 
+      <div class="highlight highlight-source-scala">
+       <pre>sc.hadoopConfiguration.set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3n.awsAccessKeyId<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_KEY_ID<span class="pl-pds">"</span></span>)
+sc.hadoopConfiguration.set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3n.awsSecretAccessKey<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_SECRET_ACCESS_KEY<span class="pl-pds">"</span></span>)</pre>
+      </div> <p>and for the <code>s3a</code> filesystem add</p> 
+      <div class="highlight highlight-source-scala">
+       <pre>sc.hadoopConfiguration.set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3a.access.key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_KEY_ID<span class="pl-pds">"</span></span>)
+sc.hadoopConfiguration.set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3a.secret.key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_SECRET_ACCESS_KEY<span class="pl-pds">"</span></span>)</pre>
+      </div> <p>Python users will have to use a slightly different method to modify the <code>hadoopConfiguration</code>, since this field is not exposed in all versions of PySpark. Although the following command relies on some Spark internals, it should work with all PySpark versions and is unlikely to break or change in the future:</p> 
+      <div class="highlight highlight-source-python">
+       <pre>sc._jsc.hadoopConfiguration().set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3n.awsAccessKeyId<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_KEY_ID<span class="pl-pds">"</span></span>)
+sc._jsc.hadoopConfiguration().set(<span class="pl-s"><span class="pl-pds">"</span>fs.s3n.awsSecretAccessKey<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>YOUR_SECRET_ACCESS_KEY<span class="pl-pds">"</span></span>)</pre>
+      </div></li> 
+     <li><p><strong>Encode keys in <code>tempdir</code> URI</strong>: For example, the URI <code>s3n://ACCESSKEY:SECRETKEY@bucket/path/to/temp/dir</code> encodes the key pair (<code>ACCESSKEY</code>, <code>SECRETKEY</code>).</p> <p>Due to <a href="https://issues.apache.org/jira/browse/HADOOP-3733" target="_blank">Hadoop limitations</a>, this approach will not work for secret keys which contain forward slash (<code>/</code>) characters, even if those characters are urlencoded.</p></li> 
+    </ol></li> 
+   <li><p><strong>Redshift to S3</strong>: Redshift also connects to S3 during <code>COPY</code> and <code>UNLOAD</code> queries. There are three methods of authenticating this connection:</p> 
+    <ol> 
+     <li><p><strong>Have Redshift assume an IAM role (most secure)</strong>: You can grant Redshift permission to assume an IAM role during <code>COPY</code> or <code>UNLOAD</code> operations and then configure this library to instruct Redshift to use that role:</p> 
+      <ol> 
+       <li>Create an IAM role granting appropriate S3 permissions to your bucket.</li> 
+       <li>Follow the guide <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/authorizing-redshift-service.html" target="_blank"><em>Authorizing Amazon Redshift to Access Other AWS Services On Your Behalf</em></a> to configure this role's trust policy in order to allow Redshift to assume this role.</li> 
+       <li>Follow the steps in the <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/copy-unload-iam-role.html" target="_blank"><em>Authorizing COPY and UNLOAD Operations Using IAM Roles</em></a> guide to associate that IAM role with your Redshift cluster.</li> 
+       <li>Set this library's <code>aws_iam_role</code> option to the role's ARN.</li> 
+      </ol></li> 
+     <li><strong>Forward Spark's S3 credentials to Redshift</strong>: if the <code>forward_spark_s3_credentials</code> option is set to <code>true</code> then this library will automatically discover the credentials that Spark is using to connect to S3 and will forward those credentials to Redshift over JDBC. If Spark is authenticating to S3 using an IAM instance role then a set of temporary STS credentials will be passed to Redshift; otherwise, AWS keys will be passed. These credentials are sent as part of the JDBC query, so therefore it is <strong>strongly recommended</strong> to enable SSL encryption of the JDBC connection when using this authentication method.</li> 
+     <li><strong>Use Security Token Service (STS) credentials</strong>: You may configure the <code>temporary_aws_access_key_id</code>, <code>temporary_aws_secret_access_key</code>, and <code>temporary_aws_session_token</code> configuration properties to point to temporary keys created via the AWS <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html" target="_blank">Security Token Service</a>. These credentials are sent as part of the JDBC query, so therefore it is <strong>strongly recommended</strong> to enable SSL encryption of the JDBC connection when using this authentication method. If you choose this option then please be aware of the risk that the credentials expire before the read / write operation succeeds.</li> 
+    </ol> <p>These three options are mutually-exclusive and you must explicitly choose which one to use.</p></li> 
+  </ul> 
+  <h3><a id="user-content-encryption" class="anchor" href="https://github.com/databricks/spark-redshift#encryption" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Encryption</h3> 
+  <ul> 
+   <li><p><strong>Securing JDBC</strong>: The Redshift and Postgres JDBC drivers both support SSL. To enable SSL support, first configure Java to add the required certificates by following the <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/connecting-ssl-support.html#connecting-ssl-support-java" target="_blank"><em>Using SSL and Server Certificates in Java</em></a> instructions in the Redshift documentation. Then, follow the instructions in <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-options.html" target="_blank"><em>JDBC Driver Configuration Options</em></a> to add the appropriate SSL options to the JDBC <code>url</code> used with this library.</p></li> 
+   <li><p><strong>Encrypting <code>UNLOAD</code> data stored in S3 (data stored when reading from Redshift)</strong>: According to the Redshift documentation on <a href="http://docs.aws.amazon.com/redshift/latest/dg/t_Unloading_tables.html" target="_blank"><em>Unloading Data to S3</em></a>, "UNLOAD automatically encrypts data files using Amazon S3 server-side encryption (SSE-S3)."</p> <p>Redshift also supports client-side encryption with a custom key (see: <a href="http://docs.aws.amazon.com/redshift/latest/dg/t_unloading_encrypted_files.html" target="_blank"><em>Unloading Encrypted Data Files</em></a>) but this library currently lacks the capability to specify the required symmetric key.</p></li> 
+   <li><p><strong>Encrypting <code>COPY</code> data stored in S3 (data stored when writing to Redshift)</strong>: According to the Redshift documentation on <a href="http://docs.aws.amazon.com/redshift/latest/dg/c_loading-encrypted-files.html" target="_blank"><em>Loading Encrypted Data Files from Amazon S3</em></a>:</p> 
+    <blockquote> 
+     <p>You can use the COPY command to load data files that were uploaded to Amazon S3 using server-side encryption with AWS-managed encryption keys (SSE-S3 or SSE-KMS), client-side encryption, or both. COPY does not support Amazon S3 server-side encryption with a customer-supplied key (SSE-C)</p> 
+    </blockquote> <p>To use this capability, you should configure your Hadoop S3 FileSystem to use encryption by setting the appropriate configuration properties (which will vary depending on whether you are using <code>s3a</code>, <code>s3n</code>, EMRFS, etc.). Note that the <code>MANIFEST</code> file (a list of all files written) will not be encrypted.</p></li> 
+  </ul> 
+  <h3><a id="user-content-parameters" class="anchor" href="https://github.com/databricks/spark-redshift#parameters" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parameters</h3> 
+  <p>The parameter map or <tt>OPTIONS</tt> provided in Spark SQL supports the following settings.</p> 
+  <table> 
+   <tbody>
+    <tr> 
+     <th>Parameter</th> 
+     <th>Required</th> 
+     <th>Default</th> 
+     <th>Notes</th> 
+    </tr> 
+    <tr> 
+     <td><tt>dbtable</tt></td> 
+     <td>Yes, unless <tt>query</tt> is specified</td> 
+     <td>No default</td> 
+     <td>The table to create or read from in Redshift. This parameter is required when saving data back to Redshift.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>query</tt></td> 
+     <td>Yes, unless <tt>dbtable</tt> is specified</td> 
+     <td>No default</td> 
+     <td>The query to read from in Redshift</td> 
+    </tr> 
+    <tr> 
+     <td><tt>user</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td>The Redshift username. Must be used in tandem with <tt>password</tt> option. May only be used if the user and password are not passed in the URL, passing both will result in an error.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>password</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td>The Redshift password. Must be used in tandem with <tt>user</tt> option. May only be used if the user and password are not passed in the URL; passing both will result in an error.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>url</tt></td> 
+     <td>Yes</td> 
+     <td>No default</td> 
+     <td> <p>A JDBC URL, of the format, <tt>jdbc:subprotocol://host:port/database?user=username&amp;password=password</tt></p> 
+      <ul> 
+       <li><tt>subprotocol</tt> can be <tt>postgresql</tt> or <tt>redshift</tt>, depending on which JDBC driver you have loaded. Note however that one Redshift-compatible driver must be on the classpath and match this URL.</li> 
+       <li><tt>host</tt> and <tt>port</tt> should point to the Redshift master node, so security groups and/or VPC will need to be configured to allow access from your driver application. </li>
+       <li><tt>database</tt> identifies a Redshift database name</li> 
+       <li><tt>user</tt> and <tt>password</tt> are credentials to access the database, which must be embedded in this URL for JDBC, and your user account should have necessary privileges for the table being referenced. </li> 
+      </ul></td> 
+    </tr> 
+    <tr> 
+     <td><tt>aws_iam_role</tt></td> 
+     <td>Only if using IAM roles to authorize Redshift COPY/UNLOAD operations</td> 
+     <td>No default</td> 
+     <td>Fully specified ARN of the <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/copy-unload-iam-role.html" target="_blank">IAM Role</a> attached to the Redshift cluster, ex: arn:aws:iam::123456789000:role/redshift_iam_role</td> 
+    </tr> 
+    <tr> 
+     <td><tt>forward_spark_s3_credentials</tt></td> 
+     <td>No</td> 
+     <td>false</td> 
+     <td> If <tt>true</tt> then this library will automatically discover the credentials that Spark is using to connect to S3 and will forward those credentials to Redshift over JDBC. These credentials are sent as part of the JDBC query, so therefore it is strongly recommended to enable SSL encryption of the JDBC connection when using this option. </td> 
+    </tr> 
+    <tr> 
+     <td><tt>temporary_aws_access_key_id</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td>AWS access key, must have write permissions to the S3 bucket.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>temporary_aws_secret_access_key</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td>AWS secret access key corresponding to provided access key.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>temporary_aws_session_token</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td>AWS session token corresponding to provided access key.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>tempdir</tt></td> 
+     <td>Yes</td> 
+     <td>No default</td> 
+     <td>A writeable location in Amazon S3, to be used for unloaded data when reading and Avro data to be loaded into Redshift when writing. If you're using Redshift data source for Spark as part of a regular ETL pipeline, it can be useful to set a <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html" target="_blank">Lifecycle Policy</a> on a bucket and use that as a temp location for this data. </td> 
+    </tr> 
+    <tr> 
+     <td><tt>jdbcdriver</tt></td> 
+     <td>No</td> 
+     <td>Determined by the JDBC URL's subprotocol</td> 
+     <td>The class name of the JDBC driver to use. This class must be on the classpath. In most cases, it should not be necessary to specify this option, as the appropriate driver classname should automatically be determined by the JDBC URL's subprotocol.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>diststyle</tt></td> 
+     <td>No</td> 
+     <td><tt>EVEN</tt></td> 
+     <td>The Redshift <a href="http://docs.aws.amazon.com/redshift/latest/dg/c_choosing_dist_sort.html" target="_blank">Distribution Style</a> to be used when creating a table. Can be one of <tt>EVEN</tt>, <tt>KEY</tt> or <tt>ALL</tt> (see Redshift docs). When using <tt>KEY</tt>, you must also set a distribution key with the <tt>distkey</tt> option. </td> 
+    </tr> 
+    <tr> 
+     <td><tt>distkey</tt></td> 
+     <td>No, unless using <tt>DISTSTYLE KEY</tt></td> 
+     <td>No default</td> 
+     <td>The name of a column in the table to use as the distribution key when creating a table.</td> 
+    </tr> 
+    <tr> 
+     <td><tt>sortkeyspec</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td> <p>A full Redshift <a href="http://docs.aws.amazon.com/redshift/latest/dg/t_Sorting_data.html" target="_blank">Sort Key</a> definition.</p> <p>Examples include:</p> 
+      <ul> 
+       <li><tt>SORTKEY(my_sort_column)</tt></li> 
+       <li><tt>COMPOUND SORTKEY(sort_col_1, sort_col_2)</tt></li> 
+       <li><tt>INTERLEAVED SORTKEY(sort_col_1, sort_col_2)</tt></li> 
+      </ul> </td> 
+    </tr> 
+    <tr> 
+     <td><del><tt>usestagingtable</tt></del> (Deprecated)</td> 
+     <td>No</td> 
+     <td><tt>true</tt></td> 
+     <td> <p> Setting this deprecated option to <tt>false</tt> will cause an overwrite operation's destination table to be dropped immediately at the beginning of the write, making the overwrite operation non-atomic and reducing the availability of the destination table. This may reduce the temporary disk space requirements for overwrites. </p> <p>Since setting <tt>usestagingtable=false</tt> operation risks data loss / unavailability, we have chosen to deprecate it in favor of requiring users to manually drop the destination table themselves.</p> </td> 
+    </tr> 
+    <tr> 
+     <td><tt>description</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td> <p>A description for the table. Will be set using the SQL COMMENT command, and should show up in most query tools. See also the <tt>description</tt> metadata to set descriptions on individual columns. </p></td>
+    </tr> 
+    <tr> 
+     <td><tt>preactions</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td> <p>This can be a <tt>;</tt> separated list of SQL commands to be executed before loading <tt>COPY</tt> command. It may be useful to have some <tt>DELETE</tt> commands or similar run here before loading new data. If the command contains <tt>%s</tt>, the table name will be formatted in before execution (in case you're using a staging table).</p> <p>Be warned that if this commands fail, it is treated as an error and you'll get an exception. If using a staging table, the changes will be reverted and the backup table restored if pre actions fail.</p> </td> 
+    </tr> 
+    <tr> 
+     <td><tt>postactions</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td> <p>This can be a <tt>;</tt> separated list of SQL commands to be executed after a successful <tt>COPY</tt> when loading data. It may be useful to have some <tt>GRANT</tt> commands or similar run here when loading new data. If the command contains <tt>%s</tt>, the table name will be formatted in before execution (in case you're using a staging table).</p> <p>Be warned that if this commands fail, it is treated as an error and you'll get an exception. If using a staging table, the changes will be reverted and the backup table restored if post actions fail.</p> </td> 
+    </tr> 
+    <tr> 
+     <td><tt>extracopyoptions</tt></td> 
+     <td>No</td> 
+     <td>No default</td> 
+     <td> <p>A list extra options to append to the Redshift <tt>COPY</tt> command when loading data, e.g. <tt>TRUNCATECOLUMNS</tt> or <tt>MAXERROR n</tt> (see the <a href="http://docs.aws.amazon.com/redshift/latest/dg/r_COPY.html#r_COPY-syntax-overview-optional-parameters" target="_blank">Redshift docs</a> for other options).</p> <p>Note that since these options are appended to the end of the <tt>COPY</tt> command, only options that make sense at the end of the command can be used, but that should cover most possible use cases.</p> </td> 
+    </tr> 
+    <tr> 
+     <td><tt>tempformat</tt> (Experimental)</td> 
+     <td>No</td> 
+     <td><tt>AVRO</tt></td> 
+     <td> <p> The format in which to save temporary files in S3 when writing to Redshift. Defaults to "AVRO"; the other allowed values are "CSV" and "CSV GZIP" for CSV and gzipped CSV, respectively. </p> <p> Redshift is significantly faster when loading CSV than when loading Avro files, so using that <tt>tempformat</tt> may provide a large performance boost when writing to Redshift. </p> </td> 
+    </tr> 
+    <tr> 
+     <td><tt>csvnullstring</tt> (Experimental)</td> 
+     <td>No</td> 
+     <td><tt>@NULL@</tt></td> 
+     <td> <p> The String value to write for nulls when using the CSV <tt>tempformat</tt>. This should be a value which does not appear in your actual data. </p> </td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-additional-configuration-options" class="anchor" href="https://github.com/databricks/spark-redshift#additional-configuration-options" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Additional configuration options</h2> 
+  <h3><a id="user-content-configuring-the-maximum-size-of-string-columns" class="anchor" href="https://github.com/databricks/spark-redshift#configuring-the-maximum-size-of-string-columns" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuring the maximum size of string columns</h3> 
+  <p>When creating Redshift tables, this library's default behavior is to create <code>TEXT</code> columns for string columns. Redshift stores <code>TEXT</code> columns as <code>VARCHAR(256)</code>, so these columns have a maximum size of 256 characters (<a href="http://docs.aws.amazon.com/redshift/latest/dg/r_Character_types.html" target="_blank">source</a>).</p> 
+  <p>To support larger columns, you can use the <code>maxlength</code> column metadata field to specify the maximum length of individual string columns. This can also be done as a space-savings performance optimization in order to declare columns with a smaller maximum length than the default.</p> 
+  <blockquote> 
+   <p><strong>
+     <g-emoji alias="warning" fallback-src="https://assets-cdn.github.com/images/icons/emoji/unicode/26a0.png" ios-version="6.0">
+      ⚠️
+     </g-emoji> Note</strong>: Due to limitations in Spark, metadata modification is unsupported in the Python, SQL, and R language APIs.</p> 
+  </blockquote> 
+  <p>Here is an example of updating multiple columns' metadata fields using Spark's Scala API:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">MetadataBuilder</span>
+
+<span class="pl-c">// Specify the custom width of each column</span>
+<span class="pl-k">val</span> <span class="pl-en">columnLengthMap</span> <span class="pl-k">=</span> <span class="pl-en">Map</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>language_code<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>country_code<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2083</span>
+)
+
+<span class="pl-k">var</span> <span class="pl-en">df</span> <span class="pl-k">=</span> ... <span class="pl-c">// the dataframe you'll want to write to Redshift</span>
+
+<span class="pl-c">// Apply each column metadata customization</span>
+columnLengthMap.foreach { <span class="pl-k">case</span> (colName, length) <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">metadata</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MetadataBuilder</span>().putLong(<span class="pl-s"><span class="pl-pds">"</span>maxlength<span class="pl-pds">"</span></span>, length).build()
+  df <span class="pl-k">=</span> df.withColumn(colName, df(colName).as(colName, metadata))
+}
+
+df.write
+  .format(<span class="pl-s"><span class="pl-pds">"</span>com.databricks.spark.redshift<span class="pl-pds">"</span></span>)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span>, jdbcURL)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>tempdir<span class="pl-pds">"</span></span>, s3TempDirectory)
+  .option(<span class="pl-s"><span class="pl-pds">"</span>dbtable<span class="pl-pds">"</span></span>, sessionTable)
+  .save()</pre>
+  </div> 
+  <h3><a id="user-content-setting-a-custom-column-type" class="anchor" href="https://github.com/databricks/spark-redshift#setting-a-custom-column-type" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setting a custom column type</h3> 
+  <p>If you need to manually set a column type, you can use the <code>redshift_type</code> column metadata. For example, if you desire to override the <code>Spark SQL Schema -&gt; Redshift SQL</code> type matcher to assign a user-defined column type, you can do the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">MetadataBuilder</span>
+
+<span class="pl-c">// Specify the custom width of each column</span>
+<span class="pl-k">val</span> <span class="pl-en">columnTypeMap</span> <span class="pl-k">=</span> <span class="pl-en">Map</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>language_code<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>CHAR(2)<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>country_code<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>CHAR(2)<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>url<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>BPCHAR(111)<span class="pl-pds">"</span></span>
+)
+
+<span class="pl-k">var</span> <span class="pl-en">df</span> <span class="pl-k">=</span> ... <span class="pl-c">// the dataframe you'll want to write to Redshift</span>
+
+<span class="pl-c">// Apply each column metadata customization</span>
+columnTypeMap.foreach { <span class="pl-k">case</span> (colName, colType) <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">metadata</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MetadataBuilder</span>().putString(<span class="pl-s"><span class="pl-pds">"</span>redshift_type<span class="pl-pds">"</span></span>, colType).build()
+  df <span class="pl-k">=</span> df.withColumn(colName, df(colName).as(colName, metadata))
+}</pre>
+  </div> 
+  <h3><a id="user-content-configuring-column-encoding" class="anchor" href="https://github.com/databricks/spark-redshift#configuring-column-encoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuring column encoding</h3> 
+  <p>When creating a table, this library can be configured to use a specific compression encoding on individual columns. You can use the <code>encoding</code> column metadata field to specify a compression encoding for each column (see <a href="http://docs.aws.amazon.com/redshift/latest/dg/c_Compression_encodings.html" target="_blank">Amazon docs</a> for available encodings).</p> 
+  <h3><a id="user-content-setting-descriptions-on-columns" class="anchor" href="https://github.com/databricks/spark-redshift#setting-descriptions-on-columns" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setting descriptions on columns</h3> 
+  <p>Redshift allows columns to have descriptions attached that should show up in most query tools (using the <code>COMMENT</code> command). You can set the <code>description</code> column metadata field to specify a description for individual columns.</p> 
+  <h2><a id="user-content-transactional-guarantees" class="anchor" href="https://github.com/databricks/spark-redshift#transactional-guarantees" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Transactional Guarantees</h2> 
+  <p>This section describes the transactional guarantees of the Redshift data source for Spark</p> 
+  <h3><a id="user-content-general-background-on-redshift-and-s3s-properties" class="anchor" href="https://github.com/databricks/spark-redshift#general-background-on-redshift-and-s3s-properties" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>General background on Redshift and S3's properties</h3> 
+  <p>For general information on Redshift's transactional guarantees, see the <a href="https://docs.aws.amazon.com/redshift/latest/dg/c_Concurrent_writes.html" target="_blank">Managing Concurrent Write Operations</a> chapter in the Redshift documentation. In a nutshell, Redshift provides <a href="https://docs.aws.amazon.com/redshift/latest/dg/c_serial_isolation.html" target="_blank">serializable isolation</a> (according to the documentation for Redshift's <a href="https://docs.aws.amazon.com/redshift/latest/dg/r_BEGIN.html" target="_blank"><code>BEGIN</code></a> command, "[although] you can use any of the four transaction isolation levels, Amazon Redshift processes all isolation levels as serializable"). According to its <a href="https://docs.aws.amazon.com/redshift/latest/dg/c_serial_isolation.html" target="_blank">documentation</a>, "Amazon Redshift supports a default <em>automatic commit</em> behavior in which each separately-executed SQL command commits individually." Thus, individual commands like <code>COPY</code> and <code>UNLOAD</code> are atomic and transactional, while explicit <code>BEGIN</code> and <code>END</code> should only be necessary to enforce the atomicity of multiple commands / queries.</p> 
+  <p>When reading from / writing to Redshift, this library reads and writes data in S3. Both Spark and Redshift produce partitioned output which is stored in multiple files in S3. According to the <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#ConsistencyModel" target="_blank">Amazon S3 Data Consistency Model</a> documentation, S3 bucket listing operations are eventually-consistent, so the files must to go to special lengths to avoid missing / incomplete data due to this source of eventual-consistency.</p> 
+  <h3><a id="user-content-guarantees-of-the-redshift-data-source-for-spark" class="anchor" href="https://github.com/databricks/spark-redshift#guarantees-of-the-redshift-data-source-for-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Guarantees of the Redshift data source for Spark</h3> 
+  <p><strong>Appending to an existing table</strong>: In the <a href="https://docs.aws.amazon.com/redshift/latest/dg/r_COPY.html" target="_blank"><code>COPY</code></a> command, this library uses <a href="https://docs.aws.amazon.com/redshift/latest/dg/loading-data-files-using-manifest.html" target="_blank">manifests</a> to guard against certain eventually-consistent S3 operations. As a result, it appends to existing tables have the same atomic and transactional properties as regular Redshift <code>COPY</code> commands.</p> 
+  <p><strong>Appending to an existing table</strong>: When inserting rows into Redshift, this library uses the <a href="https://docs.aws.amazon.com/redshift/latest/dg/r_COPY.html" target="_blank"><code>COPY</code></a> command and specifies <a href="https://docs.aws.amazon.com/redshift/latest/dg/loading-data-files-using-manifest.html" target="_blank">manifests</a> to guard against certain eventually-consistent S3 operations. As a result, <code>spark-redshift</code> appends to existing tables have the same atomic and transactional properties as regular Redshift <code>COPY</code> commands.</p> 
+  <p><strong>Creating a new table (<code>SaveMode.CreateIfNotExists</code>)</strong>: Creating a new table is a two-step process, consisting of a <code>CREATE TABLE</code> command followed by a <a href="https://docs.aws.amazon.com/redshift/latest/dg/r_COPY.html" target="_blank"><code>COPY</code></a> command to append the initial set of rows. Both of these operations are performed in a single transaction.</p> 
+  <p><strong>Overwriting an existing table</strong>: By default, this library uses transactions to perform overwrites, which are implemented by deleting the destination table, creating a new empty table, and appending rows to it.</p> 
+  <p>If the deprecated <code>usestagingtable</code> setting is set to <code>false</code> then this library will commit the <code>DELETE TABLE</code> command before appending rows to the new table, sacrificing the atomicity of the overwrite operation but reducing the amount of staging space that Redshift needs during the overwrite.</p> 
+  <p><strong>Querying Redshift tables</strong>: Queries use Redshift's <a href="https://docs.aws.amazon.com/redshift/latest/dg/r_UNLOAD.html" target="_blank"><code>UNLOAD</code></a> command to execute a query and save its results to S3 and use <a href="https://docs.aws.amazon.com/redshift/latest/dg/loading-data-files-using-manifest.html" target="_blank">manifests</a> to guard against certain eventually-consistent S3 operations. As a result, queries from Redshift data source for Spark should have the same consistency properties as regular Redshift queries.</p> 
+  <h2><a id="user-content-common-problems-and-solutions" class="anchor" href="https://github.com/databricks/spark-redshift#common-problems-and-solutions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Common problems and solutions</h2> 
+  <h3><a id="user-content-s3-bucket-and-redshift-cluster-are-in-different-aws-regions" class="anchor" href="https://github.com/databricks/spark-redshift#s3-bucket-and-redshift-cluster-are-in-different-aws-regions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>S3 bucket and Redshift cluster are in different AWS regions</h3> 
+  <p>By default, S3 &lt;-&gt; Redshift copies will not work if the S3 bucket and Redshift cluster are in different AWS regions.</p> 
+  <p>If you attempt to perform a read of a Redshift table and the regions are mismatched then you may see a confusing error, such as</p> 
+  <pre><code>java.sql.SQLException: [Amazon](500310) Invalid operation: S3ServiceException:The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.
+</code></pre> 
+  <p>Similarly, attempting to write to Redshift using a S3 bucket in a different region may cause the following error:</p> 
+  <pre><code>error:  Problem reading manifest file - S3ServiceException:The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.,Status 301,Error PermanentRedirect
+</code></pre> 
+  <p><strong>For writes:</strong> Redshift's <code>COPY</code> command allows the S3 bucket's region to be explicitly specified, so you can make writes to Redshift work properly in these cases by adding</p> 
+  <pre><code>region 'the-region-name'
+</code></pre> 
+  <p>to the <code>extracopyoptions</code> setting. For example, with a bucket in the US East (Virginia) region and the Scala API, use</p> 
+  <pre><code>.option("extracopyoptions", "region 'us-east-1'")
+</code></pre> 
+  <p><strong>For reads:</strong> According to <a href="http://docs.aws.amazon.com/redshift/latest/dg/r_UNLOAD.html" target="_blank">its documentation</a>, the Redshift <code>UNLOAD</code> command does not support writing to a bucket in a different region:</p> 
+  <blockquote> 
+   <p><strong>Important</strong></p> 
+   <p>The Amazon S3 bucket where Amazon Redshift will write the output files must reside in the same region as your cluster.</p> 
+  </blockquote> 
+  <p>As a result, this use-case is not supported by this library. The only workaround is to use a new bucket in the same region as your Redshift cluster.</p> 
+  <h2><a id="user-content-migration-guide" class="anchor" href="https://github.com/databricks/spark-redshift#migration-guide" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration Guide</h2> 
+  <ul> 
+   <li>Version 3.0 now requires <code>forward_spark_s3_credentials</code> to be explicitly set before Spark S3 credentials will be forwarded to Redshift. Users who use the <code>aws_iam_role</code> or <code>temporary_aws_*</code> authentication mechanisms will be unaffected by this change. Users who relied on the old default behavior will now need to explicitly set <code>forward_spark_s3_credentials</code> to <code>true</code> to continue using their previous Redshift to S3 authentication mechanism. For a discussion of the three authentication mechanisms and their security trade-offs, see the <a href="https://github.com/databricks/spark-redshift#authenticating-to-s3-and-redshift" target="_blank"><em>Authenticating to S3 and Redshift</em></a> section of this README.</li> 
+  </ul> 
+ </article>
+</div>

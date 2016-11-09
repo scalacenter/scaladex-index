@@ -1,0 +1,62 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-persistence-jdbc-query" class="anchor" href="https://github.com/dnvriend/akka-persistence-jdbc-query#akka-persistence-jdbc-query" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-persistence-jdbc-query</h1> 
+  <p>Akka-persistence-jdbc-query extends the akka-persistence-query API with two new interfaces for <a href="https://github.com/dnvriend/akka-persistence-jdbc" target="_blank">akka-persistence-jdbc</a>. </p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>Service</th> 
+     <th>Status</th> 
+     <th>Description</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>License</td> 
+     <td><a href="http://www.apache.org/licenses/LICENSE-2.0.txt" target="_blank"><img src="https://camo.githubusercontent.com/17d81d2643f6ee5fcc87c8f7f74588da4b5e6bb7/687474703a2f2f696d672e736869656c64732e696f2f3a6c6963656e73652d417061636865253230322d7265642e737667" alt="License" data-canonical-src="http://img.shields.io/:license-Apache%202-red.svg" style="max-width:100%;"></a></td> 
+     <td>Apache 2.0</td> 
+    </tr> 
+    <tr> 
+     <td>Bintray</td> 
+     <td><a href="https://bintray.com/dnvriend/maven/akka-persistence-jdbc-query/_latestVersion" target="_blank"><img src="https://camo.githubusercontent.com/dc20ca91b312adfcbdb2a4d529e959f9137bd42b/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f646e767269656e642f6d6176656e2f616b6b612d70657273697374656e63652d6a6462632d71756572792f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/dnvriend/maven/akka-persistence-jdbc-query/images/download.svg" style="max-width:100%;"> </a></td> 
+     <td>Latest Version on Bintray</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2><a id="user-content-eventsbypersistenceidandtag-and-currenteventsbypersistenceidandtag" class="anchor" href="https://github.com/dnvriend/akka-persistence-jdbc-query#eventsbypersistenceidandtag-and-currenteventsbypersistenceidandtag" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>EventsByPersistenceIdAndTag and CurrentEventsByPersistenceIdAndTag</h2> 
+  <p><code>eventsByPersistenceIdAndTag</code> and <code>currentEventsByPersistenceIdAndTag</code> is used for retrieving specific events identified by a specific tag for a specific PersistentActor identified by persistenceId. These two queries basically are convenience operations that optimize the lookup of events because the database can efficiently filter out the initial persistenceId/tag combination. </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.</span>{<span class="pl-v">Materializer</span>, <span class="pl-v">ActorMaterializer</span>}
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">Source</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.persistence.query.</span>{ <span class="pl-v">PersistenceQuery</span>, <span class="pl-v">EventEnvelope</span> }
+<span class="pl-k">import</span> <span class="pl-v">akka.persistence.jdbc.query.journal.scaladsl.</span><span class="pl-v">JdbcReadJournal</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">mat</span><span class="pl-k">:</span> <span class="pl-en">Materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()(system)
+<span class="pl-k">val</span> <span class="pl-en">readJournal</span><span class="pl-k">:</span> <span class="pl-en">JdbcReadJournal</span> <span class="pl-k">=</span> <span class="pl-en">PersistenceQuery</span>(system).readJournalFor[<span class="pl-en">JdbcReadJournal</span>](<span class="pl-en">JdbcReadJournal</span>.<span class="pl-en">Identifier</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">willNotCompleteTheStream</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">EventEnvelope</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> readJournal.eventsByPersistenceIdAndTag(<span class="pl-s"><span class="pl-pds">"</span>fruitbasket<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>apple<span class="pl-pds">"</span></span>, <span class="pl-c1">0L</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">willCompleteTheStream</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">EventEnvelope</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> readJournal.currentEventsByPersistenceIdAndTag(<span class="pl-s"><span class="pl-pds">"</span>fruitbasket<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>apple<span class="pl-pds">"</span></span>, <span class="pl-c1">0L</span>)</pre>
+  </div> 
+  <h1><a id="user-content-whats-new" class="anchor" href="https://github.com/dnvriend/akka-persistence-jdbc-query#whats-new" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What's new?</h1> 
+  <p>For the full list of what's new see <a href="https://github.com/dnvriend/akka-persistence-jdbc/wiki/Version-History" target="_blank">this wiki page</a>.</p> 
+  <h2><a id="user-content-100-2016-02-08" class="anchor" href="https://github.com/dnvriend/akka-persistence-jdbc-query#100-2016-02-08" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>1.0.0 (2016-02-08)</h2> 
+  <ul> 
+   <li>First release</li> 
+  </ul> 
+ </article>
+</div>

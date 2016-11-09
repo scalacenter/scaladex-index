@@ -1,0 +1,109 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-rxmon" class="anchor" href="https://github.com/vigdorchik/rxmon#rxmon" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>rxmon</h1> 
+  <p>To react to error conditions proper, it is necessary to express what the error specific to your application is. The most obvious way is to model the monitored world as a set of streams that are provided by the running application. Examples of such streams might be the number of incoming requests or the number of errors. Given the set of primitive streams, it's easy to compose them into the final "monitorable" stream. This module provides combinators for composing <em><a href="https://github.com/Netflix/RxJava" target="_blank">RxJava</a></em> Observables. In addition, <em><a href="http://akka.io" target="_blank">Akka</a></em> actors may send events to monitor, and those will be viewed as Observable stream.</p> 
+  <h2><a id="user-content-details" class="anchor" href="https://github.com/vigdorchik/rxmon#details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Details</h2> 
+  <p>The defined combinators, that can be used to construct the final monitored Observable, include:</p> 
+  <ul> 
+   <li><p>binary operations <b>+</b>, <b>-</b>, <b>*</b> with a constant or another <i>Observable</i> for <i>Numeric</i> <i>Observable</i>s.</p></li> 
+   <li><p>exponentiatikon operation <b>^</b> with Int power for <i>Numeric</i> <i>Observable</i>s.</p></li> 
+   <li><p>comparison operations <b> &lt; </b>, <b> &gt; </b> with a constant or another <i>Observable</i> for <i>Numeric</i> <i>Observable</i>s.</p></li> 
+   <li><p>logical operations <b>&amp;&amp;</b>, <b>||</b>, <b>^</b> for two <i>Boolean</i> <i>Observable</i>s.</p></li> 
+   <li><p><b>max</b>, <b>min</b>, <b>avg</b> over a specified <i>Duration</i> for <i>Numeric</i> <i>Observable</i>s.</p></li> 
+   <li><p><b>drv</b> giving an <i>Observable</i> of the derivative for <i>Numeric</i> <i>Observable</i>s. This is used to model variable growth.</p></li> 
+   <li><p><b>always, never</b> for <i>Boolean</i> <i>Observable</i>s that yield true only if their operand observable is true or false respectively during parameter <i>Duration</i>.</p></li> 
+   <li><p><b>count</b> the number of ticks of any <i>Observable</i>.</p></li> 
+   <li><p><b>watchdog</b> <i>Boolean</i> <i>Observable</i> emitting true when the source <i>Observable</i> doesn't produce values for a specified duration.</p></li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.matmexrhino.rxmon.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">Monitoring.</span><span class="pl-v">_</span>
+
+<span class="pl-k">class</span> <span class="pl-en">MyMonitoring</span> <span class="pl-k">extends</span> <span class="pl-e">Registry</span> {
+  <span class="pl-k">val</span> <span class="pl-en">actorErrors</span><span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> register[<span class="pl-k">Unit</span>](<span class="pl-s"><span class="pl-pds">"</span>some_error<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">tooManyErrors</span><span class="pl-k">:</span> <span class="pl-en">Observable</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span>
+    (count(actorError, <span class="pl-c1">1.</span>minutes) <span class="pl-k">&gt;</span> <span class="pl-c1">100</span>).always(<span class="pl-c1">1.</span>minutes)
+  tooManyErrors.whenTrue { () <span class="pl-k">=&gt;</span>
+    <span class="pl-c">// alert or something else</span>
+  }
+}
+
+...
+
+<span class="pl-c">// Some actor that might err:</span>
+registry <span class="pl-k">!</span> <span class="pl-en">ListEntries</span> 
+<span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+  ...
+  <span class="pl-k">case</span> <span class="pl-en">EntriesResponse</span>(map) <span class="pl-k">=&gt;</span>
+    <span class="pl-k">val</span> <span class="pl-en">errorsCollector</span> <span class="pl-k">=</span> map(<span class="pl-s"><span class="pl-pds">"</span>some_error<span class="pl-pds">"</span></span>)
+    ...
+}</pre>
+  </div> 
+  <h2><a id="user-content-batching" class="anchor" href="https://github.com/vigdorchik/rxmon#batching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Batching</h2> 
+  <p>To prevent network congestion, it's possible to aggregate statistics on a local node and only send the results of aggregation. Note, that aggregation naturally smoothens the curve, and prevents accidental hickups. Batching scheme must be carefully chosen to be consistent with the final rx stream. The following batching modes are supported:</p> 
+  <ul> 
+   <li><b>max</b>, <b>min</b>, <b>avg</b> for for <i>Numeric</i> variables.</li> 
+   <li><b>ever</b>, <b>never</b> for <i>Boolean</i> variables.</li> 
+   <li><b>tick</b> counts the number of ticks of <i>Unit</i> variable, and outputs <i>Int</i>.</li> 
+  </ul> 
+  <h2><a id="user-content-monitoring-message-queue" class="anchor" href="https://github.com/vigdorchik/rxmon#monitoring-message-queue" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Monitoring message queue</h2> 
+  <p>In addition to user-defined metrics, it's possible to monitor the health of akka itself:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.matmexrhino.rxmon.QueueMessages.</span><span class="pl-v">_</span>
+
+target <span class="pl-k">!</span> <span class="pl-en">Size</span>     <span class="pl-c">// sends the current size of the message queue to target.</span>
+target <span class="pl-k">!</span> <span class="pl-en">Enqueues</span> <span class="pl-c">// sends the number of enqueues in the queue to target.</span>
+target <span class="pl-k">!</span> <span class="pl-en">Dequeues</span> <span class="pl-c">// sends the number of dequeues in the queue to target.</span></pre>
+  </div> 
+  <p>In order to be able to transform those messages into numbers, one has to declare the mailbox type and register it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyMailbox</span>(<span class="pl-v">settings</span>: <span class="pl-en">ActorSystem</span>.<span class="pl-en">Settings</span>, <span class="pl-v">config</span>: <span class="pl-en">Config</span>) <span class="pl-k">extends</span> <span class="pl-e">MailboxType</span> {
+  <span class="pl-k">def</span> <span class="pl-en">create</span>(<span class="pl-v">owner</span>: <span class="pl-en">Option</span>[<span class="pl-en">ActorRef</span>], <span class="pl-v">system</span>: <span class="pl-en">Option</span>[<span class="pl-en">ActorSystem</span>]) <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyMessageQueue</span>(system.get)
+}
+<span class="pl-k">class</span> <span class="pl-en">MyMessageQueue</span>(<span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span>) <span class="pl-k">extends</span> <span class="pl-e">UnboundedMailbox.MessageQueue</span> <span class="pl-k">with</span> <span class="pl-e">QueueSizeReporter</span></pre>
+  </div> 
+  <pre><code>akka.actor.default-mailbox {
+  mailbox-type = MyMailbox
+}
+</code></pre> 
+  <h2><a id="user-content-referencing" class="anchor" href="https://github.com/vigdorchik/rxmon#referencing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Referencing</h2> 
+  <p>This project is published on <em><a href="https://bintray.com/" target="_blank">Bintray</a></em>.</p> 
+  <p>To reference from sbt:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>bintray-vigdorchik<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>http://dl.bintray.com/vigdorchik/maven<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.matmexrhino<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>rxmon<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>To reference from maven:</p> 
+  <p>Add the repository to Maven:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">repository</span>&gt;
+  &lt;<span class="pl-ent">id</span>&gt;bintray-vigdorchik&lt;/<span class="pl-ent">id</span>&gt;
+  &lt;<span class="pl-ent">url</span>&gt;http://dl.bintray.com/vigdorchik/maven&lt;/<span class="pl-ent">url</span>&gt;
+&lt;/<span class="pl-ent">repository</span>&gt;</pre>
+  </div> 
+  <p>Resolve the library:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+  &lt;<span class="pl-ent">groupId</span>&gt;org.matmerhino&lt;/<span class="pl-ent">groupId</span>&gt;
+  &lt;<span class="pl-ent">artifactId</span>&gt;rxmon_2.10&lt;/<span class="pl-ent">artifactId</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;0.1.0&lt;/<span class="pl-ent">version</span>&gt;
+ &lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+ </article>
+</div>

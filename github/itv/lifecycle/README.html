@@ -1,0 +1,298 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-lifecycle" class="anchor" href="https://github.com/itv/lifecycle#lifecycle" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Lifecycle</h1> 
+  <p>A pattern for safe usage of resources. Supports monadic operations so usage can be composed.</p> 
+  <p>It's similar to:</p> 
+  <ul> 
+   <li>the <a href="https://msdn.microsoft.com/en-GB/library/yh598w02.aspx" target="_blank">using statement</a> in C#</li> 
+   <li>the <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html" target="_blank">try-with-resources</a> statement introduced in Java JDK 7</li> 
+  </ul> 
+  <p>But also acts as a <a href="https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)" target="_blank">Factory</a> for instantiating initialized instances of a type.</p> 
+  <p>Lifecycle was born of frustration, aiming to help your codebase tidy up all used resources. It's a nice <code>try</code> / <code>finally</code> wrapper!</p> 
+  <p>A resource is anything that requires:</p> 
+  <ul> 
+   <li>Some intialization operations</li> 
+   <li>And/or some tear-down operations</li> 
+  </ul> 
+  <p>to be performed between use. For example, a file:</p> 
+  <ul> 
+   <li>Must be opened before any read/write operations are performed</li> 
+   <li>Any pending writes should be flushed, and the file handle returned to the OS after use</li> 
+  </ul> 
+  <h1><a id="user-content-sbt-settings" class="anchor" href="https://github.com/itv/lifecycle#sbt-settings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT settings</h1> 
+  <p>Stable:</p> 
+  <pre><code>"com.itv" %% "lifecycle" % "0.3"
+</code></pre> 
+  <h1><a id="user-content-contrived-example" class="anchor" href="https://github.com/itv/lifecycle#contrived-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>(Contrived) Example</h1> 
+  <p>Meet <code>bob</code>, <code>fred</code>, and <code>barry</code>.</p> 
+  <p>They each have a secret, but they'll only reveal it to you if you say hello first. After you're done using them, you should say goodbye - it'd be pretty rude not to.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">secret</span><span class="pl-k">:</span> <span class="pl-k">String</span>) {
+     <span class="pl-k">|</span>     <span class="pl-k">private</span> <span class="pl-k">var</span> <span class="pl-en">readyToTellSecret</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     <span class="pl-k">def</span> <span class="pl-en">hello</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>         readyToTellSecret <span class="pl-k">=</span> <span class="pl-c1">true</span>
+     <span class="pl-k">|</span>         println(<span class="pl-s"><span class="pl-pds">"</span>Said hello to <span class="pl-pds">"</span></span> <span class="pl-k">+</span> name)
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     <span class="pl-k">def</span> <span class="pl-en">revealSecret</span>()<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>         require(readyToTellSecret, s<span class="pl-s"><span class="pl-pds">"</span>it's rude to ask $name a secret before you've said hello<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>         secret
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     <span class="pl-k">def</span> <span class="pl-en">goodbye</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>         readyToTellSecret <span class="pl-k">=</span> <span class="pl-c1">false</span>
+     <span class="pl-k">|</span>         println(<span class="pl-s"><span class="pl-pds">"</span>Said goodbye to <span class="pl-pds">"</span></span> <span class="pl-k">+</span> name)
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span> }
+defined <span class="pl-k">class</span> <span class="pl-en">Person</span></pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">bob</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Bob<span class="pl-pds">"</span></span>, secret <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>I hate Barry<span class="pl-pds">"</span></span>)
+bob<span class="pl-k">:</span> <span class="pl-en">Person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-en">Bob</span>,<span class="pl-en">I</span> hate <span class="pl-en">Barry</span>)
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">fred</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Fred<span class="pl-pds">"</span></span>, secret <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>I hate Barry<span class="pl-pds">"</span></span>)
+fred<span class="pl-k">:</span> <span class="pl-en">Person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-en">Fred</span>,<span class="pl-en">I</span> hate <span class="pl-en">Barry</span>)
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">barry</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Barry<span class="pl-pds">"</span></span>, secret <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>I'm lonely<span class="pl-pds">"</span></span>)
+barry<span class="pl-k">:</span> <span class="pl-en">Person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-en">Barry</span>,<span class="pl-en">I</span><span class="pl-en">'m</span> lonely)</pre>
+  </div> 
+  <p><code>bob</code>, <code>fred</code> and <code>barry</code> aren't going to win any prizes for lack of side-effects, but you've got to expect the unexpected when dealing with people.</p> 
+  <p>You're gonna have a bad time if you ask <code>bob</code> his secret before saying hello:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> bob.revealSecret()
+java.lang.<span class="pl-en">IllegalArgumentException</span><span class="pl-k">:</span> requirement <span class="pl-v">failed</span>: it<span class="pl-en">'s</span> rude to ask <span class="pl-en">Bob</span> a secret before you<span class="pl-en">'ve</span> said hello
+  at scala.<span class="pl-en">Predef</span>$.require(<span class="pl-en">Predef</span>.scala<span class="pl-k">:</span><span class="pl-c1">224</span>)
+  at <span class="pl-en">Person</span>.revealSecret(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">21</span>)
+  ... <span class="pl-c1">382</span> elided</pre>
+  </div> 
+  <p>We always need to guarantee we interact with a <code>Person</code> in this manner:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> bob.hello()
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+
+scala<span class="pl-k">&gt;</span> bob.revealSecret()
+res2<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-en">I</span> hate <span class="pl-en">Barry</span>
+
+scala<span class="pl-k">&gt;</span> bob.goodbye()
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span></pre>
+  </div> 
+  <h2><a id="user-content-defining-a-lifecycle" class="anchor" href="https://github.com/itv/lifecycle#defining-a-lifecycle" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Defining a <code>Lifecycle</code></h2> 
+  <p>Here's a <code>Lifecycle</code> that performs all the pleaseantries before/after using a <code>Person</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.itv.lifecycle.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.itv.lifecycle.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">def</span> <span class="pl-en">personInteraction</span>(<span class="pl-v">person</span>: <span class="pl-en">Person</span>)<span class="pl-k">:</span> <span class="pl-en">Lifecycle</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span>
+     <span class="pl-k">|</span>     <span class="pl-k">new</span> <span class="pl-en">VanillaLifecycle</span>[<span class="pl-en">Person</span>] {
+     <span class="pl-k">|</span>         <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">start</span>()<span class="pl-k">:</span> <span class="pl-en">Person</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>             person.hello()
+     <span class="pl-k">|</span>             person
+     <span class="pl-k">|</span>         }
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>         <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">shutdown</span>(<span class="pl-v">instance</span>: <span class="pl-en">Person</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+     <span class="pl-k">|</span>             person.goodbye()
+     <span class="pl-k">|</span>     }
+personInteraction<span class="pl-k">:</span> (<span class="pl-v">person</span>: <span class="pl-en">Person</span>)com.itv.lifecycle.<span class="pl-en">Lifecycle</span>[<span class="pl-en">Person</span>]</pre>
+  </div> 
+  <p><code>start</code> produces an initialized instance of a <code>Person</code>. <code>shutdown</code> should always be performed after using a <code>Person</code>: even if the interaction caused an exception to be thrown.</p> 
+  <p>Note: in this example we perform the <code>start</code> operations on a pre-instantiated <code>Person</code>: but it's perfectly valid to instantiate the resource within the <code>start</code> method of a <code>Lifecycle</code>.</p> 
+  <h2><a id="user-content-interacting-with-a-single-person" class="anchor" href="https://github.com/itv/lifecycle#interacting-with-a-single-person" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Interacting with a single person</h2> 
+  <p>We want to grab the secret of an individual <code>Person</code>, and print it to stdout.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">def</span> <span class="pl-en">announceSecret</span>(<span class="pl-v">person</span>: <span class="pl-en">Person</span>) <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>     <span class="pl-k">val</span> <span class="pl-en">secret</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-en">Lifecycle</span>.using(personInteraction(person)) { greetedPerson <span class="pl-k">=&gt;</span>
+     <span class="pl-k">|</span>         println(<span class="pl-s"><span class="pl-pds">"</span>Asking secret<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>         greetedPerson.revealSecret()
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     println(s<span class="pl-s"><span class="pl-pds">"</span>${person.name}'s secret is '$secret'<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span> }
+announceSecret<span class="pl-k">:</span> (<span class="pl-v">person</span>: <span class="pl-en">Person</span>)<span class="pl-k">Unit</span>
+
+scala<span class="pl-k">&gt;</span> announceSecret(bob)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+<span class="pl-en">Asking</span> secret
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span>
+<span class="pl-en">Bob</span><span class="pl-en">'s</span> secret is <span class="pl-en">'I</span> hate <span class="pl-en">Barry</span><span class="pl-c1">'</span>
+<span class="pl-c1"><span class="pl-ii"></span></span>
+<span class="pl-c1"><span class="pl-ii">scala&gt; announceSecret(fred)</span></span>
+<span class="pl-c1"><span class="pl-ii">Said hello to Fred</span></span>
+<span class="pl-c1"><span class="pl-ii">Asking secret</span></span>
+<span class="pl-c1"><span class="pl-ii">Said goodbye to Fred</span></span>
+<span class="pl-c1"><span class="pl-ii">Fred</span>'</span>s secret is <span class="pl-en">'I</span> hate <span class="pl-en">Barry</span><span class="pl-c1">'</span>
+<span class="pl-c1"><span class="pl-ii"></span></span>
+<span class="pl-c1"><span class="pl-ii">scala&gt; announceSecret(barry)</span></span>
+<span class="pl-c1"><span class="pl-ii">Said hello to Barry</span></span>
+<span class="pl-c1"><span class="pl-ii">Asking secret</span></span>
+<span class="pl-c1"><span class="pl-ii">Said goodbye to Barry</span></span>
+<span class="pl-c1"><span class="pl-ii">Barry</span>'</span>s secret is <span class="pl-c1">'I'</span>m lonely<span class="pl-c1">'</span></pre>
+  </div> 
+  <p>We have used <code>Lifecycle.using</code> to interact safely with a given <code>Lifecycle[Person]</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">using</span>[<span class="pl-en">T</span>, <span class="pl-en">S</span>](<span class="pl-v">lifecycle</span>: <span class="pl-en">Lifecycle</span>[<span class="pl-en">T</span>])(<span class="pl-v">block</span>: <span class="pl-en">T</span> <span class="pl-k">=&gt;</span> <span class="pl-en">S</span>)<span class="pl-k">:</span> <span class="pl-en">S</span></pre>
+  </div> 
+  <p>The <code>using</code> method:</p> 
+  <ul> 
+   <li>Gets an instance of <code>T</code> by using the <code>start</code> method of the given <code>Lifecycle</code></li> 
+   <li>Uses a block of code you provide to produce an <code>S</code></li> 
+   <li>Guarantees the <code>shutdown</code> method of the given <code>Lifecycle</code> is called with the <code>T</code> instance: even if the block of code you provided threw an exception</li> 
+   <li>Returns the <code>S</code> your block of code produced</li> 
+  </ul> 
+  <p>The code block we called <code>Lifecycle.using</code> with is pretty tame: it's unlikely to throw an exception.</p> 
+  <p>What if there was a strong chance our code block <em>will</em> fail in an unexpected manner? We should still be courteous and ensure we say goodbye to the <code>Person</code> we're interacting with.</p> 
+  <p>Let's write a method called <code>judgeThenAnnounce</code>. This method will also interact with an individual <code>Person</code>. It will judge their secret: and throw an exception if they're being unkind. Otherwise it will return the secret without exception.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">def</span> <span class="pl-en">judgeThenAnnounce</span>(<span class="pl-v">person</span>: <span class="pl-en">Person</span>) <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>     <span class="pl-k">val</span> <span class="pl-en">secret</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-en">Lifecycle</span>.using(personInteraction(person)) { greetedPerson <span class="pl-k">=&gt;</span>
+     <span class="pl-k">|</span>         println(<span class="pl-s"><span class="pl-pds">"</span>Asking secret<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>         <span class="pl-k">val</span> <span class="pl-en">revealedSecret</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> greetedPerson.revealSecret()
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>         <span class="pl-k">if</span> (revealedSecret contains <span class="pl-s"><span class="pl-pds">"</span>hate<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>             <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">IllegalStateException</span>(s<span class="pl-s"><span class="pl-pds">"</span>I'm not going to repeat what ${greetedPerson.name} just said to me.<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>         <span class="pl-k">else</span>
+     <span class="pl-k">|</span>             revealedSecret
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     println(s<span class="pl-s"><span class="pl-pds">"</span>${person.name}'s secret is '$secret'<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span> }
+judgeThenAnnounce<span class="pl-k">:</span> (<span class="pl-v">person</span>: <span class="pl-en">Person</span>)<span class="pl-k">Unit</span></pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> judgeThenAnnounce(bob)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+<span class="pl-en">Asking</span> secret
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span>
+java.lang.<span class="pl-en">IllegalStateException</span><span class="pl-k">:</span> <span class="pl-en">I</span><span class="pl-en">'m</span> not going to repeat what <span class="pl-en">Bob</span> just said to me.
+  at $anonfun$<span class="pl-c1">1.</span>apply(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span>)
+  at $anonfun$<span class="pl-c1">1.</span>apply(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">19</span>)
+  at com.itv.lifecycle.<span class="pl-en">Lifecycle</span>$.using(<span class="pl-en">Lifecycle</span>.scala<span class="pl-k">:</span><span class="pl-c1">51</span>)
+  at .judgeThenAnnounce(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">19</span>)
+  ... <span class="pl-c1">746</span> elided</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> judgeThenAnnounce(fred)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Fred</span>
+<span class="pl-en">Asking</span> secret
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Fred</span>
+java.lang.<span class="pl-en">IllegalStateException</span><span class="pl-k">:</span> <span class="pl-en">I</span><span class="pl-en">'m</span> not going to repeat what <span class="pl-en">Fred</span> just said to me.
+  at $anonfun$<span class="pl-c1">1.</span>apply(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span>)
+  at $anonfun$<span class="pl-c1">1.</span>apply(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">19</span>)
+  at com.itv.lifecycle.<span class="pl-en">Lifecycle</span>$.using(<span class="pl-en">Lifecycle</span>.scala<span class="pl-k">:</span><span class="pl-c1">51</span>)
+  at .judgeThenAnnounce(&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">19</span>)
+  ... <span class="pl-c1">758</span> elided</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> judgeThenAnnounce(barry)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Barry</span>
+<span class="pl-en">Asking</span> secret
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Barry</span>
+<span class="pl-en">Barry</span><span class="pl-en">'s</span> secret is <span class="pl-c1">'I'</span>m lonely<span class="pl-c1">'</span></pre>
+  </div> 
+  <p>Looks good eh? Even though our code block blew up a couple of times due to the extreme views of <code>bob</code> and <code>fred</code>, we were courteous to each <code>Person</code>: always saying hello and goodbye.</p> 
+  <h2><a id="user-content-interacting-with-multiple-people" class="anchor" href="https://github.com/itv/lifecycle#interacting-with-multiple-people" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Interacting with multiple people</h2> 
+  <p>Let's extend this example further, and interact with multiple greeted <code>People</code> at the same time.</p> 
+  <p>We will say a <code>Person</code> is friends with another <code>Person</code> if they both share the same secret.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">def</span> <span class="pl-en">areFriends</span>(<span class="pl-v">personA</span>: <span class="pl-en">Person</span>, <span class="pl-v">personB</span>: <span class="pl-en">Person</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>     <span class="pl-k">val</span> <span class="pl-en">interrogation</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+     <span class="pl-k">|</span>         a <span class="pl-k">&lt;</span><span class="pl-k">-</span> personInteraction(personA)
+     <span class="pl-k">|</span>         b <span class="pl-k">&lt;</span><span class="pl-k">-</span> personInteraction(personB)
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span>         <span class="pl-k">yield</span> (a.revealSecret(), b.revealSecret())
+     <span class="pl-k">|</span>
+     <span class="pl-k">|</span>     <span class="pl-en">Lifecycle</span>.using(interrogation) {
+     <span class="pl-k">|</span>         <span class="pl-k">case</span> (secretA, secretB) <span class="pl-k">=&gt;</span>
+     <span class="pl-k">|</span>             secretA <span class="pl-k">==</span> secretB
+     <span class="pl-k">|</span>     }
+     <span class="pl-k">|</span> }
+areFriends<span class="pl-k">:</span> (<span class="pl-v">personA</span>: <span class="pl-en">Person</span>, <span class="pl-v">personB</span>: <span class="pl-en">Person</span>)<span class="pl-k">Boolean</span>
+
+scala<span class="pl-k">&gt;</span> areFriends(bob, fred)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+<span class="pl-en">Said</span> hello to <span class="pl-en">Fred</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Fred</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span>
+res10<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>
+
+scala<span class="pl-k">&gt;</span> areFriends(bob, barry)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+<span class="pl-en">Said</span> hello to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span>
+res11<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+
+scala<span class="pl-k">&gt;</span> areFriends(fred, barry)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Fred</span>
+<span class="pl-en">Said</span> hello to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Fred</span>
+res12<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+
+scala<span class="pl-k">&gt;</span> areFriends(barry, barry)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> hello to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Barry</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Barry</span>
+res13<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-c1">true</span></pre>
+  </div> 
+  <p>We can <code>map</code> and <code>flatMap</code> a <code>Lifeycle</code> just like any other container. We get the same resource safety guarantees:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> personInteraction(bob).map(_.revealSecret().toUpperCase).foreach(println)
+<span class="pl-en">Said</span> hello to <span class="pl-en">Bob</span>
+<span class="pl-en">I</span> <span class="pl-en">HATE</span> <span class="pl-en">BARRY</span>
+<span class="pl-en">Said</span> goodbye to <span class="pl-en">Bob</span></pre>
+  </div> 
+  <p>Note: in this example we're only interacting with <code>Person</code> instances, this is not a limitation, you can combine <code>Lifecycle</code>'s of different intance types in the exact same manner.</p> 
+  <h2><a id="user-content-long-running-lifecycles" class="anchor" href="https://github.com/itv/lifecycle#long-running-lifecycles" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Long running Lifecycles</h2> 
+  <p>Our typical usage is for our entire program to be defined within a single <code>Lifeycle</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">trait</span> <span class="pl-en">HttpServer</span> {
+     <span class="pl-k">|</span>     <span class="pl-k">def</span> <span class="pl-en">stop</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> println(<span class="pl-s"><span class="pl-pds">"</span>stopped<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span> }
+defined <span class="pl-k">trait</span> <span class="pl-en">HttpServer</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">httpServerLifecycle</span><span class="pl-k">:</span> <span class="pl-en">Lifecycle</span>[<span class="pl-en">HttpServer</span>] <span class="pl-k">=</span>
+     <span class="pl-k">|</span>     <span class="pl-k">new</span> <span class="pl-en">VanillaLifecycle</span>[<span class="pl-en">HttpServer</span>] {
+     <span class="pl-k">|</span>         <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">start</span><span class="pl-k">:</span> <span class="pl-en">HttpServer</span> <span class="pl-k">=</span> {
+     <span class="pl-k">|</span>             <span class="pl-k">val</span> <span class="pl-en">server</span><span class="pl-k">:</span> <span class="pl-en">HttpServer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpServer</span> {}
+     <span class="pl-k">|</span>             <span class="pl-c">/**</span>
+<span class="pl-c">     |             Construct some HTTP server, bind it to a port and establish request routes</span>
+<span class="pl-c">     |             **/</span>
+     <span class="pl-k">|</span>             println(<span class="pl-s"><span class="pl-pds">"</span>started<span class="pl-pds">"</span></span>)
+     <span class="pl-k">|</span>             server
+     <span class="pl-k">|</span>         }
+     <span class="pl-k">|</span>         
+     <span class="pl-k">|</span>         <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">shutdown</span>(<span class="pl-v">instance</span>: <span class="pl-en">HttpServer</span>) <span class="pl-k">=</span>
+     <span class="pl-k">|</span>             instance.stop()
+     <span class="pl-k">|</span>     }
+httpServerLifecycle<span class="pl-k">:</span> com.itv.lifecycle.<span class="pl-en">Lifecycle</span>[<span class="pl-en">HttpServer</span>] <span class="pl-k">=</span> $anon$<span class="pl-c1">1</span><span class="pl-k">@</span>6cd81f3f</pre>
+  </div> 
+  <p><code>Lifecycle</code> has a method that will help with this: <code>runUntilJvmShutdown</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>httpServerLifecycle.runUntilJvmShutdown</pre>
+  </div> 
+  <p>This will start an instance using the <code>Lifecycle</code>, and register the <code>shutdown</code> method to be run on the instance when the JVM exits.</p> 
+ </article>
+</div>

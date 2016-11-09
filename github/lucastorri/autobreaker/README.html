@@ -1,0 +1,136 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-autobreaker" class="anchor" href="https://github.com/lucastorri/autobreaker#autobreaker" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>autobreaker</h1> 
+  <p><code>autobreaker</code> is a <a href="http://scala-lang.org/" target="_blank">Scala</a> library that wraps your objects and intercepts all methods returning <a href="http://www.scala-lang.org/api/current/#scala.concurrent.Future" target="_blank"><code>Future</code>s</a> with a <a href="http://martinfowler.com/bliki/CircuitBreaker.html" target="_blank">circuit breaker</a>.</p> 
+  <p>It is based on <a href="https://github.com/zmanio/atmos" target="_blank">atmos</a> and <a href="http://doc.akka.io/docs/akka/current/common/circuitbreaker.html" target="_blank">Akka's Circuit Breaker</a>, using <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html" target="_blank">Java's Proxy</a> to intercept method calls.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/lucastorri/autobreaker#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.unstablebuild.autobreaker.</span><span class="pl-v">_</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">MyService</span> {
+  <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>]
+}
+
+<span class="pl-k">class</span> <span class="pl-en">FailingService</span> <span class="pl-k">extends</span> <span class="pl-e">MyService</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Future</span>.failed(<span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>))
+}
+
+<span class="pl-k">val</span> <span class="pl-en">realService</span><span class="pl-k">:</span> <span class="pl-en">MyService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">FailingService</span>
+<span class="pl-k">val</span> <span class="pl-en">serviceWithCircuitBreaker</span> <span class="pl-k">=</span> <span class="pl-en">AutoBreaker</span>.proxy(realService)
+
+<span class="pl-c">// Make it fail a few times</span>
+(<span class="pl-c1">1</span> to <span class="pl-c1">10</span>).foreach { _ <span class="pl-k">=&gt;</span> serviceWithCircuitBreaker.add(<span class="pl-c1">11</span>, <span class="pl-c1">23</span>) }
+
+<span class="pl-c">// Try again and see that the service isn't called</span>
+serviceWithCircuitBreaker.add(<span class="pl-c1">11</span>, <span class="pl-c1">23</span>)
+<span class="pl-c">// [warn] e.c.CircuitBreakerProxy - Attempt 1 of operation interrupted: akka.pattern.CircuitBreakerOpenException: Circuit Breaker is open; calls are failing fast</span>
+<span class="pl-c">// akka.pattern.CircuitBreakerOpenException: Circuit Breaker is open; calls are failing fast</span>
+</pre>
+  </div> 
+  <p>Please check the unit tests for more examples.</p> 
+  <h3><a id="user-content-skipping-a-specific-method" class="anchor" href="https://github.com/lucastorri/autobreaker#skipping-a-specific-method" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Skipping a specific method</h3> 
+  <p>You can prevent a method from being intercept with the <code>NoCircuitBreaker</code> annotation. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">AnotherImplementation</span> <span class="pl-k">extends</span> <span class="pl-e">MyService</span> {
+  <span class="pl-k">@</span><span class="pl-en">NoCircuitBreaker</span>
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Future</span>.failed(<span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>))
+}
+</pre>
+  </div> 
+  <h2><a id="user-content-install" class="anchor" href="https://github.com/lucastorri/autobreaker#install" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h2> 
+  <p>To use it with <a href="http://www.scala-sbt.org/" target="_blank">SBT</a>, add the following to your <code>build.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>public<span class="pl-pds">"</span></span>)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.unstablebuild<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>autobreaker<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.5.6<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-configuration" class="anchor" href="https://github.com/lucastorri/autobreaker#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h2> 
+  <p>The following settings (and their default values) are available:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CircuitBreakerSettings</span>(
+  <span class="pl-v">totalAttempts</span>: <span class="pl-en">TerminationPolicy</span> <span class="pl-k">=</span> <span class="pl-c1">3.</span>attempts,
+  <span class="pl-v">backoffPolicy</span>: <span class="pl-en">BackoffPolicy</span> <span class="pl-k">=</span> <span class="pl-en">LimitedExponentialBackoffPolicy</span>(<span class="pl-c1">2.</span>minutes, <span class="pl-c1">1.</span>second),
+  <span class="pl-v">maxFailures</span>: <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">5</span>,
+  <span class="pl-v">callTimeout</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">10.</span>seconds,
+  <span class="pl-v">resetTimeout</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">1.</span>minute,
+  <span class="pl-v">knownError</span>: <span class="pl-en">Throwable</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">false</span>
+)</pre>
+  </div> 
+  <p>Please see <code>atmos</code> and <code>akka</code> documentations for further reference.</p> 
+  <p><code>knownError</code> is used to decide if, given an exception type returned by the method, it should be retried or not, or counted as a failure on the circuit breaker. This allows the usage of custom exceptions to communicate the users about errors that don't affect the used method. For instance, you can decide that an exception communicating validation issues should not be considered as bad as a failure when communicating with a downstream system.</p> 
+  <h2><a id="user-content-guice-integration" class="anchor" href="https://github.com/lucastorri/autobreaker#guice-integration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Guice Integration</h2> 
+  <p><code>autobreaker-guice</code> allows you to annotate your implementations with <code>@WithCircuitBreaker</code> and modify your <a href="https://github.com/google/guice" target="_blank">Guice</a> module to automatically wrap the generated objects.</p> 
+  <p>In order to use it, you need to add the following to your dependencies:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.unstablebuild<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>autobreaker-guice<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.5.6<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Afterwards, it can be used like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">WithCircuitBreaker</span>
+<span class="pl-k">class</span> <span class="pl-en">DownstreamService</span> <span class="pl-k">extends</span> <span class="pl-e">MyService</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+}
+
+<span class="pl-k">class</span> <span class="pl-en">TestModule</span> <span class="pl-k">extends</span> <span class="pl-e">AbstractModule</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">configure</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> bind(<span class="pl-c1">classOf</span>[<span class="pl-en">MyService</span>]).to(<span class="pl-c1">classOf</span>[<span class="pl-en">DownstreamService</span>])
+}
+
+<span class="pl-k">val</span> <span class="pl-en">module</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">TestModule</span>()
+<span class="pl-k">val</span> <span class="pl-en">injector</span> <span class="pl-k">=</span> <span class="pl-en">Guice</span>.createInjector(<span class="pl-en">AutoBreakerGuice</span>.prepare(module))
+<span class="pl-k">val</span> <span class="pl-en">service</span> <span class="pl-k">=</span> injector.getInstance(<span class="pl-c1">classOf</span>[<span class="pl-en">MyService</span>])</pre>
+  </div> 
+  <p>An <code>ExecutionContext</code> and <code>Scheduler</code> should be available on your bindings.</p> 
+  <p>You can also use a <code>AutoBreakerModule</code> instead of <code>AbstractModule</code>, and that will call <code>AutoBreakerGuice.prepare</code> for you.</p> 
+  <h3><a id="user-content-settings" class="anchor" href="https://github.com/lucastorri/autobreaker#settings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Settings</h3> 
+  <p>You can inject settings in two ways:</p> 
+  <ol> 
+   <li>Bind a <code>CircuitBreakerSettings</code>;</li> 
+   <li>Bind a named <code>CircuitBreakerSettings</code>.</li> 
+  </ol> 
+  <p>For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>bind(<span class="pl-c1">classOf</span>[<span class="pl-en">CircuitBreakerSettings</span>])
+          .toInstance(mySettings)
+
+bind(<span class="pl-c1">classOf</span>[<span class="pl-en">CircuitBreakerSettings</span>])
+  .annotatedWith(<span class="pl-en">Names</span>.named(<span class="pl-s"><span class="pl-pds">"</span>custom-conf<span class="pl-pds">"</span></span>))
+  .toInstance(mySettings)</pre>
+  </div> 
+  <p>To use named Settings, you can add the use named to the <code>WithCircuitBreaker</code> annotation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">WithCircuitBreaker</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>custom-conf<span class="pl-pds">"</span></span>)
+<span class="pl-k">class</span> <span class="pl-en">CustomNamedFailureTestService</span>(<span class="pl-v">error</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">extends</span> <span class="pl-e">MyService</span> { ... }</pre>
+  </div> 
+  <p>If a Settings instance with the given name is not found, the library will try to use an unnamed one. If it also can't fidn one, it will fall back to <code>AutoBreaker.defaultSettings</code>.</p> 
+  <h2><a id="user-content-release" class="anchor" href="https://github.com/lucastorri/autobreaker#release" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release</h2> 
+  <div class="highlight highlight-source-shell">
+   <pre>./sbt <span class="pl-c1">test</span> guice/test
+./sbt publishSigned guice/publishSigned
+./sbt sonatypeReleaseAll</pre>
+  </div> 
+ </article>
+</div>

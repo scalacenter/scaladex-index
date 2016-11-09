@@ -1,0 +1,60 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sse-guice" class="anchor" href="https://github.com/sptz45/sse-guice#sse-guice" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sse-guice</h1> 
+  <p><a href="http://travis-ci.org/sptz45/sse-guice" target="_blank"><img src="https://camo.githubusercontent.com/d9a4c03eb68521ed29ed4dbc0cc8ef0cc23cba2e/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f7370747a34352f7373652d67756963652e706e67" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/sptz45/sse-guice.png" style="max-width:100%;"></a></p> 
+  <p>A library to make the <em>Guice</em> internal DSL more <em>Scala</em> friendly.</p> 
+  <p>The motivation for this library is the fact that, although Scala provides lots of syntactic ways to create internal DSLs, when working with the Guice internal DSL the Java code is both sorter an more readable. The main reason for this is the absence of class literals in Scala. Instead of writing <code>Service.class</code> in Scala we write <code>classOf[Service]</code> which is longer and less readable.</p> 
+  <p>To address this problem sse-guice extends the interfaces of Guice's internal DSL (defined in <code>com.google.inject.binder</code>) by adding a method that takes a <code>Manifest</code> for each method that takes <code>Class</code> as a parameter. This allows us to write:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>bind[<span class="pl-en">Service</span>].to[<span class="pl-en">ServiceImpl</span>].in[<span class="pl-en">Singleton</span>]</pre>
+  </div> 
+  <p>instead of:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>bind(<span class="pl-c1">classOf</span>[<span class="pl-en">Service</span>]).to(<span class="pl-c1">classOf</span>[<span class="pl-en">ServiceImpl</span>]).in(<span class="pl-c1">classOf</span>[<span class="pl-en">Singleton</span>])</pre>
+  </div> 
+  <p>which is what we have to write when using Guice in Scala.</p> 
+  <p>An added benefit of <code>Manifest</code>s is that they not only allow us to get rid of classes but also <code>TypeLiteral</code>s. To define a binding for a generic type in Guice (because of erasure) we have to construct a <code>TypeLiteral</code>. For example to bind <code>Validator[Registration]</code> to <code>RegistrationVSpec</code> we have to write:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>bind(<span class="pl-k">new</span> <span class="pl-en">TypeLiteral</span>[<span class="pl-en">Validator</span>[<span class="pl-en">Registration</span>]] {}).to(<span class="pl-c1">classOf</span>[<span class="pl-en">RegistrationVSpec</span>])</pre>
+  </div> 
+  <p>Because <code>Manifest</code> also has information about the type arguments of a type when using the methods that take <code>Manifest</code> as an argument sse-guice is able to detect if the type has type arguments and construct a <code>TypeLiteral</code> automatically. This allows us to write:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>bind[<span class="pl-en">Validator</span>[<span class="pl-en">Registration</span>]].to[<span class="pl-en">RegistrationVSpec</span>]</pre>
+  </div> 
+  <p>and avoid the explicit creation of the <code>TypeLiteral</code>.</p> 
+  <h2><a id="user-content-setup" class="anchor" href="https://github.com/sptz45/sse-guice#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h2> 
+  <p>For <em>Scala 2.9.x</em> use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>com.tzavellas<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sse-guice<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>For <em>Scala 2.10.x and 2.11.x</em> use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>com.tzavellas<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>sse-guice<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.7.2<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/sptz45/sse-guice#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>To use this library your Guice modules must extend the <code>ScalaModule</code> abstract class instead of the <code>AbstractModule</code>. The <code>ScalaModule</code> adds methods and overrides any methods that return binder interfaces to return the enhanced interfaces of this library.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyModule</span> <span class="pl-k">extends</span> <span class="pl-e">ScalaModule</span> {
+  <span class="pl-k">def</span> <span class="pl-en">configure</span>() {
+    bind[<span class="pl-en">Service</span>].to[<span class="pl-en">ServiceImpl</span>].in[<span class="pl-en">Singleton</span>]
+    bind[<span class="pl-en">PaymentService</span>].to[<span class="pl-en">CreditCardPaymentService</span>]
+    bindConstant().annotatedWithName(<span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>).to(<span class="pl-c1">8080</span>)
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/sptz45/sse-guice#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Licensed under the Apache License, Version 2.0. See the LICENSE and NOTICE files for more information.</p> 
+ </article>
+</div>

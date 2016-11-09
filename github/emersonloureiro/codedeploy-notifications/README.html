@@ -1,0 +1,75 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-codedeploy-notifications" class="anchor" href="https://github.com/emersonloureiro/codedeploy-notifications#codedeploy-notifications" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>codedeploy-notifications</h1> 
+  <p>A Scala play library for triggering notifications for AWS codedeploy deployments. It requires Scala <strong>2.11</strong>.</p> 
+  <p>You can find out the latest release <a href="https://github.com/emersonloureiro/codedeploy-notifications/releases" target="_blank">here</a>; it's simply the latest tag.</p> 
+  <p>Releases are published to <a href="http://central.sonatype.org/" target="_blank">Sonatype</a>. Simply add the following to your dependencies:</p> 
+  <p><code>resolvers += Resolver.sonatypeRepo("releases")</code></p> 
+  <pre><code>libraryDependencies ++= Seq(
+  "cf.janga" %% "codedeploy-notifications" % "0.2.1",
+)
+</code></pre> 
+  <h2><a id="user-content-using-codedeploy-notifications" class="anchor" href="https://github.com/emersonloureiro/codedeploy-notifications#using-codedeploy-notifications" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using codedeploy-notifications</h2> 
+  <p>In codedeploy-notifications, a Codedeploy application first needs to be <em>registered</em>. This essentially means enabling deployment notifications for the application. This is so that you can configure specifically which Codedeploy applications you want to trigger notifications, instead of just doing so for all of them in an AWS account. Codedeploy-notifications then works by directly querying Codedeploy for a list of deployments, for all deployment groups, for all registered applications, and then triggering notifications for successful deployments. Here's an example of registering a new application with codedeploy-notifications - registrations are persisted in Dynamo DB:</p> 
+  <pre><code>val amazonDynamoClient = ...
+val registrationDao = new DynamoDbRegistrationDao(amazonDynamoClient)
+val newRelicNotificationSetup = NewrelicNotificationSetup(applicationName)
+val newRegistration = NewRegistration("CodedeployApplicationName", Seq(newRelicNotificationSetup))
+registrationDao.newRegistration(newRegistration)
+</code></pre> 
+  <p>Successful notifications are also persisted in Dynamo DB, to prevent sending duplicate notifications for a deployment. There's a utility for setting up all the Dynamo tables. Simply call <code>DynamoSetup.setupDynamoTables</code> during your application startup, and it will create and setup all the required dynamo tables, skipping that process once they've been created. It'll also wait until all tables are created and active.</p> 
+  <p>The logic for querying Codedeploy and triggering notifications sits in <code>DeploymentScanManager</code>. There is a scheduler provided - <code>DeploymentScannerScheduler</code> - which schedules <code>DeploymentScanManager</code> to run, and then re-schedules it again once it has queried all registered applications. So you can simply call <code>DeploymentScannerScheduler.schedule</code> during your application startup. For obvious reasons, the scheduler should be called only after the dynamo tables have been setup. </p> 
+  <p>In Play, you'd typically put the Dynamo setup and scheduling call on the Global object.</p> 
+  <pre><code>object Global extends GlobalSettings {
+
+  override def onStart(app: Application): Unit = {
+    val amazonDynamoDBClient = ...
+    DynamoSetup.setupDynamoTables(amazonDynamoDBClient))
+    val schedulingFrequency = 5 // The time to be passed, in seconds, between each run of DeploymentScanManager
+    DeploymentScannerScheduler.schedule(schedulingFrequency, new DeploymentScanManager(...))
+  }
+}
+</code></pre> 
+  <p>Instead of using the scheduling as above, though, you can simply use <code>DeploymentScanManager</code> directly. This is handy if you are integrating the library with a service that is running with multiple instances. Because the scheduling logic has no global locking or leader election, multiple instances can run query Codedeploy at the same time and pick up the same deployment, resulting in duplicate notifications.</p> 
+  <p>For notifications, there's a separate trait - <code>NotificationService</code> - which you can extend if you want notifications for a channel that's not included with the library - e.g., SNS. Each <code>NotificationService</code> has a <code>NotificationChannel</code> indicating which notification channel it handles. That's used by <code>DeploymentScanManager</code> to find a suitable <code>NotificationService</code> whenever a deployment notification needs to be triggered. If no suitable one is found - which means you have registered an application with a notification channel that has no corresponding <code>NotificationService</code> - codedeploy-notifications will simply skip the notification for that channel, but it will still try to send notifications for other channels configured for that application.</p> 
+  <p><strong>Supported notifications channels</strong></p> 
+  <ul> 
+   <li>Newrelic: these will trigger deployment notifications via Newrelic's deployment endpoint. It will include the revision and deployment group - as part of the Newrelic's deployment description;</li> 
+   <li>Email (via AWS Simple Email Service (SES)): uses SES to send plain text emails containing the deployment ID, revision, application name, and deployment group.</li> 
+  </ul> 
+  <h2><a id="user-content-aws" class="anchor" href="https://github.com/emersonloureiro/codedeploy-notifications#aws" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>AWS</h2> 
+  <p>Your application will need to access to Codedeploy and the Dynamo tables. The cloudformation template snippet below illustrates the permissions needed. Replace <code>YOUR_REGION</code> with the region you're deploying to and <code>YOUR_ACCOUNT</code> with your account id.</p> 
+  <pre><code>{
+  "Effect": "Allow",
+  "Action": [
+    "codedeploy:Get*",
+    "codedeploy:List*"
+  ],
+  "Resource": [
+    "arn:aws:codedeploy:YOUR_REGION:YOUR_ACCOUNT:deploymentgroup:*",
+    "arn:aws:codedeploy:YOUR_REGION:YOUR_ACCOUNT:application:*"
+  ]
+},
+{
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:*"
+  ],
+  "Resource": [
+    "arn:aws:dynamodb:YOUR_REGION:YOUR_ACCOUNT:table/cd-notifications-registrations",
+    "arn:aws:dynamodb:YOUR_REGION:YOUR_ACCOUNT:table/cd-notifications-deployment-notifications",
+    "arn:aws:dynamodb:YOUR_REGION:YOUR_ACCOUNT:table/cd-notifications-deployment-scans"
+  ]
+}
+</code></pre> 
+ </article>
+</div>

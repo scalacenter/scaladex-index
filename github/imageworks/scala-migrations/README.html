@@ -1,0 +1,474 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>This document is a copy of <a href="http://code.google.com/p/scala-migrations/" target="_blank">http://code.google.com/p/scala-migrations/</a>; it may be easier to read it in a browser.</p> 
+  <p>Scala Migrations is a library to manage upgrades and rollbacks to database schemas. Migrations allow a source control system to manage together the database schema and the code using the schema. It is designed to allow multiple developers working on a project with a database backend to design schema modifications independently, apply the migrations to their local database for debugging and when complete, check them into a source control system to manage as one manages normal source code. Other developers then check out the new migrations and apply them to their local database. Finally, the migrations are used to migrate the production databases to the latest schema version.</p> 
+  <p>The Scala Migrations library is written in Scala and makes use of the clean Scala language to write easy to understand migrations, which are also written in Scala. Scala Migrations provides a database abstraction layer that allows migrations to target any supported database vendor.</p> 
+  <h3><a id="user-content-history" class="anchor" href="https://github.com/imageworks/scala-migrations#history" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>History</h3> 
+  <p>Scala Migrations is developed at <a href="http://www.imageworks.com/" target="_blank">Sony Pictures Imageworks</a> to manage database versioning for internal applications. The design is based off <a href="http://api.rubyonrails.org/classes/ActiveRecord/Migration.html" target="_blank">Ruby on Rails Migrations</a> and in fact shares the exact same <code>schema_migrations</code> table to manage the list of installed migrations.</p> 
+  <h3><a id="user-content-sample-migration" class="anchor" href="https://github.com/imageworks/scala-migrations#sample-migration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sample Migration</h3> 
+  <p>Here is a migration used by !VnP3, an internal Imageworks project.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">com.imageworks.vnp.dao.migrations</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.imageworks.migration.</span>{<span class="pl-v">Limit</span>,
+                                 <span class="pl-v">Migration</span>,
+                                 <span class="pl-v">Name</span>,
+                                 <span class="pl-v">NotNull</span>,
+                                 <span class="pl-v">OnDelete</span>,
+                                 <span class="pl-v">Restrict</span>,
+                                 <span class="pl-v">Unique</span>}
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Create the 'facility_set_membership' table, which is a many-to-many</span>
+<span class="pl-c"> * join table between the 'facility' and 'facility_set' tables.  It</span>
+<span class="pl-c"> * represents the sets that a facility is a member of and the</span>
+<span class="pl-c"> * facilities that are in a set.  Rows do not have a their own primary</span>
+<span class="pl-c"> * key.</span>
+<span class="pl-c"> */</span>
+<span class="pl-k">class</span> <span class="pl-en">Migrate_20081216235329_FacilitySetMembership</span>
+  <span class="pl-k">extends</span> <span class="pl-e">Migration</span>
+{
+  <span class="pl-k">val</span> <span class="pl-en">tableName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>facility_set_membership<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">def</span> <span class="pl-en">up</span>() {
+    createTable(tableName) { t <span class="pl-k">=&gt;</span>
+      t.varbinary(<span class="pl-s"><span class="pl-pds">"</span>pk_facility<span class="pl-pds">"</span></span>, <span class="pl-en">NotNull</span>, <span class="pl-en">Limit</span>(<span class="pl-c1">16</span>))
+      t.varbinary(<span class="pl-s"><span class="pl-pds">"</span>pk_facility_set<span class="pl-pds">"</span></span>, <span class="pl-en">NotNull</span>, <span class="pl-en">Limit</span>(<span class="pl-c1">16</span>))
+      t.bigint(<span class="pl-s"><span class="pl-pds">"</span>created_micros<span class="pl-pds">"</span></span>, <span class="pl-en">NotNull</span>)
+      t.bigint(<span class="pl-s"><span class="pl-pds">"</span>modified_micros<span class="pl-pds">"</span></span>, <span class="pl-en">NotNull</span>)
+    }
+
+    <span class="pl-c">// There should only be one pair of (pk_facility_set, pk_facility)</span>
+    <span class="pl-c">// tuples in the entire table, i.e., for one facility set, the</span>
+    <span class="pl-c">// facility should only appear once.</span>
+    addIndex(tableName,
+             <span class="pl-en">Array</span>(<span class="pl-s"><span class="pl-pds">"</span>pk_facility_set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>pk_facility<span class="pl-pds">"</span></span>),
+             <span class="pl-en">Unique</span>,
+             <span class="pl-en">Name</span>(<span class="pl-s"><span class="pl-pds">"</span>idx_fac_set_mmbrshp_uniq_pks<span class="pl-pds">"</span></span>))
+
+    addForeignKey(on(tableName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>pk_facility<span class="pl-pds">"</span></span>),
+                  references(<span class="pl-s"><span class="pl-pds">"</span>facility<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>pk_facility<span class="pl-pds">"</span></span>),
+                  <span class="pl-en">OnDelete</span>(<span class="pl-en">Restrict</span>),
+                  <span class="pl-en">Name</span>(<span class="pl-s"><span class="pl-pds">"</span>fk_fac_set_mmbrshp_pk_fac<span class="pl-pds">"</span></span>))
+
+    addForeignKey(on(tableName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>pk_facility_set<span class="pl-pds">"</span></span>),
+                  references(<span class="pl-s"><span class="pl-pds">"</span>facility_set<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>pk_facility_set<span class="pl-pds">"</span></span>),
+                  <span class="pl-en">OnDelete</span>(<span class="pl-en">Restrict</span>),
+                  <span class="pl-en">Name</span>(<span class="pl-s"><span class="pl-pds">"</span>fk_fac_set_mmbrshp_pk_fac_set<span class="pl-pds">"</span></span>))
+  }
+
+  <span class="pl-k">def</span> <span class="pl-en">down</span>() {
+    dropTable(tableName)
+  }
+}</pre>
+  </div> 
+  <p>To migrate a database to the latest version requires code similar to:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.imageworks.migration.</span>{<span class="pl-v">DatabaseAdapter</span>,
+                                 <span class="pl-v">InstallAllMigrations</span>,
+                                 <span class="pl-v">Vendor</span>}
+
+<span class="pl-k">object</span> <span class="pl-en">Test</span>
+{
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+    <span class="pl-k">val</span> <span class="pl-en">driver_class_name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.postgresql.Driver<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">vendor</span> <span class="pl-k">=</span> <span class="pl-en">Vendor</span>.forDriver(driver_class_name)
+    <span class="pl-k">val</span> <span class="pl-en">migration_adapter</span> <span class="pl-k">=</span> <span class="pl-en">DatabaseAdapter</span>.forVendor(vendor, <span class="pl-c1">None</span>)
+    <span class="pl-k">val</span> <span class="pl-en">data_source</span><span class="pl-k">:</span> javax.sql.<span class="pl-en">DataSource</span> <span class="pl-k">=</span> ...
+    <span class="pl-k">val</span> <span class="pl-en">migrator</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Migrator</span>(data_source, migration_adapter)
+
+    <span class="pl-c">// Now apply all migrations that are in the</span>
+    <span class="pl-c">// com.imageworks.vnp.dao.migrations package.</span>
+    migrator.migrate(<span class="pl-en">InstallAllMigrations</span>, <span class="pl-s"><span class="pl-pds">"</span>com.imageworks.vnp.dao.migrations<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>)
+  }</pre>
+  </div> 
+  <p>To rollback a database to its pristine state:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  migrator.migrate(<span class="pl-en">RemoveAllMigrations</span>, <span class="pl-s"><span class="pl-pds">"</span>com.imageworks.vnp.dao.migrations<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>)</pre>
+  </div> 
+  <p>To rollback two migrations:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  migrator.migrate(<span class="pl-en">RollbackMigration</span>(<span class="pl-c1">2</span>), <span class="pl-s"><span class="pl-pds">"</span>com.imageworks.vnp.dao.migrations<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>)</pre>
+  </div> 
+  <p>And to migrate to a specific migration, rollbacking back migrations that are newer than the requested migration version and installing migrations older than the requested version.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  migrator.migrate(<span class="pl-en">MigrateToVersion</span>(<span class="pl-c1">20090731</span>), <span class="pl-s"><span class="pl-pds">"</span>com.imageworks.vnp.dao.migrations<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>)</pre>
+  </div> 
+  <h3><a id="user-content-supported-databases" class="anchor" href="https://github.com/imageworks/scala-migrations#supported-databases" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported Databases</h3> 
+  <p>Scala Migrations currently supports</p> 
+  <ul> 
+   <li>Derby</li> 
+   <li>MySQL</li> 
+   <li>Oracle</li> 
+   <li>PostgreSQL</li> 
+  </ul> 
+  <p>Patches for other databases are welcome; however, you will need to submit a <a href="http://opensource.imageworks.com/cla/" target="_blank">Contributor License Agreement</a>.</p> 
+  <h3><a id="user-content-start-using-scala-migrations" class="anchor" href="https://github.com/imageworks/scala-migrations#start-using-scala-migrations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Start using Scala Migrations</h3> 
+  <p>Maven Central hosts compiled jars for Scala 2.8.0 and greater, compiled on JDK 1.6/JDBC 4. All Scala Migrations artifacts have a <code>groupId</code> of <code>com.imageworks.scala-migrations</code>. A separate compilation and publish is done for each Scala version, with a distinct artifactId of the form <code>scala-migrations_X.Y.Z</code>, where <code>X.Y.Z</code> is the Scala version used to compile Scala Migrations.</p> 
+  <p>Direct links to jars compiled against 2.8.0 or greater can be found at <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3Acom.imageworks.scala-migrations" target="_blank">Maven Central</a>. Jars for Scala 2.7.7 for JDBC 3 and JDBC 4 are on the <a href="http://code.google.com/p/scala-migrations/downloads/list" target="_blank">Downloads</a> page.</p> 
+  <h4><a id="user-content-sbt" class="anchor" href="https://github.com/imageworks/scala-migrations#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt</h4> 
+  <p>Add the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.imageworks.scala-migrations<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-migrations<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.1<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h4><a id="user-content-ivy" class="anchor" href="https://github.com/imageworks/scala-migrations#ivy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ivy</h4> 
+  <p>Add the following to the dependencies section of the <code>ivy.xml</code> file, replacing <code>X.Y.Z</code> with your Scala version.</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span> <span class="pl-e">org</span>=<span class="pl-s"><span class="pl-pds">"</span>com.imageworks.scala-migrations<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>-migrations_X.Y.Z<span class="pl-pds">"</span></span> <span class="pl-e">rev</span>=<span class="pl-s"><span class="pl-pds">"</span>1.1.1<span class="pl-pds">"</span></span> /&gt;</pre>
+  </div> 
+  <h4><a id="user-content-maven" class="anchor" href="https://github.com/imageworks/scala-migrations#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h4> 
+  <p>Add the following snippet to the <code>&lt;dependencies /&gt;</code> section of the project's <code>pom.xml</code> file, replacing <code>X.Y.Z</code> with your Scala version.</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;com.imageworks.scala-migrations&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;scala-migrations_X.Y.Z&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;1.1.1&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h3><a id="user-content-dependencies-and-setup" class="anchor" href="https://github.com/imageworks/scala-migrations#dependencies-and-setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies and Setup</h3> 
+  <p>Scala Migrations depends upon:</p> 
+  <ul> 
+   <li><p>The Simple Logging Facade for Java (SLF4J).</p> <p><a href="http://www.slf4j.org/" target="_blank">http://www.slf4j.org/</a></p> <p>The Simple Logging Facade for Java or (SLF4J) serves as a simple facade or abstraction for various logging frameworks, e.g. log4j and java.util.logging, allowing the end user to plug in the desired logging framework at deployment time.</p> <p>Scala Migrations has a library dependency upon SLF4J's slf4j-api jar, which only provides an interface to a logging API. The application must chose a concrete logging implementation by ensuring that one of the following jars is available in the classpath. If no implementation jar is provided, the the no-operation logging implementation is used.</p> 
+    <ul> 
+     <li><p>slf4j-log4j12</p> <p>Binding for log4j version 1.2, a widely used logging framework. You also need to place log4j.jar on your classpath.</p></li> 
+     <li><p>slf4j-jcl</p> <p>Binding for Jakarta Commons Logging. This binding will delegate all SLF4J logging to JCL.</p></li> 
+     <li><p>slf4j-jdk14</p> <p>Binding for java.util.logging, also referred to as JDK 1.4 logging.</p></li> 
+     <li><p>slf4j-nop</p> <p>Binding for NOP, silently discarding all logging.</p></li> 
+     <li><p>slf4j-simple</p> <p>Binding for Simple implementation, which outputs all events to System.err. Only messages of level INFO and higher are printed. This binding may be useful in the context of small applications.</p> <p>See <a href="http://www.slf4j.org/manual.html" target="_blank">http://www.slf4j.org/manual.html</a> for more information.</p></li> 
+    </ul></li> 
+   <li><p>The log4jdbc logging JDBC wrapper that logs all JDBC operations.</p> <p><a href="http://code.google.com/p/log4jdbc/" target="_blank">http://code.google.com/p/log4jdbc/</a></p> <p>Since running a migration on a production database is dangerous operation that can leave irreversible damage if anything goes wrong, the JDBC connection given to all migrations is a log4jdbc <code>net.sf.log4jdbc.ConnectionSpy</code> that wraps the real connection. This logs all method calls so that any migration errors can be fully debugged. log4jdbc uses SLF4J; see the log4jdbc website on how to set up the loggers and logging level for log4jdbc messages.</p> <p>As of 1.0.3, Scala Migrations will use log4jdbc to wrap the real database connection if log4jdbc is found at runtime in the classpath, otherwise it will use the raw database connection and not do any SQL specific logging. No special work needs to be done by the migration author to use log4jdbc, besides making it available in the classpath. Before 1.0.3, Scala Migrations required that log4jdbc be in the classpath.</p></li> 
+  </ul> 
+  <h3><a id="user-content-migration-naming" class="anchor" href="https://github.com/imageworks/scala-migrations#migration-naming" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration Naming</h3> 
+  <p>In Scala Migrations, the migrations needs to be compiled and their <code>*</code>.class files need to be made available at runtime; the source files will not be available at runtime.</p> 
+  <p>Scala Migrations then needs to know an ordering on the migrations, so the timestamp needs to be in the class name. Scala does not support naming a symbol such as <code>20080717013526_YourMigrationName</code> because the name begins with a digit (unless one were to quote the name which would look odd), so the Scala Migrations looks for classes named</p> 
+  <pre><code>   Migrate_(\\d+)_([_a-zA-Z0-9]*)
+</code></pre> 
+  <p>The time stamp can be generated using the following command on Unix systems:</p> 
+  <pre><code>   $ date -u +%Y%m%d%H%M%S
+</code></pre> 
+  <p>This is different than Ruby on Rails migrations which are in filenames of the form</p> 
+  <pre><code>   20080717013526_your_migration_name.rb
+</code></pre> 
+  <p>and have a corresponding class name such as <code>YourMigrationName</code>. Ruby on Rails can find all the migration <code>*</code>.rb files for a project and load them at runtime and from the filename load the correct class name. The ordering to apply the migrations is contained in the filename, not the class name.</p> 
+  <h3><a id="user-content-unsupported-database-features" class="anchor" href="https://github.com/imageworks/scala-migrations#unsupported-database-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Unsupported Database Features</h3> 
+  <p>It is not a goal of Scala Migrations to check and report on the compatibility of a Scala Migrations specific feature with a database. For example, Oracle does not support the <code>"ON UPDATE SET NULL"</code> clause on a foreign key constraint. If a <code>OnUpdate(SetNull)</code> is specified for a foreign key constraint, then Scala Migrations will generate that clause and ask the database to execute it.</p> 
+  <p>If Scala Migrations did attempt to check on the compatibility of each feature, then it would need to grow much larger to know which features worked on which database, and even worse, potentially know which features appear in which database versions. This is not something that the authors of Scala Migrations want to maintain.</p> 
+  <h3><a id="user-content-data-types" class="anchor" href="https://github.com/imageworks/scala-migrations#data-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Data Types</h3> 
+  <p>The following data types are supported listed with their mappings. If a database name is not specified, then the default mapping is used. More information on the mappings is below.</p> 
+  <ul> 
+   <li><p>Bigint</p> 
+    <ul> 
+     <li>Default: <code>BIGINT</code></li> 
+     <li>Oracle: <code>NUMBER(19, 0)</code></li> 
+    </ul></li> 
+   <li><p>Blob</p> 
+    <ul> 
+     <li>Default: <code>BLOB</code></li> 
+     <li>MySQL: <code>LONGBLOB</code></li> 
+     <li>PostgreSQL: <code>BYTEA</code></li> 
+    </ul></li> 
+   <li><p>Boolean</p> 
+    <ul> 
+     <li>Default: <code>BOOLEAN</code></li> 
+     <li>Derby: Unsupported; even though Derby 1.7 supports a <code>BOOLEAN</code> type, Scala Migrations currently always throws an <code>UnsupportedColumnTypeException</code></li> 
+     <li>Oracle: Unsupported; an <code>UnsupportedColumnTypeException</code> is thrown if Boolean is used</li> 
+    </ul></li> 
+   <li><p>Char</p> 
+    <ul> 
+     <li>Default: <code>CHAR</code></li> 
+    </ul></li> 
+   <li><p>Decimal</p> 
+    <ul> 
+     <li>Default: <code>DECIMAL</code></li> 
+     <li>Oracle: <code>NUMBER</code></li> 
+    </ul></li> 
+   <li><p>Integer</p> 
+    <ul> 
+     <li>Default: <code>INTEGER</code></li> 
+     <li>Oracle: <code>NUMBER(10, 0)</code></li> 
+    </ul></li> 
+   <li><p>Smallint</p> 
+    <ul> 
+     <li>Default: <code>SMALLINT</code></li> 
+     <li>Oracle: <code>NUMBER(5, 0)</code></li> 
+    </ul></li> 
+   <li><p>Timestamp</p> 
+    <ul> 
+     <li>Default: <code>TIMESTAMP</code></li> 
+     <li>MySQL: <code>TIMESTAMP</code> but does not support fractional precision</li> 
+    </ul></li> 
+   <li><p>Varbinary</p> 
+    <ul> 
+     <li>Default: <code>VARBINARY</code></li> 
+     <li>Derby: <code>VARCHAR FOR BIT DATA</code></li> 
+     <li>Oracle: <code>RAW</code></li> 
+     <li>PostgreSQL: <code>BYTEA</code></li> 
+    </ul></li> 
+   <li><p>Varchar</p> 
+    <ul> 
+     <li>Default: <code>VARCHAR</code></li> 
+     <li>Oracle: <code>VARCHAR2</code></li> 
+    </ul></li> 
+  </ul> 
+  <h3><a id="user-content-boolean-mapping" class="anchor" href="https://github.com/imageworks/scala-migrations#boolean-mapping" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Boolean Mapping</h3> 
+  <p>Scala Migrations does not define a mapping for the Boolean data type in databases that do not have a native Boolean data type. The reason is that there are many ways of representing a Boolean value database and Scala Migrations is not an ORM layer, so this decision is left to the application developer.</p> 
+  <p>Different representations that have been used in schemas include:</p> 
+  <ul> 
+   <li><p>A <code>CHAR(1)</code> column containing a 'Y' or 'N' value. The column may have a <code>CHECK</code> constraint to ensure that the values are only 'Y' or 'N'.</p></li> 
+   <li><p>An <code>INTEGER</code> column with 0 representing to false and all other values representing true.</p></li> 
+  </ul> 
+  <h3><a id="user-content-blob-and-varbinary-mappings" class="anchor" href="https://github.com/imageworks/scala-migrations#blob-and-varbinary-mappings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>BLOB and VARBINARY Mappings</h3> 
+  <p>Each database treats BLOB and VARBINARY differently.</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th align="left">Database</th> 
+     <th align="left">Scala Migrations Type</th> 
+     <th align="left">SQL Type</th> 
+     <th align="left">Maximum Length (bytes)</th> 
+     <th align="left">Specify Length?</th> 
+     <th align="left">Specify Default?</th> 
+     <th align="left">References</th> 
+     <th align="left">Notes</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td align="left">Derby</td> 
+     <td align="left">Blob</td> 
+     <td align="left"><code>BLOB</code></td> 
+     <td align="left">2,147,483,647</td> 
+     <td align="left">Optional, defaults to 2 GB</td> 
+     <td align="left"></td> 
+     <td align="left">No</td> 
+     <td align="left"><a href="http://db.apache.org/derby/docs/10.9/ref/rrefblob.html" target="_blank">1</a></td> 
+    </tr> 
+    <tr> 
+     <td align="left"></td> 
+     <td align="left">Varbinary</td> 
+     <td align="left"><code>VARCHAR FOR BIT DATA</code></td> 
+     <td align="left">32,672</td> 
+     <td align="left">Required</td> 
+     <td align="left">Yes</td> 
+     <td align="left"><a href="http://db.apache.org/derby/docs/10.9/ref/rrefsqlj32714.html" target="_blank">2</a></td> 
+     <td align="left"></td> 
+    </tr> 
+    <tr> 
+     <td align="left">MySQL</td> 
+     <td align="left">Blob</td> 
+     <td align="left"><code>LONGBLOB</code></td> 
+     <td align="left">4,294,967,295</td> 
+     <td align="left">No</td> 
+     <td align="left">No</td> 
+     <td align="left"><a href="http://dev.mysql.com/doc/refman/5.5/en/blob.html" target="_blank">3</a></td> 
+     <td align="left"></td> 
+    </tr> 
+    <tr> 
+     <td align="left"></td> 
+     <td align="left">Varbinary</td> 
+     <td align="left"><code>VARBINARY</code></td> 
+     <td align="left">21,844 &gt;= &amp;&amp; &lt;= 65,535</td> 
+     <td align="left">Required</td> 
+     <td align="left">Yes</td> 
+     <td align="left"><a href="http://dev.mysql.com/doc/refman/5.5/en/storage-requirements.html" target="_blank">4</a></td> 
+     <td align="left">Stored in row</td> 
+    </tr> 
+    <tr> 
+     <td align="left">Oracle</td> 
+     <td align="left">Blob</td> 
+     <td align="left"><code>BLOB</code></td> 
+     <td align="left">4,294,967,296 in Oracle 8, larger in newer versions</td> 
+     <td align="left">No</td> 
+     <td align="left">??</td> 
+     <td align="left"><a href="http://docs.oracle.com/cd/B28359_01/server.111/b28286/sql_elements001.htm#i54330" target="_blank">5</a> <a href="http://ss64.com/ora/syntax-datatypes.html" target="_blank">6</a></td> 
+     <td align="left"></td> 
+    </tr> 
+    <tr> 
+     <td align="left"></td> 
+     <td align="left">Varbinary</td> 
+     <td align="left"><code>RAW</code></td> 
+     <td align="left">2,000</td> 
+     <td align="left">Required</td> 
+     <td align="left">??</td> 
+     <td align="left"></td> 
+     <td align="left"></td> 
+    </tr> 
+    <tr> 
+     <td align="left">PostgreSQL</td> 
+     <td align="left">Blob</td> 
+     <td align="left"><code>BYTEA</code></td> 
+     <td align="left">1,073,741,823</td> 
+     <td align="left">No</td> 
+     <td align="left">Yes</td> 
+     <td align="left"><a href="http://www.postgresql.org/docs/9.1/static/storage-toast.html" target="_blank">7</a></td> 
+     <td align="left"></td> 
+    </tr> 
+    <tr> 
+     <td align="left"></td> 
+     <td align="left">Varbinary</td> 
+     <td align="left"><code>BYTEA</code></td> 
+     <td align="left">1,073,741,823</td> 
+     <td align="left">No</td> 
+     <td align="left">Yes</td> 
+     <td align="left"></td> 
+     <td align="left"></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h3><a id="user-content-oracle-and-smallint-integer-and-bigint" class="anchor" href="https://github.com/imageworks/scala-migrations#oracle-and-smallint-integer-and-bigint" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Oracle and SMALLINT, INTEGER and BIGINT</h3> 
+  <p>Oracle does not have <code>SMALLINT</code>, <code>INTEGER</code> or <code>BIGINT</code> SQL types comparable to other databases, such such as Derby, MySQL and PostgreSQL. These other databases used a fixed sized signed integer with a limited range of values that can be stored in the column.</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th align="left">Type</th> 
+     <th align="left">Storage</th> 
+     <th align="left">Min value</th> 
+     <th align="left">rax value</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td align="left">SMALLINT</td> 
+     <td align="left">2-byte signed integer</td> 
+     <td align="left">-32768</td> 
+     <td align="left">32767</td> 
+    </tr> 
+    <tr> 
+     <td align="left">INTEGER</td> 
+     <td align="left">4-byte signed integer</td> 
+     <td align="left">-2147483648</td> 
+     <td align="left">2147483647</td> 
+    </tr> 
+    <tr> 
+     <td align="left">BIGINT</td> 
+     <td align="left">8-byte signed integer</td> 
+     <td align="left">-9223372036854775808</td> 
+     <td align="left">9223372036854775807</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>Oracle does support an <code>INTEGER</code> column type but it uses a <code>NUMBER(38)</code> to <a href="http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements001.htm#sthref218" target="_blank">store it</a>.</p> 
+  <p>On Oracle, a Scala Migration using any of the <code>SMALLINT</code>, <code>INTEGER</code> and <code>BIGINT</code> types is mapped to a <code>NUMBER</code> with a precision smaller than 38.</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th align="left">Migration Type</th> 
+     <th align="left">Oracle Type</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td align="left">SMALLINT</td> 
+     <td align="left">NUMBER(5, 0)</td> 
+    </tr> 
+    <tr> 
+     <td align="left">INTEGER</td> 
+     <td align="left">NUMBER(10, 0)</td> 
+    </tr> 
+    <tr> 
+     <td align="left">BIGINT</td> 
+     <td align="left">NUMBER(19, 0)</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>This helps ensure the compatibility of any code running against an Oracle database so that it does not assume it can use 38-digit integer values in case the data needs to be exported to another database or if the code needs to work with other databases. Columns wishing to use a <code>NUMBER(38)</code> should use a DecimalType column.</p> 
+  <h3><a id="user-content-numeric-and-decimal" class="anchor" href="https://github.com/imageworks/scala-migrations#numeric-and-decimal" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>NUMERIC and DECIMAL</h3> 
+  <p>There is a minor difference in the definition of the <code>NUMERIC</code> and <code>DECIMAL</code> types according to the <a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt" target="_blank">SQL 1992 standard</a>:</p> 
+  <pre><code>17) NUMERIC specifies the data type exact numeric, with the decimal
+    precision and scale specified by the &lt;precision&gt; and &lt;scale&gt;.
+
+18) DECIMAL specifies the data type exact numeric, with the decimal
+    scale specified by the &lt;scale&gt; and the implementation-defined
+    decimal precision equal to or greater than the value of the
+    specified &lt;precision&gt;.
+</code></pre> 
+  <p>However, in practice, all databases we looked at implement them identically.</p> 
+  <ul> 
+   <li><p>Derby</p> <p>"NUMERIC is a synonym for DECIMAL and behaves the same way. See DECIMAL data type."</p> <p><a href="http://db.apache.org/derby/docs/10.4/ref/rrefsqlj12362.html" target="_blank">http://db.apache.org/derby/docs/10.4/ref/rrefsqlj12362.html</a></p> <p><a href="http://db.apache.org/derby/docs/10.4/ref/rrefsqlj15260.html" target="_blank">http://db.apache.org/derby/docs/10.4/ref/rrefsqlj15260.html</a></p></li> 
+   <li><p>Mysql</p> <p>"NUMERIC implemented as DECIMAL."</p> <p><a href="http://dev.mysql.com/doc/refman/5.1/en/numeric-types.html" target="_blank">http://dev.mysql.com/doc/refman/5.1/en/numeric-types.html</a></p></li> 
+   <li><p>Oracle</p> <p>Only has the <code>NUMBER</code> type.</p> <p><a href="http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements001.htm" target="_blank">http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements001.htm</a></p> <p><a href="http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements001.htm#sthref218" target="_blank">http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements001.htm#sthref218</a></p></li> 
+   <li><p>PostgreSQL</p> <p>"The types decimal and numeric are equivalent. Both types are part of the SQL standard."</p> <p>The documentation uses <code>NUMERIC</code> more and lists <code>DECIMAL</code> as an alias.</p> <p><a href="http://www.postgresql.org/docs/8.3/interactive/datatype-numeric.html" target="_blank">http://www.postgresql.org/docs/8.3/interactive/datatype-numeric.html</a></p> <p><a href="http://www.postgresql.org/docs/8.3/interactive/datatype.html#DATATYPE-TABLE" target="_blank">http://www.postgresql.org/docs/8.3/interactive/datatype.html#DATATYPE-TABLE</a></p></li> 
+  </ul> 
+  <h3><a id="user-content-auto-incrementing-column-default-values" class="anchor" href="https://github.com/imageworks/scala-migrations#auto-incrementing-column-default-values" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Auto-incrementing Column Default Values</h3> 
+  <p>Several databases natively support a default value for integer column data types that use as the next default value the next value from an automatically increasing sequence of integer values. The use of the AutoIncrement column option enables this feature for a column.</p> 
+  <p>Here are the database mappings:</p> 
+  <ul> 
+   <li><p>Derby</p> <p>Only supported on <code>SMALLINT</code>, <code>INT</code> and <code>BIGINT</code> data types using Derby's <code>GENERATED BY DEFAULT AS IDENTITY</code>. The alternate setting <code>GENERATED ALWAYS AS IDENTITY</code> is not used as it is not consistent with MySQL and PostgreSQL which permits the application to explicitly specify the column's value.</p> <p><a href="http://db.apache.org/derby/docs/10.9/ref/rrefsqlj37836.html" target="_blank">http://db.apache.org/derby/docs/10.9/ref/rrefsqlj37836.html</a></p></li> 
+   <li><p>MySQL</p> <p>Only supported on <code>SMALLINT</code>, <code>INT</code> and <code>BIGINT</code> data types using MySQL's <code>AUTO_INCREMENT</code> keyword.</p> <p><a href="http://dev.mysql.com/doc/refman/5.5/en/create-table.html" target="_blank">http://dev.mysql.com/doc/refman/5.5/en/create-table.html</a> <a href="http://dev.mysql.com/doc/refman/5.5/en/example-auto-increment.html" target="_blank">http://dev.mysql.com/doc/refman/5.5/en/example-auto-increment.html</a></p></li> 
+   <li><p>PostgreSQL</p> <p>Only supported on <code>SMALLINT</code>, <code>INT</code> and <code>BIGINT</code> data types by replacing the data type name with <code>SMALLSERIAL</code>, <code>SERIAL</code> and <code>BIGSERIAL</code>, respectively. Support for <code>SMALLSERIAL</code> is only available in PostgreSQL 9.2 and greater.</p> <p><a href="http://www.postgresql.org/docs/9.2/static/datatype-numeric.html#DATATYPE-SERIAL" target="_blank">http://www.postgresql.org/docs/9.2/static/datatype-numeric.html#DATATYPE-SERIAL</a></p></li> 
+   <li><p>Oracle</p> <p>No support is provided in this commit as it appears that equivalent functionality can only be provided by using triggers.</p></li> 
+  </ul> 
+  <h3><a id="user-content-character-set-encoding" class="anchor" href="https://github.com/imageworks/scala-migrations#character-set-encoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Character Set Encoding</h3> 
+  <p>Scala Migrations supports specifying the character set for <code>Char</code> and <code>Varchar</code> columns with the <code>CharacterSet()</code> column option, which takes the name of the character set as an argument. Currently, the only supported character set name is Unicode.</p> 
+  <p>Here is how different databases handle character set encoding.</p> 
+  <ul> 
+   <li><p>Derby</p> <p>"Character data types are represented as Unicode 2.0 sequences in Derby."</p> <p>So specifying <code>CharacterSet(Unicode)</code> does not change its behavior. Using any character set name besides Unicode as the argument to <code>CharacterSet()</code> raises a warning and is ignored.</p> <p><a href="http://db.apache.org/derby/docs/10.4/devguide/cdevcollation.html" target="_blank">http://db.apache.org/derby/docs/10.4/devguide/cdevcollation.html</a></p></li> 
+   <li><p>MySQL</p> <p>MySQL supports 30+ character sets and and all of them can be simultaneously used; in fact, a table can have multiple character type columns, each with a different character set. See <a href="http://dev.mysql.com/doc/refman/5.5/en/charset-database.html" target="_blank">http://dev.mysql.com/doc/refman/5.5/en/charset-database.html</a> for reference.</p> <p>If no <code>CharacterSet</code> is used, then MySQL will use the database's or the server's default character set and the default character set's default collation. If <code>CharacterSet(Unicode)</code> is used, then Scala Migrations uses the <code>utf8</code> character set with the <code>utf8_unicode_ci</code> collation, which is not MySQL's default <code>utf8_general_ci</code> collation for <code>utf8</code>, as <code>utf8_unicode_ci</code> is [<a href="http://stackoverflow.com/questions/766809/" target="_blank">http://stackoverflow.com/questions/766809/</a> not incorrect].</p> <p>Users wishing to have more control on specifying character sets and collations can discuss this on the developers mailing list.</p></li> 
+   <li><p>PostgreSQL</p> <p>The character set encoding is chosen when a database is created with the "createdb" command line utility or the</p></li> 
+  </ul> 
+  <pre><code>   CREATE DATABASE ENCODING [=] encoding
+</code></pre> 
+  <p>SQL statement. So specifying any <code>CharacterSet</code> has no effect.</p> 
+  <ul> 
+   <li><p>Oracle</p> <p>Oracle only supports two character sets. The first uses the database character set which was chosen when the database was created. This encoding is used for <code>CHAR</code>, <code>VARCHAR2</code> and <code>CLOB</code> columns. The second character set is called the national character set and is Unicode, which is used for <code>NCHAR</code>, <code>NVARCHAR2</code> and <code>NCLOB</code> columns. There are two encodings available for the national character set, <code>AL16UTF16</code> and <code>UTF8</code>. By default, Oracle uses <code>AL16UTF16</code>.</p> <p><a href="http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14225/ch6unicode.htm" target="_blank">http://download-west.oracle.com/docs/cd/B19306_01/server.102/b14225/ch6unicode.htm</a></p> <p>Specifying no <code>CharacterSet</code> column option defaults the <code>Char</code> type to <code>CHAR</code> and the <code>Varchar</code> type to <code>VARCHAR2</code>. If <code>CharacterSet(Unicode)</code> is given, then <code>Char</code> uses <code>NCHAR</code> and <code>Varchar</code> uses <code>NVARCHAR2</code>. Using any character set name besides <code>Unicode</code> as the argument to <code>CharacterSet()</code> raises a warning and is ignored, resulting in <code>CHAR</code> and <code>VARCHAR2</code> column types.</p></li> 
+  </ul> 
+  <h3><a id="user-content-caveats" class="anchor" href="https://github.com/imageworks/scala-migrations#caveats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats</h3> 
+  <ul> 
+   <li>Index and foreign key names do not use the same naming convention as the Ruby on Rails migrations, so a port of Ruby on Rails migrations to Scala Migrations should specify the index name using the <code>Name()</code> case class as an option to <code>add_index()</code> or <code>remove_index()</code>.</li> 
+  </ul> 
+ </article>
+</div>

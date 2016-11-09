@@ -1,0 +1,42 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scalad" class="anchor" href="https://github.com/janm399/scalad#scalad" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ScalaD</h1> 
+  <p>Reuse <a href="http://github.com/spray/spray-json/" target="_blank">Spray JSON</a> formatters as serialisers for <a href="http://www.mongodb.org" target="_blank">MongoDB</a> persistence in Scala, and get access to a useful CRUD for performing simple searches.</p> 
+  <p>ScalaD is an implicit heavy API: users are advised to re-read the Implicits chapter from <a href="http://www.amazon.com/dp/0981531644" target="_blank">Odersky's Book</a> if feeling overwhelmed.</p> 
+  <p>When all relevant marshallers and mongo settings are implicitly in scope, using ScalaD is as simple as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">entity</span> <span class="pl-k">=</span> ...
+
+<span class="pl-k">val</span> <span class="pl-en">crud</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SprayMongo</span>
+
+crud.insert(entity)
+crud.findAndUpdate(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span>entity.id, <span class="pl-s"><span class="pl-pds">"</span>$set<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span>{<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>Bar<span class="pl-pds">"</span></span>})
+<span class="pl-k">val</span> <span class="pl-en">update</span> <span class="pl-k">=</span> crud.findOne(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span>entity.id)
+
+<span class="pl-k">val</span> <span class="pl-en">popular</span> <span class="pl-k">=</span> crud.find(<span class="pl-s"><span class="pl-pds">"</span>count<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span> {<span class="pl-s"><span class="pl-pds">"</span>$gte<span class="pl-pds">"</span></span><span class="pl-k">:</span><span class="pl-k">&gt;</span> update.count})  <span class="pl-c">// awesome DSL for JSON</span></pre>
+  </div> 
+  <p>However, anybody using this library is strongly encouraged to read the <a href="http://docs.mongodb.org/manual/" target="_blank">MongoDB Documentation</a> as it is often necessary to get close to the raw queries to understand what is happening, especially the <a href="http://docs.mongodb.org/manual/applications/aggregation/" target="_blank">Aggregation Framework</a>.</p> 
+  <p>The best place to find more examples are the specs and the akka-patterns project:</p> 
+  <ul> 
+   <li><a href="https://github.com/janm399/scalad/blob/master/src/test/scala/org/cakesolutions/scalad/mongo/sprayjson/PersistenceSpec.scala" target="_blank">PersistenceSpec.scala</a></li> 
+   <li><a href="https://github.com/janm399/akka-patterns" target="_blank">Akka Patterns</a></li> 
+  </ul> 
+  <h2><a id="user-content-special-types" class="anchor" href="https://github.com/janm399/scalad#special-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Special Types</h2> 
+  <p>Because we're using Spray JSON to do the marshalling, it means that only JSON compatible objects are naturally supported by ScalaD.</p> 
+  <p>However, JSON is missing a few key object types, such as: <code>Date</code>, <code>UUID</code> and any distinction between number types.</p> 
+  <p>MongoDB BSON is also missing a few key object types, such as: <code>UUID</code>, <code>BigInt</code> and <code>BigDecimal</code>. Indeed, MongoDB treats numbers as primitive types and has no support for arbitrary precision numbers.</p> 
+  <p>We provide JSON marshallers for <code>UuidMarshalling</code> and <code>DateMarshalling</code> which creates JSON marshalled forms of <code>UUID</code> and <code>Date</code> objects to look like this (so they can still be understood by endpoint clients)</p> 
+  <pre><code>{"$uuid": "550e8400-e29b-41d4-a716-446655440000"}
+{"$date": "2013-02-04T17:51:35.479+0000"} // "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+</code></pre> 
+  <p>the serialisation layer will ensure that these are saved as <code>BinData</code> and <code>DateFormat</code> accordingly.</p> 
+  <p>If you want to use arbitrary precision numbers, we provide case classes (and Spray JSON marshallers) called <code>StringBigInt</code> and <code>StringBigDecimal</code> which marshall to <code>String</code>. Hopefully Spray JSON will address this magically with a fix to their <a href="https://github.com/spray/spray-json/issues/44" target="_blank">issue #44</a>.</p> 
+  <p>Be warned that although Spray JSON will correctly marshall raw <code>BigInt</code>s and <code>BigDecimal</code>s, MongoDB will silently drop the precision (ScalaD will detect this and create a log for every object that loses precision, so hopefully this is caught at development time).</p> 
+ </article>
+</div>

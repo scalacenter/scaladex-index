@@ -1,0 +1,148 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://maven-badges.herokuapp.com/maven-central/com.osinka.subset/subset_2.11" target="_blank"><img src="https://camo.githubusercontent.com/f58044ff7f25f3566da3cea35e7adc808f5e07e9/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6f73696e6b612e7375627365742f7375627365745f322e31312f62616467652e706e67" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.osinka.subset/subset_2.11/badge.png" style="max-width:100%;"></a> <a href="https://travis-ci.org/osinka/subset2" target="_blank"><img src="https://camo.githubusercontent.com/2d03b8284f9d2af40135f562e233d277faa00ae0/68747470733a2f2f7472617669732d63692e6f72672f6f73696e6b612f737562736574322e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/osinka/subset2.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/osinka/subset2#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h1> 
+  <p><strong>Subset</strong> 2.x provides simple and extensible APIs:</p> 
+  <ul> 
+   <li><p>to build <code>DBObject</code> structures for subsequent use in MongoDB driver API</p> <p>in type-safe, Anorm-like manner</p></li> 
+   <li><p>to parse the resulting <code>DBObject</code> documents</p> <p>in terms of parser combinators</p></li> 
+  </ul> 
+  <h2><a id="user-content-dbobject-builder" class="anchor" href="https://github.com/osinka/subset2#dbobject-builder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>DBObject builder</h2> 
+  <p>MongoDB Java driver commonly accepts <code>DBObject</code> values as arguments to various query methods. Thus we need a simple way to create <code>DBObject</code> documents assuming we have different field types.</p> 
+  <p>This is where a mutable <code>DBObjectBuffer</code> object comes in handy</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.osinka.subset.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>user@domain.tld<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>John Doe<span class="pl-pds">"</span></span>)
+buffer.append(<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">30</span>)</pre>
+  </div> 
+  <p>In order to create a <code>DBObject</code>, just call <code>apply</code> method on <code>buffer</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>collection.save(buffer())</pre>
+  </div> 
+  <h3><a id="user-content-own-serializers" class="anchor" href="https://github.com/osinka/subset2#own-serializers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Own serializers</h3> 
+  <p>Every value supplied into <code>DBO</code> gets serialzed by <code>BsonWritable[T]</code> type class. Hence you may easily create own serialzers for your types, e.g. if you have a type</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Likes</span>(<span class="pl-v">count</span>: <span class="pl-k">Int</span>, <span class="pl-v">latest</span>: java.util.<span class="pl-en">Date</span>)</pre>
+  </div> 
+  <p>you may write the corresponding <code>BsonWritable</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Likes</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">asBson</span> <span class="pl-k">=</span> <span class="pl-en">BsonWritable</span>[<span class="pl-en">Likes</span>](likes <span class="pl-k">=&gt;</span>
+    <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>count<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> likes.count, <span class="pl-s"><span class="pl-pds">"</span>latest<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> likes.latest)()
+  )
+}</pre>
+  </div> 
+  <p>and then</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">dbo</span> <span class="pl-k">=</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>likes<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Likes</span>(<span class="pl-c1">5</span>, <span class="pl-k">new</span> <span class="pl-en">java.util.Date</span>())) ()</pre>
+  </div> 
+  <p><strong>Subset</strong> already contains an extensive library of serializers for Scala/Java primitive types</p> 
+  <h3><a id="user-content-parameters-in-builder" class="anchor" href="https://github.com/osinka/subset2#parameters-in-builder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parameters in builder</h3> 
+  <p>Scala symbols get transformed into BSON symbols. But <code>DBObjectBuilder</code> lets you replace any symbol value later:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">preparedStmt</span> <span class="pl-k">=</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>user.age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>$gt<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">'age</span>))
+collection.find(preparedStmt(<span class="pl-en">'age</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">12</span>))</pre>
+  </div> 
+  <p>Actually you may drop some values as well by supplying <code>None</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">preparedStmt</span> <span class="pl-k">=</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>post.version<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">'version</span>, <span class="pl-s"><span class="pl-pds">"</span>modt<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>$gt<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">'datetime</span>))
+preparedStmt(<span class="pl-en">'version</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-c1">None</span><span class="pl-k">:</span><span class="pl-en">Option</span>[<span class="pl-k">Int</span>]), <span class="pl-en">'datetime</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-k">new</span> <span class="pl-en">java.util.Date)</span></pre>
+  </div> 
+  <p>Expectedly, <code>Some</code> will just work as plain value too:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">preparedStmt</span> <span class="pl-k">=</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>user.age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">DBO</span>(<span class="pl-s"><span class="pl-pds">"</span>$gt<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">'age</span>))
+collection.find(preparedStmt(<span class="pl-en">'age</span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Some</span>(<span class="pl-c1">12</span>)))</pre>
+  </div> 
+  <h2><a id="user-content-parser-api" class="anchor" href="https://github.com/osinka/subset2#parser-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parser API</h2> 
+  <p>If you liked <a href="http://www.playframework.com/documentation/2.0/ScalaAnorm" target="_blank">Parser API in Play2's Anorm</a>, you'll quickly get the idea of composable document parser combinators in <strong>Subset</strong></p> 
+  <p>You may get a typed field from a document by the field's name:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">DocParser.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">parseCount</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> get[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>count<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>A parser is merely a function <code>DBObject =&gt; Either[String,A]</code>, thus you would apply it as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>parseCount(collection.findOne(query)) fold (msg <span class="pl-k">=&gt;</span> ..., count <span class="pl-k">=&gt;</span> ...)</pre>
+  </div> 
+  <p>Any parser provides <code>unapply</code> method as well for use in pattern matching (in case you don't need parsing failure)</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">counts</span> <span class="pl-k">=</span>
+  collection.find(query).asScala collect {
+    <span class="pl-k">case</span> parseCount(count) <span class="pl-k">=&gt;</span> count
+  }</pre>
+  </div> 
+  <p>Parsers are composable. <code>int("count") ~ get[java.util.Date]("latest")</code> will create a <code>DocParser[Int ~ Date]</code>, thus it parses tuples of <code>Int</code> and <code>Date</code>. It's possible to transform these tuples into <code>Like</code> types then:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">likes</span> <span class="pl-k">=</span> int(<span class="pl-s"><span class="pl-pds">"</span>count<span class="pl-pds">"</span></span>) <span class="pl-k">~</span> get[java.util.<span class="pl-en">Date</span>](<span class="pl-s"><span class="pl-pds">"</span>latest<span class="pl-pds">"</span></span>) map {
+    <span class="pl-k">case</span> count <span class="pl-k">~</span> latest <span class="pl-k">=&gt;</span> <span class="pl-k">new</span> <span class="pl-en">Likes</span>(count,latest)
+  }</pre>
+  </div> 
+  <p>Just like any parser combinator library, <strong>Subset</strong> provides <em>option</em> and <em>alternative</em>. You may transform any <code>DocParser[A]</code> into <code>DocParser[Option[A]]</code>, e.g.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">maybeLikes</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-en">Option</span>[<span class="pl-en">Like</span>]] <span class="pl-k">=</span> likes.opt</pre>
+  </div> 
+  <p>And method <code>|</code> lets you select between parsers:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">logEntry</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-en">LogEntry</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">ver1</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-en">LogEntry</span>] <span class="pl-k">=</span> int(<span class="pl-s"><span class="pl-pds">"</span>f<span class="pl-pds">"</span></span>) map {i <span class="pl-k">=&gt;</span> <span class="pl-en">LogEntryV1</span>(i)}
+  <span class="pl-k">val</span> <span class="pl-en">ver2</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-en">LogEntry</span>] <span class="pl-k">=</span> str(<span class="pl-s"><span class="pl-pds">"</span>s<span class="pl-pds">"</span></span>) map {s <span class="pl-k">=&gt;</span> <span class="pl-en">LogEntryV2</span>(s)}
+
+  (contains(<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>) <span class="pl-k">~</span><span class="pl-k">&gt;</span> ver1 <span class="pl-k">|</span>
+   contains(<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>, <span class="pl-c1">2</span>) <span class="pl-k">~</span><span class="pl-k">&gt;</span> ver2)
+}</pre>
+  </div> 
+  <p><strong>Subset</strong> has a number of parsers specific to MongoDB documents. It lets you parse <code>ObjectId</code> values with <code>oid(name)</code> parser. <code>docId</code> is simply <code>oid("_id")</code> and fits for document IDs. Since MongoDB documents are hierarchical, there is a parser to dig deeper into the subdocuments, it's called <code>doc[A](name: String)(p: DocParser[A])</code>. If you know you have a subdocument <code>user</code> holding <code>User</code> you would write something like</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">logEntryWithUser</span> <span class="pl-k">=</span> logEntry <span class="pl-k">~</span> doc(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)(userParser)</pre>
+  </div> 
+  <p>Since MongoDB provides a <em>dot-syntax</em> to dig into documents, <strong>Subset</strong> does the same:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">userName</span><span class="pl-k">:</span> <span class="pl-en">DocParser</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> get[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span> <span class="pl-k">::</span> <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">::</span> <span class="pl-c1">Nil</span>)</pre>
+  </div> 
+  <p>As a matter of personal preference I would write it as <code>get[String]("user.name" split "\\.")</code></p> 
+  <h4><a id="user-content-getoptiontfieldname-vs-gettfieldnameopt" class="anchor" href="https://github.com/osinka/subset2#getoptiontfieldname-vs-gettfieldnameopt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>get[Option[T]](fieldName)</code> vs. <code>get[T](fieldName).opt</code></h4> 
+  <p>When you create a parser <code>get[Option[T]](fieldName)</code> you declare there must be a field named <code>fieldName</code>, but you are not sure if it can be decoded. Which means, such parser will fail if there is not field. It will return <code>Some[T]</code> if it could decode the value and <code>None</code> otherwise.</p> 
+  <p>But when you create <code>get[T](fieldName).opt</code> you declare the field is optional. The parser will return <code>None</code> if no field with this name exists and <code>Some[T]</code> if the field exists. Certainly it will fail if it cannot decode the field.</p> 
+  <h3><a id="user-content-smarter-deserialization" class="anchor" href="https://github.com/osinka/subset2#smarter-deserialization" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Smarter deserialization</h3> 
+  <p>Any primitive <code>get</code> parser relies on type class <code>Field[A]</code> that can retrieve values of type <code>A</code> from <code>Any</code> (the field value from <code>DBObject</code>). <strong>Subset</strong> already contains a library of such deserializers in two flavours. The default library gets included when you do <code>import com.osinka.subset._</code> and it is quite strict, e.g. it cannot decode <code>ObjectId</code> from a <code>String</code>. However, if you do <code>import SmartFields._</code> before your parsers, they will do their best to decode <em>compatible</em> types. E.g. they will accept <code>Int</code> value when asked to parse <code>Long</code>, etc.</p> 
+  <h3><a id="user-content-own-fields" class="anchor" href="https://github.com/osinka/subset2#own-fields" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Own fields</h3> 
+  <p>You are free to define own <code>Field[A]</code> implicits:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">jodaDateTime</span> <span class="pl-k">=</span> <span class="pl-en">Field</span>[<span class="pl-en">DateTime</span>]({
+    <span class="pl-k">case</span> <span class="pl-v">date</span>: <span class="pl-en">Date</span> <span class="pl-k">=&gt;</span> <span class="pl-k">new</span> <span class="pl-en">DateTime</span>(date)
+  })
+}</pre>
+  </div> 
+  <h1><a id="user-content-installation" class="anchor" href="https://github.com/osinka/subset2#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h1> 
+  <pre><code>libraryDependencies += "com.osinka.subset" %% "subset" % "2.2.0"
+</code></pre> 
+ </article>
+</div>

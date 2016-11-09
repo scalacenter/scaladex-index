@@ -1,0 +1,71 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-dataframe" class="anchor" href="https://github.com/oriollopezmassaguer/dataframe#dataframe" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>DataFrame</h1> 
+  <p>A simple implementation of a in memory DataFrame in Scala</p> 
+  <p>Example of manipulation of plain text files from Titanic dataset <a href="https://www.kaggle.com/c/titanic/data" target="_blank">https://www.kaggle.com/c/titanic/data</a></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-c">// Data from https://www.kaggle.com/c/titanic/data</span>
+  <span class="pl-k">import</span> <span class="pl-v">models.dataframe.</span><span class="pl-v">_</span>
+
+  <span class="pl-c">// Reading a plain text file with passenger data (tab separated)</span>
+  <span class="pl-k">val</span> <span class="pl-en">passenger_data</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> <span class="pl-en">DataFrame</span>(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/input/passenger.tsv<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Filter the rows corresponding to male passengers (SQL filter)</span>
+  <span class="pl-k">val</span> <span class="pl-en">male_passengers</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> passenger_data.filter(<span class="pl-s"><span class="pl-pds">"</span>Sex<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>male<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Export the filtered data</span>
+  male_passengers.toText(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/output/passenger_male.tsv<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// generate a new dataTable with only 3 fields of the original table (SQL projection)</span>
+  <span class="pl-k">val</span> <span class="pl-en">passenger_data_projected</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> passenger_data.project(<span class="pl-s"><span class="pl-pds">"</span>Age<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>PassengerId<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Sex<span class="pl-pds">"</span></span>)
+  passenger_data_projected.toText(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/output/passenger_projected.tsv<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Reading a plain text file with survival data (tab separated)</span>
+  <span class="pl-k">val</span> <span class="pl-en">gender_model_data</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> <span class="pl-en">DataFrame</span>(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/input/gendermodel.tsv<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Join the passenger data with survival data </span>
+  <span class="pl-c">// by PasssengerId</span>
+  <span class="pl-c">// We perform a inner join (SQL inner join) only rows with same value by join field </span>
+  <span class="pl-k">val</span> <span class="pl-en">innerjoin_data</span> <span class="pl-k">=</span> passenger_data.join(gender_model_data, <span class="pl-s"><span class="pl-pds">"</span>PassengerId<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>PassengerId2<span class="pl-pds">"</span></span>)
+  innerjoin_data.toText(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/output/passenger_inner_join_survival.tsv<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// Join the passenger data with survival data </span>
+  <span class="pl-c">// by PasssengerId</span>
+  <span class="pl-c">// We perform a left join (SQL inner join) all rows in left dataFrame independently </span>
+  <span class="pl-c">// if they are in the right dataFrame  </span>
+  <span class="pl-k">val</span> <span class="pl-en">outer_join_data</span> <span class="pl-k">=</span> passenger_data.join_left(gender_model_data, <span class="pl-s"><span class="pl-pds">"</span>PassengerId<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>PassengerId2<span class="pl-pds">"</span></span>)
+  outer_join_data.toText(<span class="pl-s"><span class="pl-pds">"</span>data/plain_text/output/passenger_outer_join_survival.tsv<span class="pl-pds">"</span></span>)
+</pre>
+  </div> 
+  <p>Example compounds data from DrugBank dataset of approved Drugs</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-c">// Data from http://www.drugbank.ca/downloads#structures</span>
+  <span class="pl-k">import</span> <span class="pl-v">models.dataframe.</span><span class="pl-v">_</span>
+
+  <span class="pl-c">// Reading approved drugs in DrugBank (using RDKit libraries)</span>
+  <span class="pl-k">val</span> <span class="pl-en">approved_drugs</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> <span class="pl-en">DataFrame</span>(<span class="pl-s"><span class="pl-pds">"</span>data/drugbank/input/approved.sdf<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c">// We compute MW and LogP for the approved drugs in DrugBank</span>
+  <span class="pl-k">val</span> <span class="pl-en">aproved_drugs_mw_logp</span> <span class="pl-k">=</span> approved_drugs
+    .addMW
+    .addLogP
+
+  <span class="pl-c">// We export the DataFrame with new fields</span>
+  <span class="pl-c">// to SDF</span>
+  aproved_drugs_mw_logp.toSDF(<span class="pl-s"><span class="pl-pds">"</span>data/drugbank/output/approved_mw_logp.sdf<span class="pl-pds">"</span></span>)
+  <span class="pl-c">// to TSV</span>
+  aproved_drugs_mw_logp.toText(<span class="pl-s"><span class="pl-pds">"</span>data/drugbank/output/approved_mw_logp.tsv<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h1><a id="user-content-setup" class="anchor" href="https://github.com/oriollopezmassaguer/dataframe#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h1> 
+  <p>To test the software you need sbt <a href="http://www.scala-sbt.org/" target="_blank">http://www.scala-sbt.org/</a></p> 
+  <p>$ sbt console</p> 
+  <p>scala&gt; models.ExampleTitanic</p> 
+  <p>scala&gt; models.ExampleDrugBank</p> 
+ </article>
+</div>

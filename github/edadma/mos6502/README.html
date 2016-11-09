@@ -1,0 +1,151 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-mos-6502-microprocessor-emulator" class="anchor" href="https://github.com/edadma/mos6502#mos-6502-microprocessor-emulator" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MOS 6502 Microprocessor Emulator</h1> 
+  <p>Have fun playing with your own virtual 6502 based computer!</p> 
+  <h2><a id="user-content-description" class="anchor" href="https://github.com/edadma/mos6502#description" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Description</h2> 
+  <p><em>mos6502</em> is an emulator for the venerable MOS Technology 6502 microprocessor written in Scala. The emulator is fully functional. It includes a basic assembler and disassembler. Programs (in 6502) can be executed from the command line, or the REPL can be used. There are a few working examples under the <code>code</code> folder that can either be executed directly from the command line or loaded into the REPL.</p> 
+  <p>It's true, there are many 6502 emulators out there, but this one is written in Scala and is therefore easy and fun to extend should you wish to add some more hardware to your virtual computer.</p> 
+  <p>All the examples in the <code>code</code> folder with a file name ending with <code>.asm</code> will assemble using the built-in assembler. Of course, the emulator's built-in assembler will have slightly different syntax than other assemblers for assembly directives. If a more powerful assembler is needed, there is one called <code>crasm</code> which is available under Ubuntu/Mint that generates SREC (Motorola S-Record) files using it's <code>-o</code> option. Those files can then be executed using the emlulator's <code>-le</code> option or loaded into the REPL using the <code>l</code> command. The <code>cc65</code> tools may also be used in conjunction with a program called <code>srecord</code> to get an SREC file that can be loaded.</p> 
+  <h2><a id="user-content-try-it-out" class="anchor" href="https://github.com/edadma/mos6502#try-it-out" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Try it out</h2> 
+  <p>The following code (assembled using the built-in assembler)</p> 
+  <pre><code>; install required i/o devices
+;
+_stdioChar_ = "8000" ; add a character i/o "device" and memory map it to address $8000
+_stdioInt_  = "8001" ; add an integer i/o "device" and memory map it to address $8001
+
+; memory mapped i/o
+;
+CHIO    EQU $8000    ; character i/o port
+INTIO   EQU $8001    ; integer i/o port
+
+; zero page variables
+;
+COUNTER RB           ; counter variable
+
+; program ROM
+;
+        ORG $9000    ; program starts at $9000
+START
+        LDA #0       ; start counter off with 0
+        STA COUNTER
+.1      INC COUNTER  ; bump the counter
+        LDA COUNTER
+        CMP #6       ; is counter less than 6
+        BNE .2       ; if so, print
+        BRK          ; otherwise, stop
+.2      STA INTIO    ; send counter value to integer i/o port
+        LDA #'\n'    ; now print a line feed
+        STA CHIO
+        JMP .1
+
+        ORG $FFFC    ; reset vector
+        DW  START    ; CPU will start executing at 9000
+</code></pre> 
+  <p>will print</p> 
+  <pre><code>1
+2
+3
+4
+5
+</code></pre> 
+  <p>The easiest way to try this out is to follow the <a href="https://github.com/edadma/mos6502#build-and-run-the-repl" target="_blank">build</a> instructions below. Then, once inside the REPL, type</p> 
+  <pre><code>a code/count.asm
+ew
+</code></pre> 
+  <p>Of course, when doing this in the REPL you will also see</p> 
+  <pre><code>A:06 X:00 Y:00 SP:01FD PC:900D
+N:0 V:0 B:0 D:0 I:0 Z:1 C:1
+900D  8D 01 80   .2              STA INTIO
+</code></pre> 
+  <p>as well, showing you the state of the CPU after execution.</p> 
+  <p>If you now type the command <code>u 9000</code> to disassemble the program from memory, you should see</p> 
+  <pre><code>9000  A9 00      START           LDA #0
+9002  85 00                      STA COUNTER
+9004  E6 00      .1              INC COUNTER
+9006  A5 00                      LDA COUNTER
+9008  C9 06                      CMP #6
+900A  D0 01                      BNE .2
+900C  00                         BRK 
+900D  8D 01 80   .2              STA INTIO
+9010  A9 0A                      LDA #$0A
+9012  8D 00 80                   STA CHIO
+9015  4C 04 90                   JMP .1
+</code></pre> 
+  <p>Notice that the REPL uses the symbol information (if available) from the assembler to provide a more readable disassembly.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/mos6502#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><em>mos6502</em> is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/edadma/mos6502#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <ul> 
+   <li><a href="http://edadma.github.io/mos6502" target="_blank">Scaladoc library documentation</a></li> 
+   <li>Type <code>java -jar mos6502-0.3.jar --help</code> for executable options</li> 
+   <li>Type <code>help</code> inside the REPL for commands</li> 
+  </ul> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/mos6502#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h3><a id="user-content-executable" class="anchor" href="https://github.com/edadma/mos6502#executable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Executable</h3> 
+  <p>If you just want to download the executable so that you can run 6502 programs or use the REPL, you can download it from <a href="https://dl.bintray.com/edadma/generic/mos6502-0.3.jar" target="_blank">here</a>. <em>You do not need</em> the Scala library for it to work because the JAR already contains all dependencies. You just need Java 7+ installed.</p> 
+  <p>Run it as a normal Java executable JAR with the command <code>java -jar mos6502-0.3.jar</code> in the folder where you downloaded the file.</p> 
+  <h3><a id="user-content-library" class="anchor" href="https://github.com/edadma/mos6502#library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Library</h3> 
+  <p>Use the following definition to use <em>mos6502</em> in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+    &lt;id&gt;hyperreal&lt;/id&gt;
+    &lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;xyz.hyperreal&lt;/groupId&gt;
+    &lt;artifactId&gt;mos6502&lt;/artifactId&gt;
+    &lt;version&gt;0.3&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use <em>mos6502</em> in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "xyz.hyperreal" %% "mos6502" % "0.3"
+</code></pre> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/edadma/mos6502#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <h3><a id="user-content-requirements" class="anchor" href="https://github.com/edadma/mos6502#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h3> 
+  <ul> 
+   <li>Java 7+</li> 
+   <li>SBT 0.13.12+</li> 
+   <li>Scala 2.11.8+</li> 
+  </ul> 
+  <h3><a id="user-content-build-and-run-the-repl" class="anchor" href="https://github.com/edadma/mos6502#build-and-run-the-repl" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build and Run the REPL</h3> 
+  <pre><code>git clone git://github.com/edadma/mos6502.git
+cd mos6502
+sbt run
+</code></pre> 
+ </article>
+</div>

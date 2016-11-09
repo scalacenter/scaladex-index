@@ -1,0 +1,159 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-quicklens" class="anchor" href="https://github.com/adamw/quicklens#quicklens" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quicklens</h1> 
+  <p><a href="https://maven-badges.herokuapp.com/maven-central/com.softwaremill.quicklens/quicklens_2.11" target="_blank"><img src="https://camo.githubusercontent.com/70d60dd5e7fc6065249d1d4c25b8fc6768d16e99/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e736f6674776172656d696c6c2e717569636b6c656e732f717569636b6c656e735f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.softwaremill.quicklens/quicklens_2.11/badge.svg" style="max-width:100%;"></a></p> 
+  <p><strong>Modify deeply nested fields in case classes:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Street</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Address</span>(<span class="pl-v">street</span>: <span class="pl-en">Street</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">address</span>: <span class="pl-en">Address</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-en">Address</span>(<span class="pl-en">Street</span>(<span class="pl-s"><span class="pl-pds">"</span>1 Functional Rd.<span class="pl-pds">"</span></span>)), <span class="pl-c1">35</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">p2</span> <span class="pl-k">=</span> person.modify(_.address.street.name).using(_.toUpperCase)
+<span class="pl-k">val</span> <span class="pl-en">p3</span> <span class="pl-k">=</span> person.modify(_.address.street.name).setTo(<span class="pl-s"><span class="pl-pds">"</span>3 OO Ln.<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// or</span>
+
+<span class="pl-k">val</span> <span class="pl-en">p4</span> <span class="pl-k">=</span> modify(person)(_.address.street.name).using(_.toUpperCase)
+<span class="pl-k">val</span> <span class="pl-en">p5</span> <span class="pl-k">=</span> modify(person)(_.address.street.name).setTo(<span class="pl-s"><span class="pl-pds">"</span>3 OO Ln.<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p><strong>Chain modifications:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>person
+  .modify(_.address.street.name).using(_.toUpperCase)
+  .modify(_.age).using(_ <span class="pl-k">-</span> <span class="pl-c1">1</span>)</pre>
+  </div> 
+  <p><strong>Modify conditionally:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>person.modify(_.address.street.name).setToIfDefined(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>3 00 Ln.<span class="pl-pds">"</span></span>))
+person.modify(_.address.street.name).setToIf(shouldChangeAddress)(<span class="pl-s"><span class="pl-pds">"</span>3 00 Ln.<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p><strong>Modify several fields in one go:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">firstName</span>: <span class="pl-k">String</span>, <span class="pl-v">middleName</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-v">lastName</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>john<span class="pl-pds">"</span></span>, <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>steve<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>smith<span class="pl-pds">"</span></span>)
+
+person.modifyAll(_.firstName, _.middleName.each, _.lastName).using(_.capitalize)</pre>
+  </div> 
+  <p><strong>Traverse options/lists/maps using .each:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Street</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Address</span>(<span class="pl-v">street</span>: <span class="pl-en">Option</span>[<span class="pl-en">Street</span>])
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">addresses</span>: <span class="pl-en">List</span>[<span class="pl-en">Address</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-en">List</span>(
+  <span class="pl-en">Address</span>(<span class="pl-en">Some</span>(<span class="pl-en">Street</span>(<span class="pl-s"><span class="pl-pds">"</span>1 Functional Rd.<span class="pl-pds">"</span></span>))),
+  <span class="pl-en">Address</span>(<span class="pl-en">Some</span>(<span class="pl-en">Street</span>(<span class="pl-s"><span class="pl-pds">"</span>2 Imperative Dr.<span class="pl-pds">"</span></span>)))
+))
+
+<span class="pl-k">val</span> <span class="pl-en">p2</span> <span class="pl-k">=</span> person.modify(_.addresses.each.street.each.name).using(_.toUpperCase)</pre>
+  </div> 
+  <p><code>.each</code> can only be used inside a <code>modify</code> and "unwraps" the container (currently supports <code>List</code>s, <code>Option</code>s and <code>Maps</code>s - only values are unwrapped for maps). You can add support for your own containers by providing an implicit <code>QuicklensFunctor[C]</code> with the appropriate <code>C</code> type parameter.</p> 
+  <p><strong>Traverse selected elements using .eachWhere:</strong></p> 
+  <p>Similarly to <code>.each</code>, you can use <code>.eachWhere(p)</code> where <code>p</code> is a predicate to modify only the elements which satisfy the condition. All other elements remain unchanged.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">filterAddress</span><span class="pl-k">:</span> <span class="pl-en">Address</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+person
+  .modify(_.addresses.eachWhere(filterAddress)
+           .street.eachWhere(_.name.startsWith(<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>)).name)
+  .using(_.toUpperCase)</pre>
+  </div> 
+  <p><strong>Modify specific sequence elements using .at:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>person.modify(_.addresses.at(<span class="pl-c1">2</span>).street.each.name).using(_.toUpperCase)</pre>
+  </div> 
+  <p>Similarly to <code>.each</code>, <code>.at</code> modifies only the element at the given index. If there's no element at that index, an <code>IndexOutOfBoundsException</code> is thrown.</p> 
+  <p><strong>Modify specific map elements using .at:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Property</span>(<span class="pl-v">value</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">props</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Property</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>Joe<span class="pl-pds">"</span></span>,
+  <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>Role<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Property</span>(<span class="pl-s"><span class="pl-pds">"</span>Programmmer<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>Age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Property</span>(<span class="pl-s"><span class="pl-pds">"</span>45<span class="pl-pds">"</span></span>))
+)
+
+person.modify(_.props.at(<span class="pl-s"><span class="pl-pds">"</span>Age<span class="pl-pds">"</span></span>).value).setTo(<span class="pl-s"><span class="pl-pds">"</span>45<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Similarly to <code>.each</code>, <code>.at</code> modifies only the element with the given key. If there's no such element, an <code>NoSuchElementException</code> is thrown.</p> 
+  <p><strong>Modify fields when they are of a certain subtype:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Animal</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Dog</span>(<span class="pl-v">age</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">Animal</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Cat</span>(<span class="pl-v">ages</span>: <span class="pl-en">List</span>[<span class="pl-k">Int</span>]) <span class="pl-k">extends</span> <span class="pl-e">Animal</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Zoo</span>(<span class="pl-v">animals</span>: <span class="pl-en">List</span>[<span class="pl-en">Animal</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">zoo</span> <span class="pl-k">=</span> <span class="pl-en">Zoo</span>(<span class="pl-en">List</span>(<span class="pl-en">Dog</span>(<span class="pl-c1">4</span>), <span class="pl-en">Cat</span>(<span class="pl-en">List</span>(<span class="pl-c1">3</span>, <span class="pl-c1">12</span>, <span class="pl-c1">13</span>))))
+
+<span class="pl-k">val</span> <span class="pl-en">olderZoo</span> <span class="pl-k">=</span> zoo.modifyAll(
+  _.animals.each.when[<span class="pl-en">Dog</span>].age,
+  _.animals.each.when[<span class="pl-en">Cat</span>].ages.at(<span class="pl-c1">0</span>)
+).using(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>)</pre>
+  </div> 
+  <p>This is also known as a <em>prism</em>, see e.g. <a href="http://julien-truffaut.github.io/Monocle//tut/prism.html" target="_blank">here</a>.</p> 
+  <p><strong>Re-usable modifications (lenses):</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">modifyStreetName</span> <span class="pl-k">=</span> modify(<span class="pl-v">_</span>: <span class="pl-en">Person</span>)(_.address.street.name)
+
+<span class="pl-k">val</span> <span class="pl-en">p3</span> <span class="pl-k">=</span> modifyStreetName(person).using(_.toUpperCase)
+<span class="pl-k">val</span> <span class="pl-en">p4</span> <span class="pl-k">=</span> modifyStreetName(anotherPerson).using(_.toLowerCase)
+
+<span class="pl-c">//</span>
+
+<span class="pl-k">val</span> <span class="pl-en">upperCaseStreetName</span> <span class="pl-k">=</span> modify(<span class="pl-v">_</span>: <span class="pl-en">Person</span>)(_.address.street.name).using(_.toUpperCase)
+
+<span class="pl-k">val</span> <span class="pl-en">p5</span> <span class="pl-k">=</span> upperCaseStreetName(person)</pre>
+  </div> 
+  <p><strong>Composing lenses:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">modifyAddress</span> <span class="pl-k">=</span> modify(<span class="pl-v">_</span>: <span class="pl-en">Person</span>)(_.address)
+<span class="pl-k">val</span> <span class="pl-en">modifyStreetName</span> <span class="pl-k">=</span> modify(<span class="pl-v">_</span>: <span class="pl-en">Address</span>)(_.street.name)
+
+<span class="pl-k">val</span> <span class="pl-en">p6</span> <span class="pl-k">=</span> (modifyAddress andThenModify modifyStreetName)(person).using(_.toUpperCase)</pre>
+  </div> 
+  <p><strong>Modify nested sealed hierarchies:</strong></p> 
+  <blockquote> 
+   <p><em>Note: this feature is experimental and might not work due to compilation order issues. See <a href="https://issues.scala-lang.org/browse/SI-7046" target="_blank">https://issues.scala-lang.org/browse/SI-7046</a> for more details.</em></p> 
+  </blockquote> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.softwaremill.quicklens.</span><span class="pl-v">_</span>
+
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Pet</span> { <span class="pl-k">def</span> <span class="pl-en">name</span><span class="pl-k">:</span> <span class="pl-k">String</span> }
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Fish</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Pet</span>
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">LeggedPet</span> <span class="pl-k">extends</span> <span class="pl-e">Pet</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Cat</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">LeggedPet</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Dog</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">LeggedPet</span>
+
+<span class="pl-k">val</span> <span class="pl-en">pets</span> <span class="pl-k">=</span> <span class="pl-en">List</span>[<span class="pl-en">Pet</span>](
+  <span class="pl-en">Fish</span>(<span class="pl-s"><span class="pl-pds">"</span>Finn<span class="pl-pds">"</span></span>), <span class="pl-en">Cat</span>(<span class="pl-s"><span class="pl-pds">"</span>Catia<span class="pl-pds">"</span></span>), <span class="pl-en">Dog</span>(<span class="pl-s"><span class="pl-pds">"</span>Douglas<span class="pl-pds">"</span></span>)
+)
+
+<span class="pl-k">val</span> <span class="pl-en">juniorPets</span> <span class="pl-k">=</span> pets.modify(_.each.name).using(_ <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>, Jr.<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <hr> 
+  <p>Similar to lenses (<a href="http://eed3si9n.com/learning-scalaz/Lens.html" target="_blank">1</a>, <a href="https://github.com/julien-truffaut/Monocle" target="_blank">2</a>), but without the actual lens creation.</p> 
+  <p>Read <a href="http://www.warski.org/blog/2015/02/quicklens-modify-deeply-nested-case-class-fields/" target="_blank">the blog</a> for more info.</p> 
+  <p>Available in Maven Central:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">quicklens</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.quicklens<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>quicklens<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.8<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Also available for <a href="http://www.scala-js.org" target="_blank">Scala.js</a>!</p> 
+ </article>
+</div>

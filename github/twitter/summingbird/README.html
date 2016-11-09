@@ -1,0 +1,134 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-summingbird-" class="anchor" href="https://github.com/twitter/summingbird#summingbird-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Summingbird <a href="http://travis-ci.org/twitter/summingbird" target="_blank"><img src="https://camo.githubusercontent.com/a8a8c3a44ae61d5ff8cd7a987ef9c6b1d9ce8a5b/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f747769747465722f73756d6d696e67626972642e706e67" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/twitter/summingbird.png" style="max-width:100%;"></a></h2> 
+  <p>Summingbird is a library that lets you write MapReduce programs that look like native Scala or Java collection transformations and execute them on a number of well-known distributed MapReduce platforms, including <a href="https://github.com/nathanmarz/storm" target="_blank">Storm</a> and <a href="https://github.com/twitter/scalding" target="_blank">Scalding</a>.</p> 
+  <p><a href="https://camo.githubusercontent.com/6e65745302004846962487f478eac925862d3d4f/68747470733a2f2f7261772e6769746875622e636f6d2f747769747465722f73756d6d696e67626972642f646576656c6f702f6c6f676f2f73756d6d696e67626972645f6c6f676f2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/6e65745302004846962487f478eac925862d3d4f/68747470733a2f2f7261772e6769746875622e636f6d2f747769747465722f73756d6d696e67626972642f646576656c6f702f6c6f676f2f73756d6d696e67626972645f6c6f676f2e706e67" alt="Summingbird Logo" data-canonical-src="https://raw.github.com/twitter/summingbird/develop/logo/summingbird_logo.png" style="max-width:100%;"></a></p> 
+  <p>While a word-counting aggregation in pure Scala might look like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">def</span> <span class="pl-en">wordCount</span>(<span class="pl-v">source</span>: <span class="pl-en">Iterable</span>[<span class="pl-k">String</span>], <span class="pl-v">store</span>: <span class="pl-en">MutableMap</span>[<span class="pl-k">String</span>, <span class="pl-k">Long</span>]) <span class="pl-k">=</span>
+    source.flatMap { sentence <span class="pl-k">=&gt;</span>
+      toWords(sentence).map(_ <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1L</span>)
+    }.foreach { <span class="pl-k">case</span> (k, v) <span class="pl-k">=&gt;</span> store.update(k, store.get(k) <span class="pl-k">+</span> v) }</pre>
+  </div> 
+  <p>Counting words in Summingbird looks like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">def</span> <span class="pl-en">wordCount</span>[<span class="pl-en">P</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Platform</span>[<span class="pl-en">P</span>]]
+    (<span class="pl-v">source</span>: <span class="pl-en">Producer</span>[<span class="pl-en">P</span>, <span class="pl-k">String</span>], <span class="pl-v">store</span>: <span class="pl-en">P</span>#<span class="pl-en">Store</span>[<span class="pl-k">String</span>, <span class="pl-k">Long</span>]) <span class="pl-k">=</span>
+      source.flatMap { sentence <span class="pl-k">=&gt;</span>
+        toWords(sentence).map(_ <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1L</span>)
+      }.sumByKey(store)</pre>
+  </div> 
+  <p>The logic is exactly the same, and the code is almost the same. The main difference is that you can execute the Summingbird program in "batch mode" (using <a href="https://github.com/twitter/scalding" target="_blank">Scalding</a>), in "realtime mode" (using <a href="https://github.com/nathanmarz/storm" target="_blank">Storm</a>), or on both Scalding and Storm in a hybrid batch/realtime mode that offers your application very attractive fault-tolerance properties.</p> 
+  <p>Summingbird provides you with the primitives you need to build rock solid production systems.</p> 
+  <h2><a id="user-content-getting-started-word-count-with-twitter" class="anchor" href="https://github.com/twitter/summingbird#getting-started-word-count-with-twitter" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started: Word Count with Twitter</h2> 
+  <p>The <code>summingbird-example</code> project allows you to run the wordcount program above on a sample of Twitter data using a local Storm topology and memcache instance. You can find the actual job definition in <a href="https://github.com/twitter/summingbird/blob/develop/summingbird-example/src/main/scala/com/twitter/summingbird/example/ExampleJob.scala" target="_blank">ExampleJob.scala</a>.</p> 
+  <p>First, make sure you have <code>memcached</code> installed locally. If not, if you're on OS X, you can get it by installing <a href="http://brew.sh/" target="_blank">Homebrew</a> and running this command in a shell:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>brew install memcached</pre>
+  </div> 
+  <p>When this is finished, run the <code>memcached</code> command in a separate terminal.</p> 
+  <p>Now you'll need to set up access to the Twitter Streaming API. <a href="http://tugdualgrall.blogspot.com/2012/11/couchbase-create-large-dataset-using.html" target="_blank">This blog post</a> has a great walkthrough, so open that page, head over to <a href="https://dev.twitter.com/" target="_blank">https://dev.twitter.com/</a> and get your various keys and tokens. Once you have these, clone the Summingbird repository:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>git clone https://github.com/twitter/summingbird.git
+<span class="pl-c1">cd</span> summingbird</pre>
+  </div> 
+  <p>And open <a href="https://github.com/twitter/summingbird/blob/develop/summingbird-example/src/main/scala/com/twitter/summingbird/example/StormRunner.scala" target="_blank">StormRunner.scala</a> in your editor. Replace the dummy variables under <code>config</code> variable with your auth tokens:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConfigurationBuilder</span>()
+    .setOAuthConsumerKey(<span class="pl-s"><span class="pl-pds">"</span>mykey<span class="pl-pds">"</span></span>)
+    .setOAuthConsumerSecret(<span class="pl-s"><span class="pl-pds">"</span>mysecret<span class="pl-pds">"</span></span>)
+    .setOAuthAccessToken(<span class="pl-s"><span class="pl-pds">"</span>token<span class="pl-pds">"</span></span>)
+    .setOAuthAccessTokenSecret(<span class="pl-s"><span class="pl-pds">"</span>tokensecret<span class="pl-pds">"</span></span>)
+    .setJSONStoreEnabled(<span class="pl-c1">true</span>) <span class="pl-c">// required for JSON serialization</span>
+    .build</pre>
+  </div> 
+  <p>You're all ready to go! Now it's time to unleash Storm on your Twitter stream. Make sure the <code>memcached</code> terminal is still open, then start Storm from the <code>summingbird</code> directory:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>./sbt <span class="pl-s"><span class="pl-pds">"</span>summingbird-example/run --local<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Storm should puke out a bunch of output, then stabilize and hang. This means that Storm is updating your local memcache instance with counts of every word that it sees in each tweet.</p> 
+  <p>To query the aggregate results in Memcached, you'll need to open an SBT repl in a new terminal:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>./sbt summingbird-example/console</pre>
+  </div> 
+  <p>At the launched repl, run the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.twitter.summingbird.example.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.summingbird.example.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-en">StormRunner</span>.lookup(<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span>)
+&lt;<span class="pl-ent">memcache</span> store loading elided&gt;
+res0<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">Long</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">5</span>)
+
+scala<span class="pl-k">&gt;</span> <span class="pl-en">StormRunner</span>.lookup(<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span>)
+res1<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">Long</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">52</span>)</pre>
+  </div> 
+  <p>Boom. Counts for the word <code>"i"</code> are growing in realtime.</p> 
+  <p>See the <a href="https://github.com/twitter/summingbird/wiki/Getting-started-with-summingbird-example" target="_blank">wiki page</a> for a more detailed explanation of the configuration required to get this job up and running and some ideas for where to go next.</p> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/twitter/summingbird#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>To learn more and find links to tutorials and information around the web, check out the <a href="https://github.com/twitter/summingbird/wiki" target="_blank">Summingbird Wiki</a>.</p> 
+  <p>The latest ScalaDocs are hosted on Summingbird's <a href="http://twitter.github.io/summingbird" target="_blank">Github Project Page</a>.</p> 
+  <h2><a id="user-content-contact" class="anchor" href="https://github.com/twitter/summingbird#contact" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contact</h2> 
+  <p>Discussion occurs primarily on the <a href="https://groups.google.com/forum/#!forum/summingbird" target="_blank">Summingbird mailing list</a>. Issues should be reported on the GitHub issue tracker. Simpler issues appropriate for first-time contributors looking to help out are tagged "newbie".</p> 
+  <p>IRC: freenode channel #summingbird</p> 
+  <p>Follow <a href="https://twitter.com/summingbird" target="_blank">@summingbird</a> on Twitter for updates.</p> 
+  <p>Please feel free to use the beautiful <a href="https://drive.google.com/folderview?id=0B3i3pDi3yVgNMHV0TXVkTGZteWM&amp;usp=sharing" target="_blank">Summingbird logo</a> artwork anywhere.</p> 
+  <h2><a id="user-content-get-involved--code-of-conduct" class="anchor" href="https://github.com/twitter/summingbird#get-involved--code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Get Involved + Code of Conduct</h2> 
+  <p>Pull requests and bug reports are always welcome!</p> 
+  <p>We use a lightweight form of project governence inspired by the one used by Apache projects. Please see <a href="https://github.com/twitter/analytics-infra-governance#contributing-and-committership" target="_blank">Contributing and Committership</a> for our code of conduct and our pull request review process. The TL;DR is send us a pull request, iterate on the feedback + discussion, and get a +1 from a <a href="https://github.com/twitter/summingbird/blob/master/COMMITTERS.md" target="_blank">Committer</a> in order to get your PR accepted.</p> 
+  <p>The current list of active committers (who can +1 a pull request) can be found here: <a href="https://github.com/twitter/summingbird/blob/master/COMMITTERS.md" target="_blank">Committers</a></p> 
+  <p>A list of contributors to the project can be found here: <a href="https://github.com/twitter/summingbird/graphs/contributors" target="_blank">Contributors</a></p> 
+  <h2><a id="user-content-maven" class="anchor" href="https://github.com/twitter/summingbird#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h2> 
+  <p>Summingbird modules are published on maven central. The current groupid and version for all modules is, respectively, <code>"com.twitter"</code> and <code>0.9.1</code>.</p> 
+  <p>Current published artifacts are</p> 
+  <ul> 
+   <li><code>summingbird-core_2.11</code></li> 
+   <li><code>summingbird-core_2.10</code></li> 
+   <li><code>summingbird-batch_2.11</code></li> 
+   <li><code>summingbird-batch_2.10</code></li> 
+   <li><code>summingbird-client_2.11</code></li> 
+   <li><code>summingbird-client_2.10</code></li> 
+   <li><code>summingbird-storm_2.11</code></li> 
+   <li><code>summingbird-storm_2.10</code></li> 
+   <li><code>summingbird-scalding_2.11</code></li> 
+   <li><code>summingbird-scalding_2.10</code></li> 
+   <li><code>summingbird-builder_2.11</code></li> 
+   <li><code>summingbird-builder_2.10</code></li> 
+  </ul> 
+  <p>The suffix denotes the scala version.</p> 
+  <h2><a id="user-content-authors-alphabetically" class="anchor" href="https://github.com/twitter/summingbird#authors-alphabetically" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Authors (alphabetically)</h2> 
+  <ul> 
+   <li>Oscar Boykin <a href="https://twitter.com/posco" target="_blank">https://twitter.com/posco</a></li> 
+   <li>Ian O'Connell <a href="https://twitter.com/0x138" target="_blank">https://twitter.com/0x138</a></li> 
+   <li>Sam Ritchie <a href="https://twitter.com/sritchie" target="_blank">https://twitter.com/sritchie</a></li> 
+   <li>Ashutosh Singhal <a href="https://twitter.com/daashu" target="_blank">https://twitter.com/daashu</a></li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/twitter/summingbird#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2013 Twitter, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+ </article>
+</div>

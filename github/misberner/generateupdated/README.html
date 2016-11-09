@@ -1,0 +1,91 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-automatic-generation-of-updated-methods" class="anchor" href="https://github.com/misberner/generateupdated#automatic-generation-of-updated-methods" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Automatic Generation of <code>updated</code> Methods</h1> 
+  <p>This small library / compiler plugin allows to automatically generate <code>updated</code> methods for case classes in Scala.</p> 
+  <h2><a id="user-content-in-a-nutshell" class="anchor" href="https://github.com/misberner/generateupdated#in-a-nutshell" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>In a Nutshell</h2> 
+  <p>The goal is to have a means of conveniently manipulating single fields of case class instances in an immutable fashion (i.e., returning a new object with the changed value). If the notion of "manipulation" were limited to mere assignments, then the copy method accomplishes just this. Take the following example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)</pre>
+  </div> 
+  <p>If we want to change the name of <code>var p = Person("Jane Doe", 42)</code>, we can write <code>p = p.copy(name = "John Doe")</code>. For realizing his birthday, we could write <code>p = p.copy(age = p.age + 1)</code>, but here we need to repeat both <code>p</code> and <code>age</code>. Furthermore, this can quickly get cumbersome if <code>p</code> were not a plain <code>var</code> or <code>val</code>, but a more complex expression.</p> 
+  <p>The idea of the <code>updated</code> method is to provide not a <em>new value</em>, but a <em>value transformer</em> (i.e., a function) to change the current value. We could then rewrite the "birthday" statement as <code>p = p.updated(age = _ + 1)</code>. An example realization can be found in <a href="https://gist.github.com/misberner/eec5e74f759353da3384" target="_blank">this Gist</a>. However, with this library/plugin, this manual implementation is no longer necessary.</p> 
+  <h2><a id="user-content-usage-as-a-compiler-plugin" class="anchor" href="https://github.com/misberner/generateupdated#usage-as-a-compiler-plugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage as a Compiler Plugin</h2> 
+  <p>Once the compiler plugin is enabled, <code>updated</code> methods will be automatically generated for all case classes in the respective compilation units (exceptions see below). No further user interaction is required.</p> 
+  <h3><a id="user-content-limitations" class="anchor" href="https://github.com/misberner/generateupdated#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h3> 
+  <p>To enable reuse of the generation logic that was originally written for a macro context only, the compiler plugin runs at a very early phase (before any resolution is performed). This makes it impossible to determine if a method with the same signature as the <code>updated</code> method to be generated already exists in a case class: types in the signature might be unresolved aliases.</p> 
+  <p>If the <code>updated</code> method were added anyway, this would result in a compilation error; the consequence being that either existing code has to be changed, or the plugin has to be disabled for the whole project. Since both options are undesirable, the plugin takes a conservative approach: if a case class has a method that "looks like" it would conflict with the method to be generated, no <code>updated</code> method is autogenerated (this can only be enforced using the macro annotation approach). This is the case if it has a method with the same name and the same number of arguments as the generated method would have.</p> 
+  <h3><a id="user-content-usage-in-sbt" class="anchor" href="https://github.com/misberner/generateupdated#usage-in-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage in SBT</h3> 
+  <p>Add the following line to your build configuration (in <code>build.sbt</code> or <code>Build.scala</code>):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.github.misberner.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>updated<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.binary)</pre>
+  </div> 
+  <h3><a id="user-content-usage-in-maven" class="anchor" href="https://github.com/misberner/generateupdated#usage-in-maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage in Maven</h3> 
+  <p>Add the following snippet to the <code>configuration</code> section of <code>scala-maven-plugin</code> in your POM:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">compilerPlugins</span>&gt;
+  &lt;<span class="pl-ent">compilerPlugin</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;com.github.misberner.scalamacros&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;updated_&lt;<span class="pl-ent">YOUR</span>.SCALA.VERSION&gt;&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.0.3&lt;/<span class="pl-ent">version</span>&gt;
+  &lt;/<span class="pl-ent">compilerPlugin</span>&gt;
+&lt;/<span class="pl-ent">compilerPlugins</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-usage-as-a-macro-annotation" class="anchor" href="https://github.com/misberner/generateupdated#usage-as-a-macro-annotation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage as a Macro Annotation</h2> 
+  <p>In order to allow a more fine-grained control over which case classes should be extended with an <code>updated</code> method, the functionality is also available as a macro annotation (note: macro annotations require <a href="https://github.com/scalamacros/paradise" target="_blank">Macro Paradise</a>; instructions for setting this up with either SBT or Maven can be found <a href="http://docs.scala-lang.org/overviews/macros/paradise.html" target="_blank">here</a>). The usage is still very simple: just annotate the case class that should be extended with an <code>updated</code> method with the <code>com.github.misberner.scalamacros.updated.generateUpdated</code> annotation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.misberner.scalamacros.updated.</span><span class="pl-v">generateUpdated</span>
+
+<span class="pl-k">@</span>generateUpdated
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyClass</span>(<span class="pl-v">intAttr</span>: <span class="pl-k">Int</span>, <span class="pl-v">listAttr</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>], <span class="pl-v">mapAttr</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>,<span class="pl-k">Int</span>]) {
+  <span class="pl-c">// ...</span>
+}</pre>
+  </div> 
+  <h3><a id="user-content-usage-in-sbt-1" class="anchor" href="https://github.com/misberner/generateupdated#usage-in-sbt-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage in SBT</h3> 
+  <p>After enabling Macro Paradise (see above), add the following line to your build configuration (in <code>build.sbt</code> or <code>Build.scala</code>):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.misberner.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>updated<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3<span class="pl-pds">"</span></span> <span class="pl-k">%</span> provided cross <span class="pl-en">CrossVersion</span>.binary</pre>
+  </div> 
+  <h3><a id="user-content-usage-in-maven-1" class="anchor" href="https://github.com/misberner/generateupdated#usage-in-maven-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage in Maven</h3> 
+  <p>After enabling Macro Paradise (see above), add the following snippet to the <code>dependencies</code> section in your POM:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+  &lt;<span class="pl-ent">groupId</span>&gt;com.github.misberner.scalamacros&lt;/<span class="pl-ent">groupId</span>&gt;
+  &lt;<span class="pl-ent">artifactId</span>&gt;updated_&lt;<span class="pl-ent">YOUR</span>.SCALA.VERSION&gt;&lt;/<span class="pl-ent">artifactId</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;0.0.3&lt;/<span class="pl-ent">version</span>&gt;
+  &lt;<span class="pl-ent">scope</span>&gt;provided&lt;/<span class="pl-ent">scope</span>&gt;  <span class="pl-c">&lt;!-- non-transitive --&gt;</span>
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h1><a id="user-content-acknowledgement" class="anchor" href="https://github.com/misberner/generateupdated#acknowledgement" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Acknowledgement</h1> 
+  <p>Realizing this library would not have been possible without Adam Warski's excellent <a href="http://www.warski.org/blog/2013/09/automatic-generation-of-delegate-methods-with-macro-annotations/" target="_blank">blog post</a>/<a href="https://github.com/adamw/scala-macro-aop" target="_blank">example</a> on automatic generation of delegate</p> 
+ </article>
+</div>

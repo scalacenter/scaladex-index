@@ -1,0 +1,110 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-settler" class="anchor" href="https://github.com/lucastorri/settler#settler" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>settler</h1> 
+  <p><code>settler</code> uses macros to generate implementations for your settings traits in Scala. It allows you to have typed configurations for your applications.</p> 
+  <p>It is inspired by <a href="https://github.com/lviggiano/owner" target="_blank"><code>owner</code></a>.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/lucastorri/settler#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Given a configuration file like this:</p> 
+  <pre><code>{
+  str: "hello world",
+  dbs: [
+    { key: "k1", value: 123 },
+    { key: "k2", value: 321 }
+  ]
+}
+</code></pre> 
+  <p>and a piece of code like the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.unstablebuild.settler.</span><span class="pl-v">_</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">AppSettings</span> {
+  <span class="pl-k">def</span> <span class="pl-en">str</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+  <span class="pl-k">def</span> <span class="pl-en">dbs</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">DBSettings</span>]
+  <span class="pl-k">def</span> <span class="pl-en">opt</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>]
+  <span class="pl-k">def</span> <span class="pl-en">optOrElse</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> opt.getOrElse(<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span>)
+}
+<span class="pl-k">trait</span> <span class="pl-en">DBSettings</span> {
+  <span class="pl-k">def</span> <span class="pl-en">key</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+  <span class="pl-k">def</span> <span class="pl-en">value</span><span class="pl-k">:</span> <span class="pl-k">Int</span>
+}
+
+<span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">Settler</span>.settings[<span class="pl-en">AppSettings</span>](<span class="pl-en">ConfigFactory</span>.parseFile(myFile))</pre>
+  </div> 
+  <p><code>settler</code> will generate the implementation for your trait and allow you to do this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  println(settings.str)                  <span class="pl-c">// hello world</span>
+
+  settings.dbs.foreach(db <span class="pl-k">=&gt;</span>             <span class="pl-c">// k1: 123</span>
+    println(s<span class="pl-s"><span class="pl-pds">"</span>${db.key}: ${db.value}<span class="pl-pds">"</span></span>))  <span class="pl-c">// k2: 321</span>
+
+  println(settings.opt)                  <span class="pl-c">// None</span>
+
+  println(settings.optOrElse)            <span class="pl-c">// default</span></pre>
+  </div> 
+  <p>It can be used out-of-the-box with <a href="https://github.com/typesafehub/config" target="_blank">Typesafe's Config</a> or <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html" target="_blank">Java Properties</a>. Additionally, you can implement your own <code>ConfigProvider</code> and use whatever source you prefer (custom file formats, databases, Redis, HTTP calls, etc).</p> 
+  <h3><a id="user-content-alternative-name" class="anchor" href="https://github.com/lucastorri/settler#alternative-name" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Alternative Name</h3> 
+  <p>Case necessary, you can modify the key used to retrieve a setting by using the <code>@Key</code> annotation as so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">AlternativeName</span> {
+  <span class="pl-k">@</span><span class="pl-en">Key</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>rightName<span class="pl-pds">"</span></span>)
+  <span class="pl-k">def</span> <span class="pl-en">wrongName</span><span class="pl-k">:</span> <span class="pl-k">Int</span>
+}</pre>
+  </div> 
+  <h3><a id="user-content-custom-types" class="anchor" href="https://github.com/lucastorri/settler#custom-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom Types</h3> 
+  <p><code>settler</code> supports most of the common Scala types, like <code>Int</code>, <code>String</code>, <code>ConfigProvider</code>, <code>Duration</code>, <code>MemorySize</code>, plus these same types wrapped on <code>Seq</code>, <code>Set</code>, and/or <code>Option</code>.</p> 
+  <p>Whenever your trait define types that are unknown to the library, it will try to find an implicit implementation of <code>ConfigParser</code>. <code>ConfigParser</code>s allow the functionallity of the library to be expanded and define custom types.</p> 
+  <p>For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">CustomSettings</span> {
+  <span class="pl-k">def</span> <span class="pl-en">customType</span><span class="pl-k">:</span> <span class="pl-en">Class</span>[_]
+}
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">classParser</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">Class</span>[_]] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">value</span>: <span class="pl-en">AnyRef</span>)<span class="pl-k">:</span> <span class="pl-en">Class</span>[_] <span class="pl-k">=</span> 
+    <span class="pl-en">Class</span>.forName(value.toString)
+}
+
+<span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">Settler</span>.settings[<span class="pl-en">CustomSettings</span>](
+    <span class="pl-en">ConfigFactory</span>.parseString(<span class="pl-s"><span class="pl-pds">"</span>customType = java.io.File<span class="pl-pds">"</span></span>))
+
+settings.customType <span class="pl-k">==</span> <span class="pl-c1">classOf</span>[java.io.<span class="pl-en">File</span>]</pre>
+  </div> 
+  <p>A few custom parsers are available by importing <code>com.unstablebuild.settler.parser._</code>.</p> 
+  <h3><a id="user-content-config-vs-settings" class="anchor" href="https://github.com/lucastorri/settler#config-vs-settings" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Config vs Settings</h3> 
+  <p>Along the documentation and the code you might see the usage of the words Config and Settings. Although they can broadly be considered synonyms, on the scope of this library Config refers to external libraries, like Typesafe's Config, who provide the mechanism of fetching configuration files and so on. On the other hand, Settings are those same configurations loaded and exposed in a way that makes sense to the application domain.</p> 
+  <h2><a id="user-content-install" class="anchor" href="https://github.com/lucastorri/settler#install" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h2> 
+  <p>To use it with <a href="http://www.scala-sbt.org/" target="_blank">SBT</a>, add the following to your <code>build.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>public<span class="pl-pds">"</span></span>)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.unstablebuild<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>settler<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-release" class="anchor" href="https://github.com/lucastorri/settler#release" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release</h2> 
+  <div class="highlight highlight-source-shell">
+   <pre>./sbt <span class="pl-c1">test</span>
+./sbt publishSigned macros/publishSigned
+./sbt sonatypeReleaseAll</pre>
+  </div> 
+ </article>
+</div>

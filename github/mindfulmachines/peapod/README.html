@@ -1,0 +1,191 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-peapod" class="anchor" href="https://github.com/mindfulmachines/peapod#peapod" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Peapod</h1> 
+  <p>Peapod is a dependency and data pipeline management framework for Spark and Scala. The goals were to provide a framework that is simple to use, automatically saves/loads the output of tasks, and provides support for versioning. It is a work in progress and still very much experimental so new versions may introduce breaking changes.</p> 
+  <p>Please let us know what you think and follow our blog <a href="http://www.mindfulmachines.io" target="_blank">Mindful Machines</a>.</p> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/mindfulmachines/peapod#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h1> 
+  <p>If you're using maven then just add this:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;io.mindfulmachines&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;peapod_2.11&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.8&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <p>If you're using SBT then just add this or clone the repository:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.mindfulmachines<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>peapod<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.8<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h1><a id="user-content-using" class="anchor" href="https://github.com/mindfulmachines/peapod#using" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using</h1> 
+  <p>The first step is to create a Task. A StorableTask will automatically save and load the output of the Task's generate method (in this case a RDD[(Long,String)]) to disk. If an appropriate serialized version exists it will be loaded, otherwise it will be generated and then saved. We'll discuss where the storage happens a bit further down. StorableTask can only serialize, currently, RDDs, DataFrames and Serializable classes. You can override the read and write methods to save/laod other types of classes.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">peapod.</span>{<span class="pl-v">Peapod</span>, <span class="pl-v">StorableTask</span>}
+<span class="pl-k">import</span> <span class="pl-v">peapod.StorableTask.</span><span class="pl-v">_</span>
+<span class="pl-k">class</span> <span class="pl-en">RawPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">StorableTask</span>[<span class="pl-en">RDD</span>[(<span class="pl-k">Long</span>, <span class="pl-k">String</span>)]] {
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span>
+    readWikiDump(p.sc, p.raw <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/enwiki-20150304-pages-articles.xml.bz2<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <p>Then you can create other tasks which depend on this task. You use the pea() method to wrap a task to have it be a dependency of the current task. You can then use the get() method of the dependency to access the output of the dependencies generate method. The outputs are cached so even if you create multiple instances of a Task (within a single Peapod, we'll get to that in a bit) their get methods will all point to the same data.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">peapod.</span>{<span class="pl-v">Peapod</span>, <span class="pl-v">StorableTask</span>}
+<span class="pl-k">import</span> <span class="pl-v">peapod.StorableTask.</span><span class="pl-v">_</span>
+<span class="pl-k">class</span> <span class="pl-en">ParsedPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">StorableTask</span>[<span class="pl-en">RDD</span>[<span class="pl-en">Page</span>]] {
+  <span class="pl-k">val</span> <span class="pl-en">rawPages</span> <span class="pl-k">=</span> pea(<span class="pl-k">new</span> <span class="pl-en">RawPages)</span>
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span>
+    parsePages(rawPages.get()).map(_._2)
+        <span class="pl-c">//Remove duplicate pages with the same title</span>
+        .keyBy(_.title).reduceByKey((l,r) <span class="pl-k">=&gt;</span> l).map(_._2)
+}</pre>
+  </div> 
+  <p>To actually run Tasks you need to create a Peapod which "holds" tasks, keeps shared variables (such as where Task outputs are saved/loaded from) and manages shared state between Task instances. In the below example Task state would be stored in "s3n://tm-bucket/peapod-pipeline". If you use s3 be sure to set the appropriate values for fs.s3n.awsAccessKeyId and fs.s3n.awsSecretAccessKey in the SparkContext's hadoopConfiguration.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Peapod</span>(
+  path<span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>s3n://tm-bucket/peapod-pipeline<span class="pl-pds">"</span></span>,
+  raw<span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>s3n://tm-bucket/peapod-input<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <p>You can now run Task's and get their outputs. Dependencies will be automatically run if necessary if the current Task isn't saved to disk.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>p(<span class="pl-k">new</span> <span class="pl-en">ParsedPages</span>()).get().count()</pre>
+  </div> 
+  <p>Tasks support versioning and the versioning flows through the pipeline so all dependent Tasks are also re-generated if the version of their dependency changes. For the below would cause ParsedPages and RawPages to be re-run even if they had previously had their output stored.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">peapod.StorableTask.</span><span class="pl-v">_</span>
+<span class="pl-k">class</span> <span class="pl-en">RawPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">StorableTask</span>[<span class="pl-en">RDD</span>[(<span class="pl-k">Long</span>, <span class="pl-k">String</span>)]] {
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">version</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span>
+    readWikiDump(p.sc, p.raw <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/enwiki-20150304-pages-articles.xml.bz2<span class="pl-pds">"</span></span>)
+}
+p(<span class="pl-k">new</span> <span class="pl-en">ParsedPages</span>()).get().count()</pre>
+  </div> 
+  <h1><a id="user-content-detailed-description" class="anchor" href="https://github.com/mindfulmachines/peapod#detailed-description" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Detailed Description</h1> 
+  <p>In progress.</p> 
+  <h2><a id="user-content-ephemeral-task" class="anchor" href="https://github.com/mindfulmachines/peapod#ephemeral-task" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ephemeral Task</h2> 
+  <p>This is a Task which never saves or loads it's state from disk but always runs the generate method. This is useful for quick Tasks or Tasks which only run for a short period of time.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">RawPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">EphemeralTask</span>[<span class="pl-en">RDD</span>[(<span class="pl-k">Long</span>, <span class="pl-k">String</span>)]] {
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span>
+    readWikiDump(p.sc, p.raw <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/enwiki-20150304-pages-articles.xml.bz2<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <h2><a id="user-content-storable-task" class="anchor" href="https://github.com/mindfulmachines/peapod#storable-task" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Storable Task</h2> 
+  <p>This is a Task which saves or loads it's state (the output of generate) from disk. You need to run <code>import peapod.StorableTask._</code> first to ensure that the implicit conversions for serialization are imported.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">peapod.StorableTask.</span><span class="pl-v">_</span>
+<span class="pl-k">class</span> <span class="pl-en">RawPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">StorableTask</span>[<span class="pl-en">RDD</span>[(<span class="pl-k">Long</span>, <span class="pl-k">String</span>)]] {
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span>
+    readWikiDump(p.sc, p.raw <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/enwiki-20150304-pages-articles.xml.bz2<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <h2><a id="user-content-cachingpersisting" class="anchor" href="https://github.com/mindfulmachines/peapod#cachingpersisting" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caching/Persisting</h2> 
+  <p>The Peapod framework will in some cases automatically run Spark's persist methods on the output of tasks (for RDD, DataFrame and Dataset outputs) and so cache them. This is currently done if a task is ephemeral or if it has more than two tasks which depend on it. Once the number of dependent tasks that have not been already generated is zero the task will be automatically unpersisted. It's also possible to manually control the persistence using the cache variable in a Task:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">RawPages</span>(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>) <span class="pl-k">extends</span> <span class="pl-e">EphemeralTask</span>[<span class="pl-en">RDD</span>[(<span class="pl-k">Long</span>, <span class="pl-k">String</span>)]] {
+  <span class="pl-c">//The default is Auto</span>
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">persist</span> <span class="pl-k">=</span> <span class="pl-en">Auto</span>
+  <span class="pl-c">//Never persists this task's output:</span>
+  <span class="pl-c">//override val persist = Never</span>
+  <span class="pl-c">//Always persist this task's output:</span>
+  <span class="pl-c">//override val persist = Always</span>
+}</pre>
+  </div> 
+  <h2><a id="user-content-parametrization" class="anchor" href="https://github.com/mindfulmachines/peapod#parametrization" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parametrization</h2> 
+  <p>There are times when you want Tasks to take in parameters in real time as part of their constructor. This can allow for clean custom pipelines without global state or for things like iterative computation and loops. For this to work cleanly with Peapod, however, you would need to have the name of the Task take the parameter into account. Doing this manually is possible but tedious so the functionality is now built into Peapod.</p> 
+  <p>To achieve this you first need to define your parameters as traits with the parameter as a variable and use the <code>param()</code> method to register it.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">ParamA</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span> {
+  <span class="pl-k">val</span> <span class="pl-en">a</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+  param(a)
+}
+<span class="pl-k">trait</span> <span class="pl-en">ParamB</span> <span class="pl-k">extends</span> <span class="pl-e">Param</span> {
+  <span class="pl-k">val</span> <span class="pl-en">b</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+  param(b)
+}</pre>
+  </div> 
+  <p>Then you simply have your Tasks inherit the traits and define the parameters in the constructor:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Test</span>(<span class="pl-k">val</span> <span class="pl-en">a</span><span class="pl-k">:</span> <span class="pl-k">String</span>, <span class="pl-k">val</span> <span class="pl-en">b</span><span class="pl-k">:</span> <span class="pl-k">String</span>)(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">p</span><span class="pl-k">:</span> <span class="pl-en">Peapod</span>)
+  <span class="pl-k">extends</span> <span class="pl-e">EphemeralTask</span>[<span class="pl-k">Double</span>] <span class="pl-k">with</span> <span class="pl-e">ParamA</span> <span class="pl-k">with</span> <span class="pl-e">ParamB</span> {
+  <span class="pl-k">def</span> <span class="pl-en">generate</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>
+}</pre>
+  </div> 
+  <p>The name of the resulting task is automatically updated based on the parameters:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">new</span> <span class="pl-en">Test</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>).name
+<span class="pl-c">//"peapod.ParamTest$Test_98_97"</span>
+<span class="pl-k">new</span> <span class="pl-en">Test</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>).name
+<span class="pl-c">//"peapod.ParamTest$Test_97_97"</span></pre>
+  </div> 
+  <h2><a id="user-content-dot-graphs" class="anchor" href="https://github.com/mindfulmachines/peapod#dot-graphs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dot Graphs</h2> 
+  <p>There is support for outputting the dependency tree into a <a href="https://en.wikipedia.org/wiki/DOT_(graph_description_language)" target="_blank">Dot format</a>. Dotted boxes indicate EphemeralTasks and filled in boxes indicate tasks that already are stored on disk.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">new</span> <span class="pl-en">Test.AUC</span>()
+println(p.dotFormatDiagram())</pre>
+  </div> 
+  <p>You can either use a tool such as <a href="http://www.graphviz.org/" target="_blank">Graphiz</a> or a service such as <a href="http://gravizo.com" target="_blank">Gravizo</a> to convert the Dot file into an image. We also provide our own service that accepts compressed representations of the Dot Diagram which allows for larger DAGs to be displayed.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>println(<span class="pl-en">Util</span>.gravizoDotLink(p.dotFormatDiagram()))
+println(<span class="pl-en">Util</span>.mindfulmachinesDotLink(p.dotFormatDiagram()))</pre>
+  </div> 
+  <p>In Spark Notebook you can simply create an XML literal for this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">img</span> <span class="pl-e">src</span>={<span class="pl-en">Util</span>.gravizoDotLink(p.dotFormatDiagram())}/&gt;</pre>
+  </div> 
+  <p><a href="https://camo.githubusercontent.com/8834e543c48c91019486aaeb39209e0471874773/687474703a2f2f672e67726176697a6f2e636f6d2f673f64696772617068253230472532302537426e6f64652532302535427368617065253344626f78253544253232646570656e64656e63792e546573742532345061727365642532322532302535427374796c6525334466696c6c6564253544253342253041253232646570656e64656e63792e546573742532345261772532322532302535427374796c6525334466696c6c6564253544253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322532302535427374796c6525334466696c6c6564253544253342253232646570656e64656e63792e54657374253234506172736564457068656d6572616c2532322532302535427374796c65253344646f74746564253544253342253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234506970656c696e6546656174757265253232253342253041253232646570656e64656e63792e546573742532345261772532322d253345253232646570656e64656e63792e54657374253234506172736564457068656d6572616c253232253342253041253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e54657374253234506970656c696e654c522532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234506970656c696e654c52253232253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322d253345253232646570656e64656e63792e54657374253234506970656c696e654c52253232253342253041253232646570656e64656e63792e546573742532345261772532322d253345253232646570656e64656e63792e5465737425323450617273656425323225334225374225323072616e6b25334473616d65253342253232646570656e64656e63792e54657374253234506172736564457068656d6572616c253232253230253232646570656e64656e63792e54657374253234415543253232253230253232646570656e64656e63792e54657374253234415543253232253230253232646570656e64656e63792e5465737425323441554325323225374425374225323072616e6b25334473616d65253342253232646570656e64656e63792e54657374253234526177253232253230253232646570656e64656e63792e54657374253234526177253232253744253744" target="_blank"><img src="https://camo.githubusercontent.com/8834e543c48c91019486aaeb39209e0471874773/687474703a2f2f672e67726176697a6f2e636f6d2f673f64696772617068253230472532302537426e6f64652532302535427368617065253344626f78253544253232646570656e64656e63792e546573742532345061727365642532322532302535427374796c6525334466696c6c6564253544253342253041253232646570656e64656e63792e546573742532345261772532322532302535427374796c6525334466696c6c6564253544253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322532302535427374796c6525334466696c6c6564253544253342253232646570656e64656e63792e54657374253234506172736564457068656d6572616c2532322532302535427374796c65253344646f74746564253544253342253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234506970656c696e6546656174757265253232253342253041253232646570656e64656e63792e546573742532345261772532322d253345253232646570656e64656e63792e54657374253234506172736564457068656d6572616c253232253342253041253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e54657374253234506970656c696e654c522532322d253345253232646570656e64656e63792e54657374253234415543253232253342253041253232646570656e64656e63792e546573742532345061727365642532322d253345253232646570656e64656e63792e54657374253234506970656c696e654c52253232253342253041253232646570656e64656e63792e54657374253234506970656c696e65466561747572652532322d253345253232646570656e64656e63792e54657374253234506970656c696e654c52253232253342253041253232646570656e64656e63792e546573742532345261772532322d253345253232646570656e64656e63792e5465737425323450617273656425323225334225374225323072616e6b25334473616d65253342253232646570656e64656e63792e54657374253234506172736564457068656d6572616c253232253230253232646570656e64656e63792e54657374253234415543253232253230253232646570656e64656e63792e54657374253234415543253232253230253232646570656e64656e63792e5465737425323441554325323225374425374225323072616e6b25334473616d65253342253232646570656e64656e63792e54657374253234526177253232253230253232646570656e64656e63792e54657374253234526177253232253744253744" alt="Gravizo Dot Graphic" data-canonical-src="http://g.gravizo.com/g?digraph%20G%20%7Bnode%20%5Bshape%3Dbox%5D%22dependency.Test%24Parsed%22%20%5Bstyle%3Dfilled%5D%3B%0A%22dependency.Test%24Raw%22%20%5Bstyle%3Dfilled%5D%3B%0A%22dependency.Test%24PipelineFeature%22%20%5Bstyle%3Dfilled%5D%3B%22dependency.Test%24ParsedEphemeral%22%20%5Bstyle%3Ddotted%5D%3B%22dependency.Test%24Parsed%22-%3E%22dependency.Test%24PipelineFeature%22%3B%0A%22dependency.Test%24Raw%22-%3E%22dependency.Test%24ParsedEphemeral%22%3B%0A%22dependency.Test%24Parsed%22-%3E%22dependency.Test%24AUC%22%3B%0A%22dependency.Test%24PipelineFeature%22-%3E%22dependency.Test%24AUC%22%3B%0A%22dependency.Test%24PipelineLR%22-%3E%22dependency.Test%24AUC%22%3B%0A%22dependency.Test%24Parsed%22-%3E%22dependency.Test%24PipelineLR%22%3B%0A%22dependency.Test%24PipelineFeature%22-%3E%22dependency.Test%24PipelineLR%22%3B%0A%22dependency.Test%24Raw%22-%3E%22dependency.Test%24Parsed%22%3B%7B%20rank%3Dsame%3B%22dependency.Test%24ParsedEphemeral%22%20%22dependency.Test%24AUC%22%20%22dependency.Test%24AUC%22%20%22dependency.Test%24AUC%22%7D%7B%20rank%3Dsame%3B%22dependency.Test%24Raw%22%20%22dependency.Test%24Raw%22%7D%7D" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-web-server-experimental" class="anchor" href="https://github.com/mindfulmachines/peapod#web-server-experimental" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Web Server (Experimental)</h1> 
+  <p>The dot graphs while useful are limited in their flexibility by requiring an explicit generation from the Peapod instance. To allow for a better user experience an experimental web server which displays the DAG graph was added in Peapod 0.8.</p> 
+  <p>To use this you need to extend Peapod with the Web trait:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">p</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Peapod</span>(
+  path<span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>file://<span class="pl-pds">"</span></span>,path.replace(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span><span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)).toString,
+  raw<span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>)(sc) <span class="pl-k">with</span> <span class="pl-e">Web</span></pre>
+  </div> 
+  <p>Then you can go to localhost:8080 to view the DAG graph in real time.</p> 
+  <h1><a id="user-content-known-issues" class="anchor" href="https://github.com/mindfulmachines/peapod#known-issues" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Known Issues</h1> 
+  <ul> 
+   <li>StorableTasks whose generate only performs a map operation on an RDD will not work if S3 is the storage location. You can get around this by running a repartition in the generate.</li> 
+  </ul> 
+  <h1><a id="user-content-the-future" class="anchor" href="https://github.com/mindfulmachines/peapod#the-future" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The Future</h1> 
+  <ul> 
+   <li>Automatic Versioning: Give the option to use the actual code of the task to generate the version and automatically change the version if the code changes.</li> 
+   <li>Improve handing of automatic persistence</li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,120 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scodec-stream" class="anchor" href="https://github.com/scodec/scodec-stream#scodec-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scodec-stream</h1> 
+  <p>Scodec-stream is a library for streaming binary encoding and decoding. It is built atop <a href="https://github.com/scodec/scodec" target="_blank">scodec</a> and <a href="https://github.com/functional-streams-for-scala/fs2" target="_blank">fs2</a>. Here's a brief example of its use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scodec.</span>{<span class="pl-v">codecs</span> <span class="pl-k">=&gt;</span> <span class="pl-v">C</span>}
+<span class="pl-k">import</span> <span class="pl-v">scodec.stream.</span>{<span class="pl-v">decode</span> <span class="pl-k">=&gt;</span> <span class="pl-v">D</span>, <span class="pl-v">StreamDecoder</span>}
+<span class="pl-k">import</span> <span class="pl-v">scodec.bits.</span><span class="pl-v">ByteVector</span>
+
+<span class="pl-k">val</span> <span class="pl-en">frames</span><span class="pl-k">:</span> <span class="pl-en">StreamDecoder</span>[<span class="pl-en">ByteVector</span>] <span class="pl-k">=</span> <span class="pl-en">D</span>.once(<span class="pl-en">C</span>.int32)
+ .flatMap { numBytes <span class="pl-k">=&gt;</span> <span class="pl-en">D</span>.once(<span class="pl-en">C</span>.bytes(numBytes)).isolate(numBytes) }
+ .many
+
+<span class="pl-k">val</span> <span class="pl-en">s</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[fs2.util.<span class="pl-en">Task</span>, <span class="pl-en">ByteVector</span>] <span class="pl-k">=</span>
+  frames.decodeMmap(<span class="pl-k">new</span> <span class="pl-en">java.io.FileInputStream</span>(<span class="pl-s"><span class="pl-pds">"</span>largefile.bin<span class="pl-pds">"</span></span>).getChannel)</pre>
+  </div> 
+  <p>When consumed, <code>s</code> will memory map in the contents of <code>"largefile.bin"</code>, then decode a stream of frames, where each frame is expected to begin with a number of bytes specified as a 32-bit signed int (the <code>int32</code> codec), followed by a frame payload of that many bytes. Nothing happens until the <code>s</code> stream is consumed, and <code>s</code> will ensure the <code>FileChannel</code> is closed in the event of an error or normal termination of the consumer. See <a href="https://github.com/scodec/scodec-stream#guide" target="_blank">the guide</a> for further information and discussion of streaming encoding.</p> 
+  <p>Decoding speeds have been observed at 100 MB/s for some realistic examples (<a href="https://github.com/scodec/scodec-stream/blob/master/src/test/scala/scodec/stream/examples/Mpeg.scala" target="_blank">decoding MPEG packets from a <code>.pcap</code> file</a>), though decoding speed will generally depend on how fine-grained the decoding is.</p> 
+  <p><strong>Links:</strong></p> 
+  <ul> 
+   <li><a href="https://github.com/scodec/scodec-stream#admin" target="_blank">Administrative</a></li> 
+   <li><a href="https://github.com/scodec/scodec-stream#getting-binaries" target="_blank">Getting Binaries</a></li> 
+   <li><a href="https://github.com/scodec/scodec-stream#guide" target="_blank">Usage guide</a> 
+    <ul> 
+     <li><a href="https://github.com/scodec/scodec-stream#decoding" target="_blank">Decoding</a></li> 
+     <li><a href="https://github.com/scodec/scodec-stream#encoding" target="_blank">Encoding</a></li> 
+    </ul></li> 
+   <li><a href="http://www.google.com/?q=scodec-stream+api" target="_blank">API docs</a></li> 
+   <li><a href="https://groups.google.com/forum/#!forum/scodec" target="_blank">scodec mailing list</a></li> 
+   <li><a href="https://github.com/scodec/scodec-protocols" target="_blank">scodec-protocols</a> has useful streaming encoders and decoders for various domains and is a nice place to look for examples of the library in use.</li> 
+  </ul> 
+  <h3><a id="user-content-administrative" class="anchor" href="https://github.com/scodec/scodec-stream#administrative" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Administrative</h3> 
+  <p>This project is licensed under a <a href="https://github.com/scodec/scodec-stream/blob/master/LICENSE" target="_blank">3-clause BSD license</a>.</p> 
+  <p>The <a href="https://groups.google.com/forum/#!forum/scodec" target="_blank">scodec mailing list</a> contains release announcements and is generally a good place to go for help. Also consider using the <a href="http://stackoverflow.com/questions/tagged/scodec" target="_blank">scodec tag on StackOverflow</a>.</p> 
+  <p>People are expected to follow the <a href="http://typelevel.org/conduct.html" target="_blank">Typelevel Code of Conduct</a> when discussing scodec on the Github page, Gitter channel, mailing list, or other venues.</p> 
+  <p>Concerns or issues can be sent to Michael Pilquist (<em><a href="mailto:mpilquist@gmail.com" target="_blank">mpilquist@gmail.com</a></em>) or to <a href="http://typelevel.org/about.html" target="_blank">Typelevel</a>.</p> 
+  <h3><a id="user-content-getting-binaries" class="anchor" href="https://github.com/scodec/scodec-stream#getting-binaries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Binaries</h3> 
+  <p>See the <a href="https://scodec.org/releases/" target="_blank">releases page on the website</a>.</p> 
+  <p>Sign up for the <a href="https://groups.google.com/forum/#!forum/scodec" target="_blank">mailing list</a> if you want to be notified of future releases.</p> 
+  <h3><a id="user-content-guide" class="anchor" href="https://github.com/scodec/scodec-stream#guide" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Guide</h3> 
+  <p>The library provides two main types, <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/decode/StreamDecoder.scala" target="_blank"><code>scodec.stream.StreamDecoder[A]</code></a>, with helper functions in the <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/decode/StreamDecoder.scala" target="_blank"><code>scodec.stream.decode</code> package object</a>, and <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/StreamEncoder.scala" target="_blank"><code>scodec.stream.StreamEncoder[A]</code></a>, with helper functions in the <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/package.scala" target="_blank"><code>scodec.stream.encode</code> package object</a>. The <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/codec/StreamCodec.scala" target="_blank"><code>scodec.stream.StreamCodec[A]</code></a> type just pairs an encoder with a decoder.</p> 
+  <h4><a id="user-content-decoding" class="anchor" href="https://github.com/scodec/scodec-stream#decoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Decoding</h4> 
+  <p>The model of a <code>StreamDecoder[A]</code> is a <code>Stream[Cursor,A]</code>, where <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/decode/Cursor.scala" target="_blank"><code>Cursor[X]</code></a> is a <code>BitVector =&gt; Attempt[DecodeResult[X]]</code> state action. Thus, a <code>StreamDecoder[A]</code> produces a stream of <code>A</code> values, using a <a href="https://github.com/scodec/scodec-bits" target="_blank"><code>BitVector</code></a> input that it may inspect and update as it emits values. The 'current' <code>BitVector</code> is sometimes called the 'cursor position' or just 'cursor' throughout this documentation.</p> 
+  <p>The combinators for building <code>StreamDecoder</code> are fairly typical of what one might see in a monadic parser combinator library. Assuming we've imported <code>scodec.stream.{decode,StreamDecoder}</code> and <code>scodec.codecs</code>:</p> 
+  <ul> 
+   <li><code>decode.once</code>: A <code>scodec.Decoder[A] =&gt; StreamDecoder[A]</code> which promotes a regular (strict) decoder to a <code>StreamDecoder</code> which decodes a single value, emits it, advances the cursor by the number of decoded bits, then halts. Any decoding failures are raised in the output stream, wrapped in <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/decode/DecodingError.scala" target="_blank"><code>DecodingError</code></a>. Example: <code>decode.once(codecs.int32)</code> has type <code>StreamDecoder[Int]</code>, and parses a single signed 32-bit integer.</li> 
+   <li><code>decode.tryOnce</code>: A <code>scodec.Decoder[A] =&gt; StreamDecoder[A]</code> which promotes a regular (strict) decoder to a <code>StreamDecoder</code>. Unlike <code>decode.once</code>, decoding failures are not raised. Instead, the cursor position is left at its current location and the stream halts with no emitted elements.</li> 
+   <li><code>d1 ++ d2</code>: Run <code>d1</code> and emit all its decoded values, then run <code>d2</code> on the remaining input and emit its values. Example: <code>decode.once(codecs.int32) ++ decode.advance(12)</code> decodes a single signed <code>Int</code>, then advances the cursor by 12 bits.</li> 
+   <li><code>d1 or d2</code> (alternately <code>d1 | d2</code>): Runs <code>d1</code>, and if it emits no elements and raises no errors, runs <code>d2</code>. Example: <code>decode.tryOnce(codecs.variableSizeBytes(codecs.int32L, codecs.utf8)) | decode.emit("Joe Sixpack")</code> will try parsing UTF-8 encoded string, which begins with a length in bytes encoded as a little-endian encoded <code>Int</code>, followed by that many bytes for the string itself, and if this fails, will leave the cursor at its current location and emit the string <code>"Joe Sixpack"</code>.</li> 
+   <li><code>d.many</code>: Run <code>d</code> for as long as there is nonempty input, emitting the stream of decoded values. Example, <code>decode.once(codecs.int64).many</code> will parse a stream of 64-bit signed integers. This can also be written as <code>decode.many(codecs.int64)</code>.</li> 
+   <li><code>d.isolate(numBits)</code> and <code>d.isolateBytes(numBytes)</code>: Useful when constructing nested decoders, runs <code>d</code> on the first <code>numBits</code> number of bits or <code>numBytes</code> number of bytes of the input, then advances the cursor by that many bits or bytes.</li> 
+   <li><code>d flatMap f</code>: Given a <code>d: StreamDecoder[A]</code> and an <code>f: A =&gt; StreamDecoder[B]</code>, produce a <code>StreamDecoder[B]</code> by running <code>d</code>, then using each resulting <code>A</code> to choose a <code>StreamDecoder[B]</code> to run to produce the output. For example, <code>decode.many(int32) flatMap { n =&gt; decode.once(codecs.fixedSizeBytes(n, codecs.utf8)) }</code> will be a <code>StreamDecoder[String]</code> which produces a stream of <code>String</code> outputs by repeatedly reading a signed 32-bit integer, <code>n</code>, then decoding a UTF-8 encoded string consisting of <code>n</code> bytes.</li> 
+   <li><code>d.peek</code>: Run <code>d: StreamDecoder[A]</code>, but after <code>d</code> completes, reset the cursor to its original, pre-<code>d</code> position.</li> 
+  </ul> 
+  <p>There are also various combinators for statefully transforming the output of a <code>StreamDecoder[A]</code>, or interleaving multiple decoders, namely <code>d pipe proc</code> (alternately <code>d |&gt; proc</code>) and <code>(d1 tee d2)(f)</code>. See the <a href="http://www.google.com/?q=scodec-stream+api" target="_blank">API docs</a> for more details.</p> 
+  <h5><a id="user-content-running-decoders" class="anchor" href="https://github.com/scodec/scodec-stream#running-decoders" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running decoders</h5> 
+  <p>A decoder, <code>d: StreamDecoder[A]</code> may be run on an input <code>bits: BitVector</code> via <code>d.decode(bits)</code>, and there are various convenience functions, including <code>decodeInputStream</code>, <code>decodeMmap</code>, and <code>decodeChannel</code>, for safely decoding from a <code>java.io.InputStream</code>, a memory-mapped file, or <code>java.nio.ReadableByteChannel</code>. These convenience functions will allocate a lazy <code>BitVector</code> backed by the given source and ensure the input is closed when the consumer finishes consuming the decoded stream.</p> 
+  <p>Decoders are given the full input starting from the current cursor location - any chunking of the input <code>BitVector</code> is not visible to decoders, which simplifies their implementation as decoders need not worry about being given partial input. Thus, when promoting a <code>d: Decoder[A]</code> to a <code>StreamDecoder[A]</code> via <code>decode.once(d)</code>, <code>d</code> will be run on the full remainder of the current input. (Calling <code>decode.once(d).isolate(42)</code> will give <code>d</code> only the first 42 bits of the input, starting from the current cursor location, and will advance the cursor by 42 bits on completion.)</p> 
+  <p>When a <code>StreamDecoder[A]</code> advances the cursor, the head of the underlying <code>BitVector</code> may be garbage collected, making it easy to write decoders that operate in constant memory. There are a few caveats:</p> 
+  <ul> 
+   <li><code>d.peek</code> will retain the current cursor location in memory for as long as <code>d</code> takes to run, so it can reset this cursor location after <code>d</code> completes. Thus, it should be used only in restricted scopes, like <code>decode.once(codecs.int32).peek</code>, which reads a single <code>Int</code> and leaves it unconsumed. (Whereas <code>decode.many(int32).peek</code> will read an entire stream of <code>Int</code> values, and leave them unconsumed, requiring as much memory as is needed to represent all the integers in the stream)</li> 
+   <li><code>decode.ask: StreamDecoder[BitVector]</code> obtains the full input starting from the current cursor location. Obviously, stashing this <code>BitVector</code> somewhere may prevent the head of the <code>BitVector</code> from being garbage collected.</li> 
+  </ul> 
+  <h4><a id="user-content-encoding" class="anchor" href="https://github.com/scodec/scodec-stream#encoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Encoding</h4> 
+  <p>The model of a <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/StreamEncoder.scala" target="_blank"><code>StreamEncoder[A]</code></a> is a <code>Stream.Handle[Pure, A] =&gt; Pull[Pure, BitVector, (Stream.Handle[Pure, A], StreamEncoder[A])]</code>. Thus, a <code>StreamEncoder[A]</code> receives a stream of <code>A</code> values and transforms this stream (possibly statefully) into a stream of <code>BitVector</code> chunks. Encoding failures are raised within the pull as a <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/EncodingError.scala" target="_blank"><code>EncodingError</code></a>.</p> 
+  <p>We are currently still discovering nice combinators for building up <code>StreamEncoder</code> values. Assuming you have imported <code>scodec.stream.{encode,StreamEncoder}</code> and <code>scodec.codecs</code>, the <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/package.scala" target="_blank">key</a> <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/StreamEncoder.scala" target="_blank">combinators</a> so far are:</p> 
+  <ul> 
+   <li><code>encode.once</code>: A <code>scodec.Encoder[A] =&gt; StreamEncoder[A]</code> which encode a single <code>A</code> to the output, then halts. For example, <code>encode.once(codecs)</code></li> 
+   <li><code>encode.many</code> or <code>e.many</code>: A <code>scodec.Encoder[A] =&gt; StreamEncoder[A]</code> which encodes multiple <code>A</code> values to the output, halting only when the input <code>A</code> stream is exhausted. Example: <code>encode.many(codecs.int16)</code> encodes zero or more integers, each of which is expected to fit within 16 bits.</li> 
+   <li><code>e1 ++ e2</code>: Encode values with <code>e1</code> until it halts, then encode values with <code>e2</code> until it halts. Example: <code>encode.once(codecs.int32) ++ encode.many(codecs.int16)</code> encodes one <code>Int</code> as a 32-bit signed <code>Int</code>, followed by zero or more <code>Int</code> values encoded as 16-bit signed ints. (If an input does not fit in 16 bits, an <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/EncodingError.scala" target="_blank">encoding error</a> is raised within the pull)</li> 
+  </ul> 
+  <p>Since encoders only retain references to previously received values if they do so explicitly, it is easy to write streaming encoders to operate in constant memory.</p> 
+  <h5><a id="user-content-running-encoders" class="anchor" href="https://github.com/scodec/scodec-stream#running-encoders" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running encoders</h5> 
+  <p>An <code>e: StreamEncoder[A]</code> may be applied to any <code>s: Stream[F,A]</code> via <code>e.encode(s)</code>, which returns a <code>Stream[F,BitVector]</code> that can be dumped to a file using normal <a href="https://github.com/functional-streams-for-scala/fs2" target="_blank">fs2</a> I/O combinators. We welcome contributions of helper functions for common encoding cases.</p> 
+  <p>The representation of <code>StreamEncoder</code> means it can be used to transform the result of a <code>StreamDecoder</code>, for instance:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scodec.</span><span class="pl-v">codecs</span>
+<span class="pl-k">import</span> <span class="pl-v">scodec.stream.</span>{<span class="pl-v">encode</span>,<span class="pl-v">decode</span>,<span class="pl-v">StreamDecoder</span>,<span class="pl-v">StreamEncoder</span>}
+<span class="pl-k">import</span> <span class="pl-v">fs2.util.</span><span class="pl-v">Task</span>
+
+<span class="pl-c">// skip first 64 bits, then decode</span>
+<span class="pl-k">val</span> <span class="pl-en">d</span><span class="pl-k">:</span> <span class="pl-en">StreamDecoder</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> decode.advance(<span class="pl-c1">64</span>) <span class="pl-k">++</span> decode.many(codecs.int32)
+<span class="pl-k">val</span> <span class="pl-en">e</span><span class="pl-k">:</span> <span class="pl-en">StreamEncoder</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> encode.many(codecs.int16)
+
+<span class="pl-k">val</span> <span class="pl-en">t</span><span class="pl-k">:</span> <span class="pl-en">Task</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span>
+ e.encode { d.decodeMmap(<span class="pl-k">new</span> <span class="pl-en">FileInputStream</span>(<span class="pl-s"><span class="pl-pds">"</span>largefile.bin<span class="pl-pds">"</span></span>).getChannel) }
+  .map(_.toByteVector)
+  .to(fs2.io.fileChunkW(<span class="pl-s"><span class="pl-pds">"</span>smallerfile.bin<span class="pl-pds">"</span></span>)) <span class="pl-c">// TODO Update this for fs2 when IO module is ready</span>
+  .run.run
+
+<span class="pl-c">// at the end of the universe</span>
+t.unsafeRun</pre>
+  </div> 
+  <p>Calling <code>t.unsafeRun</code> will do a streaming decode of the <code>"largefile.bin"</code> file, skipping the first 64 bits, then a stream of signed 32 bit ints, which it downsamples to 16 bits and streams to the output file <code>"smallerfile.bin"</code>, raising an <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/EncodingError.scala" target="_blank"><code>EncodingError</code></a> in the event of a format error or if an integer from the input fails to fit within 16 bits.</p> 
+ </article>
+</div>

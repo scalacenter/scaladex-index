@@ -1,0 +1,131 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-cronish-core" class="anchor" href="https://github.com/philcali/cronish#cronish-core" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cronish Core</h1> 
+  <p><strong>Note</strong>: I moved the <a href="https://github.com/philcali/cronish-sbt" target="_blank">cronish-sbt</a> plugin and the <a href="https://github.com/philcali/cronish-app" target="_blank">cronish-app</a> into their own repositories.</p> 
+  <p>The cronish library can be used to determine the <em>cron</em> lingo from any given string. This library is clearly a work in progress, but it works for the most part.</p> 
+  <h2><a id="user-content-basic-syntax" class="anchor" href="https://github.com/philcali/cronish#basic-syntax" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Basic Syntax</h2> 
+  <p>A typical cron job is said to run <em>every something</em> where "something" represents a single field in cron or multiple fields strung together. An example would be:</p> 
+  <p><em>Every day at midnight</em></p> 
+  <p>This dsl library makes that assumption as well... in fact all are legitimate cron definitions:</p> 
+  <pre><code>"Every day at midnight".crons == "0 0 * * *"
+"Every 15 minutes at midnight on the weekend".crons == "*/15 0 * * 0,6"
+"Every other minute in July at noon on the weekday".crons == "*/2 12 * 7 1-5"
+"Every 1st day in April at midnight".crons == "0 0 1 4 *"
+"Every day on the weekday at 3:30".crons == "30 3 * * 1-5"
+</code></pre> 
+  <p>Let's take this excerpt from the <a href="http://en.wikipedia.org/wiki/Cron#Examples_2" target="_blank">cron</a> article on Wikipedia:</p> 
+  <pre><code>In 2003 CE on the 11th to 26th of each month in January to June every third minute starting from 2 past 1am, 9am and 10pm
+</code></pre> 
+  <p>Using cronish, we can almost write this verbatim...</p> 
+  <pre><code>"Every 3 minutes in the year 2003 on the 11th to 26th day in January to June at 1am, 9am, and 10pm".cron
+
+Cron("0", "*/3", "1,9,22", "11-26", "1-6", "*", "2003")
+</code></pre> 
+  <h2><a id="user-content-determining-the-next-run" class="anchor" href="https://github.com/philcali/cronish#determining-the-next-run" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Determining the Next Run</h2> 
+  <p>A <code>Cron</code> object created from an expression, or created manually, can determine its next run from now, or a specific time in the future. Here's a few examples of this:</p> 
+  <pre><code>import cronish._
+import cronish.dsl._
+
+val cron = "every 10 days".cron
+val now = Scalendar.now
+
+println(cron.nextFrom(now)) // returns milliseconds
+println(cron.nextFrom(now + 12.days)) // can advance
+
+println(cron.nextTime) // returns a Scalendar object
+println(now to cron.nextTime) // This is obviously a duration
+
+println(cron.next) // returns milliseconds from Scalendar.now
+
+println(cron.nextFrom(cron.nextTime)) // The next-next run
+</code></pre> 
+  <h2><a id="user-content-creating-a-cron-job" class="anchor" href="https://github.com/philcali/cronish#creating-a-cron-job" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Creating a Cron Job</h2> 
+  <p>Cron jobs are created via dsl language as well. The syntax borrows heavily from sbt task creation.</p> 
+  <pre><code>val payroll = task {
+  println("You have just been paid... Finally!")
+}
+
+// Yes... that's how you run it 
+payroll executes "every last Friday in every month"
+</code></pre> 
+  <p>A job can easily do the following:</p> 
+  <ul> 
+   <li>delayed start</li> 
+   <li>exact start</li> 
+   <li>reset</li> 
+  </ul> 
+  <p>An example of the three below:</p> 
+  <pre><code>val greetings = job (println("Hello there")) describedAs "General Greetings"
+
+// give a delayed start
+val delayed = greetings runs "every day at 7:30" in 5.seconds
+
+// give an exact time to start
+val exact = greetings runs "every day at noon" starting now + 1.week
+
+// resets a job to its definition 
+val reseted = exact.reset()
+
+reseted starting now + 1.day
+</code></pre> 
+  <p>A cron task can optionally handle exceptions, a pre-start hook, and a ending hook. Take a look below:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// These are formed in the task definition phase</span>
+<span class="pl-k">val</span> <span class="pl-en">spoken</span> <span class="pl-k">=</span> job (println (<span class="pl-s"><span class="pl-pds">"</span>My name is Philip Cali.<span class="pl-pds">"</span></span>))
+
+<span class="pl-k">val</span> <span class="pl-en">greetings</span> <span class="pl-k">=</span> spoken starts (println(<span class="pl-s"><span class="pl-pds">"</span>Hi, there...<span class="pl-pds">"</span></span>)) ends (println(<span class="pl-s"><span class="pl-pds">"</span>How are you?<span class="pl-pds">"</span></span>))
+
+greetings runs <span class="pl-s"><span class="pl-pds">"</span>every second<span class="pl-pds">"</span></span> exactly <span class="pl-c1">2.</span>times
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Hi, there...</span>
+<span class="pl-c"> * My name is Philip Cali.</span>
+<span class="pl-c"> * My name is Philip Cali.</span>
+<span class="pl-c"> * How are you?</span>
+<span class="pl-c"> */</span>
+
+<span class="pl-k">val</span> <span class="pl-en">badJob</span> <span class="pl-k">=</span> job {
+  <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">RuntimeException</span>(<span class="pl-s"><span class="pl-pds">"</span>Something terrible happened<span class="pl-pds">"</span></span>)
+} catches {
+  <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">RuntimeException</span> <span class="pl-k">=&gt;</span> <span class="pl-c">// Report this... rollback... whatever</span>
+  <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-en">Scheduled</span>.destroyAll()
+}
+
+badJob runs <span class="pl-s"><span class="pl-pds">"</span>every 5 seconds<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-cron-management" class="anchor" href="https://github.com/philcali/cronish#cron-management" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cron Management</h2> 
+  <p>All jobs described previously are loaded up in a singleton Cron manager via the <code>Scheduled</code> object.</p> 
+  <pre><code>// Gets a list of all active jobs
+Scheduled.active
+Scheduled.active.foreach(_.stop)
+
+// Destroys all jobs (same as above)
+Scheduled.shutdown()
+
+// Destroys a single instance
+Scheduled.stop(Scheduled.active(0))
+</code></pre> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/philcali/cronish#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.philcali<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>cronish<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+ </article>
+</div>

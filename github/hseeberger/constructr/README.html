@@ -1,0 +1,109 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-constructr" class="anchor" href="https://github.com/hseeberger/constructr#constructr" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ConstructR</h1> 
+  <p><a href="https://gitter.im/hseeberger/constructr?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/hseeberger/constructr" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p>ConstructR is for bootstrapping (construction) an <a href="http://akka.io" target="_blank">Akka</a> cluster by using a coordination service.</p> 
+  <p>Disambiguation: Despite the similar name, ConstructR is not related to <a href="http://www.lightbend.com/products/conductr" target="_blank">Lightbend ConductR</a>.</p> 
+  <p>ConstructR utilizes a key-value coordination service like etcd to automate bootstrapping or joining a cluster. It stores each member node under the key <code>/constructr/$clusterName/nodes/$address</code> where <code>$clusterName</code> is for disambiguating multiple clusters and <code>$address</code> is a Base64 encoded Akka <code>Address</code>. These keys expire after a configurable time in order to avoid stale information. Therefore ConstructR refreshes each key periodically.</p> 
+  <p>In a nutshell, ConstructR is a state machine which first tries to get the nodes from the coordination service. If none are available it tries to acquire a lock, e.g. via a CAS write for etcd, and uses itself or retries getting the nodes. Then it joins using these nodes as seed nodes. After that it adds its address to the nodes and starts the refresh loop:</p> 
+  <pre><code>    ┌───────────────────┐              ┌───────────────────┐
+    │   GettingNodes    │◀─────────────│BeforeGettingNodes │
+    └───────────────────┘    delayed   └───────────────────┘
+              │     │                            ▲
+    non-empty │     └──────────────────────┐     │ failure
+              ▼               empty        ▼     │
+    ┌───────────────────┐              ┌───────────────────┐
+    │      Joining      │◀─────────────│      Locking      │
+    └───────────────────┘    success   └───────────────────┘
+              │
+member-joined │
+              ▼
+    ┌───────────────────┐
+    │    AddingSelf     │
+    └───────────────────┘
+              │     ┌────────────────────────────┐
+              │     │                            │
+              ▼     ▼                            │
+    ┌───────────────────┐              ┌───────────────────┐
+    │ RefreshScheduled  │─────────────▶│    Refreshing     │
+    └───────────────────┘              └───────────────────┘
+</code></pre> 
+  <p>If something goes finally wrong when interacting with the coordination service, e.g. a permanent timeout after a configurable number of retries, ConstructR terminates its <code>ActorSystem</code> in the spirit of "fail fast".</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// All releases including intermediate ones are published here,</span>
+<span class="pl-c">// final ones are also published to Maven Central.</span>
+resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>hseeberger<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>maven<span class="pl-pds">"</span></span>)
+
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Vector</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>de.heikoseeberger<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>constructr<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.14.0<span class="pl-pds">"</span></span>,
+  ...
+)</pre>
+  </div> 
+  <p>Simply add the <code>ConstructrExtension</code> to the <code>extensions</code> configuration setting:</p> 
+  <pre><code>akka.extensions = [de.heikoseeberger.constructr.akka.ConstructrExtension]
+</code></pre> 
+  <p>This will start the <code>Constructr</code> actor as a system actor. Alternatively start it yourself as early as possible if you feel so inclined.</p> 
+  <p>The following listing shows the available configuration settings with their defaults:</p> 
+  <pre><code>constructr {
+  coordination {
+    host = localhost
+    port = 2379
+  }
+
+  coordination-timeout = 3 seconds  // Maximum response time for coordination service (e.g. etcd)
+  join-timeout         = 15 seconds // Might depend on cluster size and network properties
+  max-nr-of-seed-nodes = 0          // Any nonpositive value means Int.MaxValue
+  nr-of-retries        = 2          // Nr. of tries are nr. of retries + 1
+  refresh-interval     = 30 seconds // TTL is refresh-interval * ttl-factor
+  retry-delay          = 3 seconds  // Give coordination service (e.g. etcd) some delay before retrying
+  ttl-factor           = 2.0        // Must be greater or equal 1 + ((coordination-timeout * (1 + nr-of-retries) + retry-delay * nr-of-retries)/ refresh-interval)!
+}
+</code></pre> 
+  <h2><a id="user-content-coordination" class="anchor" href="https://github.com/hseeberger/constructr#coordination" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Coordination</h2> 
+  <p>ConstructR comes with out-of-the-box support for etcd: simply depend on the "constructr-coordination-etcd" module. If you want to use some other coordination backend, e.g. Consul, simply implement the <code>Coordination</code> trait from the "constructr-coordination" module and make sure to provide the fully qualified class name via the <code>constructr.coordination.class-name</code> configuration setting.</p> 
+  <h3><a id="user-content-community-coordination-implementations" class="anchor" href="https://github.com/hseeberger/constructr#community-coordination-implementations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Community Coordination Implementations</h3> 
+  <p>There are some implementations for other coordination backends than etcd:</p> 
+  <ul> 
+   <li><a href="https://github.com/Tecsisa/constructr-consul" target="_blank">Tecsisa/constructr-consul</a>: This library enables to use Consul as cluster coordinator in a ConstructR based cluster.</li> 
+   <li><a href="https://github.com/everpeace/constructr-redis" target="_blank">everpeace/constructr-redis</a>: This library enables to use Redis as cluster coordinator in a ConstructR based cluster.</li> 
+  </ul> 
+  <h2><a id="user-content-testing" class="anchor" href="https://github.com/hseeberger/constructr#testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing</h2> 
+  <p>etcd must be running, e.g.:</p> 
+  <pre><code>docker run \
+  --detach \
+  --name etcd \
+  --publish 2379:2379 \
+  quay.io/coreos/etcd:v2.3.7 \
+  --listen-client-urls http://0.0.0.0:2379 \
+  --advertise-client-urls http://192.168.99.100:2379
+</code></pre> 
+  <h2><a id="user-content-contribution-policy" class="anchor" href="https://github.com/hseeberger/constructr#contribution-policy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contribution policy</h2> 
+  <p>Contributions via GitHub pull requests are gladly accepted from their original author. Along with any pull requests, please state that the contribution is your original work and that you license the work to the project under the project's open source license. Whether or not you state this explicitly, by submitting any copyrighted material via pull request, email, or other means you agree to license the material under the project's open source license and warrant that you have the legal authority to do so.</p> 
+  <p>Please make sure to follow these conventions:</p> 
+  <ul> 
+   <li>For each contribution there must be a ticket (GitHub issue) with a short descriptive name, e.g. "Respect seed-nodes configuration setting"</li> 
+   <li>Work should happen in a branch named "ISSUE-DESCRIPTION", e.g. "32-respect-seed-nodes"</li> 
+   <li>Before a PR can be merged, all commits must be squashed into one with its message made up from the ticket name and the ticket id, e.g. "Respect seed-nodes configuration setting (closes #32)"</li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/hseeberger/constructr#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This code is open source software licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 License</a>.</p> 
+ </article>
+</div>

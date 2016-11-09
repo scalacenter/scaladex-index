@@ -1,0 +1,157 @@
+<div class="announce instapaper_body rst" data-path="README.rst" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-readme" class="anchor" href="https://github.com/djspiewak/gll-combinators#readme" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>README</h1> 
+  <p><strong>GLL Combinators</strong> is a framework designed to implement the <a href="http://ldta.info/2009/ldta2009proceedings.pdf" target="_blank">GLL parsing algorithm</a> (Scott and Johnstone, LDTA 2009) in a functional manner. More specifically, the framework makes use of atomic parser combinators to compose grammars which are then evaluated using the GLL algorithm. The framework provides a syntax for this task which is almost identical to that of the parser combinator framework built into Scala. For example, we can render the classic "parentheses grammar" using GLL combinators:</p> 
+  <pre>lazy val expr: Parser[Any] = (
+    "(" ~ expr ~ ")"
+  | ""
+)
+</pre> 
+  <p>As the type annotation implies, <code>expr</code> will reference an instance of type <code>Parser[Any]</code>. That is, an atomic parser which consumes some input and returns a value of type <code>Any</code>. We can invoke this parser against a <code>String</code> input in the following way:</p> 
+  <pre>expr("((()))")
+</pre> 
+  <p>This will return a value of type <code>Stream[Result[Any]]</code>. The <code>Result[A]</code> ADT is defined as one of the following (for some type <code>A</code>):</p> 
+  <ul> 
+   <li><code>Success[A]</code> -- Represents a successful parse and contains the resulting value.</li> 
+   <li><code>Failure</code> -- Represents a failed parse and contains the relevant error message as well as the remainder of the parse stream (the characters which were not consumed).</li> 
+  </ul> 
+  <p>If any result is successful (i.e. an instance of <code>Success[A]</code>), then no failures will be returned. Thus, the <code>Stream</code> returned will be completely homogeneous, containing <em>either</em> <code>Success</code> or <code>Failure</code>, but not both. A <code>Stream</code> is returned rather than a single value to allow for ambiguity in the grammar (see below).</p> 
+  <p>It's worth mentioning that GLL is a form of <a href="http://en.wikipedia.org/wiki/Recursive_descent_parser" target="_blank">recursive-descent parsing</a>. It has all of the advantages of conventional recursive-descent, including an intuitive control flow, arbitrary positioning of semantic actions and superior error messages. In fact, it is the fact that GLL is recursive-descent which allows it to be implemented using atomic combinators. Other algorithms which share the same capabilities as GLL (such as GLR, Earley Parsing, etc) are fundamentally incompatible with the combinator model due to their highly-unintuitive control flow. In GLL parsing, the control flow follows that of the grammar, as it does in traditional parser combinators or any other form of recursive-descent.</p> 
+  <a name="user-content-getting-started" target="_blank" href=""></a> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/djspiewak/gll-combinators#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <p>Compiled artifacts are pushed to Maven Central with the groupId of <code>com.codecommit</code> and the artifactId of <code>gll-combinators</code>. The most recent stable version is <code>2.2</code>, and the most recent snapshot version is <code>2.3-SNAPSHOT</code>. The artifacts are cross-published for Scala 2.10.4 and 2.11.4. If you're using SBT, you can simply copy/paste the following artifact descriptor into your build.sbt:</p> 
+  <pre>libraryDependencies += "com.codecommit" %% "gll-combinators" % "2.2"
+</pre> 
+  <p>You should have the following packages available for use:</p> 
+  <ul> 
+   <li><code>com.codecommit.gll</code> -- The complete public interface for the framework.</li> 
+   <li><code>com.codecommit.util</code> -- A number of useful utility classes used internally. Should not be considered as part of the stable API.</li> 
+  </ul> 
+  <a name="user-content-fundamentals" target="_blank" href=""></a> 
+  <h3><a id="user-content-fundamentals" class="anchor" href="https://github.com/djspiewak/gll-combinators#fundamentals" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Fundamentals</h3> 
+  <p><strong>TODO</strong></p> 
+  <a name="user-content-examples" target="_blank" href=""></a> 
+  <h3><a id="user-content-examples" class="anchor" href="https://github.com/djspiewak/gll-combinators#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h3> 
+  <p><strong>TODO</strong></p> 
+  <a name="user-content-advantages" target="_blank" href=""></a> 
+  <h2><a id="user-content-advantages" class="anchor" href="https://github.com/djspiewak/gll-combinators#advantages" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Advantages</h2> 
+  <p>Despite superficial syntactic similarities, the GLL combinators framework does improve somewhat upon the syntax provided by the default Scala framework. For example, we can modify the above grammar with semantic actions using the <code>^^</code> combinator:</p> 
+  <pre>lazy val expr: Parser[Any] = (
+    "(" ~ expr ~ ")" ^^ { _ + _ + _ }
+  | ""
+)
+</pre> 
+  <p>The key difference here is that GLL combinators does not require semantic actions to be defined as functions of arity-1 (although this is supported). Instead, the semantic action is expected (and type-checked) to be of the same arity as the number of tokens returned by the relevant production. Unlike the default Scala framework, this is made possible by an extremely intricate series of implicit conversions, allowing Scala to automatically infer the argument types of the function. This is what enables use of the "underscore shorthand" as shown above.</p> 
+  <p>GLL combinators are also capable of parsing grammars with certain useful properties, such as left-recursion and even ambiguity. In fact, the GLL algorithm is capable of parsing <em>any</em> context-free grammar, no matter how arcane. As an example, consider this very natural grammar for arithmetic expressions:</p> 
+  <pre>lazy val expr: Parser[Int] = (
+    expr ~ "*" ~ expr     ^^ { (e1, _, e2) =&gt; e1 * e2 }
+  | expr ~ "/" ~ expr     ^^ { (e1, _, e2) =&gt; e1 / e2 }
+  | expr ~ "+" ~ expr     ^^ { (e1, _, e2) =&gt; e1 + e2 }
+  | expr ~ "-" ~ expr     ^^ { (e1, _, e2) =&gt; e1 - e2 }
+  | "(" ~&gt; expr &lt;~ ")"
+  | "-" ~&gt; expr           ^^ { -_ }
+  | """\d+""".r           ^^ { _.toInt }
+)
+</pre> 
+  <p>Unfortunately, while this grammar may be very natural, it is also well beyond the capabilities of a traditional parser combinator framework. Specifically, this grammar exhibits <em>both</em> left-recursion and a rather pesky form of ambiguity. For the uninitiated, left-recursion is when a non-terminal -- in this case, <code>expr</code> -- refers to itself as the first token in any one of its productions -- in this case, the productions for multiplication, division, addition and subtraction. Ambiguity is when it is possible for a parser to produce two different values from the same input while still following the rules of the grammar. The <code>expr</code> parser is ambiguous in two ways: first, it doesn't dictate operator associativity ("<code>1 + 2 + 3</code>" could parse as either "<code>(1 + 2) + 3</code>" or "<code>1 + (2 + 3)</code>"); second, it doesn't dictate operator precedence ("<code>1 + 2 * 3</code>" could parse as either "<code>(1 + 2) * 3</code>" or "<code>1 + (2 * 3)</code>").</p> 
+  <p>Now, the updated parser combinator framework in Scala 2.8.0 will be able to handle the left-recursion aspect of this grammar (through the use of a modified form of the Packrat algorithm), but not the ambiguity. This is where the GLL algorithm really begins to shine. Let's imagine that we ran our parser in the following way:</p> 
+  <pre>val results = expr("-1 + 2 * 3")
+</pre> 
+  <p>The <code>results</code> value will contain the following <code>Stream</code> <a href="https://github.com/djspiewak/gll-combinators#id2" id="user-content-id1" target="_blank">[1]</a>:</p> 
+  <pre>Stream(Success(-7,), Success(5,), Success(-9,), Success(3,))
+</pre> 
+  <p>These results represent all of the different values which can be produced by following the grammar while parsing the input string "<code>1 + 2 * -3 + 4</code>". The different interpretations are as follows:</p> 
+  <blockquote> 
+   <table> 
+    <thead valign="bottom"> 
+     <tr>
+      <th>Value</th> 
+      <th>Interpretation</th> 
+     </tr> 
+    </thead> 
+    <tbody valign="top"> 
+     <tr>
+      <td><strong>5</strong></td> 
+      <td>(-1) + (2 * 3)</td> 
+     </tr> 
+     <tr>
+      <td><strong>-9</strong></td> 
+      <td>-(1 + 2) * 3</td> 
+     </tr> 
+     <tr>
+      <td><strong>3</strong></td> 
+      <td>((-1) + 2) * 3</td> 
+     </tr> 
+     <tr>
+      <td><strong>-9</strong></td> 
+      <td>-((1 + 2) * 3)</td> 
+     </tr> 
+     <tr>
+      <td><strong>-7</strong></td> 
+      <td>-(1 + (2 * 3))</td> 
+     </tr> 
+    </tbody> 
+   </table> 
+  </blockquote> 
+  <p>If we were to feed this grammar into the 2.7.4 (or earlier) version of the Scala parser combinator framework, the result would be an immediate infinite loop as the <code>expr</code> parser attempted to consume an <code>expr</code> as the first step in consuming an <code>expr</code> (a well-known problem inherent to <a href="http://en.wikipedia.org/wiki/Recursive_descent_parser" target="_blank">recursive-descent</a>). As mentioned earlier, the Scala 2.8.0 version of the framework would do better, parsing the input completely and producing a result. However, this would produce only one of the four possible results (shown above). In other words, even Packrat parser combinators (as are used in Scala 2.8.0) must select a single unambiguous line to follow at the expense of the other possibilities. While this sounds like a good thing, it ultimately imposes some severe limits on the grammars which can be handled.</p> 
+  <p>Ambiguity is <em>essential</em> in fields like natural-language processing, where the language to be parsed may even be inherantly ambiguous. However, it is also extremely useful in other, less escoteric applications. While it is always possible to create an unambiguous grammar for a language which does not have any inherant ambiguity, it is often <em>easier</em> to simply allow for local ambiguity which is resolved later on in the parse.</p> 
+  <blockquote> 
+   <strong>TODO:</strong> I suppose I should come up with an example here. Maybe Haskell?
+  </blockquote> 
+  <p>Critically, GLL does not impose a significant cost when dealing with ambiguous grammars. One would expect that following all possible parse trees in a highly-ambiguous grammar would lead to exponentially long runtimes. However, GLL is able to effectively exploit the same data structure which allows generalized bottom-up parsing algorithms (such as GLR) to function efficiently: the <a href="http://en.wikipedia.org/wiki/Graph-structured_stack" target="_blank">graph-structured stack</a>. Describing this data structure is beyond the scope of this README. Instead, I would refer you to <a href="http://acl.ldc.upenn.edu/P/P88/P88-1031.pdf" target="_blank">this paper by Masaru Tomita</a>, original creator of GLR and inventor of the graph-structured stack. Suffice it to say that the GSS makes it possible for the GLL combinators framework to parse <em>any</em> grammar in <em>O(n^3)</em> time. This is even better than GLR, which is <em>O(n^4)</em> in the worst case.</p> 
+  <p>Note that <code>Stream</code> is used as a result type (rather than <code>List</code>) to allow users to retrieve only the results which they actually need. Technically, generalized <em>parsing</em> has an exponential lower-bound due to the fact that a parser may need to return an exponential number of results. The <em>O(n^3)</em> performance guarantee offered by GLL is only valid when GLL is being used as a recognizer with a single result value for all parse trails. To get around this problem, the parse process will run <em>only</em> until it reaches the first successful value (or runs out of possible parse trails to attempt). Once it hits this first success, it bundles up the <code>Result[A]</code> along with a <a href="http://en.wikipedia.org/wiki/Thunk#Thunk_as_delayed_computation" target="_blank">thunk</a> representing the remainder of the parse. If you only require a single result, then the remainder of the parse can be discarded, resulting in truly <em>O(n^3)</em> performance in the worst case (likely much faster). If you need <em>all</em> possible results, then you are free to enumerate the entire result <code>Stream</code>, forcing the parse to return all possible values.</p> 
+  <p>Please note that Scala's <code>Stream</code> implementation is highly prone to memory leaks. For example, even if you have already traversed the entire <code>Stream</code> (and thus completed the parse), the data structure will continue to maintain a reference to the transient data structures used during the GLL parse process. It is recommended that you allow the result <code>Stream</code> to go out of scope as quickly as possible. If you need to retain a list of results for any amount of time, you should use the <code>toList</code> method to copy the <code>Stream</code> into a <code>List</code>, rather than simply saving a reference to the <code>Stream</code>.</p> 
+  <table frame="void" id="user-content-id2" rules="none"> 
+   <tbody valign="top"> 
+    <tr>
+     <td><a href="https://github.com/djspiewak/gll-combinators#id1" target="_blank">[1]</a></td>
+     <td>The "extra" comma in the <code>Success</code> constructors is not a typo, it indicates that the entire stream was consumed by the parse. Without some serious conniptions, this is the default. Any <code>Success</code> which does not consume the entire stream is converted into a <code>Failure</code> prior to return. This is to enforce greedy matching in repetitions (the default for <a href="http://en.wikipedia.org/wiki/Parsing_expression_grammar" target="_blank">PEGs</a>).</td>
+    </tr> 
+   </tbody> 
+  </table> 
+  <a name="user-content-performance" target="_blank" href=""></a> 
+  <h2><a id="user-content-performance" class="anchor" href="https://github.com/djspiewak/gll-combinators#performance" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Performance</h2> 
+  <p>At the moment, performance is basically non-existent. The GLL algorithm itself is <em>O(n^3)</em> even in the worst case, but there is a high constant factor which is introduced by the framework which makes this quite a bit slower than it sounds. This is significantly better than traditional parser combinators, which are <em>O(k^n)</em> in the worst case (where <em>k</em> is a constant representing the ambiguity of the grammar), but the constant overhead imposed by the framework does make parsing according to the average grammar a somewhat longer affair than the traditional parser combinators or even mainstream bottom-up parsers such as Bison. A good example of poor performance is the <strong>MiniML</strong> example in the <code>examples/</code> directory. Another, somewhat pathological example is the following highly-ambiguous grammar:</p> 
+  <pre>lazy val s: Parser[String] = (
+    "b"
+  | s ~ s       ^^ { _ + _ }
+  | s ~ s ~ s   ^^ { _ + _ + _ }
+)
+</pre> 
+  <p>It takes roughly 18 seconds to run this grammar against an input consisting of the letter <code>b</code> repeated 100 times. If we increase that number to 300, the parser will actually exhaust the available heap space in the default JVM configuration.</p> 
+  <p>The actual performance on the <code>s</code> grammar is demonstrated by the following graph (plotted on a cubic scale). The gray line is <em>y = kx^3</em> (for some constant <em>k</em>). The blue line was determined emperically from progressively longer runs (starting at strings of length 10 and increasing to length 100) on the <code>s</code> parser shown above. The <em>y</em> axis represents time in milliseconds.</p> 
+  <a href="https://github.com/djspiewak/gll-combinators/blob/master/performance.jpg" target="_blank"><img alt="performance.jpg" src="https://github.com/djspiewak/gll-combinators/raw/master/performance.jpg" style="max-width:100%;"></a> 
+  <p>With all this said, there are very few grammar/input combinations which push the framework to its limit. In fact, for grammars which are LL(1)_, the GLL Combinators framework should actually be <em>faster</em> than traditional parser combinators. For example:</p> 
+  <pre>val num = ("0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9") ^^ { _.toInt }
+</pre> 
+  <p>In order to parse this grammar, traditional parser combinators would require time proportional to the number of alternates (in this case, 10). GLL Combinators are capable of parsing this grammar in linear time (<em>O(n)</em>), which is equivalent to the best LL(k) parsers. This is because the GLL algorithm degrades gracefully to predictive recursive-descent when the grammar (or sub-grammar) is LL(1). Note that GLL also lacks any form of conventional backtracking, which is how it is able to avoid the exponential cases which make naive recursive-descent so problematic.</p> 
+  <p>It is also worth noting that the GLL algorithm is inherantly parallelizable. This means that, given enough processors, GLL should be quite a bit faster (in terms of total parse time) than any conventional bottom-up <em>or</em> top-down parser. The framework does not currently exploit this design property, but the plan is to eventually do so. Essentially, the parse would seamlessly distribute across all available cores. The more ambiguous the grammar, the better the algorithm could parallelize the parse.</p> 
+  <a name="user-content-theory" target="_blank" href=""></a> 
+  <h2><a id="user-content-theory" class="anchor" href="https://github.com/djspiewak/gll-combinators#theory" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Theory</h2> 
+  <p>The theoretical underpinnings for GLL are quite interesting, but also beyond the scope of this readme. I would refer you to <a href="http://ldta.info/2009/ldta2009proceedings.pdf" target="_blank">the original paper</a> by doctors Elizabeth Scott and Adrian Johnstone of Royal Holloway, University of London.</p> 
+  <p>In a nutshell, the algorithm is almost identical to conventional single-token predictive recursive-descent parsing with no backtracking. This technique (recursive-descent) is only capable of handling grammars which are LL(1), meaning no left-recursion, no ambiguity, and no alternates which begin with the same token. The key difference is that GLL uses a <em>trampoline</em> function to dispatch ambiguous alternates. The idea of using a trampoline function to implement mutual tail-recursion in constant stack space is a well-known technique in functional programming (it's at the heart of Scheme's dispatch system). However, GLL is the first (to my knowledge) to apply this idea to text parsing.</p> 
+  <p>The trampoline contains a queue (or stack) of pending alternate productions and their corresponding position in the input stream. Any number of alternates may be pending at any given point in time. These alternates are considered individually and parsed using conventional recursive-descent. That is, until the parsing process hits another ambiguity, at which point the possible alternates are added to the trampoline and control flow is returned to the main loop. This process continues until no further alternates are available.</p> 
+  <p>The entire proceding is saved from exponentially-long runtimes by the graph-structured stack (GSS), a well-known device used in many generalized parsing algorithms. GLL expands slightly upon the original concept of the GSS by allowing for full-blown cycles in the graph structure, symbolizing direct or indirect left-recursion. These cycles effectively take the place of the <code>GOTO</code> operation used by LR parser automata on grammars with <em>non-hidden</em> left-recursion (hidden left-recursion, where the left-recursive production has a nullable non-terminal (one which goes to the empty string) as its first token, is not supported by any of the mainstream LR variants, including the ever-popular LALR).</p> 
+ </article>
+</div>

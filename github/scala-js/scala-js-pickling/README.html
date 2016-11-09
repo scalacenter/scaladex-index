@@ -1,0 +1,169 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scalajs-pickling-040" class="anchor" href="https://github.com/scala-js/scala-js-pickling#scalajs-pickling-040" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala.js Pickling 0.4.0</h1> 
+  <p>Scala.js Pickling is a small serialization (aka pickling) library for <a href="https://www.scala-js.org/" target="_blank">Scala.js</a>. It also cross-compiles on the JVM so that client and server can exchange pickled data transparently. It was inspired by <a href="https://github.com/scala/pickling" target="_blank">Scala Pickling</a>, but a major requirement is that everything happens at compile-time, and that pickling and unpickling never falls back on runtime reflection.</p> 
+  <p>Therefore, types that have to be pickled and unpickled must be registered explicitly, (at least) once, in a <code>PicklerRegistry</code> beforehand:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">be.doeraene.spickling.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// custom data types</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">TrivialCaseObject</span>
+
+<span class="pl-c">// register the data types once</span>
+<span class="pl-en">PicklerRegistry</span>.register[<span class="pl-en">Person</span>]
+<span class="pl-en">PicklerRegistry</span>.register(<span class="pl-en">TrivialCaseObject</span>)</pre>
+  </div> 
+  <p><code>register</code> expects implicit picklers and unpicklers for the type. This works out of the box for case classes and case objects. See the reference below for more details and how to create custom picklers.</p> 
+  <p>After that, the case class <code>Person</code> and the case object <code>TrivialCaseObject</code> can be pickled an unpickled using the following in Scala.js:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.scalajs.</span><span class="pl-v">js</span>
+
+<span class="pl-c">// import the implicits for the js.Any pickle format (~JSON objects)</span>
+<span class="pl-k">import</span> <span class="pl-v">be.doeraene.spickling.jsany.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// pickle and unpickle</span>
+<span class="pl-k">val</span> <span class="pl-en">pickle</span><span class="pl-k">:</span> js.<span class="pl-en">Any</span> <span class="pl-k">=</span> <span class="pl-en">PicklerRegistry</span>.pickle(<span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>, <span class="pl-c1">24</span>))
+<span class="pl-k">val</span> <span class="pl-en">value</span><span class="pl-k">:</span> <span class="pl-en">Any</span> <span class="pl-k">=</span> <span class="pl-en">PicklerRegistry</span>.unpickle(pickle)</pre>
+  </div> 
+  <p>The <code>js.Any</code> pickle format consists of typical JSON-serializable JavaScript values (primitives, arrays and dictionaries).</p> 
+  <p>On the JVM, a pickle format for the Play! JSON library is provided by default, and is used similarly:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">play.api.libs.json.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// import the implicits for the Play! JSON pickle format</span>
+<span class="pl-k">import</span> <span class="pl-v">be.doeraene.spickling.playjson.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// pickle and unpickle</span>
+<span class="pl-k">val</span> <span class="pl-en">pickle</span><span class="pl-k">:</span> <span class="pl-en">JsValue</span> <span class="pl-k">=</span> <span class="pl-en">PicklerRegistry</span>.pickle(<span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>, <span class="pl-c1">24</span>))
+<span class="pl-k">val</span> <span class="pl-en">value</span><span class="pl-k">:</span> <span class="pl-en">Any</span> <span class="pl-k">=</span> <span class="pl-en">PicklerRegistry</span>.unpickle(pickle)</pre>
+  </div> 
+  <h2><a id="user-content-important-caveat-with-byte-short-float-and-double" class="anchor" href="https://github.com/scala-js/scala-js-pickling#important-caveat-with-byte-short-float-and-double" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Important caveat with <code>Byte</code>, <code>Short</code>, <code>Float</code> and <code>Double</code></h2> 
+  <p>Serializing a <code>Byte</code>, <code>Short</code>, <code>Float</code> or <code>Double</code> on the JS side and deserializing it on the JVM side gives unexpected results.</p> 
+  <p>Instead of receiving a value of the type you began with, you will systematically receive an <code>Int</code> is the <em>value</em> fits in a <code>Int</code>, and a <code>Double</code> otherwise. In particular, even when the original value is typed as a <code>Double</code>, you can receive an <code>Int</code>.</p> 
+  <p><strong>This will cause the deserialization to go berskerk if the destination type cannot handle <code>Int</code>!</strong></p> 
+  <p>Work around: never use these 4 numeric types in the data structures you want to pickle and unpickle. Use <code>java.lang.Number</code> instead, which can accommodate both <code>Int</code>s and <code>Double</code>s, then use its <code>doubleValue()</code> method (or another).</p> 
+  <h2><a id="user-content-alternatives" class="anchor" href="https://github.com/scala-js/scala-js-pickling#alternatives" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Alternatives</h2> 
+  <p>Before getting started, you should consider alternative serialization frameworks for Scala.js. Scala.js Pickling is rarely the best one. All the alternatives do not require classes to be registered in advance, for example. They also do more at compile-time (and are therefore faster), and do not have the caveat about numeric types documented hereabove.</p> 
+  <p>Here are the alternatives known at the time of this writing:</p> 
+  <ul> 
+   <li><a href="https://github.com/lihaoyi/upickle" target="_blank">uPickle</a></li> 
+   <li><a href="https://github.com/benhutchison/prickle" target="_blank">Prickle</a></li> 
+  </ul> 
+  <p>The main advantage of Scala.js Pickling with respect to these alternatives is that it is able to serialize and deserialize data whose statically known type is not sealed, in particular, <code>Any</code>.</p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/scala-js/scala-js-pickling#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <p>Scala.js Pickling is published on Maven Central.</p> 
+  <p>On the JS side, all you need to do is to add the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>be.doeraene<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajs-pickling<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>On the JVM side, with Play!, use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>be.doeraene<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajs-pickling-play-json<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>If you want to depend on the cross-compiling core, use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>be.doeraene<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajs-pickling-core<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>scalajs-pickling 0.4.0 is built and published for Scala.js 0.6.x, with both Scala 2.10 and 2.11.</p> 
+  <h2><a id="user-content-reference" class="anchor" href="https://github.com/scala-js/scala-js-pickling#reference" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reference</h2> 
+  <p>The basic snippets hereabove should get you started quickly. But it is probably worth reading this section to understand how the public API is articulated.</p> 
+  <h3><a id="user-content-picklerregistry" class="anchor" href="https://github.com/scala-js/scala-js-pickling#picklerregistry" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PicklerRegistry</h3> 
+  <p>The main entry point to the library is the <code>PicklerRegistry</code>. At its core, a pickler registry is a thing that can pickle and unpickle values:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">PicklerRegistry</span> {
+  <span class="pl-k">def</span> <span class="pl-en">pickle</span>[<span class="pl-en">P</span>](<span class="pl-v">value</span>: <span class="pl-en">Any</span>)(<span class="pl-k">implicit</span> <span class="pl-v">builder</span>: <span class="pl-en">PBuilder</span>[<span class="pl-en">P</span>],
+      <span class="pl-v">registry</span>: <span class="pl-en">PicklerRegistry</span> <span class="pl-k">=</span> <span class="pl-v">this</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">unpickle</span>[<span class="pl-en">P</span>](<span class="pl-v">pickle</span>: <span class="pl-en">P</span>)(<span class="pl-k">implicit</span> <span class="pl-v">reader</span>: <span class="pl-en">PReader</span>[<span class="pl-en">P</span>],
+      <span class="pl-v">registry</span>: <span class="pl-en">PicklerRegistry</span> <span class="pl-k">=</span> <span class="pl-v">this</span>)<span class="pl-k">:</span> <span class="pl-en">Any</span>
+}</pre>
+  </div> 
+  <p>Throughout the codebase and the API, <code>P</code> is the type of a pickle in a given format. <code>P</code> can be anything, really. The way the API interacts with generic <code>P</code> is through implicit pickle builders (<code>PBuilder[P]</code>) and pickle readers (<code>PReader[P]</code>). More on this later.</p> 
+  <p>The basic implementation of <code>PicklerRegistry</code> is <code>BasePicklerRegistry</code>, and, for convenience, the top-level object <code>PicklerRegistry</code> is an instance of <code>BasePicklerRegistry</code>.</p> 
+  <p>A <code>BasePicklerRegistry</code>, by default, can only pickle primitive types and strings. Other data types must be registered explicitly using one of its <code>register</code> methods. There are two main <code>register</code> methods: one for types, and one for values (typically singleton objects):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">BasePicklerRegistry</span> <span class="pl-k">extends</span> <span class="pl-e">PicklerRegistry</span> {
+  <span class="pl-k">def</span> <span class="pl-en">register</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">ClassTag</span>](<span class="pl-k">implicit</span> <span class="pl-v">pickler</span>: <span class="pl-en">Pickler</span>[<span class="pl-en">A</span>],
+      <span class="pl-v">unpickler</span>: <span class="pl-en">Unpickler</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> { ... }
+
+  <span class="pl-k">def</span> <span class="pl-en">register</span>[<span class="pl-en">A</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Singleton</span>](<span class="pl-v">obj</span>: <span class="pl-en">A</span>)(
+      <span class="pl-k">implicit</span> <span class="pl-v">name</span>: <span class="pl-en">SingletonFullName</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> { ... }
+
+  ...
+}
+
+<span class="pl-k">object</span> <span class="pl-en">PicklerRegistry</span> <span class="pl-k">extends</span> <span class="pl-e">BasePicklerRegistry</span></pre>
+  </div> 
+  <p>Throughout the codebase and the API, <code>A</code> is the type of a value being pickled or unpickled.</p> 
+  <p>Note that registering a type requires implicit pickler and unpickler for that type. Implicit picklers and unpicklers can be materialized automatically via macros for case classes. More on this later.</p> 
+  <p>For values, a <code>SingletonFullName[A]</code> is required. Singleton full names can be materialized automatically via macros for case objects.</p> 
+  <h3><a id="user-content-pickle-builders-and-readers" class="anchor" href="https://github.com/scala-js/scala-js-pickling#pickle-builders-and-readers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pickle builders and readers</h3> 
+  <p>Pickle builders and readers abstract away the actual format of pickles. Not too much, though: they assume some kind of JSON-ish structure. Their definitions are:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">PBuilder</span>[<span class="pl-en">P</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">makeNull</span>()<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">makeBoolean</span>(<span class="pl-v">b</span>: <span class="pl-k">Boolean</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">makeNumber</span>(<span class="pl-v">x</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">makeString</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">makeArray</span>(<span class="pl-v">elems</span>: <span class="pl-en">P</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">makeObject</span>(<span class="pl-v">fields</span>: (<span class="pl-k">String</span>, <span class="pl-en">P</span>)<span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">PReader</span>[<span class="pl-en">P</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">isUndefined</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+  <span class="pl-k">def</span> <span class="pl-en">isNull</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+  <span class="pl-k">def</span> <span class="pl-en">readBoolean</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+  <span class="pl-k">def</span> <span class="pl-en">readNumber</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
+  <span class="pl-k">def</span> <span class="pl-en">readString</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">String</span>
+  <span class="pl-k">def</span> <span class="pl-en">readArrayLength</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>)<span class="pl-k">:</span> <span class="pl-k">Int</span>
+  <span class="pl-k">def</span> <span class="pl-en">readArrayElem</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>, <span class="pl-v">index</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+  <span class="pl-k">def</span> <span class="pl-en">readObjectField</span>(<span class="pl-v">x</span>: <span class="pl-en">P</span>, <span class="pl-v">field</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">P</span>
+}</pre>
+  </div> 
+  <p>The packages <code>be.doeraene.spickling.jsany</code> and <code>be.doeraene.spickling.playjson</code> provide implicit pickle builders and readers for <code>js.Any</code> in Scala.js, and <code>JsValue</code> in Play! JSON, respectively. You may define your own if you want to work with a different implementation of JSON.</p> 
+  <h3><a id="user-content-picklers-and-unpicklers" class="anchor" href="https://github.com/scala-js/scala-js-pickling#picklers-and-unpicklers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Picklers and unpicklers</h3> 
+  <p>The actual pickling work is done by type-aware picklers an unpicklers. Their definitions are simple:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Pickler</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">pickle</span>[<span class="pl-en">P</span>](<span class="pl-v">obj</span>: <span class="pl-en">A</span>)(<span class="pl-k">implicit</span> <span class="pl-v">registry</span>: <span class="pl-en">PicklerRegistry</span>,
+      <span class="pl-v">builder</span>: <span class="pl-en">PBuilder</span>[<span class="pl-en">P</span>])<span class="pl-k">:</span> <span class="pl-en">P</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">Unpickler</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">unpickle</span>[<span class="pl-en">P</span>](<span class="pl-v">pickle</span>: <span class="pl-en">P</span>)(<span class="pl-k">implicit</span> <span class="pl-v">registry</span>: <span class="pl-en">PicklerRegistry</span>,
+      <span class="pl-v">reader</span>: <span class="pl-en">PReader</span>[<span class="pl-en">P</span>])<span class="pl-k">:</span> <span class="pl-en">A</span>
+}</pre>
+  </div> 
+  <p>The library provides implicit picklers and unpicklers for all primitive types of Scala, as well as <code>String</code>. There are also implicit macros that can materialize picklers and unpicklers automatically for case classes. These will pickle recursively the parameters of the case class (in the first parameter list of the constructor). Other fields will not be pickled by the automatic picklers.</p> 
+  <p>You can define custom picklers for your data types simply by implementing these two interfaces, and registering them to a pickler registry.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/scala-js/scala-js-pickling#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Scala.js Pickling is distributed under the <a href="http://www.scala-lang.org/license.html" target="_blank">Scala License</a>.</p> 
+ </article>
+</div>

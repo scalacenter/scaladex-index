@@ -1,0 +1,93 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-shapeless-refined-std" class="anchor" href="https://github.com/alexarchambault/shapeless-refined-std#shapeless-refined-std" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>shapeless-refined-std</h1> 
+  <p><em>Type-level API for standard collections</em></p> 
+  <p><a href="https://travis-ci.org/alexarchambault/shapeless-refined-std" target="_blank"><img src="https://camo.githubusercontent.com/aad19a07905d2a65e5ff65f946b484ee54536f04/68747470733a2f2f7472617669732d63692e6f72672f616c657861726368616d6261756c742f73686170656c6573732d726566696e65642d7374642e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/alexarchambault/shapeless-refined-std.svg" style="max-width:100%;"></a> <a href="https://gitter.im/alexarchambault/shapeless-refined-std?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p><strong>shapeless-refined-std</strong> enriches the standard library, collections mostly, using the typelevel collections: tuples, shapeless' <code>HList</code> and <code>Sized</code>.</p> 
+  <p>Whenever possible, it provides alternatives with stronger types to standard library collections' methods that can either return collections of sizes known at compile-time, for example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">it</span> <span class="pl-k">=</span> <span class="pl-en">Iterator</span>.fill(nextInt(<span class="pl-c1">50</span>))(nextDouble()) <span class="pl-c">// A random iterator...</span>
+
+<span class="pl-k">def</span> <span class="pl-en">result</span> <span class="pl-k">=</span> it.slidingT(<span class="pl-c1">3</span>) <span class="pl-c">// Iterator[(Double, Double, Double)]</span>
+<span class="pl-c">//  3 provided as argument at compile-time -&gt; Tuple3 in the return type</span>
+
+
+<span class="pl-k">val</span> <span class="pl-en">str</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>first;second;third;fourth<span class="pl-pds">"</span></span>
+
+<span class="pl-k">val</span> <span class="pl-en">resultOpt</span> <span class="pl-k">=</span> str.splitH(<span class="pl-c1">3</span>, <span class="pl-s"><span class="pl-pds">"</span>;<span class="pl-pds">"</span></span>) <span class="pl-c">// Option[String :: String :: String :: HNil]</span>
+<span class="pl-c">// 3 provided as argument at compile-time -&gt; 3-length HList in the return type</span></pre>
+  </div> 
+  <p>or that can be repeated, for example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">l</span> <span class="pl-k">=</span> <span class="pl-en">List</span>.fill(nextInt(<span class="pl-c1">10</span>))(nextDouble()) <span class="pl-c">// A random list...</span>
+
+<span class="pl-c">/* Trying to find 5 elements satisfying a predicate */</span>
+<span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> l.findS(<span class="pl-c1">5</span>)(_ <span class="pl-k">&gt;</span> <span class="pl-c1">0.5</span>) <span class="pl-c">// Option[Sized[List[Double], _5]]</span>
+<span class="pl-c">// 5 provided as argument at compile-time -&gt; Sized of length 5 in the return type</span></pre>
+  </div> 
+  <p>In the above, <code>splitH(3, ...)</code> tries to split <code>str</code> into 3 elements. <code>splitH</code> ends in <code>H</code> so it will try to return a <code>HList</code>. If it succeeds, it returns <code>Some(firstFoundElement :: secondFoundElement :: thirdFoundElement :: HNil)</code>, and it returns <code>None</code> if it fails. <code>findT</code> and <code>findS</code> also exist, where the 3-length <code>HList</code> is replaced by a tuple (<code>(Double, Double, Double)</code>) or a <code>Sized</code> (<code>Sized[List[Double], _3]</code>).</p> 
+  <p>The returned values can be matched straight away, like in:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>it.groupedT(<span class="pl-c1">2</span>).map{ <span class="pl-k">case</span> (previous, current) <span class="pl-k">=&gt;</span> ... }
+
+str.splitT(<span class="pl-c1">3</span>, <span class="pl-s"><span class="pl-pds">"</span>;<span class="pl-pds">"</span></span>) <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> <span class="pl-c">// failed</span>
+  <span class="pl-k">case</span> <span class="pl-en">Some</span>((first, second, third)) <span class="pl-k">=&gt;</span> <span class="pl-c">// success</span>
+}</pre>
+  </div> 
+  <p>Whereas using the standard library methods, one would have had to write</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>it.grouped(<span class="pl-c1">2</span>).withPartial(<span class="pl-c1">false</span>).map{ t <span class="pl-k">=&gt;</span> (t(<span class="pl-c1">0</span>), t(<span class="pl-c1">1</span>)) }.map{<span class="pl-k">case</span> (first, second) <span class="pl-k">=&gt;</span> ...}
+
+<span class="pl-en">Some</span>(str.split(<span class="pl-s"><span class="pl-pds">"</span>;<span class="pl-pds">"</span></span>, <span class="pl-c1">3</span>)).filter(_.length <span class="pl-k">==</span> <span class="pl-c1">3</span>).map(t <span class="pl-k">=&gt;</span> (t(<span class="pl-c1">0</span>), t(<span class="pl-c1">1</span>), t(<span class="pl-c1">2</span>))) <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> ...
+  <span class="pl-k">case</span> <span class="pl-en">Some</span>((first, second, third)) <span class="pl-k">=&gt;</span> ...
+}</pre>
+  </div> 
+  <p>Available methods are illustrated in the tests, under <code>src/test</code>.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/alexarchambault/shapeless-refined-std#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Add to your <code>build.sbt</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.alexarchambault<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shapeless-refined-std<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>For the development version, add instead</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>snapshots<span class="pl-pds">"</span></span>)
+)
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>
+  <span class="pl-s"><span class="pl-pds">"</span>com.github.alexarchambault<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>shapeless-refined-std<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.2-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>If you are using shapeless 2.2, replace <code>0.1.2-SNAPSHOT</code> by <code>0.2.0-SNAPSHOT</code>.</p> 
+  <p>Then add in your sources:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">shapeless.refinedstd.syntax.</span><span class="pl-v">_</span>
+
+<span class="pl-c">/* New methods ending in ...T (tuples), ...H (HList), or ...S (Sized),</span>
+<span class="pl-c"> * are available on instances of TraversableOnce, Iterator, TraversableLike,</span>
+<span class="pl-c"> * IterableLike, SeqLike, String, Regex. </span>
+<span class="pl-c"> */</span></pre>
+  </div> 
+  <p>Only for scala 2.11 for now, a (possibly lighter) version for scala 2.10 is being prepared. Depends on shapeless 2.1.0.</p> 
+  <h2><a id="user-content-internals" class="anchor" href="https://github.com/alexarchambault/shapeless-refined-std#internals" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Internals</h2> 
+  <p>These methods are backed by dependent functions (shapeless' <code>DepFn</code>*), available in the <code>shapeless.refinedstd.ops</code> namespace, à la shapeless.</p> 
+  <h2><a id="user-content-notice" class="anchor" href="https://github.com/alexarchambault/shapeless-refined-std#notice" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Notice</h2> 
+  <p>Copyright (c) 2014-2015 Alexandre Archambault. See LICENSE file for more details.</p> 
+  <p>Released under Apache 2.0 license.</p> 
+  <p>Thanks to <a href="https://github.com/milessabin/" target="_blank">@milessabin</a> for the suggestion of the name "shapeless-refined-std".</p> 
+ </article>
+</div>

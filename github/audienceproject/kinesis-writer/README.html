@@ -1,0 +1,90 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-kinesis-writer" class="anchor" href="https://github.com/audienceproject/kinesis-writer#kinesis-writer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Kinesis Writer</h2> 
+  <p>This very simple library can be used to write data to an <em>Amazon Kinesis</em> stream. This package is intended to be used with <em>Scala</em>, <em>sbt</em> and the excellent <em>ScalaPB</em> sbt plugin <a href="http://trueaccord.github.io/ScalaPB/" target="_blank">http://trueaccord.github.io/ScalaPB/</a>.</p> 
+  <p>The data that is supposed to be written to the Kinesis Stream has to be an <code>Iterator[GeneratedMessage]</code>. <code>GeneratedMessage</code> is a trait given to <em>Protocol Buffers</em> classes generated using the <em>ScalaPB</em> sbt plugin <a href="http://trueaccord.github.io/ScalaPB/" target="_blank">http://trueaccord.github.io/ScalaPB/</a></p> 
+  <h2><a id="user-content-how-to-use-it" class="anchor" href="https://github.com/audienceproject/kinesis-writer#how-to-use-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use it</h2> 
+  <p>Include the library in your project's <code>build.sbt</code> file:</p> 
+  <pre><code>libraryDependencies += "com.audienceproject" %% "kinesis-writer" % "1.0.10"
+</code></pre> 
+  <p>This library uses the Google's <em>Protocol Buffers</em> protocol for the individual <em>User Records</em> that are sent to the <em>Kinesis Stream</em>. For this reason, you will have to create a <code>.proto</code> file that will be used to generate <em>Scala</em> code for serializing your data. Please follow the instructions for installing the <em>ScalaPB</em> sbt plugin here: <a href="http://trueaccord.github.io/ScalaPB/" target="_blank">http://trueaccord.github.io/ScalaPB/</a>. After installing the plugin create your <code>.proto</code> file. For example:</p> 
+  <pre><code> message PBMessage {
+     string date = 1;
+ }
+</code></pre> 
+  <p>Generate the <em>Scala</em> classes with <code>sbt compile</code>.</p> 
+  <p>Easiest is to just to provide the Kinesis Stream name and the iterator. The Kinesis client is build for you with the default profile credentials provider. This works great on Amazon EC2.</p> 
+  <pre><code>// PBMessage is class generated from a Protocol Buffers .proto file
+// with the help of the ScalaPB sbt plugin.
+val it = List(
+    new PBMessage("now"),
+    new PBMessage("yesterday"),
+    new PBMessage("tomorrow")
+).toIterator
+
+PBScalaKinesisWriter.write("test-stream", it)
+</code></pre> 
+  <p>You can also specify a Kinesis client. This is mostly useful when running outside AWS.</p> 
+  <pre><code>// PBMessage is class generated from a Protocol Buffers .proto file
+// with the help of the ScalaPB sbt plugin.
+val it = List(
+    new PBMessage("now"),
+    new PBMessage("yesterday"),
+    new PBMessage("tomorrow")
+).toIterator
+
+val client = new AmazonKinesisClient(new ProfileCredentialsProvider("my-custom-profile"))
+
+PBScalaKinesisWriter.write("test-stream", it, client)
+</code></pre> 
+  <p>If you use <a href="https://raygun.com/" target="_blank">Raygun</a>, you can have exceptions sent there</p> 
+  <pre><code>val it = List(
+    new PBMessage("now"),
+    new PBMessage("yesterday"),
+    new PBMessage("tomorrow")
+).toIterator
+
+val raygun = new RaygunClient("your-raygun-key")
+
+PBScalaKinesisWriter.write("test-stream", it, raygun)
+</code></pre> 
+  <pre><code>val it = List(
+    new PBMessage("now"),
+    new PBMessage("yesterday"),
+    new PBMessage("tomorrow")
+).toIterator
+
+val client = new AmazonKinesisClient(new ProfileCredentialsProvider("my-custom-profile"))
+
+val raygun = new RaygunClient("your-raygun-key")
+
+PBScalaKinesisWriter.write("test-stream", it, client, raygun)
+</code></pre> 
+  <h2><a id="user-content-known-issues" class="anchor" href="https://github.com/audienceproject/kinesis-writer#known-issues" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Known issues</h2> 
+  <h4><a id="user-content-dependencies-not-in-maven" class="anchor" href="https://github.com/audienceproject/kinesis-writer#dependencies-not-in-maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies not in Maven</h4> 
+  <p>This project depends on some classes which are not available in Maven. The classes in question are part of the Kinesis Aggregation repository <a href="https://github.com/awslabs/kinesis-aggregation/tree/master/java/KinesisAggregator" target="_blank">https://github.com/awslabs/kinesis-aggregation/tree/master/java/KinesisAggregator</a>. If you try to use the <code>kinesis-writer</code> and get an error message like bellow, it means you are missing the <em>KinesisAggregator</em> <em>.jar</em> file. You can download a readily available <em>.jar</em> from here <a href="https://github.com/awslabs/kinesis-aggregation/tree/master/java/KinesisAggregator/dist" target="_blank">https://github.com/awslabs/kinesis-aggregation/tree/master/java/KinesisAggregator/dist</a>. </p> 
+  <pre><code>Error:scalac: missing or invalid dependency detected while loading class file 'PBScalaKinesisWriter.class'.
+Could not access term kinesis in package com.amazonaws,
+because it (or its dependencies) are missing. Check your build definition for
+missing or conflicting dependencies. (Re-run with `-Ylog-classpath` to see the problematic classpath.)
+A full rebuild may help if 'PBScalaKinesisWriter.class' was compiled against an incompatible version of com.amazonaws.
+</code></pre> 
+  <h4><a id="user-content-magical-numbers" class="anchor" href="https://github.com/audienceproject/kinesis-writer#magical-numbers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Magical numbers</h4> 
+  <p>To make sure that data is successfully consumed on the other side of the <em>Kinesis</em> stream, the maximum record size has empirically been made smaller than what <em>Amazon</em> lists as maximum. Experiments have shown that records the size of (or close) to 1MB can fail to be consumed correctly.</p> 
+ </article>
+</div>

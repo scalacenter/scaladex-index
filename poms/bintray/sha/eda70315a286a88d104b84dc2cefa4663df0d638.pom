@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+  
+  http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.fusesource</groupId>
+    <artifactId>fusesource-pom</artifactId>
+    <version>1.9</version>
+  </parent>
+
+  <groupId>org.scalatra.scalate</groupId>
+  <artifactId>scalamd_2.10</artifactId>
+  <version>1.6.1</version>
+  <packaging>bundle</packaging>
+  
+  <name>${project.artifactId}</name>
+  <description>ScalaMD: A Scala Markdown Processor</description>
+
+  <inceptionYear>2010</inceptionYear>
+
+  <properties>
+    <forge-project-id>scalamd</forge-project-id>
+    <scala-version>2.10.0</scala-version>
+    <scala-maven-plugin-version>3.1.0</scala-maven-plugin-version>
+    <maven-surefire-plugin-version>2.12.4</maven-surefire-plugin-version>
+    <bundle-plugin-version>2.3.4</bundle-plugin-version>
+    
+  </properties>
+    
+  <dependencies>
+    
+    <!-- Scala Support: this needs to be copied into every scala project -->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <scope>provided</scope>
+      <version>${scala-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>${scala-version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <!-- Testing Deps -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2_2.10</artifactId>
+      <version>1.13</version>
+      <scope>test</scope>
+    </dependency>
+    
+  </dependencies>
+
+  <url>http://github.com/scalatra/scalamd.git</url>
+  <scm>
+    <connection>scm:git:git://github.com/scalatra/scalamd.git</connection>
+    <developerConnection>scm:git:git@github.com:scalatra/scalamd.git</developerConnection>
+    <url>https://github.com/scalatra/scalamd/blob/master</url>
+  </scm>
+  <distributionManagement>
+    <!--
+    <site>
+      <id>website.fusesource.org</id>
+      <name>website</name>
+      <url>dav:http://fusesource.com/forge/dav/${forge-project-id}/maven/${project.version}</url>
+    </site>
+    -->
+    <repository>
+      <id>sonatype-nexus</id>
+      <name>sonatype-nexus</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+  </distributionManagement>
+
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <sourceDirectory>src/main/scala</sourceDirectory>
+    <testSourceDirectory>src/test/scala</testSourceDirectory>
+
+    <resources>
+      <resource>
+        <directory>target/schema</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>${scala-maven-plugin-version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scaladocClassName>scala.tools.nsc.ScalaDoc</scaladocClassName>
+          <jvmArgs>
+            <jvmArg>-Xmx1024m</jvmArg>
+            <jvmArg>-Xss8m</jvmArg>
+          </jvmArgs>
+          <args>
+            <arg>-deprecation</arg>
+          </args>
+          <scalaVersion>${scala-version}</scalaVersion>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin-version}</version>
+        
+        <configuration>
+          <!-- we must turn off the use of system class loader so our tests can find stuff - otherwise ScalaSupport compiler can't find stuff -->
+          <useSystemClassLoader>false</useSystemClassLoader>
+          <!--forkMode>pertest</forkMode-->
+          <childDelegation>false</childDelegation>
+          <useFile>true</useFile>
+          <failIfNoTests>false</failIfNoTests>
+          <includes>
+            <include>**/*Spec.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>${bundle-plugin-version}</version>
+        <extensions>true</extensions>
+        <inherited>true</inherited>
+        <configuration>
+          <instructions>
+            <Implementation-Title>${project.description}</Implementation-Title>
+            <Implementation-Version>${project.version}</Implementation-Version>
+            <Bundle-Name>${project.artifactId}</Bundle-Name>
+            <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>{local-packages};version=${project.version};-noimport:=true</Export-Package>
+            <Import-Package>*</Import-Package>
+            <Private-Package>!*</Private-Package>
+            <_versionpolicy-impl>[$(version;==;$(@)),$(version;=+;$(@)))</_versionpolicy-impl>
+            <_versionpolicy-uses>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy-uses>
+            <_versionpolicy>[$(version;==;$(@)),$(version;+;$(@)))</_versionpolicy>
+            <_failok>false</_failok>
+          </instructions>
+        </configuration>
+      </plugin>
+            
+    </plugins>
+  </build>
+  <profiles>
+
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- Generate the Scala Docs so that they can be included in the javadoc artifact -->
+          <plugin>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <version>${scala-maven-plugin-version}</version>
+            <executions>
+              <execution>
+                <id>doc</id>
+                <phase>process-classes</phase>
+                <goals>
+                  <goal>doc</goal>
+                </goals>
+                <configuration>
+                  <reportOutputDirectory>${project.build.directory}</reportOutputDirectory>
+                  <outputDirectory>apidocs</outputDirectory>
+                </configuration>                
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+  </profiles>
+
+
+</project>

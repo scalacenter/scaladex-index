@@ -1,0 +1,113 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-jsentric" class="anchor" href="https://github.com/higherstate/jsentric#jsentric" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>jsentric</h1> 
+  <p>Json contract patterns, validation, lenses and query</p> 
+  <pre><code>"io.higherstate" %% "jsentric" % "1.0.0"
+
+resolvers ++= Seq(
+  "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/",
+)
+</code></pre> 
+  <p>jsentric is built upon <a href="http://argonaut.io/" target="_blank">argonaut</a> and is designed to facilitate the use of the basic json datatypes in cases where we have partially dynamic data or are regularly moving through bounded context and may not wish to constantly serialize/deserialize from class objects.</p> 
+  <p>jsentric works by describing a singleton contract which represents data we might wish to extract from the json data structure. By doing so, we get easy validation, lenses and even a type safe mongo db query generator.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-c">/*define a contract,</span>
+<span class="pl-c">    \  \?  \! expected, optional, default properties</span>
+<span class="pl-c">    \: \:?  \:!  expected, optional, default array properties</span>
+<span class="pl-c">    \\ \\? expected, option object properties</span>
+<span class="pl-c">   */</span>
+  <span class="pl-k">object</span> <span class="pl-en">Order</span> <span class="pl-k">extends</span> <span class="pl-e">Contract</span> {
+    <span class="pl-k">val</span> <span class="pl-en">firstName</span> <span class="pl-k">=</span> \[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>firstName<span class="pl-pds">"</span></span>, nonEmptyOrWhiteSpace)
+    <span class="pl-k">val</span> <span class="pl-en">lastName</span> <span class="pl-k">=</span> \[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>lastName<span class="pl-pds">"</span></span>, nonEmptyOrWhiteSpace)
+    <span class="pl-k">val</span> <span class="pl-en">orderId</span> <span class="pl-k">=</span> \<span class="pl-k">?</span>[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>orderId<span class="pl-pds">"</span></span>, reserved <span class="pl-k">&amp;&amp;</span> immutable)
+
+    <span class="pl-k">val</span> <span class="pl-en">email</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">\\</span>(<span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span>) {
+      <span class="pl-k">val</span> <span class="pl-en">friendlyName</span> <span class="pl-k">=</span> \<span class="pl-k">?</span>[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>friendlyName<span class="pl-pds">"</span></span>)
+      <span class="pl-k">val</span> <span class="pl-en">address</span> <span class="pl-k">=</span> \[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>address<span class="pl-pds">"</span></span>)
+    }
+    <span class="pl-k">val</span> <span class="pl-en">status</span> <span class="pl-k">=</span> \<span class="pl-k">?</span>[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>status<span class="pl-pds">"</span></span>, in(<span class="pl-s"><span class="pl-pds">"</span>pending<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>processing<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>sent<span class="pl-pds">"</span></span>) <span class="pl-k">&amp;&amp;</span> reserved)
+    <span class="pl-k">val</span> <span class="pl-en">notes</span> <span class="pl-k">=</span> \<span class="pl-k">?</span>[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>notes<span class="pl-pds">"</span></span>, internal)
+
+    <span class="pl-k">val</span> <span class="pl-en">orderLines</span> <span class="pl-k">=</span> \<span class="pl-k">:</span>[(<span class="pl-k">String</span>, <span class="pl-k">Int</span>)](<span class="pl-s"><span class="pl-pds">"</span>orderLines<span class="pl-pds">"</span></span>, forall(custom[(<span class="pl-k">String</span>, <span class="pl-k">Int</span>)](ol <span class="pl-k">=&gt;</span> ol._2 <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span>, <span class="pl-s"><span class="pl-pds">"</span>Cannot order negative items<span class="pl-pds">"</span></span>)))
+
+    <span class="pl-k">import</span> <span class="pl-v">Composite.</span><span class="pl-v">_</span>
+    <span class="pl-c">//Combine properties to make a composite pattern matcher</span>
+    <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">fullName</span> <span class="pl-k">=</span> firstName <span class="pl-k">@:</span> lastName
+  }
+
+  <span class="pl-k">import</span> <span class="pl-v">argonaut.</span><span class="pl-v">_</span>
+
+  <span class="pl-c">//Create a new Json object</span>
+  <span class="pl-k">val</span> <span class="pl-en">newOrder</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.$create{o <span class="pl-k">=&gt;</span>
+    o.firstName.$set(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+    o.lastName.$set(<span class="pl-s"><span class="pl-pds">"</span>Smith<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+    o.email.address.$set(<span class="pl-s"><span class="pl-pds">"</span>johnSmith@test.com<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+    o.orderLines.$append(<span class="pl-s"><span class="pl-pds">"</span>Socks<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">3</span>)
+  }
+
+  <span class="pl-c">//validate a new json object</span>
+  <span class="pl-k">val</span> <span class="pl-en">validated</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.$validate(newOrder)
+
+  <span class="pl-c">//pattern match property values</span>
+  newOrder <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Order</span>.email.address(email) <span class="pl-k">&amp;&amp;</span> <span class="pl-en">Order</span>.email.friendlyName(<span class="pl-en">Some</span>(name)) <span class="pl-k">=&gt;</span>
+      println(s<span class="pl-s"><span class="pl-pds">"</span>$email &lt;$name&gt;<span class="pl-pds">"</span></span>)
+    <span class="pl-k">case</span> <span class="pl-en">Order</span>.email.address(email) <span class="pl-k">&amp;&amp;</span> <span class="pl-en">Order</span>.fullName(firstName, lastName) <span class="pl-k">=&gt;</span>
+      println(s<span class="pl-s"><span class="pl-pds">"</span>$email &lt;$firstName $lastName&gt;<span class="pl-pds">"</span></span>)
+  }
+
+  <span class="pl-c">//make changes to the json object.</span>
+  <span class="pl-k">val</span> <span class="pl-en">pending</span> <span class="pl-k">=</span>
+    <span class="pl-en">Order</span>{o <span class="pl-k">=&gt;</span>
+      o.orderId.$set(<span class="pl-c1">123</span>) <span class="pl-k">~</span>
+      o.status.$set(<span class="pl-s"><span class="pl-pds">"</span>pending<span class="pl-pds">"</span></span>) <span class="pl-k">~</span>
+      o.notes.$modify(maybe <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(maybe.foldLeft(<span class="pl-s"><span class="pl-pds">"</span>Order now pending.<span class="pl-pds">"</span></span>)(_ <span class="pl-k">+</span> _)))
+    }(newOrder)
+
+  <span class="pl-c">//strip out any properties marked internal</span>
+  <span class="pl-k">val</span> <span class="pl-en">sendToClient</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.$sanitize(pending)
+
+  <span class="pl-c">//generate query json</span>
+  <span class="pl-k">val</span> <span class="pl-en">relatedOrdersQuery</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.orderId.$gt(<span class="pl-c1">56</span>) <span class="pl-k">&amp;&amp;</span> <span class="pl-en">Order</span>.status.$in(<span class="pl-s"><span class="pl-pds">"</span>processing<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>sent<span class="pl-pds">"</span></span>)
+  <span class="pl-c">//experimental convert to postgres jsonb clause</span>
+  <span class="pl-k">val</span> <span class="pl-en">postgresQuery</span> <span class="pl-k">=</span> <span class="pl-en">QueryJsonb</span>(<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>, relatedOrdersQuery)
+
+  <span class="pl-k">import</span> <span class="pl-v">scalaz.</span>{<span class="pl-v">\/</span>, <span class="pl-v">\/-</span>}
+  <span class="pl-c">//create a dynamic property</span>
+  <span class="pl-k">val</span> <span class="pl-en">dynamic</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.$dynamic[\<span class="pl-k">/</span>[<span class="pl-k">String</span>, <span class="pl-k">Int</span>]](<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>)
+
+  sendToClient <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> dynamic(<span class="pl-en">Some</span>(\<span class="pl-k">/-</span>(ageInt))) <span class="pl-k">=&gt;</span>
+      println(ageInt)
+    <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">statusDelta</span> <span class="pl-k">=</span> <span class="pl-en">Order</span>.$create(_.status.$set(<span class="pl-s"><span class="pl-pds">"</span>processing<span class="pl-pds">"</span></span>))
+  <span class="pl-c">//validate against current state</span>
+  <span class="pl-en">Order</span>.$validate(statusDelta, pending)
+  <span class="pl-c">//apply delta to current state</span>
+  <span class="pl-k">val</span> <span class="pl-en">processing</span> <span class="pl-k">=</span> pending.delta(statusDelta)
+
+  <span class="pl-c">//Define subcontract for reusable or recursive structures</span>
+  <span class="pl-k">trait</span> <span class="pl-en">UserTimestamp</span> <span class="pl-k">extends</span> <span class="pl-e">SubContract</span> {
+    <span class="pl-k">val</span> <span class="pl-en">account</span> <span class="pl-k">=</span> \[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>account<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">timestamp</span> <span class="pl-k">=</span> \[<span class="pl-k">Long</span>](<span class="pl-s"><span class="pl-pds">"</span>timestamp<span class="pl-pds">"</span></span>)
+  }
+  <span class="pl-k">object</span> <span class="pl-en">Element</span> <span class="pl-k">extends</span> <span class="pl-e">Contract</span> {
+    <span class="pl-k">val</span> <span class="pl-en">created</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">\\</span>(<span class="pl-s"><span class="pl-pds">"</span>created<span class="pl-pds">"</span></span>, immutable) <span class="pl-k">with</span> <span class="pl-e">UserTimestamp</span>
+    <span class="pl-k">val</span> <span class="pl-en">modified</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">\\</span>(<span class="pl-s"><span class="pl-pds">"</span>modified<span class="pl-pds">"</span></span>) <span class="pl-k">with</span> <span class="pl-e">UserTimestamp</span>
+  }
+
+  <span class="pl-c">//try to force a match even if wrong type</span>
+  <span class="pl-k">import</span> <span class="pl-v">LooseCodecs.</span><span class="pl-v">_</span>
+  <span class="pl-en">Json</span>(<span class="pl-s"><span class="pl-pds">"</span>orderId<span class="pl-pds">"</span></span> <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>23628<span class="pl-pds">"</span></span>) <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Order</span>.orderId(<span class="pl-en">Some</span>(id)) <span class="pl-k">=&gt;</span> id
+  }</pre>
+  </div> 
+  <p>*Auto generation of schema information is still a work in progress</p> 
+  <p>*mongo query is not a full feature set.</p> 
+ </article>
+</div>

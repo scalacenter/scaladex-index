@@ -1,0 +1,72 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-logback-flume-appender" class="anchor" href="https://github.com/grahamar/logback-flume-appender#logback-flume-appender" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>logback-flume-appender</h1> 
+  <p>Logback appender to forward log messages to a Flume agent</p> 
+  <h2><a id="user-content-configuration-entries" class="anchor" href="https://github.com/grahamar/logback-flume-appender#configuration-entries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration Entries</h2> 
+  <ul> 
+   <li><strong>application</strong>: Application name, if unset it will be inferred from the application.name system property</li> 
+   <li><strong>hostname</strong>: Host name, if unset it will be inferred from the box host name via <code>InetAddress.getLocalHost().getHostName()</code></li> 
+   <li><strong>type</strong>: Type of logging, will be ignored if unset</li> 
+   <li><strong>flumeAgents</strong>: Comma separated list of flume avro agents in format <code>{hostname}:{port}</code></li> 
+   <li><strong>flumeProperties</strong>: Additional properties to create the flume RpcClient in format <code>{key}={value}</code> separated by <code>;</code></li> 
+   <li><strong>batchSize</strong>: Set the batch size of events to report, overriding the default of 50</li> 
+   <li><strong>reportingWindow</strong>: Override the maximum time spent trying to fill a batch, between 100ms and 10s</li> 
+   <li><strong>additionalAvroHeaders</strong>: Add additional headers to the events in format <code>{key}={value}</code> separated by <code>;</code></li> 
+   <li><strong>reporterMaxThreadPoolSize</strong>: Set the maximum number of threads for the reporter to use, overriding the default 2</li> 
+   <li><strong>reporterMaxQueueSize</strong>: Set the maximum number of event batches to keep in memory, overriding the default 50</li> 
+  </ul> 
+  <p><strong>Sample configuration</strong></p> 
+  <pre><code>&lt;configuration debug="true"&gt;
+     &lt;appender name="flume" class="com.gilt.logback.flume.FlumeLogstashV1Appender"&gt;
+         &lt;flumeAgents&gt;
+             flume-es-1b.gilt.com:5000,
+             flume-es-1c.gilt.com:5000,
+             flume-es-1d.gilt.com:5000
+         &lt;/flumeAgents&gt;
+         &lt;flumeProperties&gt;
+             connect-timeout=4000;
+             request-timeout=8000
+         &lt;/flumeProperties&gt;
+         &lt;batchSize&gt;100&lt;/batchSize&gt;
+         &lt;reportingWindow&gt;1000&lt;/reportingWindow&gt;
+         &lt;additionalAvroHeaders&gt;
+             myHeader=myValue
+         &lt;/additionalAvroHeaders&gt;
+         &lt;application&gt;smapleapp&lt;/application&gt;
+         &lt;layout class="ch.qos.logback.classic.PatternLayout"&gt;
+             &lt;pattern&gt;%d{HH:mm:ss.SSS} %-5level %logger{36} - \(%file:%line\) - %message%n%ex&lt;/pattern&gt;
+         &lt;/layout&gt;
+     &lt;/appender&gt;
+
+     &lt;appender name="console" class="ch.qos.logback.core.ConsoleAppender"&gt;
+         &lt;filter class="ch.qos.logback.classic.filter.ThresholdFilter"&gt;
+             &lt;level&gt;WARN&lt;/level&gt;
+         &lt;/filter&gt;
+         &lt;encoder&gt;
+             &lt;pattern&gt;%d{HH:mm:ss.SSS} %-5level %logger{36} - \(%file:%line\) - %message%n%ex&lt;/pattern&gt;
+         &lt;/encoder&gt;
+     &lt;/appender&gt;
+
+     &lt;logger name="play" level="INFO" /&gt;
+     &lt;logger name="application" level="DEBUG" /&gt;
+
+     &lt;!-- Off these ones as they are annoying, and anyway we manage configuration ourselves --&gt;
+     &lt;logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" /&gt;
+     &lt;logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" /&gt;
+     &lt;logger name="com.avaje.ebeaninternal.server.lib.BackgroundThread" level="OFF" /&gt;
+     &lt;logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" /&gt;
+
+     &lt;root level="INFO"&gt;
+         &lt;appender-ref ref="flume" /&gt;
+         &lt;appender-ref ref="console"/&gt;
+     &lt;/root&gt;
+ &lt;/configuration&gt;
+</code></pre> 
+ </article>
+</div>

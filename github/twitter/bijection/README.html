@@ -1,0 +1,164 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-bijection--" class="anchor" href="https://github.com/twitter/bijection#bijection--" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bijection <a href="http://travis-ci.org/twitter/bijection" target="_blank"><img src="https://camo.githubusercontent.com/3ffdf998c809c9bb6d33f33b982e6531b6af2428/68747470733a2f2f7365637572652e7472617669732d63692e6f72672f747769747465722f62696a656374696f6e2e706e67" alt="Build Status" data-canonical-src="https://secure.travis-ci.org/twitter/bijection.png" style="max-width:100%;"></a> <a href="https://codecov.io/github/twitter/bijection" target="_blank"><img src="https://camo.githubusercontent.com/72c2b83b64896013a8f89b152f4c8c73bc21a240/68747470733a2f2f696d672e736869656c64732e696f2f636f6465636f762f632f6769746875622f747769747465722f62696a656374696f6e2e7376673f6d61784167653d32353932303030" alt="Codecov" data-canonical-src="https://img.shields.io/codecov/c/github/twitter/bijection.svg?maxAge=2592000" style="max-width:100%;"></a></h2> 
+  <p>A Bijection is an invertible function that converts back and forth between two types, with the contract that a round-trip through the Bijection will bring back the original object. Moreover, the inverse has the same property.</p> 
+  <p>See the <a href="http://twitter.github.com/bijection" target="_blank">current API documentation</a> for more information.</p> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/twitter/bijection#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples:</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> .<span class="pl-k">/</span>sbt bijection<span class="pl-k">-</span>core<span class="pl-k">/</span>console
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.</span><span class="pl-v">_</span>
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Bijection</span>[<span class="pl-k">Int</span>, java.lang.<span class="pl-en">Integer</span>](<span class="pl-c1">42</span>)
+res0<span class="pl-k">:</span> java.lang.<span class="pl-en">Integer</span> <span class="pl-k">=</span> <span class="pl-c1">42</span></pre>
+  </div> 
+  <p>In addition to Bijection, we have Injection. An Injection embeds a type A in a larger space of type B. Every item from A can be round-tripped through B, but not every B can be mapped to A. So Injection is like a pair of function: <code>A =&gt; B, B =&gt; Try[A]</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.</span><span class="pl-v">_</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Injection</span>[<span class="pl-k">Int</span>, <span class="pl-k">String</span>](<span class="pl-c1">100</span>)
+res0<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-c1">100</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-en">Injection</span>.invert[<span class="pl-k">Int</span>, <span class="pl-k">String</span>](res0)
+res1<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-c1">100</span>)</pre>
+  </div> 
+  <p>If we want to treat an Injection like a Bijection (over a restricted subspace of the larger set), we use the <code>B @@ Rep[A]</code> syntax, for instance: <code>String @@ Rep[Int]</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Bijection</span>[<span class="pl-k">Int</span>, <span class="pl-k">String</span> <span class="pl-k">@@</span> <span class="pl-en">Rep</span>[<span class="pl-k">Int</span>]](<span class="pl-c1">100</span>)
+res2<span class="pl-k">:</span> com.twitter.bijection.package.<span class="pl-k">@@</span>[<span class="pl-k">String</span>,com.twitter.bijection.<span class="pl-en">Rep</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> <span class="pl-c1">100</span></pre>
+  </div> 
+  <p>Use <code>invert</code> to reverse the transformation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-en">Bijection</span>.invert[<span class="pl-k">Int</span>, <span class="pl-k">String</span> <span class="pl-k">@@</span> <span class="pl-en">Rep</span>[<span class="pl-k">Int</span>]](res2)
+res3<span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">100</span></pre>
+  </div> 
+  <p>If you <code>import Conversion.asMethod</code> you can use <code>.as[T]</code> to use an available Bijection/Injection to <code>T</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.Conversion.</span><span class="pl-v">asMethod</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.Conversion.</span><span class="pl-v">asMethod</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-c1">1.</span>as[java.lang.<span class="pl-en">Integer</span>]
+res6<span class="pl-k">:</span> java.lang.<span class="pl-en">Integer</span> <span class="pl-k">=</span> <span class="pl-c1">1</span></pre>
+  </div> 
+  <p>Bijections and Injections can also be composed. As with functions, <code>andThen</code> composes forward, <code>compose</code> composes backward.</p> 
+  <p>This example round-trips a long into a GZipped base64-encoded string:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">injection</span> <span class="pl-k">=</span> <span class="pl-en">Injection</span>.long2BigEndian andThen <span class="pl-en">Bijection</span>.bytes2GZippedBase64
+injection<span class="pl-k">:</span> com.twitter.bijection.<span class="pl-en">Injection</span>[<span class="pl-k">Long</span>,<span class="pl-en">Array</span>[<span class="pl-k">Byte</span>]] <span class="pl-k">=</span> &lt;<span class="pl-ent">function1</span>&gt;
+
+scala<span class="pl-k">&gt;</span> injection(<span class="pl-c1">123456789L</span>)
+res1<span class="pl-k">:</span> com.twitter.bijection.<span class="pl-en">GZippedBase64String</span> <span class="pl-k">=</span> <span class="pl-en">GZippedBase64String</span>(<span class="pl-en">H4sIAAAAAAAAAGNgYGBgjz4rCgBpa5WLCAAAAA</span><span class="pl-k">==</span>)
+
+scala<span class="pl-k">&gt;</span> injection.invert(res1)
+res2<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-k">Long</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-c1">123456789</span>)</pre>
+  </div> 
+  <p>When you have bijections between a path of items you can <code>Bijection.connect</code> or <code>Injection.connect</code> them:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.Injection.</span><span class="pl-v">connect</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.Injection.</span><span class="pl-v">connect</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.</span><span class="pl-v">Base64String</span>
+<span class="pl-k">import</span> <span class="pl-v">com.twitter.bijection.</span><span class="pl-v">Base64String</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">Conversion.</span><span class="pl-v">asMethod</span>
+<span class="pl-k">import</span> <span class="pl-v">Conversion.</span><span class="pl-v">asMethod</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">long2String2Bytes2B64</span> <span class="pl-k">=</span> connect[<span class="pl-k">Long</span>,<span class="pl-k">String</span>,<span class="pl-en">Array</span>[<span class="pl-k">Byte</span>],<span class="pl-en">Base64String</span>]
+string2Long2Bytes2B64<span class="pl-k">:</span> com.twitter.bijection.<span class="pl-en">Bijection</span>[<span class="pl-k">String</span>,com.twitter.bijection.<span class="pl-en">Base64String</span>] <span class="pl-k">=</span> &lt;<span class="pl-ent">function1</span>&gt;
+
+scala<span class="pl-k">&gt;</span> <span class="pl-c1">243L</span>.as[<span class="pl-en">Base64String</span>]
+res0<span class="pl-k">:</span> com.twitter.bijection.<span class="pl-en">Base64String</span> <span class="pl-k">=</span> <span class="pl-en">Base64String</span>(<span class="pl-en">MjQz</span>)
+
+scala<span class="pl-k">&gt;</span> long2String2Bytes2B64.invert(res0)
+res1<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-k">Long</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-c1">243</span>)</pre>
+  </div> 
+  <h2><a id="user-content-supported-bijectionsinjections" class="anchor" href="https://github.com/twitter/bijection#supported-bijectionsinjections" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported Bijections/Injections</h2> 
+  <p>Bijection implicitly supplies Bijections between:</p> 
+  <ul> 
+   <li>all numeric types &lt;-&gt; their boxed java counterparts</li> 
+   <li>containers/primitives &lt;-&gt; Json (Injections via bijection-json)</li> 
+   <li>thrift/protobuf/avro &lt;-&gt; <code>Array[Byte]</code> (Injections via bijection-protobuf/bijection-thrift/bijection-avro)</li> 
+   <li>all numeric types &lt;-&gt; big-endian <code>Array[Byte]</code> encodings (Injections)</li> 
+   <li>all numeric types &lt;-&gt; String (Injections)</li> 
+   <li>Bijections for all <code>asScala</code>, <code>asJava</code> pairs provided by <a href="http://www.scala-lang.org/api/current/scala/collection/JavaConverters$.html" target="_blank">scala.collection.JavaConverters</a></li> 
+   <li>String &lt;-&gt; utf8 encoded bytes</li> 
+   <li><code>Array[Byte]</code> &lt;-&gt; <code>GZippedBytes</code></li> 
+   <li><code>Array[Byte]</code> &lt;-&gt; <code>Base64String</code></li> 
+   <li><code>Array[Byte]</code> &lt;-&gt; <code>GZippedBase64String</code></li> 
+   <li><code>Array[Byte]</code> &lt;-&gt; <code>java.nio.ByteBuffer</code></li> 
+   <li><code>Class[T]</code> &lt;-&gt; String (Injection)</li> 
+   <li><code>A =&gt; B</code> &lt;-&gt; <code>C =&gt; D</code> (function conversion)</li> 
+   <li>Bijection/Injection builders for all tuples. (<code>(String,Int)</code> &lt;-&gt; <code>(Array[Byte], java.lang.Integer)</code> is built automatically, for example.)</li> 
+  </ul> 
+  <p>Additionally there is a method to generate Bijections between most of Scala's built in types: <code>Bijection.toContainer[Int,String,List[Int],Vector[String]</code> returns <code>Bijection[List[Int], Vector[String]</code></p> 
+  <p>If you see a reversible conversion that is not here and related to types in the standard library of Java or Scala, please contribute!</p> 
+  <h2><a id="user-content-serialization-via-bufferable" class="anchor" href="https://github.com/twitter/bijection#serialization-via-bufferable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Serialization via Bufferable</h2> 
+  <p><code>Bufferable[T]</code> handles putting and getting a type <code>T</code> into a ByteBuffer in a composable way. <code>Bufferable[T]</code> instances for all primitives/tuples/containers are provided. Bijections and Injections to any of these types give you binary serialization via Bufferable.</p> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/twitter/bijection#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>To learn more and find links to tutorials and information around the web, check out the <a href="https://github.com/twitter/bijection/wiki" target="_blank">Bijection Wiki</a>.</p> 
+  <p>The latest ScalaDocs are hosted on Bijection's <a href="http://twitter.github.io/bijection" target="_blank">Github Project Page</a>.</p> 
+  <h2><a id="user-content-get-involved--code-of-conduct" class="anchor" href="https://github.com/twitter/bijection#get-involved--code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Get Involved + Code of Conduct</h2> 
+  <p>Pull requests and bug reports are always welcome!</p> 
+  <p>Discussion occurs primarily on the <a href="https://groups.google.com/forum/#!forum/bijection" target="_blank">Bijection mailing list</a>. Issues should be reported on the <a href="https://github.com/twitter/bijection/issues" target="_blank">GitHub issue tracker</a>.</p> 
+  <p>We use a lightweight form of project governence inspired by the one used by Apache projects. Please see <a href="https://github.com/twitter/analytics-infra-governance#contributing-and-committership" target="_blank">Contributing and Committership</a> for our code of conduct and our pull request review process. The TL;DR is send us a pull request, iterate on the feedback + discussion, and get a +1 from a <a href="https://github.com/twitter/bijection/blob/master/COMMITTERS.md" target="_blank">Committer</a> in order to get your PR accepted.</p> 
+  <p>The current list of active committers (who can +1 a pull request) can be found here: <a href="https://github.com/twitter/bijection/blob/master/COMMITTERS.md" target="_blank">Committers</a></p> 
+  <p>A list of contributors to the project can be found here: <a href="https://github.com/twitter/bijection/graphs/contributors" target="_blank">Contributors</a></p> 
+  <h2><a id="user-content-maven" class="anchor" href="https://github.com/twitter/bijection#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h2> 
+  <p>Bijection modules are available on maven central. The current groupid and version for all modules is, respectively, <code>"com.twitter"</code> and <code>0.9.2</code>.</p> 
+  <p>Current published artifacts are</p> 
+  <ul> 
+   <li><code>bijection-core</code></li> 
+   <li><code>bijection-protobuf</code></li> 
+   <li><code>bijection-thrift</code></li> 
+   <li><code>bijection-guava</code></li> 
+   <li><code>bijection-scrooge</code></li> 
+   <li><code>bijection-json</code></li> 
+   <li><code>bijection-util</code></li> 
+   <li><code>bijection-clojure</code></li> 
+   <li><code>bijection-netty</code></li> 
+   <li><code>bijection-avro</code></li> 
+   <li><code>bijection-hbase</code></li> 
+  </ul> 
+  <p>Every artifact is published against Scala <code>"2.10"</code> and <code>"2.11"</code>. To pull in the jars, make sure to add your desired scala version as a suffix, ie:</p> 
+  <p><code>bijection-core_2.10</code> or <code>bijection-core_2.11</code></p> 
+  <h2><a id="user-content-chat" class="anchor" href="https://github.com/twitter/bijection#chat" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Chat</h2> 
+  <p><a href="https://gitter.im/twitter/bijection?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge" target="_blank"><img src="https://camo.githubusercontent.com/ea60d5bc3769d277b0b775b113b3ebaa5a0bbcd5/68747470733a2f2f6261646765732e6769747465722e696d2f747769747465722f62696a656374696f6e2e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/twitter/bijection.svg" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-authors" class="anchor" href="https://github.com/twitter/bijection#authors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Authors</h2> 
+  <ul> 
+   <li>Oscar Boykin <a href="http://twitter.com/posco" target="_blank">http://twitter.com/posco</a></li> 
+   <li>Marius Eriksen <a href="http://twitter.com/marius" target="_blank">http://twitter.com/marius</a></li> 
+   <li>Sam Ritchie <a href="http://twitter.com/sritchie" target="_blank">http://twitter.com/sritchie</a></li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/twitter/bijection#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2012 Twitter, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+ </article>
+</div>

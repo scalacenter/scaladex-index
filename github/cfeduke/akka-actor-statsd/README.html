@@ -1,0 +1,156 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-actor-statsd" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#akka-actor-statsd" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-actor-statsd</h1> 
+  <p>A dead simple <a href="https://github.com/etsy/statsd" target="_blank">statsd</a> client written in Scala as an actor using the <a href="http://akka.io" target="_blank">akka</a> framework.</p> 
+  <p>Currently at 0.4 snapshot. We're using this software in a non-production setting at <a href="http://www.trafficland.com" target="_blank">TrafficLand</a>.</p> 
+  <p>0.4 is compiled with Scala 2.10.4 against Akka 2.3.4 which works with Play 2.3.4.</p> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Counter</span>(<span class="pl-k">val</span> <span class="pl-en">counterName</span><span class="pl-k">:</span> <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Actor</span> {
+  <span class="pl-k">var</span> <span class="pl-en">seconds</span> <span class="pl-k">=</span> <span class="pl-c1">0L</span>
+  <span class="pl-k">var</span> <span class="pl-en">minutes</span> <span class="pl-k">=</span> <span class="pl-c1">0L</span>
+  <span class="pl-k">var</span> <span class="pl-en">hours</span> <span class="pl-k">=</span> <span class="pl-c1">0L</span>
+
+  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">stats</span> <span class="pl-k">=</span> context.actorOf(<span class="pl-en">StatsActor</span>.props(<span class="pl-s"><span class="pl-pds">"</span>stats.someserver.com<span class="pl-pds">"</span></span>, s<span class="pl-s"><span class="pl-pds">"</span>prototype.$counterName<span class="pl-pds">"</span></span>))
+  <span class="pl-k">val</span> <span class="pl-en">secondsCounter</span> <span class="pl-k">=</span> <span class="pl-en">Increment</span>(<span class="pl-s"><span class="pl-pds">"</span>seconds<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">minutesCounter</span> <span class="pl-k">=</span> <span class="pl-en">Increment</span>(<span class="pl-s"><span class="pl-pds">"</span>minutes<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">hoursCounter</span> <span class="pl-k">=</span> <span class="pl-en">Increment</span>(<span class="pl-s"><span class="pl-pds">"</span>hours<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">gaugeMetric</span> <span class="pl-k">=</span> <span class="pl-en">Gauge</span>(<span class="pl-s"><span class="pl-pds">"</span>shotgun<span class="pl-pds">"</span></span>)(<span class="pl-c1">12L</span>)
+  <span class="pl-k">val</span> <span class="pl-en">timingMetric</span> <span class="pl-k">=</span> <span class="pl-en">Timing</span>(<span class="pl-s"><span class="pl-pds">"</span>tempo<span class="pl-pds">"</span></span>)(<span class="pl-c1">5.</span>seconds)
+
+  <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">IncrementSecond</span> <span class="pl-k">=&gt;</span>
+      seconds <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+      statsd <span class="pl-k">!</span> secondsCounter
+    <span class="pl-k">case</span> <span class="pl-en">IncrementMinute</span> <span class="pl-k">=&gt;</span>
+      minutes <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+      statsd <span class="pl-k">!</span> gaugeMetric
+      statsd <span class="pl-k">!</span> minutesCounter
+      statsd <span class="pl-k">!</span> timingMetric
+    <span class="pl-k">case</span> <span class="pl-en">IncrementHour</span> <span class="pl-k">=&gt;</span>
+      hours <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+      statsd <span class="pl-k">!</span> hoursCounter
+    <span class="pl-k">case</span> <span class="pl-en">Status</span> <span class="pl-k">=&gt;</span> sender <span class="pl-k">!</span> (seconds, minutes, hours)
+  }
+}</pre>
+  </div> 
+  <p>The counter messages themselves are curried for convience:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">interval</span> <span class="pl-k">=</span> <span class="pl-en">Timing</span>(<span class="pl-s"><span class="pl-pds">"</span>interval<span class="pl-pds">"</span></span>)
+stats <span class="pl-k">!</span> interval(<span class="pl-c1">3.</span>seconds)
+stats <span class="pl-k">!</span> interval(<span class="pl-c1">2.</span>seconds)
+stats <span class="pl-k">!</span> interval(<span class="pl-c1">1.</span>second)</pre>
+  </div> 
+  <p>If a <code>StatsActor</code> instance is assigned a namespace then all counters sent from that actor have the namespace applied to the counter:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">page1Perf</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">StatsActor</span>.props(<span class="pl-s"><span class="pl-pds">"</span>stats.someserver.com<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>page1<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">page2Perf</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">StatsActor</span>.props(<span class="pl-s"><span class="pl-pds">"</span>stats.someserver.com<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>page2<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">response</span> <span class="pl-k">=</span> <span class="pl-en">Timing</span>(<span class="pl-s"><span class="pl-pds">"</span>response<span class="pl-pds">"</span></span>)
+page1Perf <span class="pl-k">!</span> response(<span class="pl-c1">250.</span>milliseconds)
+page2Perf <span class="pl-k">!</span> response(<span class="pl-c1">100.</span>milliseconds)</pre>
+  </div> 
+  <p>But you don't have to use namespaced actors at all:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">perf</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">StatsActor</span>.props(<span class="pl-s"><span class="pl-pds">"</span>stats.someserver.com<span class="pl-pds">"</span></span>))
+perf <span class="pl-k">!</span> <span class="pl-en">Timing</span>(<span class="pl-s"><span class="pl-pds">"</span>page1.response<span class="pl-pds">"</span></span>)(<span class="pl-c1">250.</span>milliseconds)
+perf <span class="pl-k">!</span> <span class="pl-en">Timing</span>(<span class="pl-s"><span class="pl-pds">"</span>page2.response<span class="pl-pds">"</span></span>)(<span class="pl-c1">100.</span>milliseconds)</pre>
+  </div> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Releases are hosted on Maven Central.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.deploymentzone<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-actor-statsd<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Snapshots are hosted on the Sonatype OSS repository.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>Sonatype OSS Snapshots<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/repositories/snapshots<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>This library requires <a href="http://akka.io" target="_blank">Akka</a> 2.3 to get around a bug with <a href="http://stackoverflow.com/questions/21725473/creating-a-testactorref-results-in-nullpointerexception/22432436#22432436" target="_blank">Stash and TestActorRef</a> for test purposes only. It is compatible with Akka 2.2.3. If you need to keep a dependency on Akka 2.2.3 (for use with <a href="https://github.com/debasishg/scala-redis-nb/tree/master" target="_blank">scala-redis-nb</a> for example) be sure to use an exclusion rule:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>com.deploymentzone<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>akka-actor-statsd<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2<span class="pl-pds">"</span></span>
+  excludeAll <span class="pl-en">ExclusionRule</span>(<span class="pl-s"><span class="pl-pds">"</span>com.typesafe.akka<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <h2><a id="user-content-explanation" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#explanation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Explanation</h2> 
+  <p>This implementation is intended to be very high performance.</p> 
+  <ul> 
+   <li>Uses an akka.io UdpConnected implementation to bypass local security checks within the JVM</li> 
+   <li>Batches messages together, as per <a href="https://github.com/etsy/statsd/blob/master/docs/metric_types.md#multi-metric-packets" target="_blank">statsd Multi-Metric Packets</a> specification</li> 
+  </ul> 
+  <p>Supports all of the <a href="https://github.com/etsy/statsd/blob/master/docs/metric_types.md" target="_blank">statsd Metric Types</a> including optional sampling parameters.</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th align="left">statsd</th> 
+     <th align="left">akka-actor-statsd</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td align="left">Counting</td> 
+     <td align="left">Count</td> 
+    </tr> 
+    <tr> 
+     <td align="left">Timing</td> 
+     <td align="left">Timing</td> 
+    </tr> 
+    <tr> 
+     <td align="left">Gauges</td> 
+     <td align="left">Gauge</td> 
+    </tr> 
+    <tr> 
+     <td align="left">Gauge (modification)</td> 
+     <td align="left">GaugeAdd, GaugeSubtract</td> 
+    </tr> 
+    <tr> 
+     <td align="left">Sets</td> 
+     <td align="left">Set</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h3><a id="user-content-batching" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#batching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Batching</h3> 
+  <p>As messages are transmitted to a stats actor those messages are queued for later transmission. By default the queue flushes every 100 milliseconds and combines messages together up to a packet size of 1,432 bytes (taking UTF-8 character sizes into account).</p> 
+  <h2><a id="user-content-configuration" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h2> 
+  <p>You may pass your own Typesafe Config instance to the <code>StatsActor.props(Config)</code> method, or use the parameterless method <code>StatsActor.props()</code> to rely on <code>ConfigFactory.load()</code> to resolve settings. Here are the default settings, with the exception of hostname, which is a required setting:</p> 
+  <pre><code>deploymentzone {
+    akka-actor-statsd {
+        hostname = "required"
+        port = 8125
+        namespace = ""
+        # common packet sizes:
+        # fast ethernet:        1432
+        # gigabit ethernet:     8932
+        # commodity internet:    512
+        packet-size = 1432
+        transmit-interval = 100 ms
+    }
+}
+</code></pre> 
+  <p>Even if you do not explicitly pass a Config by using one of the other <code>StatsActor.props(...)</code> methods downstream actors in the network still respect the configuration file settings - or the defaults if no configuration file is used.</p> 
+  <h2><a id="user-content-influences" class="anchor" href="https://github.com/cfeduke/akka-actor-statsd#influences" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Influences</h2> 
+  <ul> 
+   <li><a href="https://github.com/benhardy/statsd-scala" target="_blank">statsd-scala</a> Straight forward neat implementation, but no actors means that by default message transmission - up until when the UDP packet is handed off to the kernel - will happen on the calling thread.</li> 
+   <li><a href="https://github.com/themodernlife/akka-statsd" target="_blank">akka-statsd</a> A trait for extending an actor which is a nice take, except by following the intended implementation causes your actors to violate single responsibility principle and transmit stat data on the actor's thread.</li> 
+   <li><a href="https://github.com/archena/statsd-akka" target="_blank">statsd-akka</a> Found this after I began my version, very close to what I had originally envisioned.</li> 
+  </ul> 
+ </article>
+</div>

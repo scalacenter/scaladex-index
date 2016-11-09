@@ -1,0 +1,68 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-koboshi" class="anchor" href="https://github.com/wix/koboshi#koboshi" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Koboshi</h1> 
+  <p>A library we use extensively at Wix for resilient caching of any configuration/resources that a service may need to rely on, but are obtained from an unreliable source (such as other internal services, databases, or any other remote source).</p> 
+  <p>A Highly Available Single Element Cache - When your application opts for availability over having up-to-date configuration.</p> 
+  <p>Our cannonical use-case is our site renderer which has a very strict SLA.<br> That service needs <a href="https://github.com/wix/petri" target="_blank">feature-flags</a> in order to operate but it can't fail or be delayed if they aren't there.<br> It can however work with stale feature flags which is where Koboshi steps in.</p> 
+  <p>Koboshi makes sure that:</p> 
+  <ul> 
+   <li>Your service can always start up no matter the status of your remote source</li> 
+   <li>Your service is periodically updated with data from the remote source</li> 
+   <li>No user request has to incur the cost of updating that single-element cache</li> 
+  </ul> 
+  <p><strong>NOTE:</strong> As this is a work-in-progress, and is being changed as we get feedback from users, some interfaces might change or be removed at later versions.</p> 
+  <h3><a id="user-content-usage" class="anchor" href="https://github.com/wix/koboshi#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.wix.hoopoe.koboshi.cache.defaults.</span><span class="pl-v">ResilientCaches</span>
+...
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">YourData</span>(<span class="pl-v">data</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>])
+<span class="pl-k">val</span> <span class="pl-en">resilientCaches</span> <span class="pl-k">=</span> <span class="pl-en">ResilientCaches</span>.resilientCaches(yourCacheFolder)
+<span class="pl-k">val</span> <span class="pl-en">resilientCache</span> <span class="pl-k">=</span> resilientCaches.aResilientInitializedCache[<span class="pl-en">YourData</span>](
+     <span class="pl-k">new</span> <span class="pl-en">RemoteDataSource</span>[<span class="pl-en">YourData</span>] {
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">fetch</span>()<span class="pl-k">:</span> <span class="pl-en">YourData</span> <span class="pl-k">=</span> <span class="pl-k">???</span> <span class="pl-c">//e.g. read from a remote service</span>
+      })
+<span class="pl-k">val</span> <span class="pl-en">yourData</span><span class="pl-k">:</span> <span class="pl-en">YourData</span> <span class="pl-k">=</span> resilientCache.read()</pre>
+  </div> 
+  <p><strong>NOTE:</strong> By default Koboshi uses <a href="https://github.com/wix/koboshi/blob/master" target="_blank">Jackson</a> for working with the persistent copy. It is advised not to use collections (Map, List, etc') directly as a DTO but rather encapsulate those in your own class as shown in the example above (YourData). This will allow better support for backward/forward compatability which otherwise will be compromised, leaving the local cached copy unparsable upon a change in the DTO. Also, make sure the DTO is serializable. Koboshi supports Scala's case classes out of the box, but if you're using something else (Java for example) make sure to include an empty constructor and getters or other Jackson constructs (annotate with a custom @JSonCreator or @JsonDeserialize).</p> 
+  <p>See all features in the <a href="https://github.com/wix/koboshi/blob/master/koboshi-bootstrap/src/it/java/com/wix/hoopoe/koboshi/ResilientCachesIT.scala" target="_blank">acceptance test</a>.</p> 
+  <h3><a id="user-content-maven" class="anchor" href="https://github.com/wix/koboshi#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h3> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;com.wix.hoopoe.koboshi&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;koboshi-bootstrap_2.11&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.0.4&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h3><a id="user-content-sbt" class="anchor" href="https://github.com/wix/koboshi#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.wix.hoopoe.koboshi<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>koboshi-bootstrap_2.11<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.4<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-scala-binary-compatibility" class="anchor" href="https://github.com/wix/koboshi#scala-binary-compatibility" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala binary compatibility</h3> 
+  <p>This library is currently only published for Scala 2.11.x:</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/wix/koboshi#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright (c) 2015 Wix.com Ltd. All Rights Reserved. Use of this source code is governed by a BSD-style license that can be found in the <a href="https://github.com/wix/koboshi/blob/master/LICENSE.md" target="_blank">LICENSE</a> file in the root of the source tree.</p> 
+  <h2><a id="user-content-code-of-conduct" class="anchor" href="https://github.com/wix/koboshi#code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code of Conduct</h2> 
+  <p>Please note that this project is released with a Contributor <a href="https://github.com/wix/koboshi/blob/master/code_of_conduct.md" target="_blank">Code of Conduct</a>. By participating in this project you agree to abide by its terms.</p> 
+ </article>
+</div>

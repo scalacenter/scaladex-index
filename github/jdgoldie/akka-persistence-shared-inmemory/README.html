@@ -1,0 +1,69 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><strong>Overview</strong></p> 
+  <p>This project contains in-memory implementations of the journal and snapshot store for akka-persistence that are designed to work with multi-node and single-node unit tests. Since all data is kept in memory structures, there are no side effects or cleanup between test runs. These plugins are tested against <code>akka-persistence-tck-experimental</code> version 2.3.9</p> 
+  <p><a href="https://travis-ci.org/jdgoldie/akka-persistence-shared-inmemory" target="_blank"><img src="https://camo.githubusercontent.com/09adcf0ba64df227a9d7590a1f056d41fda9495f/68747470733a2f2f7472617669732d63692e6f72672f6a64676f6c6469652f616b6b612d70657273697374656e63652d7368617265642d696e6d656d6f72792e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/jdgoldie/akka-persistence-shared-inmemory.svg" style="max-width:100%;"></a></p> 
+  <p><a href="https://coveralls.io/r/jdgoldie/akka-persistence-shared-inmemory" target="_blank"><img src="https://camo.githubusercontent.com/7df33f3cb44937fef5c072a7c4d2bd9dbce3ca07/68747470733a2f2f696d672e736869656c64732e696f2f636f766572616c6c732f6a64676f6c6469652f616b6b612d70657273697374656e63652d7368617265642d696e6d656d6f72792e737667" alt="Coverage Status" data-canonical-src="https://img.shields.io/coveralls/jdgoldie/akka-persistence-shared-inmemory.svg" style="max-width:100%;"></a></p> 
+  <p><strong>Adding to your project</strong></p> 
+  <p>Add a resolver:</p> 
+  <pre><code>defaultResolvers += ("jdgoldie at bintray" at "http://dl.bintray.com/jdgoldie/maven")
+</code></pre> 
+  <p>and the dependency:</p> 
+  <pre><code>  "com.github.jdgoldie" %% "akka-persistence-shared-inmemory" % "1.0.16"
+</code></pre> 
+  <p><strong>Use in a single node test</strong></p> 
+  <p>To use the journal and snapshot store in a basic unit test, add the following configuration to your <code>application.conf</code>:</p> 
+  <pre><code>  akka {
+    persistence {
+      journal {
+        plugin = "akka.persistence.inmem.journal"
+      }
+      snapshot-store {
+        plugin = "akka.persistence.inmem.snapshot-store"
+      }
+    }
+  }
+</code></pre> 
+  <p><strong>Use in a multi-node test</strong></p> 
+  <p>Using the journal and snapshot store in shared mode with a multi-node test requires a little more work. The configuration is:</p> 
+  <pre><code>persistence {
+  journal {
+    plugin = "akka.persistence.inmem.shared-journal"
+  }
+  snapshot-store {
+    plugin = "akka.persistence.inmem.shared-snapshot-store"
+  }
+}
+</code></pre> 
+  <p>These plugins are only proxies to the actual stores, however, and must be configured further. In the <code>multi-jvm</code> tests, <code>ExampleMultiJvmTestSpec.scala</code> has an example of the additional configuration:</p> 
+  <pre><code>Persistence(system)
+
+runOn(node1) {
+  SharedInMemoryJournal.setStore(system.actorOf(
+      Props[SharedInMemoryMessageStore], "journalStore"), system)
+}
+
+runOn(node2) {
+  SharedInMemoryJournal.setStore(getActorRef(
+      node(node1) / "user" / "journalStore").get, system)
+}
+</code></pre> 
+  <p>On <em>node1</em>, the journalStore actor is created and the plugin-proxy is given a reference. On <em>node2</em>, the plugin-proxy is given a reference to the journalStore actor on <em>node1</em>.</p> 
+  <p>The shared snapshot store is configured in a similar way. An example can be found in <code>ExampleMultiJvmTestSpec.scala</code> as well:</p> 
+  <pre><code>runOn(node1) {
+  Persistence(system).snapshotStoreFor(null) ! 
+      SharedInMemorySnapshotStore.SetStore(
+          system.actorOf(Props[InMemorySnapshotStore], "snapStore"))
+}
+
+runOn(node2) {
+  Persistence(system).snapshotStoreFor(null) ! 
+      SharedInMemorySnapshotStore.SetStore(
+          getActorRef(node(node1) / "user" / "snapStore").get)
+}
+</code></pre> 
+  <p><strong>Acknowledgements</strong></p> 
+  <p>The design for the shared plugins is heavily based on the shared LevelDB journal in <code>akka-persistence</code>. The shared journal test is ported from the shared LevelDB journal test from the same source. </p> 
+  <p>Thanks to <a href="http://www.onegeek.com.au" target="_blank">OneGeek</a> for the <a href="http://www.onegeek.com.au/scala/setting-up-travis-ci-for-scala" target="_blank">article</a> on TravisCi-to-Bintray setup</p> 
+ </article>
+</div>

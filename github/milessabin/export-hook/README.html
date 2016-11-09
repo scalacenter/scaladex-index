@@ -1,0 +1,318 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-export-hook-minimal-dependency-support-for-expanding-type-class-implicit-scope" class="anchor" href="https://github.com/milessabin/export-hook#export-hook-minimal-dependency-support-for-expanding-type-class-implicit-scope" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>export-hook: minimal dependency support for expanding type class implicit scope</h1> 
+  <p>This project provides minimal infrastructure to support the inclusion of derived, subclass and other orphan instances in the implicit scope of a type class without imposing heavyweight dependencies on the type class provider.</p> 
+  <p><a href="https://travis-ci.org/milessabin/export-hook" target="_blank"><img src="https://camo.githubusercontent.com/1be69b0907cf73bd729d0180ab3098e880574907/68747470733a2f2f6170692e7472617669732d63692e6f72672f6d696c6573736162696e2f6578706f72742d686f6f6b2e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://api.travis-ci.org/milessabin/export-hook.png?branch=master" style="max-width:100%;"></a> <a href="https://waffle.io/milessabin/export-hook" target="_blank"><img src="https://camo.githubusercontent.com/5bb8cce92e410e5da5feca2a9f29a0e53cf710c0/68747470733a2f2f62616467652e776166666c652e696f2f6d696c6573736162696e2f6578706f72742d686f6f6b2e706e673f6c6162656c3d5265616479" alt="Stories in Ready" data-canonical-src="https://badge.waffle.io/milessabin/export-hook.png?label=Ready" style="max-width:100%;"></a> <a href="https://gitter.im/milessabin/export-hook" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/org.typelevel/export-hook_2.11" target="_blank"><img src="https://camo.githubusercontent.com/e9d1f74663bef96925241e58fc74f60e43f87d1a/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f6f72672e747970656c6576656c2f6578706f72742d686f6f6b5f322e31312e737667" alt="Maven Central" data-canonical-src="https://img.shields.io/maven-central/v/org.typelevel/export-hook_2.11.svg" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-what-are-orphan-type-class-instances" class="anchor" href="https://github.com/milessabin/export-hook#what-are-orphan-type-class-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What are "orphan" type class instances?</h2> 
+  <p>An <em>orphan</em> type class instance is a type class instance which is defined outside its <em>implicit scope</em>. To understand this we first need to review a few details of how the scala compiler resolves implicit parameters ...</p> 
+  <p>Implicit definitions are resolved to satisfy implicit parameters in two ways,</p> 
+  <ol> 
+   <li>by searching for a matching definition in the current or an enclosing scope or via an import.</li> 
+   <li>by searching for a matching definition in the <em>implicit scope</em>.</li> 
+  </ol> 
+  <p>The <em>implicit scope</em> of a type <code>T</code> consists of all companion objects of the types that are associated with it. To a first approximation the types associated with <code>T</code> are all the types that are mentioned in <code>T</code>. So, for example, the implicit scope of <code>Functor[List]</code> includes the companion object of <code>Functor</code> and the companion object of <code>List</code>. The full set of rules is more complicated and can be found in <a href="http://scala-lang.org/files/archive/spec/2.11/07-implicits.html#implicit-parameters" target="_blank">section 7.2</a> of the Scala Language Reference.</p> 
+  <p>When the compiler is resolving an implicit parameter it will first look for defintions using strategy (1) above: implicit defintions which are directly accessible in the current or an enclosing scope, or via an import will be consulted first and selected according to the <a href="http://scala-lang.org/files/archive/spec/2.11/06-expressions.html#overloading-resolution" target="_blank">normal overload resolution rules</a>.</p> 
+  <p>The compiler will <em>only</em> use strategy (2), searching the implicit scope, if no suitable implicit definitions are found using strategy (1). Or, to put it another way, directly accessible implicit definitions will always trump implicit definitions in the implicit scope. <a href="https://twitter.com/eed3si9n" target="_blank">Eugene Yokota</a> has an excellent writeup of the mechanics <a href="http://eed3si9n.com/revisiting-implicits-without-import-tax" target="_blank">here</a>.</p> 
+  <p>As a general rule we prefer implicit definitions to be available without needing explicit imports so, by and large, it's preferable to define type class instances in the implicit scope, ie. within the companion object of the type class trait, or within the companion object of the type for which we're defining the instance.</p> 
+  <p>For example, given the <code>Functor</code> type class and some type <code>Foo</code>, we would prefer to define the instance <code>Functor[Foo]</code> in either the companion object of <code>Functor</code> or the companion object of <code>Foo</code>. In this case, whenever <code>Functor</code> and <code>Foo</code> are visible, <code>Functor[Foo]</code> can be implicitly resolved without any further imports.</p> 
+  <p>Conversely, an implicit definition which is defined <em>outside</em> its implicit scope will only be resolved as an implicit parameter if it is directly accessible, ie. if it is imported or defined in the current or an enclosing scope. This would be the case if the instance <code>Functor[Foo]</code> were provided by a third-party, neither in the companion object of <code>Functor</code> nor in the companion object of <code>Foo</code>. Type class instances defined in this way are <em>orphans</em>.</p> 
+  <h2><a id="user-content-why-are-orphans-a-problem-for-automatically-derived-and-subclass-type-class-instances" class="anchor" href="https://github.com/milessabin/export-hook#why-are-orphans-a-problem-for-automatically-derived-and-subclass-type-class-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why are orphans a problem for automatically derived and subclass type class instances?</h2> 
+  <p>Pulling the above together we can conclude,</p> 
+  <ul> 
+   <li>Orphan type class instances must be imported (because they're not in the implicit scope).</li> 
+   <li>Orphan type class instances will trump non-orphan type class instances (because directly accessible implicits are found during the first phase of implicit resolution before the implicit scope is consulted).</li> 
+  </ul> 
+  <p>For many purposes these are exacly the semantics we want: orphan type class instances are often used locally to provide an alternative to the default instance of a type class which has been provided for a given type. In this scenario we want the directly accessible local definition to trump the definitions in the implicit scope.</p> 
+  <p>However, these aren't the semantics we want for automatically derived or subclass type class instances. Here we want hand written instances, which will typically be defined in the implicit scope, to take precedence over derived instances. This directly conflicts with the need to import orphans.</p> 
+  <p>To complicate matters still further, it's common for there to be a default type class instance for a very general type such as <code>AnyRef</code> or <code>Any</code>. This will typically be defined as a lowest priority instance in the companion object of the type class trait. We will want derived and subclass instances to have a higher priority than these very general instances.</p> 
+  <p>In other words, we want derived and subclass instances to have a priority in-between hand-crafted specific instances (in the implicit scope) and very general fallback instances (also in the implicit scope). This is very difficult to achieve with orphan instances.</p> 
+  <h2><a id="user-content-dealing-with-derived-subclass-and-other-orphans" class="anchor" href="https://github.com/milessabin/export-hook#dealing-with-derived-subclass-and-other-orphans" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dealing with derived, subclass and other orphans</h2> 
+  <p><a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a> has an evolving set of mechanisms which help to deal with this problem, but it would be even better if we didn't have to deal with it at all, and not produce orphan instances in the first place. One way of achieving this would be for projects which provide type classes to also publish derived and subclass instances directly. However, in the derived case this forces a dependency on shapeless onto those projects, which might be too heavyweight for them, and it limits shapeless's ability to evolve independently; and in the subclass case it couples subclasses and superclasses which can be problematic across module boundaries.</p> 
+  <p>This project is a proof of concept of an alternative mechanism, an <em>export hook</em>, which allows derived, subclass and other orphan instances to be inserted into the implicit scope of a type class with the appropriate priority <em>without</em> requiring either a shapeless dependency or coupling between subclasses and superclasses, hence respecting module boundaries.</p> 
+  <p>Instead the only dependency is this project, which has a very small runtime footprint and no further dependencies. Value classes and macro inlining have been used to eliminate all runtime overhead relative to directly importing external instances.</p> 
+  <p>The project providing type classes, and the other parties, follow the conventions below (<code>Encoder</code>, <code>Decoder</code>, <code>Codec</code>, <code>DerivedEncoder</code> and <code>DerivedDecoder</code> are example user type classes) ...</p> 
+  <h2><a id="user-content-the-type-class-provider" class="anchor" href="https://github.com/milessabin/export-hook#the-type-class-provider" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The type class provider</h2> 
+  <p>The participating type class provider includes a hook for exporters of instances such as type class derivers or subclasses. That implies a dependency on this project, and a hook trait as part of the stack of prioritized companion object traits,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">export.</span><span class="pl-v">_</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">Encoder</span>[<span class="pl-en">T</span>] {
+  <span class="pl-c">// Type class defns ...</span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Encoder</span> <span class="pl-k">extends</span> <span class="pl-e">EncoderLowPriority</span> {
+  <span class="pl-c">// Instances which should be higher priority than derived</span>
+  <span class="pl-c">// or subclass instances should be defined here ...</span>
+}
+
+<span class="pl-c">// Derived, subclass and other instances of Encoder are automatically included here ...</span>
+<span class="pl-k">@</span>imports[<span class="pl-en">Encoder</span>]
+<span class="pl-k">trait</span> <span class="pl-en">EncoderLowPriority</span> {
+  <span class="pl-c">// Instances which should be lower priority than imported</span>
+  <span class="pl-c">// instances should be defined here ...</span>
+}</pre>
+  </div> 
+  <p>(Below we assume a similar set of definitions for the <code>Decoder</code> type class).</p> 
+  <h2><a id="user-content-the-provider-of-derived-subclass-or-other-instances" class="anchor" href="https://github.com/milessabin/export-hook#the-provider-of-derived-subclass-or-other-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The provider of derived, subclass or other instances</h2> 
+  <p>A type class deriver provides instances for the requested types using shapeless or any other suitable mechanism and indicates that they are to be exported by adding the <code>@exports</code> annotation to its companion object,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">export.</span><span class="pl-v">_, </span><span class="pl-v">shapeless.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Automatically derive instances of Encoder[T] for all T with a shapeless</span>
+<span class="pl-c">// Generic instance</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">T</span>] <span class="pl-k">extends</span> <span class="pl-e">Encoder</span>[<span class="pl-en">T</span>]
+
+<span class="pl-k">@</span>exports
+<span class="pl-k">object</span> <span class="pl-en">DerivedEncoder</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">hnil</span><span class="pl-k">:</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">HNil</span>] <span class="pl-k">=</span> ...
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">hcons</span>[<span class="pl-en">H</span>, <span class="pl-en">T</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">HList</span>]
+    (<span class="pl-k">implicit</span> <span class="pl-v">hd</span>: <span class="pl-en">Encoder</span>[<span class="pl-en">H</span>], <span class="pl-v">tl</span>: <span class="pl-en">Lazy</span>[<span class="pl-en">DerivedEncoder</span>[<span class="pl-en">T</span>]])<span class="pl-k">:</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">H</span> <span class="pl-k">::</span> <span class="pl-en">T</span>] <span class="pl-k">=</span> ...
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">cnil</span><span class="pl-k">:</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">CNil</span>] <span class="pl-k">=</span> ...
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">ccons</span>[<span class="pl-en">H</span>, <span class="pl-en">T</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Coproduct</span>]
+    (<span class="pl-k">implicit</span> <span class="pl-v">hd</span>: <span class="pl-en">Encoder</span>[<span class="pl-en">H</span>], <span class="pl-v">tl</span>: <span class="pl-en">Lazy</span>[<span class="pl-en">DerivedEncoder</span>[<span class="pl-en">T</span>]])<span class="pl-k">:</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">H</span> <span class="pl-k">:</span><span class="pl-k">+</span><span class="pl-k">:</span> <span class="pl-en">T</span>] <span class="pl-k">=</span> ...
+
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">gen</span>[<span class="pl-en">T</span>, <span class="pl-en">R</span>]
+    (<span class="pl-k">implicit</span> <span class="pl-v">gen</span>: <span class="pl-en">Generic</span>.<span class="pl-en">Aux</span>[<span class="pl-en">T</span>, <span class="pl-en">R</span>], <span class="pl-v">mtcr</span>: <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">R</span>])<span class="pl-k">:</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> ...
+}</pre>
+  </div> 
+  <p>(Below we assume a similar set of definitions for the <code>DerivedDecoder</code> type class).</p> 
+  <p>A type class subclass provides instances which are automatically instances of their superclasses by virtue of the subtype relationship,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">export.</span><span class="pl-v">_</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">Codec</span>[<span class="pl-en">T</span>] <span class="pl-k">extends</span> <span class="pl-e">Encoder</span>[<span class="pl-en">T</span>] <span class="pl-k">with</span> <span class="pl-e">Decoder</span>[<span class="pl-en">T</span>]
+
+<span class="pl-k">@</span>exports(<span class="pl-en">Subclass</span>)
+<span class="pl-k">object</span> <span class="pl-en">Codec</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fooInst</span><span class="pl-k">:</span> <span class="pl-en">Codec</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> ...
+}</pre>
+  </div> 
+  <p>Instances can be exported with different relative priorities. In the derivation example they are exported with the default priority, which is appropiate for instances constructed using type class derivation. In the subclass example we specify the <code>Subclass</code> priority explicitly as an argument to the <code>@export</code> annotation. The available instance priorities are, in order from highest to lowest priority,</p> 
+  <ul> 
+   <li><p><code>HighPriority</code></p> <p>A catch-all priority higher than any other defined here.</p></li> 
+   <li><p><code>Orphan</code></p> <p>User provided explicit orphan instances.</p></li> 
+   <li><p><code>Subclass</code></p> <p>Instances provided by subclasses, ie. a <code>Semigroup[T]</code> provided by a <code>Monoid[T]</code>.</p></li> 
+   <li><p><code>Algebraic</code></p> <p>Instances provided by a combination of instances of other classes, combined according to their characteristic laws, ie. a <code>Monoid[T]</code> provided by a combination of a <code>Semigroup[T]</code> with a <code>Zero[T]</code>.</p></li> 
+   <li><p><code>Instantiated</code></p> <p>Instances provided by instantiating a higher kinded instance at some first order type, ie. a <code>Monoid[List[Int]]</code> provided by instantiating <code>MonoidK[List]</code> at <code>Int</code>.</p></li> 
+   <li><p><code>Generic</code> (default priority if not explicitly specified)</p> <p>Instances provided by type class derivation using shapeless or any other suitable mechanism.</p></li> 
+   <li><p><code>Default</code></p> <p>Instances which are acceptable in the last resort.</p></li> 
+   <li><p><code>LowPriority</code></p> <p>A catch-all priority lower than any other defined here.</p></li> 
+  </ul> 
+  <h2><a id="user-content-the-type-class-user" class="anchor" href="https://github.com/milessabin/export-hook#the-type-class-user" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The type class user</h2> 
+  <p>The type class user should import both the type class and the type class deriver or subclass exports,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">Encoder</span>
+<span class="pl-k">import</span> <span class="pl-v">DerivedEncoder.exports.</span><span class="pl-v">_  </span><span class="pl-c">// for derived instances</span>
+<span class="pl-k">import</span> <span class="pl-v">Codec.exports.</span><span class="pl-v">_           </span><span class="pl-c">// for subclass instances</span></pre>
+  </div> 
+  <p>If the type class user doesn't want derived or subclass instances they simply omit the corresponding import, in which case they will only see underived base instances.</p> 
+  <h2><a id="user-content-locally-modifying-the-instance-priority-ordering" class="anchor" href="https://github.com/milessabin/export-hook#locally-modifying-the-instance-priority-ordering" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Locally modifying the instance priority ordering</h2> 
+  <p>The priority ordering of the instance categories is a reasonable default which should do what the user expects in almost all circumstances. However, it's important to have an escape hatch for the rare cases where we need to do something different. export-hook provides a mechanism for defining a local priority ordering via an implicit definition of type <code>ExportPriority</code>. The local ordering will be in force only where that implicit definition is in scope,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">export.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">CustomPrioritization</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">priority</span> <span class="pl-k">=</span>
+    <span class="pl-en">ExportPriority</span>[
+      <span class="pl-en">ExportHighPriority</span>,
+      <span class="pl-en">ExportOrphan</span>,
+      <span class="pl-en">ExportSubclass</span>,
+      <span class="pl-en">ExportAlgebraic</span>,
+      <span class="pl-en">ExportGeneric</span>,      <span class="pl-c">// give generic instances a higher priority than instances</span>
+      <span class="pl-en">ExportInstantiated</span>, <span class="pl-c">// constructed from higher kinded instances</span>
+      <span class="pl-en">ExportDefault</span>,
+      <span class="pl-en">ExportLowPriority</span>
+    ]
+}
+
+<span class="pl-k">object</span> <span class="pl-en">ScopeWithDefaultPriority</span> {
+  <span class="pl-c">// Here a Monoid[List[Int]] constructed from a MonoidK[List] will be</span>
+  <span class="pl-c">// selected using the default prioritization ...</span>
+
+  implicitly[<span class="pl-en">Monoid</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]]]
+}
+
+<span class="pl-k">object</span> <span class="pl-en">ScopeWithCustomPriority</span> {
+  <span class="pl-k">import</span> <span class="pl-v">CustomPrioritization.</span><span class="pl-v">_ </span><span class="pl-c">// instance of ExportPriority now in scope ...</span>
+
+  <span class="pl-c">// Here a Monoid[List[Int]] provided by type class derivation will be</span>
+  <span class="pl-c">// selected using the our custom prioritization ...</span>
+
+  implicitly[<span class="pl-en">Monoid</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]]]
+}</pre>
+  </div> 
+  <h2><a id="user-content-bundling-and-reexporting-type-class-instances" class="anchor" href="https://github.com/milessabin/export-hook#bundling-and-reexporting-type-class-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bundling and reexporting type class instances</h2> 
+  <p>It is sometimes convenient to make multiple orphan type class instances available via a single import. This is supported via the <code>@reexport</code> annotation. In the example below all the instances defined by <code>DerivedEncoder</code> and <code>DerivedDecoder</code> are made available in the current scope by a single import,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">DerivedEncoder</span>[<span class="pl-en">T</span>] <span class="pl-k">extends</span> <span class="pl-e">Encoder</span>[<span class="pl-en">T</span>]
+<span class="pl-k">@</span>exports
+<span class="pl-k">object</span> <span class="pl-en">DerivedEncoder</span> {
+  <span class="pl-c">// Encoder derivation here ...</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">DerivedDecoder</span>[<span class="pl-en">T</span>] <span class="pl-k">extends</span> <span class="pl-e">Decoder</span>[<span class="pl-en">T</span>]
+<span class="pl-k">@</span>exports
+<span class="pl-k">object</span> <span class="pl-en">DerivedDecorer</span> {
+  <span class="pl-c">// Decoder derivation here ...</span>
+}
+
+<span class="pl-c">// Reexport instances of both type classes via a single object</span>
+<span class="pl-k">@</span>reexports[<span class="pl-en">DerivedEncoder</span>, <span class="pl-en">DerivedDecoder</span>]
+<span class="pl-k">object</span> <span class="pl-en">derivedcodecs</span>
+
+<span class="pl-c">// Client code ...</span>
+
+<span class="pl-k">import</span> <span class="pl-v">derivedcodecs.</span><span class="pl-v">_ </span><span class="pl-c">// single import</span>
+
+<span class="pl-c">// Instances of both DerivedEncoder and DerivedDecoder are now available via</span>
+<span class="pl-c">// the implicit scope of Encoder and Decoder ...</span></pre>
+  </div> 
+  <p>Reexported instances will have the same priority that they were initially exported with.</p> 
+  <h2><a id="user-content-exporting-and-reexporting-individual-instances" class="anchor" href="https://github.com/milessabin/export-hook#exporting-and-reexporting-individual-instances" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Exporting and reexporting individual instances</h2> 
+  <p>Sometimes it's a little heavyweight to create a new subclass simply to be able to export a handful of ad hoc instances. In this case individual instance definitions can be exported by using a val/method level <code>@export</code> definition marking the definition for export and providing a priority,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span>exports
+<span class="pl-k">object</span> <span class="pl-en">InstantiatedEmptyK</span> {
+  <span class="pl-k">@</span>export(<span class="pl-en">Instantiated</span>)
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">instantiate</span>[<span class="pl-en">F</span>[_], <span class="pl-en">T</span>](<span class="pl-k">implicit</span> <span class="pl-v">ekf</span>: <span class="pl-en">EmptyK</span>[<span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">Empty</span>[<span class="pl-en">F</span>[<span class="pl-en">T</span>]] <span class="pl-k">=</span> ekf.synthesize[<span class="pl-en">T</span>]
+}</pre>
+  </div> 
+  <p>Here we synthesize an instance of the Alleycats <code>Empty</code> type class from an instance of the higher-kinded <code>EmptyK</code> type class. The resulting definition is exported with the <code>Instantiated</code> priority and made available by importing in the usual way,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">InstantiatedEmptyK.exports.</span><span class="pl-v">_</span>
+
+<span class="pl-en">Empty</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]] <span class="pl-c">// synthesized from EmptyK[List]</span></pre>
+  </div> 
+  <p>These individual instances can also be bundled and reexported,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span>reexports(<span class="pl-en">InstantiatedEmptyK</span>)
+<span class="pl-k">object</span> <span class="pl-en">emptykinst</span></pre>
+  </div> 
+  <p>which allows imports of the form,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">emptykinst.</span><span class="pl-v">_</span>
+
+<span class="pl-en">Empty</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]] <span class="pl-c">// synthesized from EmptyK[List]</span></pre>
+  </div> 
+  <h2><a id="user-content-exporting-with-type-refinements" class="anchor" href="https://github.com/milessabin/export-hook#exporting-with-type-refinements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Exporting with type refinements</h2> 
+  <p>In order to avoid ambiguities with a blanket export, each individual definition will need an <code>@export</code> added.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">RefinedExporter</span>[<span class="pl-en">T</span>] <span class="pl-k">extends</span> <span class="pl-e">Exporter</span>[<span class="pl-en">T</span>]{
+  <span class="pl-k">type</span> <span class="pl-en">Out</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">wrap</span>(<span class="pl-v">t</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">Out</span>
+}
+
+<span class="pl-k">@</span>exports
+<span class="pl-k">object</span> <span class="pl-en">RefinedExporter</span>{
+  <span class="pl-k">type</span> <span class="pl-en">Aux</span>[<span class="pl-en">T</span>, <span class="pl-en">Out0</span>] <span class="pl-k">=</span> <span class="pl-en">RefinedExporter</span>[<span class="pl-en">T</span>]{ <span class="pl-k">type</span> <span class="pl-en">Out</span> <span class="pl-k">=</span> <span class="pl-en">Out0</span> }
+
+  <span class="pl-k">@</span>export
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">refined</span>[<span class="pl-en">T</span>]<span class="pl-k">:</span> <span class="pl-en">Aux</span>[<span class="pl-en">T</span>, <span class="pl-c">//rest of definition ...</span>
+}</pre>
+  </div> 
+  <h2><a id="user-content-current-status" class="anchor" href="https://github.com/milessabin/export-hook#current-status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Current status</h2> 
+  <p>This is a young project and we are keen to get input from anyone who finds it useful ... please create issues here or hop on the <a href="https://gitter.im/milessabin/export-hook" target="_blank">gitter channel</a>. Discussion is also welcome on the <a href="https://gitter.im/milessabin/shapeless" target="_blank">shapeless</a> and <a href="https://gitter.im/non/cats" target="_blank">cats</a> gitter channels ... please let us know what you think.</p> 
+  <h2><a id="user-content-using-export-hook" class="anchor" href="https://github.com/milessabin/export-hook#using-export-hook" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using export-hook</h2> 
+  <p>Binary release artefacts are published to the <a href="https://oss.sonatype.org/index.html#nexus-search;quick%7Eexport-hook" target="_blank">Sonatype OSS Repository Hosting service</a> and synced to Maven Central. Snapshots of the master branch are built using <a href="https://travis-ci.org/milessabin/export-hook" target="_blank">Travis CI</a> and automatically published to the Sonatype OSS Snapshot repository. To include the Sonatype repositories in your SBT build you should add,</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>snapshots<span class="pl-pds">"</span></span>)
+)</pre>
+  </div> 
+  <p>Builds are available for Scala 2.12.x, 2.11.x and 2.10.x for Scala JDK and Scala.js. The main line of development for export-hook 1.1.0 is Scala 2.12.0 supported via the macro paradise compiler plugin.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.12.0<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>org.typelevel<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>export-hook<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.0<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>org.scala-lang<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-reflect<span class="pl-pds">"</span></span> <span class="pl-k">%</span> scalaVersion.value <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>,
+  compilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>paradise<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.1.0<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.patch)
+)</pre>
+  </div> 
+  <p>export-hook requires SBT 0.13.13 or later, and will cause a <code>NullPointerException</code> to be thrown at compile time for earlier versions (see issue <a href="https://github.com/milessabin/export-hook/issues/13" target="_blank">#13</a>).</p> 
+  <p>The SBT version can be configured in <code>/project/build.properties</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>sbt.version<span class="pl-k">=</span><span class="pl-c1">0.13.13</span></pre>
+  </div> 
+  <h2><a id="user-content-binary-compatibility" class="anchor" href="https://github.com/milessabin/export-hook#binary-compatibility" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Binary compatibility</h2> 
+  <p>As of version 1.1.0 export-hook uses <a href="https://github.com/typesafehub/migration-manager" target="_blank">MiMa</a> to verify binary compatibility within minor versions. export-hook is binary compatible within minor versions from 1.1.0 onwards.</p> 
+  <h2><a id="user-content-building-export-hook" class="anchor" href="https://github.com/milessabin/export-hook#building-export-hook" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building export-hook</h2> 
+  <p>export-hook is built with SBT 0.13.13 or later, and its master branch is built with Scala 2.12.0 by default.</p> 
+  <h2><a id="user-content-participation" class="anchor" href="https://github.com/milessabin/export-hook#participation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Participation</h2> 
+  <p>The export-hook project supports the <a href="http://typelevel.org/" target="_blank">Typelevel</a> <a href="http://typelevel.org/conduct.html" target="_blank">code of conduct</a> and wants all of its channels (Gitter, github, etc.) to be welcoming environments for everyone.</p> 
+  <h2><a id="user-content-projects-using-export-hook" class="anchor" href="https://github.com/milessabin/export-hook#projects-using-export-hook" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Projects using export-hook</h2> 
+  <ul> 
+   <li><a href="https://github.com/travisbrown/circe" target="_blank">circe</a></li> 
+   <li><a href="https://github.com/milessabin/kittens" target="_blank">kittens</a></li> 
+   <li><a href="https://github.com/nrinaudo/tabulate" target="_blank">tabulate</a></li> 
+  </ul> 
+  <h2><a id="user-content-contributors" class="anchor" href="https://github.com/milessabin/export-hook#contributors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <ul> 
+   <li>Age Mooij <a href="mailto:age.mooij@gmail.com" target="_blank">age.mooij@gmail.com</a> <a href="https://twitter.com/agemooij" target="_blank">@agemooij</a></li> 
+   <li>Alistair Johnson <a href="mailto:alistair.johnson@johnsonusm.com" target="_blank">alistair.johnson@johnsonusm.com</a> <a href="https://twitter.com/AlistairUSM" target="_blank">@AlistairUSM</a></li> 
+   <li>Miles Sabin <a href="mailto:miles@milessabin.com" target="_blank">miles@milessabin.com</a> <a href="https://twitter.com/milessabin" target="_blank">@milessabin</a></li> 
+   <li>Nicolas Rinaudo <a href="mailto:nicolas@nrinaudo.com" target="_blank">nicolas@nrinaudo.com</a> <a href="https://twitter.com/NicolasRinaudo" target="_blank">@NicolasRinaudo</a></li> 
+   <li>Your name here :-)</li> 
+  </ul> 
+ </article>
+</div>

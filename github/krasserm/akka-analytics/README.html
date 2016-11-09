@@ -1,0 +1,139 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-analytics" class="anchor" href="https://github.com/krasserm/akka-analytics#akka-analytics" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka Analytics</h1> 
+  <p>Large-scale event processing with <a href="http://doc.akka.io/docs/akka/2.4.7/scala/persistence.html" target="_blank">Akka Persistence</a> and <a href="http://spark.apache.org/" target="_blank">Apache Spark</a>. At the moment you can </p> 
+  <ul> 
+   <li>batch-process events from an <a href="https://github.com/krasserm/akka-persistence-cassandra" target="_blank">Akka Persistence Cassandra</a> journal as Spark <code>RDD</code>.</li> 
+   <li>stream-process events from an <a href="https://github.com/krasserm/akka-persistence-kafka" target="_blank">Akka Persistence Kafka</a> journal as Spark Streaming <code>DStream</code>. </li> 
+  </ul> 
+  <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/krasserm/akka-analytics#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies</h2> 
+  <pre><code>resolvers += "krasserm at bintray" at "http://dl.bintray.com/krasserm/maven"
+
+libraryDependencies ++= Seq(
+  "com.github.krasserm" %% "akka-analytics-cassandra" % “0.3.1”,
+  "com.github.krasserm" %% "akka-analytics-kafka" % “0.3.1”
+)
+</code></pre> 
+  <h2><a id="user-content-event-batch-processing" class="anchor" href="https://github.com/krasserm/akka-analytics#event-batch-processing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Event batch processing</h2> 
+  <p>With <code>akka-analytics-cassandra</code> you can expose and process events written by <strong>all</strong> persistent actors as <a href="http://spark.apache.org/docs/latest/programming-guide.html#resilient-distributed-datasets-rdds" target="_blank">resilient distributed dataset</a> (<code>RDD</code>). It uses the <a href="https://github.com/datastax/spark-cassandra-connector" target="_blank">Spark Cassandra Connector</a> to fetch data from the Cassandra journal. Here's a primitive example (details <a href="https://github.com/krasserm/akka-analytics/blob/master/akka-analytics-cassandra/src/test/scala/akka/analytics/cassandra/IntegrationSpec.scala" target="_blank">here</a>):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.rdd.</span><span class="pl-v">RDD</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">SparkConf</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">SparkContext</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.SparkContext.</span><span class="pl-v">_</span>
+
+<span class="pl-k">import</span> <span class="pl-v">akka.analytics.cassandra.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">conf</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkConf</span>()
+  .setAppName(<span class="pl-s"><span class="pl-pds">"</span>CassandraExample<span class="pl-pds">"</span></span>)
+  .setMaster(<span class="pl-s"><span class="pl-pds">"</span>local[4]<span class="pl-pds">"</span></span>)
+  .set(<span class="pl-s"><span class="pl-pds">"</span>spark.cassandra.connection.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkContext</span>(conf)
+
+<span class="pl-c">// expose journaled Akka Persistence events as RDD</span>
+<span class="pl-k">val</span> <span class="pl-en">rdd</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[(<span class="pl-en">JournalKey</span>, <span class="pl-en">Any</span>)] <span class="pl-k">=</span> sc.eventTable().cache()
+
+<span class="pl-c">// and do some processing ... </span>
+rdd.sortByKey().map(...).filter(...).collect().foreach(println)</pre>
+  </div> 
+  <p>The dataset generated by <code>eventTable()</code> is of type <code>RDD[(JournalKey, Any)]</code> where <code>Any</code> represents the persisted event (see also Akka Persistence <a href="http://doc.akka.io/api/akka/2.4.7/#akka.persistence.package" target="_blank">API</a>) and <code>JournalKey</code> is defined as</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">akka.analytics.cassandra</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">JournalKey</span>(<span class="pl-v">persistenceId</span>: <span class="pl-k">String</span>, <span class="pl-v">partition</span>: <span class="pl-k">Long</span>, <span class="pl-v">sequenceNr</span>: <span class="pl-k">Long</span>)</pre>
+  </div> 
+  <p>Events for a given <code>persistenceId</code> are partitioned across nodes in the Cassandra cluster where the partition is represented by the <code>partition</code> field in the key. The <code>eventTable()</code> method returns an <code>RDD</code> in which events with the same <code>persistenceId</code> - <code>partition</code> combination (= cluster partition) are ordered by increasing <code>sequenceNr</code> but the ordering across cluster partitions is not defined. If needed the <code>RDD</code> can be sorted with <code>sortByKey()</code> by <code>persistenceId</code>, <code>partition</code> and <code>sequenceNr</code> in that order of significance. Btw, the default size of a cluster partition in the Cassandra journal is <code>5000000</code> events (see <a href="https://github.com/krasserm/akka-persistence-cassandra" target="_blank">akka-persistence-cassandra</a>).</p> 
+  <h2><a id="user-content-event-stream-processing" class="anchor" href="https://github.com/krasserm/akka-analytics#event-stream-processing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Event stream processing</h2> 
+  <p>With <code>akka-analytics-kafka</code> you can expose and process events written by <strong>all</strong> persistent actors (more specific, from any <a href="https://github.com/krasserm/akka-persistence-kafka#user-defined-topics" target="_blank">user-defined topic</a>) as <a href="http://spark.apache.org/docs/latest/streaming-programming-guide.html#dstreams" target="_blank">discretized stream</a> (<code>DStream</code>). Here's a primitive example (details <a href="https://github.com/krasserm/akka-analytics/blob/master/akka-analytics-kafka/src/test/scala/akka/analytics/kafka/IntegrationSpec.scala" target="_blank">here</a>):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">SparkConf</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.streaming.</span>{<span class="pl-v">Seconds</span>, <span class="pl-v">StreamingContext</span>}
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.streaming.dstream.</span><span class="pl-v">DStream</span>
+
+<span class="pl-k">import</span> <span class="pl-v">akka.analytics.kafka.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.persistence.kafka.</span><span class="pl-v">Event</span>
+
+<span class="pl-k">val</span> <span class="pl-en">sparkConf</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkConf</span>()
+  .setAppName(<span class="pl-s"><span class="pl-pds">"</span>events-consumer<span class="pl-pds">"</span></span>)
+  .setMaster(<span class="pl-s"><span class="pl-pds">"</span>local[4]<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// read from user-defined events topic </span>
+<span class="pl-c">// with 2 threads (see also Kafka API) </span>
+<span class="pl-k">val</span> <span class="pl-en">topics</span> <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>events<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>)
+<span class="pl-k">val</span> <span class="pl-en">params</span> <span class="pl-k">=</span> <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">String</span>](
+  <span class="pl-s"><span class="pl-pds">"</span>group.id<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>events-consumer<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>auto.commit.enable<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>,  
+  <span class="pl-s"><span class="pl-pds">"</span>auto.offset.reset<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>smallest<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>zookeeper.connect<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>localhost:2181<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>zookeeper.connection.timeout.ms<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>10000<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">ssc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">StreamingContext</span>(sparkConf, <span class="pl-en">Seconds</span>(<span class="pl-c1">1</span>))
+<span class="pl-k">val</span> <span class="pl-en">es</span><span class="pl-k">:</span> <span class="pl-en">DStream</span>[<span class="pl-en">Event</span>] <span class="pl-k">=</span> ssc.eventStream(params, topics)
+
+es.foreachRDD(rdd <span class="pl-k">=&gt;</span> rdd.map(...).filter(...).collect().foreach(println))
+
+ssc.start()
+ssc.awaitTermination()</pre>
+  </div> 
+  <p>The stream generated by <code>eventStream(...)</code> is of type <code>DStream[Event]</code> where <code>Event</code> is defined in <code>akka-persistence-kafka</code> as</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">akka.persistence.kafka</span>
+
+<span class="pl-c">/**</span>
+<span class="pl-c"> * Event published to user-defined topics.</span>
+<span class="pl-c"> *</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-v">persistenceId</span> Id of the persistent actor that generates event `data`.</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-v">sequenceNr</span> Sequence number of the event.</span>
+<span class="pl-c"> * <span class="pl-k">@param</span> <span class="pl-v">data</span> Event data generated by a persistent actor.</span>
+<span class="pl-c"> */</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Event</span>(<span class="pl-v">persistenceId</span>: <span class="pl-k">String</span>, <span class="pl-v">sequenceNr</span>: <span class="pl-k">Long</span>, <span class="pl-v">data</span>: <span class="pl-en">Any</span>)</pre>
+  </div> 
+  <p>The stream of events (written by all persistent actors) is partially ordered i.e. events with the same <code>persistenceId</code> are ordered by <code>sequenceNr</code> whereas the ordering of events with different <code>persistenceId</code> is not defined. Details about Kafka consumer <code>params</code> are described <a href="http://kafka.apache.org/documentation.html#consumerconfigs" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-custom-serialization" class="anchor" href="https://github.com/krasserm/akka-analytics#custom-serialization" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom serialization</h2> 
+  <p>If events have been persisted with a <a href="http://doc.akka.io/docs/akka/2.4.7/scala/persistence.html#custom-serialization" target="_blank">custom serializer</a>, the corresponding <a href="http://doc.akka.io/docs/akka/2.4.7/scala/serialization.html" target="_blank">Akka serializer</a> configuration must be specified for event processing. For <a href="https://github.com/krasserm/akka-analytics#event-batch-processing" target="_blank">event batch processing</a> this is done as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">jsc</span><span class="pl-k">:</span> <span class="pl-en">JournalSparkContext</span> <span class="pl-k">=</span> 
+  <span class="pl-k">new</span> <span class="pl-en">SparkContext</span>(sparkConfig).withSerializerConfig(system.settings.config)
+
+<span class="pl-k">val</span> <span class="pl-en">rdd</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[(<span class="pl-en">JournalKey</span>, <span class="pl-en">Any</span>)] <span class="pl-k">=</span> jsc.eventTable()
+<span class="pl-c">// ...</span>
+
+jsc.context.stop()
+</pre>
+  </div> 
+  <p>For <a href="https://github.com/krasserm/akka-analytics#event-stream-processing" target="_blank">event stream processing</a> this is done in a similar way:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">jsc</span><span class="pl-k">:</span> <span class="pl-en">JournalStreamingContext</span> <span class="pl-k">=</span> 
+  <span class="pl-k">new</span> <span class="pl-en">StreamingContext</span>(sparkConfig, <span class="pl-en">Seconds</span>(<span class="pl-c1">1</span>)).withSerializerConfig(system.settings.config)
+
+<span class="pl-k">val</span> <span class="pl-en">es</span><span class="pl-k">:</span> <span class="pl-en">DStream</span>[<span class="pl-en">Event</span>] <span class="pl-k">=</span> jsc.eventStream(kafkaParams, kafkaTopics)
+<span class="pl-c">// ...</span>
+
+jsc.context.start()
+<span class="pl-c">// ...</span>
+
+jsc.context.stop()</pre>
+  </div> 
+  <p>Running examples are <a href="https://github.com/krasserm/akka-analytics/blob/master/akka-analytics-cassandra/src/test/scala/akka/analytics/cassandra/CustomSerializationSpec.scala" target="_blank"><code>akka.analytics.cassandra.CustomSerializationSpec</code></a> and <a href="https://github.com/krasserm/akka-analytics/blob/master/akka-analytics-kafka/src/test/scala/akka/analytics/kafka/CustomSerializationSpec.scala" target="_blank"><code>akka.analytics.kafka.CustomSerializationSpec</code></a>.</p> 
+ </article>
+</div>

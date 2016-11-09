@@ -1,0 +1,261 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-future-streams" class="anchor" href="https://github.com/fsist/future-streams#future-streams" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>future-streams</h1> 
+  <p>A <code>scala.concurrent.Future</code>-based model of streams with backpressure, with <a href="http://www.reactive-streams.org" target="_blank">Reactive Streams</a> support. Synchronous stream operations are executed synchronously, instead of putting each step in a separately scheduled <code>Future</code>.</p> 
+  <h2><a id="user-content-purpose-and-design-constraints" class="anchor" href="https://github.com/fsist/future-streams#purpose-and-design-constraints" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Purpose and design constraints</h2> 
+  <p>This library implements asynchronous streams with back-pressure in scala. It is a poor man's akka-streams, similar in design and purpose to akka-streams, but on a much smaller scale. This enabled me to write, test and ship it quickly, because I couldn't wait for akka-streams to be ready for production. Akka-streams should be ready in the next few months, and then this library will be obsolete; I expect to switch to using akka-streams myself at some future date.</p> 
+  <p>For this reason, future-streams doesn't include some good features and design choices, because they would take too much work to implement and test.</p> 
+  <p>future-streams can support converters to/from Reactive Streams and pass the RS 1.0-RC1 TCK, but I haven't yet written that code.</p> 
+  <h2><a id="user-content-high-level-description" class="anchor" href="https://github.com/fsist/future-streams#high-level-description" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>High-level description</h2> 
+  <p>Note: the Scaladoc for the main types, such as <code>Source</code> and <code>Sink</code>, is the authoritative reference for details of behavior. This is only a summary.</p> 
+  <p>A stream contains one or more <code>StreamInput</code>s and one or more <code>StreamOutput</code>s, and zero or more <code>Transform</code>ers and <code>Connector</code>s. These are connected to one another in a directed manner, forming a digraph in which we can speak of components 'upstream' and 'downstream' relative to each node.</p> 
+  <p>Stream components, which are also called (graph) nodes, come in four main types:</p> 
+  <ol> 
+   <li> A <code>StreamInput[Out]</code> introduces new elements into the stream from elsewhere. It has no upstream connection.</li> 
+   <li> A <code>StreamOutput[In]</code> consumes stream elements. It has no downstream connection.</li> 
+   <li> A <code>Transform[In, Out]</code> transforms the stream in some way. Output elements don't always correspond one-to-one to input elements.</li> 
+   <li> A <code>Connector[In, Out]</code> is a special node type which can connect to more than one upstream or downstream node. This serves to fan-out or fan-in stream connections. The Connector exposes multiple connection ponints via its <code>sources</code> and <code>sinks</code> methods.</li> 
+  </ol> 
+  <p>For each of these four types, there are several concrete case classes which implement them. Each class corresponds to a different state machine implementation in the library; in other words, these classes are as general as possible. They are:</p> 
+  <ol> 
+   <li> For <code>StreamInput</code>, there is <code>IteratorSource</code>, which reads from an Iterator or Iterable, and <code>GeneratorSource</code>, which has a user-provided function with the signature <code>producer: Func[Unit, Out]</code>.</li> 
+   <li> For <code>StreamOutput</code>, there is only one model, <code>SimpleOutput</code>, which has a user-provided function <code>onNext: Func[In, Unit]</code>.</li> 
+   <li> For <code>Transform</code> there are three models. <code>SingleTransform</code> and <code>MultiTransform</code> correspond to <code>map</code> and <code>flatMap</code> respectively. </li> 
+   <li> For <code>Connector</code> there are <code>Splitter</code> and <code>Scatterer</code>, which model different kinds of one-to-many connections, and <code>Merger</code> which models a many-to-one join.</li> 
+  </ol> 
+  <p>All of these case classes have <code>Func</code> arguments describing their behavior.</p> 
+  <p>There are also three special case classes which model a part of the stream that will only become available after the rest of the stream has already started running. They are:</p> 
+  <ol> 
+   <li> <code>case class DelayedSource[+Out](future: Future[Source[Out]]) extends StreamInput[Out]</code></li> 
+   <li> <code>case class DelayedPipe[-In, +Out](future: Future[Pipe[In, Out]]) extends Transform[In, Out]</code></li> 
+   <li> <code>case class DelayedSink[-In, +Res](future: Future[Sink[In, Res]]) extends StreamOutput[In, Res]</code></li> 
+  </ol> 
+  <p>You can construct them using <code>Source.flatten</code>, <code>Pipe.flattenPipe</code> and <code>Sink.flatten</code> respectively. (Don't confuse these methods with <code>Transform.flatten</code>, which transforms a <code>List[List[Int]]</code> to a <code>List[Int]</code>.)</p> 
+  <p>As an alternative to using these case classes, when implementing your own inputs, outputs and transformations you can also implement the corresponding trait; see below for more on this.</p> 
+  <p>Finally, we can briefly mention that there are also some lower-level traits these components implement, namely <code>SourceComponent</code> and <code>SinkComponent</code>. These usually aren't used explicitly by user code; however, make sure not to confuse them with <code>Source</code> and <code>Sink</code>, which are described below.</p> 
+  <h3><a id="user-content-sources-sinks-and-pipes" class="anchor" href="https://github.com/fsist/future-streams#sources-sinks-and-pipes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sources, Sinks and Pipes</h3> 
+  <p>These are three 'combinator' types which should be used in APIs to hide implementation details.</p> 
+  <p>A <code>Source</code> is any collection of connected components which exposes a single unconnected <code>SourceComponent</code>. It may be, trivially, just a single SourceInput, or a SourceInput with several Transforms, or a more complex graph with multiple inputs and Connectors.</p> 
+  <p>A <code>Sink</code> is any collection of connected components with a single unconnected <code>SinkComponent</code>, and which contains a single <code>StreamOutput</code>, whose result is exposed as part of the <code>Sink</code>.</p> 
+  <p>A <code>Pipe</code> is any collection of connected components with a single unconnected <code>SourceComponent</code> and a single unconnected <code>SinkComponent</code>.</p> 
+  <p>When designing your own APIs, they should take and return Sources, Sinks and Pipes in preference to StreamInputs, StreamOutputs and Transforms.</p> 
+  <h3><a id="user-content-modeling-and-running-the-stream" class="anchor" href="https://github.com/fsist/future-streams#modeling-and-running-the-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Modeling and running the stream</h3> 
+  <p>Instances of these node types are case classes (e.g. <code>IteratorSource</code> is a kind of <code>StreamInput</code>). These instances are, therefore, immutable; this allows them to be co- and contra-variant in the expected ways (e.g. <code>Source[+Out]</code>). Creating these instances, and linking them together to form a graph using methods such as <code>Source.connect(sink)</code>, does not cause the stream to start executing.</p> 
+  <p>When you have finished building the stream model from these components, forming a fully connected graph in which every <code>Source</code> is connected to a <code>Sink</code> and vice versa, you need to call the <code>build()</code> method on any of the stream components. This method materializes the components into state machine implementations and starts running them by scheduling one or more Futures. It returns a <code>RunningStream</code>, the live stream's public API.</p> 
+  <p>Each component in a running stream is modeled by the <code>RunningStreamComponent</code> trait, with sub-traits for running inputs, outputs etc. A running component has a member <code>completion: Future[Unit]</code> which is completed when the member has processed the EOF signal. This happens when the component's <code>onComplete</code> handler (which can be supplied by the user) completes, and the component has finished passing the EOF signal downstream.</p> 
+  <p><code>RunningStream</code> contains methods (overloads of <code>get</code> and <code>apply</code>) which return the <code>RunningStreamComponent</code> instance corresponding to the model case class instance passed in.</p> 
+  <p>In practice, the timing of the completion of different components in the same stream is not intended to be a useful, strongly specified kind of behavior. In particular, downstream components may complete before or after upstream ones, because some component implementation may wait for their downstream to complete before completing themselves.</p> 
+  <p>The whole <code>RunningStream</code> also has a global completion event (<code>RunningStream.completion: Future[Unit]</code>) which completes when all components have completed.</p> 
+  <h4><a id="user-content-stream-components-cannot-be-reused" class="anchor" href="https://github.com/fsist/future-streams#stream-components-cannot-be-reused" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Stream components cannot be reused</h4> 
+  <p>Although stream component model types are case classes, they <em>cannot</em> be reused in other streams, and the same stream model cannot be built and run more than once. Although this is a desirable feature (which exists in akka-streams), it would take too much effort to implement, even though the design itself might be simple. </p> 
+  <h3><a id="user-content-stream-results" class="anchor" href="https://github.com/fsist/future-streams#stream-results" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Stream results</h3> 
+  <p>A <code>StreamOutput[In, Res]</code> has two type parameters: in addition to the stream element type <code>In</code>, there is the result type <code>Res</code>. This optional result is returned by the output's <code>onComplete</code> handler (which is supplied by the user when constructing the component).</p> 
+  <p>Unlike in future-streams v1, this result cannot be completed before whole component completes. Components that wish to provide data earlier should take or provide callbacks or Promises when their model is constructed.</p> 
+  <p>A <code>Sink[In, Res]</code> generalizes this to include a <code>StreamOutput[_, Res]</code> and zero or more components connected upstream of it, with a single unconnected <code>SinkComponent[In]</code> remaining.</p> 
+  <h3><a id="user-content-stream-failures" class="anchor" href="https://github.com/fsist/future-streams#stream-failures" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Stream failures</h3> 
+  <p>A stream component is considered to fail if any of its user-provided onXxx methods throw exceptions or return a failed Future.</p> 
+  <p>If any stream component fails, the whole stream will immediately fail as well; failures cannot be compartmentalized. Components which want to recover from failures must do so inside their implementation.</p> 
+  <p>When a stream fails, the <code>onError</code> callbacks of all components are called in parallel. This is <em>concurrent</em> with any ongoing calls to their <code>onNext</code> and <code>onComplete</code> methods. In fact, <code>onNext</code> and/or <code>onComplete</code> may be called again after <code>onError</code> has been called (or while it is running), due to race conditions.</p> 
+  <p>However, if a component has already completed (<code>onComplete</code> has finished and the <code>completion</code> promise has been fulfilled), then <code>onError</code> is guaranteed not to be called for that component.</p> 
+  <p>Each call to <code>onError</code> is scheduled as a separate Future, so implementations can take as long as they need.</p> 
+  <p>The <code>RunningStreamComponent.completion</code> future of each component that hasn't completed yet, and the <code>RunningStream.completion</code> future of the entire stream, are all failed with the exact original exception of the original failing component. This happens <em>before</em> the execution of the <code>onError</code> handler of that component.</p> 
+  <p>A stream can also be failed deliberately from the outside by calling <code>RunningStream.fail(throwable)</code>. This causes the same behavior as if a stream component had failed with this exception.</p> 
+  <h2><a id="user-content-implementing-stream-components" class="anchor" href="https://github.com/fsist/future-streams#implementing-stream-components" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Implementing stream components</h2> 
+  <p>Many components can be composed using the constructors and transformation methods included in the library, but you can also implement your own <code>StreamInput</code>s, <code>StreamOutput</code>s and <code>Transform</code>ers.</p> 
+  <p>There are several ways to implement each kind of component, listed below.</p> 
+  <p>One way is to provide <code>Func</code> instances for the most-general constructor of each component type. These are <code>Source.generate</code>, <code>Sink.foreach</code>, <code>Transform.map</code> and <code>Transform.flatMap</code>. You can create these <code>Func</code> instances either by constructing them directly or by implementing the <code>SyncFunc</code> and <code>AsyncFunc</code> traits.</p> 
+  <p>Another way is to implement one of several traits which represent the same logic as these constructors in methods instead of functions. This can lead to more readable code as well as fewer closures and Scala functions, and so is the preferred approach for complex or stateful implementations.</p> 
+  <p>The traits have separate synchronous and asynchronous variants. They are:</p> 
+  <ol> 
+   <li> <code>SyncStreamProducer</code> and <code>AsyncStreamProducer</code>, corresponding to <code>Source.genereate</code>.</li> 
+   <li> <code>SyncStreamConsumer</code> and <code>AsyncStreamConsumer</code>, corresponding to <code>Sink.foreach</code>.</li> 
+   <li> <code>SyncSingleTransform</code> and <code>AsyncSingleTransform</code>, corresponding to <code>Transform.map</code> and the <code>SingleTransform</code> case class.</li> 
+   <li> <code>SyncMultiTransform</code> and <code>AsyncMultiTransform</code>, corresponding to <code>Transform.flatMap</code> and the <code>MultiTransform</code> case class.</li> 
+  </ol> 
+  <h3><a id="user-content-constructing-funcs" class="anchor" href="https://github.com/fsist/future-streams#constructing-funcs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Constructing Funcs</h3> 
+  <p>There are implicit conversions defined on <code>Func</code>, <code>SyncFunc</code> and <code>AsyncFunc</code> from Scala functions (and methods). If you already have your logic written out, and it's a pure function, it's easiest to convert it to a Func this way.</p> 
+  <p>These are all equivalent:</p> 
+  <pre><code>val func: Func[Int, String] = (i: Int) =&gt; i.toString
+
+val func2 = Func((i: Int) =&gt; i.toString)
+
+val func3 = Func[Int, String](_.toString)
+
+def method(i: Int): String = i.toString
+val func4 = Func(method(_))
+</code></pre> 
+  <p>You can also create functions that discard their input. This produces a <code>Func[Any, String]</code>:</p> 
+  <pre><code>val func5 = Func("foo")
+</code></pre> 
+  <p>In all these examples, the value (and the inferred type) is not just a generic <code>Func</code> but a <code>SyncFunc</code>.</p> 
+  <p>You can also create asynchronous functions by invoking <code>AsyncFunc</code> explicitly:</p> 
+  <pre><code>val func6 = AsyncFunc((i: Int) =&gt; Future { i.toString })
+</code></pre> 
+  <p>Note that if you try to write:</p> 
+  <pre><code>val func7 = Func((i: Int) =&gt; Future { i.toString })
+</code></pre> 
+  <p>You won't get an <code>AsyncFunc[Int, String]</code>. Instead you'll get a <code>SyncFunc[Int, Future[String]]</code>.</p> 
+  <p>There's one more thing to note about constructing <code>Func</code>s. A typical asynchronous method signature takes an implicit ExecutionContext:</p> 
+  <pre><code>def method2(i: Int)(implicit ec: ExecutionContext): Future[String]
+</code></pre> 
+  <p>The corresponding function signature is <code>Int =&gt; ExecutionContext =&gt; Future[String]</code>. If you have an existing Scala function or method with this signature, you can convert it to an <code>AsyncFunc</code> using the constructor <code>AsyncFunc.withEc(method2)</code>. Then the target method will receive the ExecutionContext passed to <code>AsyncFunc.apply</code>.</p> 
+  <p>If instead you use the constructor shown above (<code>AsyncFunc.apply(func: A =&gt; Future[B])</code>), then your asynchronous function or method won't be given an ExecutionContext, and will have to provide its own. This is usually a bad idea, but sometimes it doesn't matter, because you know the same ExecutionContext is being passed to many objects in the same scope.</p> 
+  <h3><a id="user-content-implementing-funcs" class="anchor" href="https://github.com/fsist/future-streams#implementing-funcs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Implementing Funcs</h3> 
+  <p>As an alternative to the above, you can also implement <code>Func</code>s as traits. This is more verbose, but is also more efficient, because it uses methods and doesn't create extra Scala functions.</p> 
+  <p>The usual reason for doing this is when your function isn't pure, but needs to maintain state between calls. This state can then be stored in private fields of the new class extending a Func trait. It also allows you to break up a complex function into several private methods.</p> 
+  <p>You need to implement one of these traits:</p> 
+  <pre><code>trait SyncFunc[-A, +B] {
+  def apply(a: A): B
+}
+
+trait AsyncFunc[-A, +B] {
+  def apply(a: A)(implicit ec: ExecutionContext): Future[B]
+}
+</code></pre> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/fsist/future-streams#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <h3><a id="user-content-a-simple-processing-pipeline" class="anchor" href="https://github.com/fsist/future-streams#a-simple-processing-pipeline" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>A simple processing pipeline</h3> 
+  <pre><code>Source.from(1 to 100).map(_ + 1).foreach(println(_)).buildResult()
+</code></pre> 
+  <p>This returns a <code>Future[Unit]</code> which is the result of the <code>StreamOutput</code> that corresponds to the <code>foreach</code> statement. It will complete when all 100 elements have been printed. The whole stream runs synchronously, because it was built from synchronous components, so the <code>println(_)</code> function will see the <code>map(_+1)</code> function on its calling stack. However, the stream as a whole still runs in a Future.</p> 
+  <h3><a id="user-content-scatter-gather" class="anchor" href="https://github.com/fsist/future-streams#scatter-gather" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scatter-gather</h3> 
+  <p>Here is a more complex graph, which also demonstrates combining stream parts defined separately:</p> 
+  <pre><code>implicit ec = ExecutionContext.global
+
+var state = 0
+val source = Source.generate(AsyncFunc(Future {
+  state += 1
+  if (state &gt; 5) throw new EndOfStreamException
+  else state
+}))
+
+val mapper = Transform.flatMap((i: Int) =&gt; 1 to i)
+
+val scattered = source.scatter(3)
+val merge = Connector.merge[Int](3)
+for ((output, input) &lt;- scattered.outputs zip merge.inputs)
+  output.flatMap((i: Int) =&gt; 1 to i).connect(input)
+
+val result = merge.output.toList().singleResult()
+</code></pre> 
+  <p>The <code>result</code> is a <code>Future[List[Int]]</code>. The order of elements in it is indeterminate, because the three pipelines after <code>scatter</code> run in parallel.</p> 
+  <h3><a id="user-content-pipelines" class="anchor" href="https://github.com/fsist/future-streams#pipelines" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pipelines</h3> 
+  <p>The <code>Pipe[In, Out]</code> abstraction allows libraries to provide pipe segments which can then be used as building blocks by the user code.</p> 
+  <p>In this example, we might have various stream transformations available:</p> 
+  <pre><code>trait MyTransform {
+  def apply(): Pipe[Int, Int]
+}
+
+class Ceiling(max: Int) extends MyTransform {
+  override def apply(): Pipe[Int, Int] = Pipe(Transform((i: Int) =&gt; Math.max(i, max)))
+}
+
+object WeirdExample extends MyTransform {
+  override def apply(): Pipe[Int, Int] =
+    Transform((i: Int) =&gt; i + 1).pipe(_ / 2).pipe(_ * 3)
+}
+</code></pre> 
+  <p>And then user code could compose them generically:</p> 
+  <pre><code>val transforms: Seq[Pipe[Int, Int]] = ???
+val source = Source.of(1,2,3)
+val stream = transforms.fold(source){
+  case (src, tr) =&gt; src.transform(tr)
+}
+val result = stream.collect[List].singleResult
+</code></pre> 
+  <h2><a id="user-content-low-level-detail" class="anchor" href="https://github.com/fsist/future-streams#low-level-detail" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Low-level detail</h2> 
+  <h3><a id="user-content-non-concurrent-methods" class="anchor" href="https://github.com/fsist/future-streams#non-concurrent-methods" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Non-concurrent methods</h3> 
+  <p>Non-concurrency is a calling convention of multiple methods (or functions).</p> 
+  <p>Two or more methods are said to be called non-concurrently with respect to one another, if each new call to one of them begins (from the point of view of the callee) after the previous call to one of them has completed. </p> 
+  <p>If any of the methods are asynchronous, a call completing means the Future returned by the call is completed.</p> 
+  <p>This calling convention applies to the <code>onNext</code> and <code>onComplete</code> (but not <code>onError</code>) methods of any <em>one</em> stream component.</p> 
+  <p>This calling convention guarantees that each subsequent call will <a href="https://github.com/reactive-streams/reactive-streams/issues/53#issuecomment-43916232" target="_blank">see all memory effects</a> of the previously completed call (including effects of code that ran in a Future returned by the previous call). This means mutable state can be used with ordinary variable fields, without <code>@volatile</code> annotations or <code>AtomicReference</code>.</p> 
+  <h3><a id="user-content-func" class="anchor" href="https://github.com/fsist/future-streams#func" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Func</h3> 
+  <p>The type <code>com.fsist.util.concurrent.Func[-A, +B]</code> abstracts over synchronous functions <code>A =&gt; B</code> and asynchronous ones <code>A =&gt; Future[B]</code>, which are represented by <code>SyncFunc</code> and <code>AsyncFunc</code> respectively.</p> 
+  <p>It provides efficient combinators for composition of functions (<code>func1.compose(func2)</code> or <code>func1 ~&gt; func2</code>), error recovery (using either try/catch or Future.recover as appropriate), and other useful idioms. </p> 
+  <p>This abstraction is convenient, because most code doesn't need to care if a particular function is asynchronous or not. However, function invocation can be as much as 10 times slower than method invocation, because the JVM is bad at inlining function calls (see <a href="https://groups.google.com/d/msg/scala-user/a96iW30_FFM/QZFKzbN8R4QJ" target="_blank">here</a> and <a href="http://www.azulsystems.com/blog/cliff/2011-04-04-fixing-the-inlining-problem" target="_blank">here</a>). For this reason, in hotspots I implement traits (which compiles to methods) instead of using <code>Func</code>s.</p> 
+  <h3><a id="user-content-futurestreambuilder" class="anchor" href="https://github.com/fsist/future-streams#futurestreambuilder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FutureStreamBuilder</h3> 
+  <p>Stream components are defined as case classes, so they're immutable. In particular, they don't change when connected to one another. </p> 
+  <p>The mutable state representing the structure of the stream model being built is stored in instances of the mutable class <code>FutureSreamBuilder</code>. This class also implements the <code>build</code> method that materializes a stream model.</p> 
+  <p>Every stream component model case class has a parameter of type <code>FutureStreamBuilder</code>. Constructor methods take an implicit builder instance with a default value of <code>new FutureStreamBuilder</code>. Components belonging to different builders can be connected to one another. When a stream is materialized and run, it does not matter how components are distributed across different builders, and it doesn't matter which builder you use to call <code>build</code>.</p> 
+  <p>This class is <strong>NOT concurrent-safe</strong>. This means that while you can construct different stream components in parallel, you need to use different builders to do so (and not link them until later). Linking the components, and building the stream, must be carried out from a single thread.</p> 
+  <h2><a id="user-content-differences-from-the-previous-version-of-this-library" class="anchor" href="https://github.com/fsist/future-streams#differences-from-the-previous-version-of-this-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Differences from the previous version of this library</h2> 
+  <p>This is the second version of future-streams, and is a complete redesign from the ground up. Without going into too much detail about the old version, these are the major <em>design</em> differences:</p> 
+  <ol> 
+   <li> Not every stream component implements the public Reactive Streams interfaces (Publisher/Subscriber); only explicitly constructed converters do (e.g. <code>Source.fromPublisher</code>). This allows the internal communication between stream components to be much faster, and to have slightly different semantics from RS. It also makes the implementation much simpler.</li> 
+   <li> Synchronous functions and stream components receive first-class support, and are called and combined synchronously, without the expense of scheduling Futures.</li> 
+   <li> There is a separate model or blueprint API (<code>Source</code>, <code>Sink</code>, <code>Transform</code>, <code>Connector</code>) and a runtime API (<code>StateMachine</code>, <code>FutureStream</code>), bridged by the <code>FutureStreamBuilder</code>. This is done for some of the same reasons as the materialization phase in akka-streams: to allow models to use the expected variance (e.g. <code>Source[+Out]</code>), and to reuse models where appropriate.</li> 
+   <li> Results can only be computed by <code>StreamOutput</code> components (and not by other <code>Sink</code>s), and are only available once the component has completed (which in practice is usually when the whole stream completes). This is intended as a convenience, not as a core feature. Components that wish to expose results earlier than that are expected to simply take, or return, a Promise in their model, or a user callback in the form of an extra Func, which they can then fulfill or call whenever they want to.</li> 
+   <li> <code>StreamInput</code>, <code>StreamOutput</code> and the various types of <code>Transform</code> and <code>Connector</code> all have dedicated implementations in the library core (in subclasses of <code>StateMachine</code>). The core model traits and classes are all respectively sealed and final. Other abstractions are built on top of that in user code. This contrasts with the v1 model, where the only first-class types were <code>Source</code> and <code>Sink</code>, and all implementations had the same status. This allows us keep the core implementation simple, fast and correct. The variety of component implementations in v1 made the library unmanageable.</li> 
+  </ol> 
+  <h3><a id="user-content-removed-features" class="anchor" href="https://github.com/fsist/future-streams#removed-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Removed features</h3> 
+  <p>These minor features or combinators are no longer directly supported (most have workarounds):</p> 
+  <ol> 
+   <li> There is no explicit support for cancellation. Asynchronous cancellation with e.g. a CancelToken can be achieved by failing the stream from outside.</li> 
+   <li> <code>Source.flatten</code>, <code>Sink.flatten</code> and <code>Pipe.flatten</code>, which convert a <code>Future[Source]</code> to a <code>Source</code> etc., are no longer available. All stream components need to exist concretely when the stream is materialized. It would be possible to implement <code>flatten</code> in the future-streams library core, but so far I'm trying to do without.</li> 
+   <li> Adapters for java.io and java.nio are no longer included, because they are not part of the core concern of this library. (They are still just as easy to write.)</li> 
+  </ol> 
+ </article>
+</div>

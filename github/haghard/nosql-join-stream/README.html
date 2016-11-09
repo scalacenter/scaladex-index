@@ -1,0 +1,137 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-nosql-join-stream" class="anchor" href="https://github.com/haghard/nosql-join-stream#nosql-join-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Nosql-join-stream</h1> 
+  <p>Goals:</p> 
+  <ul> 
+   <li>To demonstrate power of design based on "Abstract algebraic data type"</li> 
+   <li><p>Provide support for streaming libs:</p> <p><a href="https://github.com/scalaz/scalaz-stream" target="_blank">ScalazStream</a>, <a href="https://github.com/akka/akka" target="_blank">AkkaStream</a> and <a href="https://github.com/ReactiveX/RxScala.git" target="_blank">RxScala</a></p></li> 
+   <li>Provide support for MongoDb and Cassandra</li> 
+   <li>Resource safety</li> 
+  </ul> 
+  <p>The main idea for "Abstract algebraic data type" pattern was taken from this <a href="http://io.pellucid.com/blog/abstract-algebraic-data-type" target="_blank">blog post</a></p> 
+  <h1><a id="user-content-where-to-get-it" class="anchor" href="https://github.com/haghard/nosql-join-stream#where-to-get-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Where to get it</h1> 
+  <pre><code>resolvers += "haghard-bintray"  at "http://dl.bintray.com/haghard/releases"
+
+libraryDependencies +=  "com.haghard"  %% "nosql-join-stream" % "0.2.5"
+
+</code></pre> 
+  <h1><a id="user-content-log-example-for-cassandra" class="anchor" href="https://github.com/haghard/nosql-join-stream#log-example-for-cassandra" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Log Example for cassandra</h1> 
+  <p>from mongo.channel.test.stream.{ PartitionedLogCassandraSpec, AkkaCassandraPartitionedLogSpec } </p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">maxPartitionSize</span> <span class="pl-k">=</span> <span class="pl-c1">5000</span>
+  <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span>
+      s<span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">         |SELECT * FROM DOMAIN WHERE</span>
+<span class="pl-s">         |        persistence_id = ? AND</span>
+<span class="pl-s">         |        partition_nr = ? AND</span>
+<span class="pl-s">         |        sequence_nr &gt;= ?</span>
+<span class="pl-s">     <span class="pl-pds">"""</span></span>.stripMargin
+
+  <span class="pl-c">//to get Process</span>
+  <span class="pl-k">val</span> <span class="pl-en">logA</span> <span class="pl-k">=</span> (eventlog.<span class="pl-en">Log</span>[<span class="pl-en">CassandraProcess</span>] from (query, <span class="pl-s"><span class="pl-pds">"</span>key-a<span class="pl-pds">"</span></span>, <span class="pl-c1">0</span>, maxPartitionSize))
+
+
+  <span class="pl-c">//to get Observable</span>
+  <span class="pl-k">val</span> <span class="pl-en">logB</span> <span class="pl-k">=</span> (eventlog.<span class="pl-en">Log</span>[<span class="pl-en">CassandraObservable</span>] from (query, <span class="pl-s"><span class="pl-pds">"</span>key-a<span class="pl-pds">"</span></span>, <span class="pl-c1">0</span>, maxPartitionSize))
+
+
+  <span class="pl-c">//to get Akka Source</span>
+  <span class="pl-k">val</span> <span class="pl-en">dName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>akka.join-dispatcher<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializerSettings</span>(system)
+      .withInputBuffer(<span class="pl-c1">32</span>, <span class="pl-c1">64</span>)
+      .withDispatcher(dName)
+      .withSupervisionStrategy(decider)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">Mat</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>(settings)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispatcher</span> <span class="pl-k">=</span> system.dispatchers.lookup(dName)
+
+  <span class="pl-k">val</span> <span class="pl-en">logC</span> <span class="pl-k">=</span> (eventlog.<span class="pl-en">Log</span>[<span class="pl-en">CassandraSource</span>] from (query, <span class="pl-s"><span class="pl-pds">"</span>key-a<span class="pl-pds">"</span></span>, <span class="pl-c1">0</span>, maxPartitionSize)).source
+
+</pre>
+  </div> 
+  <h1><a id="user-content-join-example-for-cassandra" class="anchor" href="https://github.com/haghard/nosql-join-stream#join-example-for-cassandra" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Join Example for cassandra</h1> 
+  <p>from mongo.channel.test.join.JoinCassandraSpec</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">dsl.cassandra.</span><span class="pl-v">_</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">qSensors</span> <span class="pl-k">=</span> <span class="pl-k">for</span> { q <span class="pl-k">←</span> select(<span class="pl-s"><span class="pl-pds">"</span>SELECT sensor FROM {0}<span class="pl-pds">"</span></span>) } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">def</span> <span class="pl-en">qTemperature</span>(<span class="pl-v">r</span>: <span class="pl-en">CRow</span>) <span class="pl-k">=</span> <span class="pl-k">for</span> {
+    _ <span class="pl-k">←</span> select(<span class="pl-s"><span class="pl-pds">"</span>SELECT sensor, event_time, temperature FROM {0} WHERE sensor = ?<span class="pl-pds">"</span></span>)
+    q <span class="pl-k">←</span> fk[java.lang.<span class="pl-k">Long</span>](<span class="pl-s"><span class="pl-pds">"</span>sensor<span class="pl-pds">"</span></span>, r.getLong(<span class="pl-s"><span class="pl-pds">"</span>sensor<span class="pl-pds">"</span></span>))    
+  } <span class="pl-k">yield</span> q
+
+  <span class="pl-c">//to get Process</span>
+  <span class="pl-k">val</span> <span class="pl-en">joinQuery</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">CassandraProcess</span>] inner (qSensors, <span class="pl-en">SENSORS</span>, qTemperature, <span class="pl-en">TEMPERATURE</span>, <span class="pl-en">KEYSPACE</span>)) { (outer, inner) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Sensor №${outer.getLong(<span class="pl-pds">"</span></span>sensor<span class="pl-s"><span class="pl-pds">"</span>)} - time: ${inner.getLong(<span class="pl-pds">"</span></span>event_time<span class="pl-s"><span class="pl-pds">"</span>)} temperature: ${inner.getDouble(<span class="pl-pds">"</span></span>temperature<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-c">//to get Observable</span>
+  <span class="pl-k">val</span> <span class="pl-en">joinQuery</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">CassandraObservable</span>] inner (qSensors, <span class="pl-en">SENSORS</span>, qTemperature, <span class="pl-en">TEMPERATURE</span>, <span class="pl-en">KEYSPACE</span>)) { (outer, inner) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Sensor №${outer.getLong(<span class="pl-pds">"</span></span>sensor<span class="pl-s"><span class="pl-pds">"</span>)} - time: ${inner.getLong(<span class="pl-pds">"</span></span>event_time<span class="pl-s"><span class="pl-pds">"</span>)} temperature: ${inner.getDouble(<span class="pl-pds">"</span></span>temperature<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-c">//to get akka Source</span>
+  <span class="pl-k">val</span> <span class="pl-en">dName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>akka.join-dispatcher<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializerSettings</span>(system)
+      .withInputBuffer(<span class="pl-c1">32</span>, <span class="pl-c1">64</span>)
+      .withDispatcher(dName)
+      .withSupervisionStrategy(decider)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">Mat</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>(settings)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispatcher</span> <span class="pl-k">=</span> system.dispatchers.lookup(dName)
+
+  <span class="pl-k">val</span> <span class="pl-en">joinQuery</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">CassandraSource</span>] inner (qSensors, <span class="pl-en">SENSORS</span>, qTemperature, <span class="pl-en">TEMPERATURE</span>, <span class="pl-en">KEYSPACE</span>)) { (outer, r) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Sensor №${outer.getLong(<span class="pl-pds">"</span></span>sensor<span class="pl-s"><span class="pl-pds">"</span>)} - time: ${inner.getLong(<span class="pl-pds">"</span></span>event_time<span class="pl-s"><span class="pl-pds">"</span>)} temperature: ${inner.getDouble(<span class="pl-pds">"</span></span>temperature<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>
+  }
+</pre>
+  </div> 
+  <h1><a id="user-content-join-example-for-mongo" class="anchor" href="https://github.com/haghard/nosql-join-stream#join-example-for-mongo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Join Example for mongo</h1> 
+  <p>from mongo.channel.test.join.JoinMongoSpec</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">mongo.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">dsl.mongo.</span><span class="pl-v">_</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">qLang</span> <span class="pl-k">=</span> <span class="pl-k">for</span> { q <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> $gte <span class="pl-c1">0</span> $lte <span class="pl-c1">5</span> } <span class="pl-k">yield</span> q
+
+  <span class="pl-k">def</span> <span class="pl-en">qProg</span>(<span class="pl-v">outer</span>: <span class="pl-en">DBObject</span>) <span class="pl-k">=</span> <span class="pl-k">for</span> { q <span class="pl-k">←</span> <span class="pl-s"><span class="pl-pds">"</span>lang<span class="pl-pds">"</span></span> $eq outer.get(<span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span>).<span class="pl-c1">asInstanceOf</span>[<span class="pl-k">Int</span>] } <span class="pl-k">yield</span> q
+
+  <span class="pl-c">//to get Process</span>
+  <span class="pl-k">val</span> <span class="pl-en">joinQuery</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">MongoProcess</span>] inner (qLang, <span class="pl-en">LANGS</span>, qProg(_), <span class="pl-en">PROGRAMMERS</span>, <span class="pl-en">TEST_DB</span>)) { (outer, inner) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>PK:${outer.get(<span class="pl-pds">"</span></span>index<span class="pl-s"><span class="pl-pds">"</span>)} - FK:${inner.get(<span class="pl-pds">"</span></span>lang<span class="pl-s"><span class="pl-pds">"</span>)} - ${inner.get(<span class="pl-pds">"</span></span>name<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-c">//to get Observable</span>
+  <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">MongoObservable</span>] inner (qLang, <span class="pl-en">LANGS</span>, qProg(_), <span class="pl-en">PROGRAMMERS</span>, <span class="pl-en">TEST_DB</span>)) { (outer, inner) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>PK:${outer.get(<span class="pl-pds">"</span></span>index<span class="pl-s"><span class="pl-pds">"</span>)} - [FK:${inner.get(<span class="pl-pds">"</span></span>lang<span class="pl-s"><span class="pl-pds">"</span>)} - ${inner.get(<span class="pl-pds">"</span></span>name<span class="pl-s"><span class="pl-pds">"</span>)}]<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-c">//to get akka Source</span>
+  <span class="pl-k">val</span> <span class="pl-en">dName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>akka.join-dispatcher<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializerSettings</span>(system)
+      .withInputBuffer(<span class="pl-c1">32</span>, <span class="pl-c1">64</span>)
+      .withDispatcher(dName)
+      .withSupervisionStrategy(decider)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">Mat</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>(settings)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispatcher</span> <span class="pl-k">=</span> system.dispatchers.lookup(dName)
+
+  <span class="pl-k">val</span> <span class="pl-en">joinQuery</span> <span class="pl-k">=</span> (<span class="pl-en">Join</span>[<span class="pl-en">MongoSource</span>] inner (qSensors, <span class="pl-en">SENSORS</span>, qTemperature, <span class="pl-en">TEMPERATURE</span>, <span class="pl-en">KEYSPACE</span>)) { (outer, inner) <span class="pl-k">⇒</span>
+    s<span class="pl-s"><span class="pl-pds">"</span>Sensor №${outer.getLong(<span class="pl-pds">"</span></span>sensor<span class="pl-s"><span class="pl-pds">"</span>)} - time: ${inner.getLong(<span class="pl-pds">"</span></span>event_time<span class="pl-s"><span class="pl-pds">"</span>)} temperature: ${inner.getDouble(<span class="pl-pds">"</span></span>temperature<span class="pl-s"><span class="pl-pds">"</span>)}<span class="pl-pds">"</span></span>
+  }
+</pre>
+  </div> 
+ </article>
+</div>

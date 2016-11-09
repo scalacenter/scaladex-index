@@ -1,0 +1,105 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-human-tester" class="anchor" href="https://github.com/edadma/human-tester#human-tester" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Human Tester</h1> 
+  <p>This is a simple framework for generating question/answer pairs to test if an <em>entity</em> is human or not. The framework is still in it's infancy - currently it can only deal with simple numerical type questions.</p> 
+  <p>Here is a code snippet to show how to use it.</p> 
+  <pre><code>import ca.hyperreal.human_tester.Tester
+
+object Main extends App
+{
+    Tester.question( "default", "default", "What is the product of a:tint, b:tint and c:tint?", "a &lt; b &lt; c, a*b*c &lt; 50", "a*b*c" )
+
+    for (_ &lt;- 1 to 20)
+        println( Tester.test("default") )
+}
+</code></pre> 
+  <p>The above code snippet starts by adding a new type of test to the list of possible questions. This is just to show that new questions can be added. You probably won't need to do that. Actually, this is a question that you wouldn't really want to have (it's not one of the built-in questions) because the answers can easily be too large without the size limiting constraint <code>a*b*c &lt; 50</code>, but with the constraint most of the questions will have a one as the first number, as can be seen in the sample output below. The snippet then displays 20 question/answer pairs. For example, you may get something like</p> 
+  <pre><code>(What is 3 times 9?,27)                                                                                                                                                                                                      
+(What is the product of 1, 4 and 5?,20)                                                                                                                                                                                      
+(Does 8 come after 7?,yes)                                                                                                                                                                                                   
+(What number comes after 4?,5)                                                                                                                                                                                               
+(What is the sum of 1, 5 and 6?,12)                                                                                                                                                                                          
+(What is 14 divided by 7?,2)                                                                                                                                                                                                 
+(What is 4 plus 3?,7)                                                                                                                                                                                                        
+(What number comes after 3?,4)                                                                                                                                                                                               
+(Is 7 less than 5?,no)                                                                                                                                                                                                       
+(What is the product of 1, 2 and 7?,14)                                                                                                                                                                                      
+(What is the sum of 1, 2 and 6?,9)                                                                                                                                                                                           
+(Is 12 divisible by 7?,no)                                                                                                                                                                                                   
+(Is 15 divisible by 5?,yes)                                                                                                                                                                                                  
+(What is the product of 1, 2 and 4?,8)
+(What is the sum of 3, 7 and 8?,18)
+(What is 3 times 8?,24)
+(What is 15 divided by 5?,3)
+(Is 12 divisible by 2?,yes)
+(What is 4 times 5?,20)
+(What number comes before 9?,8)
+</code></pre> 
+  <h2><a id="user-content-questionanswer-templates" class="anchor" href="https://github.com/edadma/human-tester#questionanswer-templates" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Question/Answer Templates</h2> 
+  <p>The framework uses string templating to make it convenient to have it be able to generate a large number of appropriate question/answer pairs without having to individually add every particular question/answer pair. The framework comes with one built-in test question template class, <code>ArithmeticTemplate</code>. We will use the above example code and output to discuss question/answer templates. A question that the tester can ask has three components: the question itself, a list of constraints (boolean expressions), and the answer to the question.</p> 
+  <p>In the example above, a question is added where the question itself is <code>What is the product of a:tint, b:tint and c:tint?</code>, the constraints to be satisfied are <code>a &lt; b &lt; c, a*b*c &lt; 50</code>, and the answer is <code>a*b*c</code>. In the question, there are "slots" for randomly generated variables. Each slot is a pair of the form <code>&lt;name&gt;:&lt;set&gt;</code> where <code>name</code> is the name of the variable and <code>set</code> is the name of a set of possible choices for that slot. In this example, <code>tint</code> means "tiny integer" which is an integer from 1 to 9, inclusive. Next, we have the constraints which say that the three variables should be in ascending order and their product should be less than 50. And finally, the answer is the product of the three variables.</p> 
+  <p>The sets for question variables that are included are:</p> 
+  <ul> 
+   <li><code>tint</code> (tiny integer) integers from 1 to 9, inclusive</li> 
+   <li><code>tprime</code> (tiny prime) prime numbers from 2 to 9, inclusive</li> 
+   <li><code>tcomp</code> (tiny composite) composite numbers from from 4 to 15, inclusive</li> 
+   <li><code>sint</code> (small integer) integers from 1 to 30, inclusive</li> 
+   <li><code>sprime</code> (small prime) prime numbers from 2 to 29, inclusive</li> 
+   <li><code>scomp</code> (small composite) composite numbers from 4 to 40, inclusive</li> 
+  </ul> 
+  <h2><a id="user-content-adding-template-classes" class="anchor" href="https://github.com/edadma/human-tester#adding-template-classes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Adding Template Classes</h2> 
+  <p>A new template class can be added to <code>Tester</code> using the <code>template</code> method. Let's say you wanted to have a template class based on <code>ArithmeticTemplate</code> that had a new number set called <code>ssquare</code>, the set of small square numbers up to 100. You could use the following:</p> 
+  <pre><code>object ExampleArithmeticTemplate extends ArithmeticTemplate
+{
+    import math._
+
+    types("ssquare") = (1 to 100) filter (n =&gt; pow(floor(sqrt(n)), 2 ) == n)
+}
+</code></pre> 
+  <p>The following snippet shows how to add the above template object to <code>Tester</code> along with a question to demonstrate the <code>ssquare</code> set:</p> 
+  <pre><code>Tester.template( "example", ExampleArithmeticTemplate )
+Tester.question( "example", "example", "What is the square root of a:ssquare?", null, "isqrt( a )" )
+
+for (_ &lt;- 1 to 5)
+    println( Tester.test("example") )
+</code></pre> 
+  <p>Of course, the above question probably isn't one you would use to test if someone/something is a human because not everyone will know what "square root" means. A better question might be</p> 
+  <pre><code>Tester.question( "example", "example", "Is a:sint a perfect square number?", null, "if( isqrt(a)*isqrt(a) = a, 'yes', 'no' )" )
+</code></pre> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/human-tester#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Human Tester is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/human-tester#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Use the following elements to use Human Tester in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+    &lt;id&gt;hyperreal&lt;/id&gt;
+    &lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;ca.hyperreal&lt;/groupId&gt;
+    &lt;artifactId&gt;human-tester&lt;/artifactId&gt;
+    &lt;version&gt;0.5&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use Human Tester in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "ca.hyperreal" %% "human-tester" % "0.5"
+</code></pre> 
+ </article>
+</div>

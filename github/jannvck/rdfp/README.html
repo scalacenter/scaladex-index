@@ -1,0 +1,169 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-rdfp" class="anchor" href="https://github.com/jannvck/rdfp#rdfp" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>rdfp</h1> 
+  <p>RDF stream processing framework written in Scala.</p> 
+  <p>Works with Sesame and Jena and has a small footprint. Supports on-the-fly Lucene indexing. <code>RDFStreamProcessingTest.scala</code> contains several test cases which may serve as examples on how to use. The framework is designed to process very large datasets and has been used successfully to process datasets of the german national library containing more than 100 billion triples. It can process RDF streams in parallel since the Akka actors model has been applied.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/jannvck/rdfp#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Use Maven:</p> 
+  <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.github.jannvck&lt;/groupId&gt;
+    &lt;artifactId&gt;rdfp_2.11&lt;/artifactId&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Or with SBT add to your <code>build.sbt</code> file:</p> 
+  <pre><code>libraryDependencies += "com.github.jannvck" % "rdfp_2.11" % "1.0"
+</code></pre> 
+  <p>Or clone the repository and run <a href="http://www.scala-sbt.org/" target="_blank">sbt</a> in the project root folder. Enter 'test' to run the tests, 'compile' to compile the project or 'doc' to generate API documentation with scaladoc. Use the tests to verify all is running correctly. </p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/jannvck/rdfp#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <p>The basic building blocks of a RDF stream processor in rdfp are <em>matchers</em>, <em>sources</em> and <em>sinks</em>. While sources are mandatory, sinks are optional. To process RDF triples you have to define matchers, that define which triples will be processed. A matcher consists of a match condition, definition of what to store and how to transform it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Matcher</span>[<span class="pl-en">S</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">matches</span><span class="pl-k">:</span> <span class="pl-en">S</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Boolean</span>
+  <span class="pl-k">def</span> <span class="pl-en">handle</span><span class="pl-k">:</span> <span class="pl-en">S</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Option</span>[_]
+  <span class="pl-k">def</span> <span class="pl-en">transform</span><span class="pl-k">:</span> <span class="pl-en">S</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Option</span>[<span class="pl-en">Set</span>[<span class="pl-en">S</span>]]
+}</pre>
+  </div> 
+  <p>The following examples match upon a certain URI on the subject, store the object of a matched triple and apply no transformation.</p> 
+  <p>With Jena:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">jenaMatcher</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SetMatcher</span>(
+    (<span class="pl-v">t</span>: <span class="pl-en">Triple</span>) <span class="pl-k">=&gt;</span> t.getSubject().hasURI(someURI), <span class="pl-c">// match condition</span>
+    (<span class="pl-v">t</span>: <span class="pl-en">Triple</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(t.getObject()), <span class="pl-c">// element to store in this Matcher's list</span>
+    (<span class="pl-v">t</span>: <span class="pl-en">Triple</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(<span class="pl-en">Set</span>(t))) <span class="pl-c">// triple to store, the place for transformations</span></pre>
+  </div> 
+  <p>Or with sesame:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">sesameMatcher</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SetMatcher</span>(
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> s.getSubject().stringValue().equals(someURI), <span class="pl-c">// match condition</span>
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(s.getObject()), <span class="pl-c">// element to store in this Matcher's list</span>
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(<span class="pl-en">Set</span>(s))) <span class="pl-c">// triple to store, the place for transformations</span></pre>
+  </div> 
+  <p>To start processing the RDF source, set up a RDFStreamProcessor instance. An RDFStreamProcessor consists of source, sink and a list of matchers:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">RDFStreamProcessor</span>[<span class="pl-en">S</span>] {
+  <span class="pl-k">val</span> <span class="pl-en">source</span><span class="pl-k">:</span> <span class="pl-en">Any</span>
+  <span class="pl-k">val</span> <span class="pl-en">sink</span><span class="pl-k">:</span> <span class="pl-en">S</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>
+  <span class="pl-k">val</span> <span class="pl-en">matchers</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Matcher</span>[<span class="pl-en">S</span>]]
+  …
+}</pre>
+  </div> 
+  <p>Implementations of RDFStreamProcessors exist for Jena and Sesame. With Jena:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">new</span> <span class="pl-en">JenaRDFStreamProcessor</span>(
+    <span class="pl-s"><span class="pl-pds">"</span>/path/to/dataset<span class="pl-pds">"</span></span>, <span class="pl-c">// source</span>
+    (<span class="pl-v">t</span>: <span class="pl-en">Triple</span>) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>, <span class="pl-c">// sink</span>
+    <span class="pl-en">List</span>(jenaMatcher)).trigger</pre>
+  </div> 
+  <p>With Sesame:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">SesameRDFStreamProcessor</span>(
+        () <span class="pl-k">=&gt;</span> <span class="pl-en">FileUtils</span>.openResourceFile(<span class="pl-s"><span class="pl-pds">"</span>/path/to/dataset<span class="pl-pds">"</span></span>),
+        (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>,
+        <span class="pl-en">List</span>(sesameMatcher)).trigger</pre>
+  </div> 
+  <h2><a id="user-content-parallel-processing" class="anchor" href="https://github.com/jannvck/rdfp#parallel-processing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parallel processing</h2> 
+  <p>You can easily create multiple processors to run in parallel as the following example illustrates with a Sesame RDF stream processor. The producer-consumer pattern has been applied. The file <code>src/test/scala/RDFStreamProcessingTest.scala</code> contains some tests which demonstrate how to use multiple processors.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">consumers</span> <span class="pl-k">=</span> <span class="pl-en">Set</span>[<span class="pl-en">ActorRef</span>]()
+<span class="pl-k">val</span> <span class="pl-en">consumedStatements</span> <span class="pl-k">=</span> <span class="pl-en">ListBuffer</span>[<span class="pl-en">Statement</span>[<span class="pl-en">SesameStatement</span>]]()
+<span class="pl-k">val</span> <span class="pl-en">processor</span> <span class="pl-k">=</span> <span class="pl-en">SesameRDFStreamProcessor</span>(
+    () <span class="pl-k">=&gt;</span> <span class="pl-en">FileUtils</span>.openResourceFile(<span class="pl-en">Dataset</span>),
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> consumers.foreach((<span class="pl-v">c</span>: <span class="pl-en">ActorRef</span>) <span class="pl-k">=&gt;</span> c <span class="pl-k">!</span> <span class="pl-en">Statement</span>(s)), <span class="pl-c">// send matched triple to all consumers</span>
+    <span class="pl-en">List</span>(sesameMatcher))
+<span class="pl-k">val</span> <span class="pl-en">producer0</span> <span class="pl-k">=</span> processor.producer
+<span class="pl-k">val</span> <span class="pl-en">producer1</span> <span class="pl-k">=</span> processor.producer
+consumers <span class="pl-k">+</span><span class="pl-k">=</span> processor.consumer((<span class="pl-v">s</span>: <span class="pl-en">Statement</span>[<span class="pl-en">SesameStatement</span>]) <span class="pl-k">=&gt;</span> consumedStatements <span class="pl-k">+</span><span class="pl-k">=</span> s) <span class="pl-c">// do something with the statement</span>
+producer0 <span class="pl-k">!</span> <span class="pl-en">Start</span>
+producer1 <span class="pl-k">!</span> <span class="pl-en">Start</span></pre>
+  </div> 
+  <h2><a id="user-content-persistence" class="anchor" href="https://github.com/jannvck/rdfp#persistence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Persistence</h2> 
+  <p>Special classes exist to store matched elements in a SQL database by using the <a href="http://www.h2database.com/html/main.html" target="_blank">H2</a> database. These classes are useful when dealing with RDF streams. They can be used for general storage and are, by modular design, not dependent on the rest of the rdfp code. Implemenatations are available for string keys and values.</p> 
+  <ul> 
+   <li><code>PersistentMap</code>, Map[K, V] simple key-value SQL storage of arbitrary serializable objects. </li> 
+   <li><code>PersistentMapSet</code>, Map[K, Set[V]] forms a mapping between an arbitrary serializable key object and a corresponding set containing arbitrary serializable objects</li> 
+   <li><code>PersistentNestedMapSet</code>, Map[K1, Map[K2, Set[V]]] mapping</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// find all people</span>
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">smwPersons</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PersistentSetMatcher</span>[<span class="pl-en">SesameStatement</span>, <span class="pl-en">Value</span>](
+    <span class="pl-s"><span class="pl-pds">"</span>jdbc:h2:<span class="pl-pds">"</span></span> <span class="pl-k">+</span> path <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/tmp/rdfp.smw.persons<span class="pl-pds">"</span></span>,
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">RDFType</span>.equals(s.getPredicate().toString()) <span class="pl-k">&amp;&amp;</span> <span class="pl-en">PersonURI</span>.equals(s.getObject().toString()), <span class="pl-c">// match condition</span>
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(s.getSubject()), <span class="pl-c">// element to store in this Matcher's list</span>
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>) <span class="pl-c">// triple to store, the place for transformations</span></pre>
+  </div> 
+  <h2><a id="user-content-change-listeners" class="anchor" href="https://github.com/jannvck/rdfp#change-listeners" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change Listeners</h2> 
+  <p>To watch for changes on components of statments as triples pass along, the <code>SesameRDFStreamProcessor</code> extends the <code>ComponentChangeHandler</code> trait.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">ComponentChangeListener</span>[<span class="pl-en">Component</span>, <span class="pl-en">Subject</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Component</span>, <span class="pl-en">Predicate</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Component</span>, <span class="pl-en">Object</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Component</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">onComponentChange</span>(<span class="pl-v">e</span>: <span class="pl-en">ComponentChangeEvent</span>[<span class="pl-en">Component</span>, <span class="pl-en">Subject</span>, <span class="pl-en">Predicate</span>, <span class="pl-en">Object</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span>
+}</pre>
+  </div> 
+  <p>The received event <code>ComponentChangeEvent</code> is implemented by the case classes <code>SubjectChange</code>, <code>PredicateChange</code> and <code>ObjectChange</code> which carry the previous element and the new one.</p> 
+  <h2><a id="user-content-blank-nodes" class="anchor" href="https://github.com/jannvck/rdfp#blank-nodes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Blank nodes</h2> 
+  <p>The <code>SesameRDFStreamProcessor</code> extends the <code>BNodeHandler</code> trait which allows to keep track of blank nodes. For example it allows to keep track of the root node of the blank node subgraph. Arbitrary transformations of the subgraphs are possible. The following example will <em>flatten</em> a subgraph containing blank nodes:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">bNMapping</span> <span class="pl-k">=</span> (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>, <span class="pl-v">h</span>: <span class="pl-en">BNodeHandler</span>[<span class="pl-en">Value</span>, <span class="pl-en">Resource</span>, <span class="pl-en">Value</span>, <span class="pl-en">SesameStatement</span>]) <span class="pl-k">=&gt;</span> {
+      <span class="pl-k">if</span> (s.getSubject().<span class="pl-c1">isInstanceOf</span>[<span class="pl-en">BNode</span>])
+        <span class="pl-en">Set</span>(factory.createStatement(h.root.getOrElse(s.getSubject()), s.getPredicate(), s.getObject()))
+      <span class="pl-k">else</span>
+        <span class="pl-en">Set</span>[<span class="pl-en">SesameStatement</span>]()
+    }</pre>
+  </div> 
+  <p>This blank node mapping will have the following effect:</p> 
+  <pre><code>&lt;someSubject&gt; &lt;somePredicate&gt; &lt;b_node0&gt;
+&lt;b_node0&gt; &lt;someOtherPredicate&gt; &lt;someObject&gt;
+</code></pre> 
+  <p>Will yield two triples:</p> 
+  <pre><code>&lt;someSubject&gt; &lt;somePredicate&gt; &lt;someObject&gt;
+&lt;someSubject&gt; &lt;someOtherPredicate&gt; &lt;someObject&gt;
+</code></pre> 
+  <p>Where <em>someSubject</em> is the <em>root node</em>.</p> 
+  <h2><a id="user-content-lucene-indexing" class="anchor" href="https://github.com/jannvck/rdfp#lucene-indexing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Lucene indexing</h2> 
+  <p>A <code>IndexingSesameRDFStreamProcessor</code> will by default use a <code>StandardAnalyzer</code>, and <code>DefaultSimilarity</code>. It uses a <code>ComponentChangeHandler</code> and has a special method <code>onNewRootSubject</code> which is called whenever the subject in the RDF stream changes. Subgraphs containing blank nodes are automatically handled (by <em>flattening</em> the subgraph - see previous section) The code snippet below processes an RDF stream and creates an index with Lucene on-the-fly. By default, a new subject will be mapped to a document in the Lucene index. This can be changed by overriding the <code>onNewRootSubject</code> method.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">idxDirectory</span> <span class="pl-k">=</span> <span class="pl-en">FSDirectory</span>.open(<span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>data/lucene.idx<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">proc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IndexingSesameRDFStreamProcessor</span>(
+    datasetReader, <span class="pl-c">// input stream of statements</span>
+    (<span class="pl-v">s</span>: <span class="pl-en">SesameStatement</span>) <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>, <span class="pl-c">// element to store in the matcher</span>
+    <span class="pl-en">List</span>(<span class="pl-k">new</span> <span class="pl-en">DefaultMatcher</span>())) <span class="pl-c">// process all statements</span>
+proc.trigger
+proc.closeIndexWriter
+proc.closeIndexDirectory</pre>
+  </div> 
+  <p>To search an index, standard Lucence queries can be used as in the example below:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">dnbIndex</span> <span class="pl-k">=</span> <span class="pl-en">LuceneSearcher</span>(<span class="pl-en">FSDirectory</span>.open(<span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>data/lucene.idx<span class="pl-pds">"</span></span>)))
+dnbIndex.searchByParsedQuery(fac.createURI(gndo <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>preferredNameForThePerson<span class="pl-pds">"</span></span>).toString(), <span class="pl-s"><span class="pl-pds">"</span>some label<span class="pl-pds">"</span></span>, <span class="pl-c1">10</span>)</pre>
+  </div> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/jannvck/rdfp#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This software is distributed under the terms of the Eclipse Public License 1.0, see <a href="http://www.eclipse.org/legal/epl-v10.html" target="_blank">http://www.eclipse.org/legal/epl-v10.html</a>.</p> 
+ </article>
+</div>

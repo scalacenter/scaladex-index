@@ -1,0 +1,99 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-depend-on-engine-api" class="anchor" href="https://github.com/dependon/engine-api#depend-on-engine-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Depend On Engine API</h1> 
+  <p>This is the Engine API library for Depend On Engines. <a href="https://dependon.us" target="_blank">Depend On</a> is a service that automatically updates dependencies on your GitHub projects by analyzing the build files in a repository and determining what changes are needed based on their current values and the latest versions that are available from upstream systems. So, for example, you might have a Maven pom.xml at the root of your project that pulls in Apache's HTTP Commons library. An <strong>Engine</strong> is what helps Depend On understand the dependencies provided by a particular package manager. So, the <a href="https://github.com/dependon/pom-engine" target="_blank">pom-engine</a> does this for Maven's pom.xml files.</p> 
+  <p>A DependOn engine has two components:</p> 
+  <ul> 
+   <li>A <strong>Parser</strong> that is responsible for determining what dependencies currently exist in a build file for a given package manager.</li> 
+   <li>An <strong>Updater</strong> that is responsible for executing on a series of update instructions that are passed into it.</li> 
+  </ul> 
+  <p>By restricting package manager specific knowledge to the engines themselves and making the rest of the Depend On system language agnostic, we have a clean architecture with which to work and an opportunity for the open source community to contribute their own engines or improve ours. This also should allow those of us working on the Depend On core more time to focus on that, in the hope that fixes are contributed to the engines as the developers using them find issues.</p> 
+  <p>We encourage you to check out the engines we've published to date for a look at how they work. The <a href="https://github.com/dependon/pom-engine" target="_blank">pom-engine</a> and <a href="https://github.com/dependon/ivy-engine" target="_blank">ivy-engine</a> are great examples of engines that do all their work using static analysis. They're simply reading from and writing to XML files. The <a href="https://github.com/dependon/npm-engine" target="_blank">npm-engine</a> is a good example of an engine that has to actually download some of the build files onto the local filesystem and execute an update command, effectively leaning on npm itself to deal with figuring out all of the transitive dependencies.</p> 
+  <h2><a id="user-content-writing-your-first-engine" class="anchor" href="https://github.com/dependon/engine-api#writing-your-first-engine" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing your first engine</h2> 
+  <p>To get started, you'll need to create a new project. It may make sense to copy one of the existing engines and just make changes to that one to implement your new engine. But if you'd like to start from scratch you certainly can. If you're using sbt then the current stable version of this library can be pulled in by adding the following to your <code>libraryDependencies</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.frmr.dependon<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>engine-api<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>However, sometimes it may be appropreate to build against the bleeding edge development version of the engine-api. To do this, add the following to your <code>build.sbt</code> file instead:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Sonatype snapshots<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/repositories/snapshots/<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.frmr.dependon<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>engine-api<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.7.0-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>To start writing a <code>Parser</code> extend the <code>me.frmr.dependon.parsers.Parser</code> trait and implement the <code>parse</code> method. To implement an <code>Updater</code> extend the <code>me.frmr.dependon.updaters.Updater</code> trait and implement the <code>runUpdate</code> method and the <code>updaterIdentifier</code>.</p> 
+  <h2><a id="user-content-engine-guidelines" class="anchor" href="https://github.com/dependon/engine-api#engine-guidelines" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Engine guidelines</h2> 
+  <p>There are some basic guidelines for writing an engine that should always be followed:</p> 
+  <ul> 
+   <li>Engines never update content in GitHub directly. Ever. I'm going to be adjusting the interfaces soon to completely prohibit that, but for now just don't do it. I won't include your change if you do.</li> 
+   <li>Where possible, engines shouldn't execute code. Sometimes you need to calculate transitive dependencies and running the package manager is the lesser of two evils.</li> 
+   <li>Engines should always include tests. No exceptions. I'm not a big proponent of test driven development. If your engine is simple, demonstrating that it is able to successfully parse and execute updates against a particular buildfile is fine. If you have a more complex method, it may be worth writing more complex tests.</li> 
+  </ul> 
+  <p>Once you feel your engine is built out and ready to rock, file an issue on this repository explaining what package manager it is for and with a link to a public GitHub repository where it can be found. We'll coordinate with you on getting it included in DependOn.</p> 
+  <h2><a id="user-content-data-structures" class="anchor" href="https://github.com/dependon/engine-api#data-structures" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Data structures</h2> 
+  <p>There are several important data structures you should be aware of when working on engines. Here's a summary of the important ones.</p> 
+  <h3><a id="user-content-parserresult" class="anchor" href="https://github.com/dependon/engine-api#parserresult" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ParserResult</h3> 
+  <p>A <code>ParserResult</code> is what a <code>Parser</code> implementation should produce. Big surprise there. But there are some important details about it. It has five parameters on it, and each of them is important to get right, so here you go:</p> 
+  <ul> 
+   <li><code>packageManager</code> – This should be some short code string representing the package manager this ParserResult relates to. For npm, we use "npm". For pom, we use "pom". And soforth. This must be unique across the entire system (a detail we'll be enforcing).</li> 
+   <li><code>packageName</code> – Pretty simple, but this is the name of the package in its most basic form. For package systems that don't use an organization designation, like npm, this is just the name of the package (e.g. <code>express</code>) as you'd expect. For package systems that do need an organization, this should be the actual packageName without the organization component (e.g. <code>lift-webkit_2.10</code>).</li> 
+   <li><code>packageVersion</code> – The version of the package that this build file requires. This should be a verbatim representation of whatever is in that version field.</li> 
+   <li><code>packageOrganization</code> – If your package system uses an organization designation, plug it in here when you're generating the result.</li> 
+   <li><code>customParameters</code> – Any custom parameters we need to know about the package. This is designed to store package manager specific data about a result that isn't relevant to the larger system.</li> 
+  </ul> 
+  <h3><a id="user-content-updaterinstruction" class="anchor" href="https://github.com/dependon/engine-api#updaterinstruction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>UpdaterInstruction</h3> 
+  <p>A list of <code>UpdaterInstruction</code>s is what will be passed into your updater from the Depend On system that instructs it what to do.</p> 
+  <ul> 
+   <li><code>packageSource</code> – This the package manager the <code>UpdaterInstruction</code> relates to. We use this in the <code>Updater</code>'s <a href="https://github.com/dependon/engine-api/blob/master/src/main/scala/me/frmr/dependon/updaters/Updater.scala#L64-L72" target="_blank">update method</a> to filter out any instructions that don't belong to this updater. You should set the <code>updaterIdentifier</code> in your <code>Updater</code> implementation to match whatever you string you used when generating <code>ParserResult</code>s. This will ensure you get instructions for updates you originally parsed.</li> 
+   <li><code>packageName</code> – The package name that needs to be updated.</li> 
+   <li><code>packageOrganization</code> – The organization of the package to be updated, if any.</li> 
+   <li><code>newVersion</code> – The new version the package should be updated to. This value will already be <strong>masked</strong> against the original version in the build file. So, for example, if you defined "4.2.x" of something in a <code>package.json</code>, and "4.3.0" is released then this string will read "4.3.x".</li> 
+  </ul> 
+  <h3><a id="user-content-updatedfile" class="anchor" href="https://github.com/dependon/engine-api#updatedfile" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>UpdatedFile</h3> 
+  <p>The <code>UpdatedFile</code> case class is generated by your Updater to tell the Depend On system to make changes to a particular file in the end-user's repository. It includes two parameters: the <code>filePath</code> relative to the project root of the file that needs to be changes and the <code>fileContent</code> that should be put in that file.</p> 
+  <h3><a id="user-content-updaterresult" class="anchor" href="https://github.com/dependon/engine-api#updaterresult" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>UpdaterResult</h3> 
+  <p>This is the grand summary of everything the <code>Updater</code> did during its run. It contains three parameters:</p> 
+  <ul> 
+   <li><code>successful</code> – A List containing the <code>UpdaterInstruction</code> instances you were able to successfully update.</li> 
+   <li><code>unsuccessful</code> – A List containing the <code>UpdaterInstruction</code> instances you were not able to successfully update.</li> 
+   <li><code>updatedFiles</code> – A list with all the <code>UpdatedFile</code> instances that need to be executed against the remote repository.</li> 
+  </ul> 
+  <h2><a id="user-content-where-can-i-find-more" class="anchor" href="https://github.com/dependon/engine-api#where-can-i-find-more" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Where can I find more</h2> 
+  <p>As always, you can get more information about this through the usual means:</p> 
+  <ul> 
+   <li><a href="https://github.com/dependon/engine-api/issues/new" target="_blank">Open an issue</a></li> 
+   <li><a href="http://www.javadoc.io/doc/me.frmr.dependon/engine-api_2.11" target="_blank">Browse the Scala Docs</a></li> 
+  </ul> 
+  <h2><a id="user-content-so-whos-mad-idea-is-this" class="anchor" href="https://github.com/dependon/engine-api#so-whos-mad-idea-is-this" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>So who's mad idea is this?</h2> 
+  <p>DependOn is a product of Crazy Goat Creative, Matt Farmer's little lab for interesting side projects and consulting work. If you're interested in things Matt may have to say you should check out his <a href="https://farmdawgnation.com" target="_blank">blog</a> or his <a href="https://twitter.com/farmdawgnation" target="_blank">Twitter</a> for more.</p> 
+ </article>
+</div>

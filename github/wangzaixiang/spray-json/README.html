@@ -1,0 +1,208 @@
+<div class="announce instapaper_body markdown" data-path="README.markdown" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><em>spray-json</em> is a lightweight, clean and efficient <a href="http://json.org" target="_blank">JSON</a> implementation in Scala.</p> 
+  <p>It sports the following features:</p> 
+  <ul> 
+   <li>A simple immutable model of the JSON language elements</li> 
+   <li>An efficient JSON parser</li> 
+   <li>Choice of either compact or pretty JSON-to-string printing</li> 
+   <li>Type-class based (de)serialization of custom objects (no reflection, no intrusion)</li> 
+   <li>No external dependencies</li> 
+  </ul> 
+  <p><em>spray-json</em> allows you to convert between</p> 
+  <ul> 
+   <li>String JSON documents</li> 
+   <li>JSON Abstract Syntax Trees (ASTs) with base type JsValue</li> 
+   <li>instances of arbitrary Scala types</li> 
+  </ul> 
+  <p>as depicted in this diagram:</p> 
+  <p><a href="https://github.com/wangzaixiang/spray-json/blob/master/images/Conversions.png" target="_blank"><img src="https://github.com/wangzaixiang/spray-json/raw/master/images/Conversions.png" alt="Spray-JSON conversions" title="Conversions possible with Spray-JSON" style="max-width:100%;"></a></p> 
+  <h3><a id="user-content-installation" class="anchor" href="https://github.com/wangzaixiang/spray-json#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h3> 
+  <p><em>spray-json</em> is available from the <a href="http://repo.spray.io" target="_blank">repo.spray.io</a> repository. The latest release is <code>1.3.2</code> and is built against Scala 2.10.5 and Scala 2.11.6.</p> 
+  <p>If you use SBT you can include <em>spray-json</em> in your project with</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.spray<span class="pl-pds">"</span></span> <span class="pl-k">%%</span>  <span class="pl-s"><span class="pl-pds">"</span>spray-json<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.3.2<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h3><a id="user-content-usage" class="anchor" href="https://github.com/wangzaixiang/spray-json#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h3> 
+  <p><em>spray-json</em> is really easy to use. Just bring all relevant elements in scope with</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">spray.json.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">DefaultJsonProtocol.</span><span class="pl-v">_ </span><span class="pl-c">// if you don't supply your own Protocol (see below)</span></pre>
+  </div> 
+  <p>and do one or more of the following:</p> 
+  <ul> 
+   <li><p>Parse a JSON string into its Abstract Syntax Tree (AST) representation</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"""</span>{ "some": "JSON source" }<span class="pl-pds">"""</span></span>
+<span class="pl-k">val</span> <span class="pl-en">jsonAst</span> <span class="pl-k">=</span> source.parseJson <span class="pl-c">// or JsonParser(source)</span></pre>
+    </div></li> 
+   <li><p>Print a JSON AST back to a String using either the <code>CompactPrinter</code> or the <code>PrettyPrinter</code></p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">json</span> <span class="pl-k">=</span> jsonAst.prettyPrint <span class="pl-c">// or .compactPrint</span></pre>
+    </div></li> 
+   <li><p>Convert any Scala object to a JSON AST using the pimped <code>toJson</code> method</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">jsonAst</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>).toJson</pre>
+    </div></li> 
+   <li><p>Convert a JSON AST to a Scala object with the <code>convertTo</code> method</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">myObject</span> <span class="pl-k">=</span> jsonAst.convertTo[<span class="pl-en">MyObjectType</span>]</pre>
+    </div></li> 
+  </ul> 
+  <p>In order to make steps 3 and 4 work for an object of type <code>T</code> you need to bring implicit values in scope that provide <code>JsonFormat[T]</code> instances for <code>T</code> and all types used by <code>T</code> (directly or indirectly). The way you normally do this is via a "JsonProtocol".</p> 
+  <h3><a id="user-content-jsonprotocol" class="anchor" href="https://github.com/wangzaixiang/spray-json#jsonprotocol" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JsonProtocol</h3> 
+  <p><em>spray-json</em> uses <a href="https://github.com/debasishg/sjson" target="_blank">SJSON</a>s Scala-idiomatic type-class-based approach to connect an existing type <code>T</code> with the logic how to (de)serialize its instances to and from JSON. (In fact <em>spray-json</em> even reuses some of <a href="https://github.com/debasishg/sjson" target="_blank">SJSON</a>s code, see the 'Credits' section below).</p> 
+  <p>This approach has the advantage of not requiring any change (or even access) to <code>T</code>s source code. All (de)serialization logic is attached 'from the outside'. There is no reflection involved, so the resulting conversions are fast. Scalas excellent type inference reduces verbosity and boilerplate to a minimum, while the Scala compiler will make sure at compile time that you provided all required (de)serialization logic.</p> 
+  <p>In <em>spray-jsons</em> terminology a 'JsonProtocol' is nothing but a bunch of implicit values of type <code>JsonFormat[T]</code>, whereby each <code>JsonFormat[T]</code> contains the logic of how to convert instance of <code>T</code> to and from JSON. All <code>JsonFormat[T]</code>s of a protocol need to be "mece" (mutually exclusive, collectively exhaustive), i.e. they are not allowed to overlap and together need to span all types required by the application.</p> 
+  <p>This may sound more complicated than it is. <em>spray-json</em> comes with a <code>DefaultJsonProtocol</code>, which already covers all of Scala's value types as well as the most important reference and collection types. As long as your code uses nothing more than these you only need the <code>DefaultJsonProtocol</code>. Here are the types already taken care of by the <code>DefaultJsonProtocol</code>:</p> 
+  <ul> 
+   <li>Byte, Short, Int, Long, Float, Double, Char, Unit, Boolean</li> 
+   <li>String, Symbol</li> 
+   <li>BigInt, BigDecimal</li> 
+   <li>Option, Either, Tuple1 - Tuple7</li> 
+   <li>List, Array</li> 
+   <li>immutable.{Map, Iterable, Seq, IndexedSeq, LinearSeq, Set, Vector}</li> 
+   <li>collection.{Iterable, Seq, IndexedSeq, LinearSeq, Set}</li> 
+   <li>JsValue</li> 
+  </ul> 
+  <p>In most cases however you'll also want to convert types not covered by the <code>DefaultJsonProtocol</code>. In these cases you need to provide <code>JsonFormat[T]</code>s for your custom types. This is not hard at all.</p> 
+  <h3><a id="user-content-providing-jsonformats-for-case-classes" class="anchor" href="https://github.com/wangzaixiang/spray-json#providing-jsonformats-for-case-classes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Providing JsonFormats for Case Classes</h3> 
+  <p>If your custom type <code>T</code> is a case class then augmenting the <code>DefaultJsonProtocol</code> with a <code>JsonFormat[T]</code> is really easy:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Color</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">red</span>: <span class="pl-k">Int</span>, <span class="pl-v">green</span>: <span class="pl-k">Int</span>, <span class="pl-v">blue</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">object</span> <span class="pl-en">MyJsonProtocol</span> <span class="pl-k">extends</span> <span class="pl-e">DefaultJsonProtocol</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">colorFormat</span> <span class="pl-k">=</span> jsonFormat4(<span class="pl-en">Color</span>)
+}
+
+<span class="pl-k">import</span> <span class="pl-v">MyJsonProtocol.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">spray.json.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">json</span> <span class="pl-k">=</span> <span class="pl-en">Color</span>(<span class="pl-s"><span class="pl-pds">"</span>CadetBlue<span class="pl-pds">"</span></span>, <span class="pl-c1">95</span>, <span class="pl-c1">158</span>, <span class="pl-c1">160</span>).toJson
+<span class="pl-k">val</span> <span class="pl-en">color</span> <span class="pl-k">=</span> json.convertTo[<span class="pl-en">Color</span>]</pre>
+  </div> 
+  <p>The <code>jsonFormatX</code> methods reduce the boilerplate to a minimum, just pass the right one the companion object of your case class and it will return a ready-to-use <code>JsonFormat</code> for your type (the right one is the one matching the number of arguments to your case class constructor, e.g. if your case class has 13 fields you need to use the <code>jsonFormat13</code> method). The <code>jsonFormatX</code> methods try to extract the field names of your case class before calling the more general <code>jsonFormat</code> overloads, which let you specify the field name manually. So, if spray-json has trouble determining the field names or if your JSON objects use member names that differ from the case class fields you can also use <code>jsonFormat</code> directly.</p> 
+  <p>There is one additional quirk: If you explicitly declare the companion object for your case class the notation above will stop working. You'll have to explicitly refer to the companion objects <code>apply</code> method to fix this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Color</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">red</span>: <span class="pl-k">Int</span>, <span class="pl-v">green</span>: <span class="pl-k">Int</span>, <span class="pl-v">blue</span>: <span class="pl-k">Int</span>)
+<span class="pl-k">object</span> <span class="pl-en">Color</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MyJsonProtocol</span> <span class="pl-k">extends</span> <span class="pl-e">DefaultJsonProtocol</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">colorFormat</span> <span class="pl-k">=</span> jsonFormat4(<span class="pl-en">Color</span>.apply)
+}</pre>
+  </div> 
+  <p>If your case class is generic in that it takes type parameters itself the <code>jsonFormat</code> methods can also help you. However, there is a little more boilerplate required as you need to add context bounds for all type parameters and explicitly refer to the case classes <code>apply</code> method as in this example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">NamedList</span>[<span class="pl-en">A</span>](<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">items</span>: <span class="pl-en">List</span>[<span class="pl-en">A</span>])
+
+<span class="pl-k">object</span> <span class="pl-en">MyJsonProtocol</span> <span class="pl-k">extends</span> <span class="pl-e">DefaultJsonProtocol</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">namedListFormat</span>[<span class="pl-en">A</span> <span class="pl-k">:</span><span class="pl-en">JsonFormat</span>] <span class="pl-k">=</span> jsonFormat2(<span class="pl-en">NamedList</span>.apply[<span class="pl-en">A</span>])
+}</pre>
+  </div> 
+  <h4><a id="user-content-nulloptions" class="anchor" href="https://github.com/wangzaixiang/spray-json#nulloptions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>NullOptions</h4> 
+  <p>The <code>NullOptions</code> trait supplies an alternative rendering mode for optional case class members. Normally optional members that are undefined (<code>None</code>) are not rendered at all. By mixing in this trait into your custom JsonProtocol you can enforce the rendering of undefined members as <code>null</code>. (Note that this only affect JSON writing, spray-json will always read missing optional members as well as <code>null</code> optional members as <code>None</code>.)</p> 
+  <h3><a id="user-content-providing-jsonformats-for-other-types" class="anchor" href="https://github.com/wangzaixiang/spray-json#providing-jsonformats-for-other-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Providing JsonFormats for other Types</h3> 
+  <p>Of course you can also supply (de)serialization logic for types that aren't case classes. Here is one way to do it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Color</span>(<span class="pl-k">val</span> <span class="pl-en">name</span><span class="pl-k">:</span> <span class="pl-k">String</span>, <span class="pl-k">val</span> <span class="pl-en">red</span><span class="pl-k">:</span> <span class="pl-k">Int</span>, <span class="pl-k">val</span> <span class="pl-en">green</span><span class="pl-k">:</span> <span class="pl-k">Int</span>, <span class="pl-k">val</span> <span class="pl-en">blue</span><span class="pl-k">:</span> <span class="pl-k">Int</span>)
+
+<span class="pl-k">object</span> <span class="pl-en">MyJsonProtocol</span> <span class="pl-k">extends</span> <span class="pl-e">DefaultJsonProtocol</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">ColorJsonFormat</span> <span class="pl-k">extends</span> <span class="pl-e">RootJsonFormat</span>[<span class="pl-en">Color</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">write</span>(<span class="pl-v">c</span>: <span class="pl-en">Color</span>) <span class="pl-k">=</span>
+      <span class="pl-en">JsArray</span>(<span class="pl-en">JsString</span>(c.name), <span class="pl-en">JsNumber</span>(c.red), <span class="pl-en">JsNumber</span>(c.green), <span class="pl-en">JsNumber</span>(c.blue))
+
+    <span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">value</span>: <span class="pl-en">JsValue</span>) <span class="pl-k">=</span> value <span class="pl-k">match</span> {
+      <span class="pl-k">case</span> <span class="pl-en">JsArray</span>(<span class="pl-en">Vector</span>(<span class="pl-en">JsString</span>(name), <span class="pl-en">JsNumber</span>(red), <span class="pl-en">JsNumber</span>(green), <span class="pl-en">JsNumber</span>(blue))) <span class="pl-k">=&gt;</span>
+        <span class="pl-k">new</span> <span class="pl-en">Color</span>(name, red.toInt, green.toInt, blue.toInt)
+      <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> deserializationError(<span class="pl-s"><span class="pl-pds">"</span>Color expected<span class="pl-pds">"</span></span>)
+    }
+  }
+}
+
+<span class="pl-k">import</span> <span class="pl-v">MyJsonProtocol.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">json</span> <span class="pl-k">=</span> <span class="pl-en">Color</span>(<span class="pl-s"><span class="pl-pds">"</span>CadetBlue<span class="pl-pds">"</span></span>, <span class="pl-c1">95</span>, <span class="pl-c1">158</span>, <span class="pl-c1">160</span>).toJson
+<span class="pl-k">val</span> <span class="pl-en">color</span> <span class="pl-k">=</span> json.convertTo[<span class="pl-en">Color</span>]</pre>
+  </div> 
+  <p>This serializes <code>Color</code> instances as a JSON array, which is compact but does not make the elements semantics explicit. You need to know that the color components are ordered "red, green, blue".</p> 
+  <p>Another way would be to serialize <code>Color</code>s as JSON objects:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">MyJsonProtocol</span> <span class="pl-k">extends</span> <span class="pl-e">DefaultJsonProtocol</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">ColorJsonFormat</span> <span class="pl-k">extends</span> <span class="pl-e">RootJsonFormat</span>[<span class="pl-en">Color</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">write</span>(<span class="pl-v">c</span>: <span class="pl-en">Color</span>) <span class="pl-k">=</span> <span class="pl-en">JsObject</span>(
+      <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">JsString</span>(c.name),
+      <span class="pl-s"><span class="pl-pds">"</span>red<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">JsNumber</span>(c.red),
+      <span class="pl-s"><span class="pl-pds">"</span>green<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">JsNumber</span>(c.green),
+      <span class="pl-s"><span class="pl-pds">"</span>blue<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">JsNumber</span>(c.blue)
+    )
+    <span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">value</span>: <span class="pl-en">JsValue</span>) <span class="pl-k">=</span> {
+      value.asJsObject.getFields(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>red<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>green<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>blue<span class="pl-pds">"</span></span>) <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">Seq</span>(<span class="pl-en">JsString</span>(name), <span class="pl-en">JsNumber</span>(red), <span class="pl-en">JsNumber</span>(green), <span class="pl-en">JsNumber</span>(blue)) <span class="pl-k">=&gt;</span>
+          <span class="pl-k">new</span> <span class="pl-en">Color</span>(name, red.toInt, green.toInt, blue.toInt)
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">DeserializationException</span>(<span class="pl-s"><span class="pl-pds">"</span>Color expected<span class="pl-pds">"</span></span>)
+      }
+    }
+  }
+}</pre>
+  </div> 
+  <p>This is a bit more verbose in its definition and the resulting JSON but transports the field semantics over to the JSON side. Note that this is the approach <em>spray-json</em> uses for case classes.</p> 
+  <h3><a id="user-content-jsonformat-vs-rootjsonformat" class="anchor" href="https://github.com/wangzaixiang/spray-json#jsonformat-vs-rootjsonformat" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JsonFormat vs. RootJsonFormat</h3> 
+  <p>According to the JSON specification not all of the defined JSON value types are allowed at the root level of a JSON document. A JSON string for example (like <code>"foo"</code>) does not constitute a legal JSON document by itself. Only JSON objects or JSON arrays are allowed as JSON document roots.</p> 
+  <p>In order to distinguish, on the type-level, "regular" JsonFormats from the ones producing root-level JSON objects or arrays <em>spray-json</em> defines the <a href="http://spray.github.com/spray/api/spray-json/cc/spray/json/RootJsonFormat.html" target="_blank"><code>RootJsonFormat</code></a> type, which is nothing but a marker specialization of <code>JsonFormat</code>. Libraries supporting <em>spray-json</em> as a means of document serialization might choose to depend on a <code>RootJsonFormat[T]</code> for a custom type <code>T</code> (rather than a "plain" <code>JsonFormat[T]</code>), so as to not allow the rendering of illegal document roots. E.g., the <code>SprayJsonSupport</code> trait of <em>spray-routing</em> is one notable example of such a case.</p> 
+  <p>All default converters in the <code>DefaultJsonProtocol</code> producing JSON objects or arrays are actually implemented as <code>RootJsonFormat</code>. When "manually" implementing a <code>JsonFormat</code> for a custom type <code>T</code> (rather than relying on case class support) you should think about whether you'd like to use instances of <code>T</code> as JSON document roots and choose between a "plain" <code>JsonFormat</code> and a <code>RootJsonFormat</code> accordingly.</p> 
+  <h3><a id="user-content-jsonformats-for-recursive-types" class="anchor" href="https://github.com/wangzaixiang/spray-json#jsonformats-for-recursive-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JsonFormats for recursive Types</h3> 
+  <p>If your type is recursive such as</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">i</span>: <span class="pl-k">Int</span>, <span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)</pre>
+  </div> 
+  <p>you need to wrap your format constructor with <code>lazyFormat</code> and supply an explicit type annotation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fooFormat</span><span class="pl-k">:</span> <span class="pl-en">JsonFormat</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> lazyFormat(jsonFormat(<span class="pl-en">Foo</span>, <span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>Otherwise your code will either not compile (no explicit type annotation) or throw an NPE at runtime (no <code>lazyFormat</code> wrapper). Note, that <code>lazyFormat</code> returns a <code>JsonFormat</code> even if it was given a <code>RootJsonFormat</code> which means it isn't picked up by <code>SprayJsonSupport</code>. To get back a <code>RootJsonFormat</code> just wrap the complete <code>lazyFormat</code> call with another call to <code>rootFormat</code>.</p> 
+  <h3><a id="user-content-credits" class="anchor" href="https://github.com/wangzaixiang/spray-json#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h3> 
+  <p>Most of type-class (de)serialization code is nothing but a polished copy of what <strong>Debasish Ghosh</strong> made available with his <a href="https://github.com/debasishg/sjson" target="_blank">SJSON</a> library. These code parts therefore bear his copyright. Additionally the JSON AST model is heavily inspired by the one contributed by <strong>Jorge Ortiz</strong> to <a href="https://github.com/n8han/Databinder-Dispatch" target="_blank">Databinder-Dispatch</a>.</p> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/wangzaixiang/spray-json#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p><em>spray-json</em> is licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">APL 2.0</a>.</p> 
+  <h3><a id="user-content-mailing-list" class="anchor" href="https://github.com/wangzaixiang/spray-json#mailing-list" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Mailing list</h3> 
+  <p>Please use the <a href="http://groups.google.com/group/spray-user" target="_blank">spray-user</a> mailing list if you have any questions.</p> 
+  <h3><a id="user-content-patch-policy" class="anchor" href="https://github.com/wangzaixiang/spray-json#patch-policy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Patch Policy</h3> 
+  <p>Feedback and contributions to the project, no matter what kind, are always very welcome. However, patches can only be accepted from their original author. Along with any patches, please state that the patch is your original work and that you license the work to the <em>spray-json</em> project under the project’s open source license.</p> 
+ </article>
+</div>

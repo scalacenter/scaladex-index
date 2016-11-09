@@ -1,0 +1,27 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h3><a id="user-content-resetallattrs" class="anchor" href="https://github.com/scalamacros/resetallattrs#resetallattrs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>resetallattrs</h3> 
+  <p>In Scala 2.10, when macros were first introduced, our public API exposed two low-level methods: <code>Context.resetLocalAttrs</code> and <code>Context.resetAllAttrs</code>. While these methods wouldn't be needed at all if our internal implementation of the macro API were more advanced, at our past level of technology we needed them (and we still do) to deal with possible inconsistencies in partially synthetic trees.</p> 
+  <p>Without going into details, experience has shown that <code>resetLocalAttrs</code> can deal with a majority of possible inconsistencies having a mild chance of corrupting trees as a side-effect of its operation, whereas <code>resetAllAttrs</code> can deal with some additional inconsistencies, but it's almost always guaranteed to corrupt trees. Go through our <a href="https://github.com/scalamacros/macrology201" target="_blank">Macrology 201</a> tutorial to learn more about this topic.</p> 
+  <p>Anyway, based on what we've learned about resetAttrs methods, in Scala 2.11.0 we removed <code>resetAllAttrs</code> and renamed <code>resetLocalAttrs</code> to <code>untypecheck</code>, branding <code>resetLocalAttrs</code> as the one and only public way of fixing inconsistencies in trees. When doing that, we expected that <code>resetLocalAttrs</code> should be enough for virtually everyone who previously used <code>resetAllAttrs</code>.</p> 
+  <p>Unfortunately, that ended up being not the case and due to binary compatibility constraints we can't just reintroduce <code>resetAllAttrs</code> in 2.11.x (or even in 2.12.x, for that matter). So here we go, reinstating <code>resetAllAttrs</code> in a separate library for the cases when it's really necessary. Let's hope the necessity for <code>resetAllAttrs</code> won't last for long.</p> 
+  <h3><a id="user-content-usage" class="anchor" href="https://github.com/scalamacros/resetallattrs#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h3> 
+  <p>In your SBT build you need to write a one-liner:</p> 
+  <pre><code>libraryDependencies += "org.scalamacros" %% "resetallattrs" % "1.0.0"
+</code></pre> 
+  <p>Then in your macros you write another one-liner, and that enables you to use <code>resetAllAttrs</code> like in the good old days. Beware, all usual caveats apply. Please try <code>untypecheck</code> first, and only then reach for <code>resetAllAttrs</code>.</p> 
+  <pre><code>def impl(c: Context)(...) = {
+  ...
+  import org.scalamacros.resetallattrs._
+  c.resetAllAttrs(...)
+  ...
+}
+</code></pre> 
+ </article>
+</div>

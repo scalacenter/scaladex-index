@@ -1,0 +1,187 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-typechef" class="anchor" href="https://github.com/ckaestne/typechef#typechef" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TypeChef</h1> 
+  <p><a href="https://travis-ci.org/ckaestne/TypeChef" target="_blank"><img src="https://camo.githubusercontent.com/ab5f646780c0697c497a2b618e9b3f8b78dc1f8e/68747470733a2f2f7472617669732d63692e6f72672f636b616573746e652f54797065436865662e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/ckaestne/TypeChef.svg?branch=master" style="max-width:100%;"></a> <a href="https://coveralls.io/github/ckaestne/TypeChef" target="_blank"><img src="https://camo.githubusercontent.com/3830d78802054a25d0ecfcd66d121eb585df2296/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f636b616573746e652f54797065436865662f62616467652e706e673f6272616e63683d6d6173746572" alt="Coverage" data-canonical-src="https://coveralls.io/repos/ckaestne/TypeChef/badge.png?branch=master" style="max-width:100%;"></a></p> 
+  <p>TypeChef is a research project with the goal of analyzing ifdef variability in C code with the goal of finding variability-induced bugs in large-scale real-world systems, such as the Linux kernel with several thousand features (or configuration options).</p> 
+  <p>Instead of analyzing each variant for each feature combination in isolation, TypeChef parses the entire source code containing all variability in a variability-aware fashion without preprocessing. The resulting abstract syntax tree contains the variability in form of choice nodes. Eventually, a variability-aware type system performs type checking on these trees, variability-aware data-flow analysis performs data-flow analysis and so forth.</p> 
+  <p>TypeChef was started with the goal of building a type system for C code with compile-time configurations. TypeChef was originally short for <em>Type Checking Ifdef Variability</em>. Over time it has grown into an infrastructure of all kinds of analyses. In all cases, the goal is to detect errors in all possible feature combinations, without resorting to a brute-force approach. It also evolved into a basis for a sound transformation and refactoring engine (<a href="https://github.com/joliebig/Hercules" target="_blank">Hercules</a> and <a href="https://github.com/joliebig/Morpheus" target="_blank">Morpheus</a>) and as an import mechanism for <a href="https://github.com/mbeddr" target="_blank">mbeddr</a>.</p> 
+  <p><a href="http://ckaestne.github.com/TypeChef/typechef-poster.png" target="_blank"><img alt="TypeChef Poster" src="https://camo.githubusercontent.com/b385f429adc54b697379144a4152c5b2f46f76b8/687474703a2f2f636b616573746e652e6769746875622e636f6d2f54797065436865662f74797065636865662d706f737465722d736d616c6c2e706e67" data-canonical-src="http://ckaestne.github.com/TypeChef/typechef-poster-small.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-architecture-and-subprojects" class="anchor" href="https://github.com/ckaestne/typechef#architecture-and-subprojects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Architecture and Subprojects</h2> 
+  <p>The TypeChef project contains of four main components and several helper libraries.</p> 
+  <ul> 
+   <li><p>A library for reasoning about <strong>feature expressions</strong> (subproject <em>FeatureExprLib</em>). The library allows to easily express and reason about expressions in propositional logic. It supports also parsing feature expressions and loading entire feature models (in textual format or a .dimacs file). For reasoning, internally both BDDs and SAT solvers are used which allows to scale reasoning even to feature models the size of the Linux kernel. The library is stable, has a simple and convenient syntax, and can be (and is) reused in very different contexts. It also works well with Java code.</p></li> 
+   <li><p>A library of <strong>conditional data structures</strong> for variational programming (subproject <em>ConditionalLib</em>) with several useful operations on conditional structures. Used heavily in all other subprojects. For a short introduction see <a href="https://github.com/ckaestne/TypeChef/blob/master/VariationalProgramming.md" target="_blank">VariationalProgramming.md</a>.</p></li> 
+   <li><p>A <strong>variability-aware lexer</strong> (also called partial preprocessor; subproject <em>PartialPreprocessor</em>) that reads unpreprocessed code and produces a conditional token stream. The variability-aware lexer is responsible for resolving macros and file inclusions and for normalizing <code>#ifdef</code> conditions. There are two possible internal implementations to chose from, our own based on a heavily modified version of <a href="http://www.anarres.org/projects/jcpp/" target="_blank">jcpp</a> and the independently developed on from <a href="http://cs.nyu.edu/xtc/" target="_blank">xtc</a>.</p></li> 
+   <li><p>A <strong>variability-aware parser framework</strong> provides parser combinators to build variability-aware parsers (subproject <em>ParserFramework</em>).</p></li> 
+   <li><p>The <strong>variability-aware parsers</strong> for GNU C and Java (subprojects <em>CParser</em> and <em>JavaParser</em>) use the parser framework to build parsers for the corresponding languages. The parsers read a conditional token stream and produce abstract syntax trees with corresponding choice nodes. Variability-aware parsers for HTML and JavaScript exist in forks.</p></li> 
+   <li><p>A <strong>variability-aware type system</strong> (subproject <em>CTypeChecker</em>) checks types considering variability in the abstract syntax tree. As a normal type system, it walks over the AST, collects an environment of known types, and issues (conditional) type errors when problems are found. In addition, it extracts (conditional) symbol tables needed for linker checks.</p></li> 
+   <li><p>A <strong>variability-aware control-flow and data-flow analysis</strong> (subproject <em>CRewrite</em>) provides implementations for successor/predecessor determination of abstract syntax tree elements in the presence of choice nodes and on top of it a variable liveness implementation. </p></li> 
+   <li><p>A <strong>call graph</strong> analysis with a corresponding <strong>pointer analysis</strong> is currently developed in a <a href="https://github.com/gabrielcsf/TypeChef" target="_blank">fork</a>.</p></li> 
+   <li><p>A <strong>rewrite and refactoring engine</strong> built on TypeChef is available as separate projects <a href="https://github.com/joliebig/Hercules" target="_blank">Hercules</a> and <a href="https://github.com/joliebig/Morpheus" target="_blank">Morpheus</a>.</p></li> 
+   <li><p>Setups for analyzing individual systems together with useful tooling are available as separate github projects (see section evaluation below).</p></li> 
+  </ul> 
+  <h2><a id="user-content-installation-and-usage" class="anchor" href="https://github.com/ckaestne/typechef#installation-and-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation and Usage</h2> 
+  <p>You can download a .jar file including all necessary libraries <a href="http://ckaestne.github.com/TypeChef/deploy/TypeChef-0.3.7.jar" target="_blank">TypeChef.jar</a>. Run as usual</p> 
+  <pre><code>java -jar TypeChef.jar ...
+</code></pre> 
+  <p>TypeChef is also available as a <a href="http://search.maven.org/#search%7Cga%7C1%7Ctypechef" target="_blank">maven repository</a>. With <a href="http://code.google.com/p/simple-build-tool/" target="_blank">sbt</a> you can include TypeChef with the following line:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>de.fosd.typechef<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>frontend<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.7<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>There is an Eclipse plugin <a href="https://sites.google.com/a/ic.ufal.br/colligens/" target="_blank">Colligens</a> available, developed and maintained at Universidade Federal de Alagoas and Universidade Federal de Campina Grande. The plugin is also integrated in <a href="http://fosd.net/fide" target="_blank">FeatureIDE</a>.</p> 
+  <p>To build TypeChef from source, we use <a href="http://code.google.com/p/simple-build-tool/" target="_blank">sbt</a>. Install <em>git</em> and download and compile the code as follows</p> 
+  <pre><code>git clone git://github.com/ckaestne/TypeChef.git
+cd TypeChef
+java -Xmx512M -Xss10m -jar sbt-launch.jar clean update compile
+</code></pre> 
+  <p>Due to library dependencies, setting up the TypeChef classpath can be difficult. There are two convenient mechanisms: Use <code>sbt assembly</code> to build a single jar file. Alternatively, call <code>sbt mkrun</code> to create a script <code>typechef.sh</code> that sets a correct classpath. </p> 
+  <p>Most functionality of TypeChef is accessible through parameters of the main <code>de.fosd.typechef.Frontend</code> class. Call TypeChef with <code>--help</code> to see a list of configuration parameters. See also <a href="https://github.com/ckaestne/TypeChef/blob/master/Parameter.txt" target="_blank">Parameter.txt</a>. You will need to set up system include paths with <code>-I</code> and a header file with the compiler's macro definitions with <code>-h</code> (generate, for example, with <code>echo - | gcc -dM - -E -std=gnu99</code> for gcc). Have a look at existing projects using TypeChef or contact us in case of questions.</p> 
+  <p>For development, we use IntelliJ Idea. In never versions, you can simply import the project as an sbt project. In general avoid to set the classpath in IDEs manually, but automate this step through sbt.</p> 
+  <h2><a id="user-content-evaluation" class="anchor" href="https://github.com/ckaestne/typechef#evaluation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Evaluation</h2> 
+  <p>Details on our syntax analysis of Linux have been published in an OOPSLA paper (see below). Details of the type checking and linker checking of Busybox were publishing in an subsequent OOPSLA paper (see below).</p> 
+  <p>The implementation of the data-flow analysis has been evaluated in two case studies (BusyBox and Linux) and the result of this evaluation is available from <a href="http://fosd.net/vaa" target="_blank">http://fosd.net/vaa</a></p> 
+  <p>The setups for running TypeChef on these projects are available as separate github projects, for example:</p> 
+  <ul> 
+   <li><a href="https://github.com/ckaestne/TypeChef-LinuxAnalysis" target="_blank">https://github.com/ckaestne/TypeChef-LinuxAnalysis</a></li> 
+   <li><a href="https://github.com/ckaestne/TypeChef-BusyboxAnalysis" target="_blank">https://github.com/ckaestne/TypeChef-BusyboxAnalysis</a></li> 
+  </ul> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/ckaestne/typechef#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p>The project was only possible with fruitful collaboration of many researchers, included, but not limited to:</p> 
+  <ul> 
+   <li><a href="http://www.cs.cmu.edu/%7Eckaestne/" target="_blank">Christian Kaestner</a> (Carnegie Mellon University, project lead)</li> 
+   <li><a href="http://www.infosun.fim.uni-passau.de/cl/staff/liebig/" target="_blank">Joerg Liebig</a> (University of Passau)</li> 
+   <li><a href="http://www.informatik.uni-marburg.de/%7Epgiarrusso/" target="_blank">Paolo G. Giarrusso</a> (Philipps University Marburg)</li> 
+   <li><a href="http://www.informatik.uni-marburg.de/%7Erendel/" target="_blank">Tillmann Rendel</a> (Philipps University Marburg)</li> 
+   <li><a href="http://erdweg.org/" target="_blank">Sebastian Erdweg</a> (Technical University Darmstadt)</li> 
+   <li><a href="http://www.informatik.uni-marburg.de/%7Ekos/" target="_blank">Klaus Ostermann</a> (Philipps University Marburg)</li> 
+   <li><a href="http://bis.uni-leipzig.de/ThorstenBerger" target="_blank">Thorsten Berger</a> (University of Leipzig)</li> 
+   <li><a href="http://www.infosun.fim.uni-passau.de/spl/people-rhein.php" target="_blank">Alexander von Rhein</a> (University of Passau)</li> 
+   <li><a href="http://swag.uwaterloo.ca/%7Esnadi/index.html" target="_blank">Sarah Nadi</a> (University of Waterloo)</li> 
+   <li>Alex Eifler (Philipps University Marburg)</li> 
+   <li>David Kraus (Philipps University Marburg)</li> 
+   <li>Andy Kenner (Metop Research Institute, Magdeburg)</li> 
+   <li>Steffen Haase (Metop Research Institute, Magdeburg)</li> 
+   <li>Andreas Janker (University of Passau)</li> 
+   <li>Florian Garbe (University of Passau)</li> 
+   <li>Flavio Medeiros (Universidade Federal de Campina Grande, UFCG)</li> 
+   <li><a href="http://www.infosun.fim.uni-passau.de/spl/apel/" target="_blank">Sven Apel</a> (University of Passau)</li> 
+  </ul> 
+  <p>The variability-aware lexer is implemented on top of <a href="http://www.anarres.org/projects/jcpp/" target="_blank">jcpp</a>, an implementation of the C preprocessor in Java. An alternative based on <a href="http://cs.nyu.edu/xtc/" target="_blank">xtc/superc</a> is included experimentally as well.</p> 
+  <p>For reasoning about propositional formulas, we use the SAT solver <a href="http://www.sat4j.org/" target="_blank">sat4j</a>.</p> 
+  <p>The GNU C parser is based on an <a href="http://www.antlr.org/grammar/cgram" target="_blank">ANTLR grammar for GNU C</a>.</p> 
+  <p>The Java parser is based on a grammar that can be traced back to the Java 1.5 grammar in the <a href="http://java.net/projects/javacc/downloads/directory/contrib/grammars" target="_blank">JavaCC repository</a>.</p> 
+  <p>For convenience, we include a binary of <a href="http://code.google.com/p/simple-build-tool/" target="_blank">sbt</a> in the repository.</p> 
+  <p>This work was supported in part by the European Research Council, grant #203099 and the National Science Foundation #.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/ckaestne/typechef#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Fork the project, write bug reports, contact us, .... We are open for collaborations and extensions and other scenarios. </p> 
+  <h2><a id="user-content-publications" class="anchor" href="https://github.com/ckaestne/typechef#publications" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publications</h2> 
+  <p>An in-depth discussion of the <strong>parsing</strong> approach and our experience with parsing Linux was published at OOPSLA 2011:</p> 
+  <blockquote> 
+   <p>Christian Kaestner, Paolo G. Giarrusso, Tillmann Rendel, Sebastian Erdweg, Klaus Ostermann, and Thorsten Berger. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/oopsla11_typechef.pdf" target="_blank">Variability-Aware Parsing in the Presence of Lexical Macros and Conditional Compilation</a>. In Proceedings of the 26th Annual ACM SIGPLAN Conference on Object-Oriented Programming, Systems, Languages, and Applications (OOPSLA) (Portland, OR), New York, NY, October 2011. ACM Press.</p> 
+  </blockquote> 
+  <p>In the context of a variability-aware <strong>module system</strong>, we discussed <strong>type checking</strong> and <strong>linker checks</strong> on the example of Busybox, published at OOPSLA 2012:</p> 
+  <blockquote> 
+   <p>Christian Kästner, Klaus Ostermann, and Sebastian Erdweg. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/oopsla12.pdf" target="_blank">A Variability-Aware Module System</a>. In Proceedings of the 27th Annual ACM SIGPLAN Conference on Object-Oriented Programming, Systems, Languages, and Applications (OOPSLA), pages 773--792, New York, NY: ACM Press, October 2012.</p> 
+  </blockquote> 
+  <p>A description of how we scaled <strong>type system</strong> and <strong>data-flow analysis</strong> and a performance comparison with sampling strategies can be found here:</p> 
+  <blockquote> 
+   <p>J. Liebig, A. von Rhein, C. Kästner, S. Apel, J. Dörre, and C. Lengauer. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/fse13.pdf" target="_blank">Scalable Analysis of Variable Software</a>. In Proceedings of the European Software Engineering Conference and ACM SIGSOFT Symposium on the Foundations of Software Engineering (ESEC/FSE), New York, NY: ACM Press, August 2013.</p> 
+  </blockquote> 
+  <p>A large scale <strong>analysis of configuration constraints</strong> in Linux, Busybox, eCOS, and uClibc using TypeChef was presented at ICSE 2014 and subsequently published in TSE:</p> 
+  <blockquote> 
+   <p>S. Nadi, T. Berger, C. Kästner, and K. Czarnecki. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/icse14_mining.pdf" target="_blank">Mining Configuration Constraints: Static Analyses and Empirical Results</a>. In Proceedings of the 36th International Conference on Software Engineering (ICSE), pages 140--151, June 2014.</p> 
+   <p>S. Nadi, T. Berger, C. Kästner, and K. Czarnecki. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/tse15.pdf" target="_blank">Where do Configuration Constraints Stem From? An Extraction Approach and an Empirical Study</a>. IEEE Transactions on Software Engineering (TSE), 2015.</p> 
+  </blockquote> 
+  <p>The underlying concepts of building <strong>variational data structures</strong> and programming with variational lists, maps, and sets were discussed in an Onward 2014 paper:</p> 
+  <blockquote> 
+   <p>E. Walkingshaw, C. Kästner, M. Erwig, S. Apel, and E. Bodden. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/onward14.pdf" target="_blank">Variational Data Structures: Exploring Tradeoffs in Computing with Variability</a>. In Proceedings of the 13rd SIGPLAN Symposium on New Ideas in Programming and Reflections on Software at SPLASH (Onward!), pages 213--226, New York, NY: ACM Press, 2014.</p> 
+  </blockquote> 
+  <p>A sound <strong>refactoring engine</strong> based on TypeChef was presented at ICSE 2015:</p> 
+  <blockquote> 
+   <p>J. Liebig, A. Janker, F. Garbe, S. Apel, and C. Lengauer. <a href="http://www.infosun.fim.uni-passau.de/publications/docs/LiJaGa+15.pdf" target="_blank">Morpheus: Variability-Aware Refactoring in the Wild</a>. In Proceedings of the IEEE/ACM International Conference on Software Engineering (ICSE), pages 380–391. IEEE Computer Society, May 2015. </p> 
+  </blockquote> 
+  <p>A more detailed discussion of the variability-aware <strong>lexer</strong> (or partial preprocessor) was presented at VaMoS 2011:</p> 
+  <blockquote> 
+   <p>Christian Kästner, Paolo G. Giarrusso, and Klaus Ostermann. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/vamos11.pdf" target="_blank">Partial Preprocessing C Code for Variability Analysis</a>. In Proceedings of the Fifth International Workshop on Variability Modelling of Software-intensive Systems (VaMoS) (Namur, Belgium), pages 137-140, New York, NY, USA, January 2011. ACM Press.</p> 
+  </blockquote> 
+  <p>A discussion of potential <strong>integer vulnerabilities</strong> across compile-time configurations was discussed in a technical report:</p> 
+  <blockquote> 
+   <p>Z. Coker, S. Hasan, J. Overbey, M. Hafiz, and C. Kästner. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/csse14-01.pdf" target="_blank">Integers In C: An Open Invitation to Security Attacks?</a> Technical Report CSSE14-01, Auburn, AL: College of Engineering, Auburn University, February 2014. </p> 
+  </blockquote> 
+  <p>A simple variability-aware <strong>interpreter</strong> for executing test cases was build on top of TypeChef and published at FOSD 2012. A subsequent extension of this work for PHP was published at ICSE 2014:</p> 
+  <blockquote> 
+   <p>C. Kästner, A. von Rhein, S. Erdweg, J. Pusch, S. Apel, T. Rendel, and K. Ostermann. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/FOSD12_testing.pdf" target="_blank">Toward Variability-Aware Testing</a>. In Proceedings of the 4th International Workshop on Feature-Oriented Software Development (FOSD), pages 1--8, New York, NY: ACM Press, September 2012. </p> 
+   <p>H. Nguyen, C. Kästner, and T. Nguyen. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/icse14_varex.pdf" target="_blank">Exploring Variability-Aware Execution for Testing Plugin-Based Web Applications</a>. In Proceedings of the 36th International Conference on Software Engineering (ICSE), pages 907--918, June 2014.</p> 
+  </blockquote> 
+  <p>An approach to <strong>simplify presence conditions</strong>, integrated into TypeChef, was presented at ICSE 2015:</p> 
+  <blockquote> 
+   <p>A. von Rhein, A. Grebhahn, S. Apel, N. Siegmund, D. Beyer, and T. Berger. <a href="http://www.infosun.fim.uni-passau.de/publications/docs/RhGrAp+15.pdf" target="_blank">Presence-Condition Simplification in Highly Configurable Systems</a>. In Proceedings of the IEEE/ACM International Conference on Software Engineering (ICSE), pages 178–188. IEEE Computer Society, May 2015.</p> 
+  </blockquote> 
+  <p>TypeChef supported the infrastructure for work on <strong>analyzing HTML and JavaScript within PHP code</strong>, published at FSE 2014, FSE 2015 and a tool demo:</p> 
+  <blockquote> 
+   <p>H. Nguyen, C. Kästner, and T. Nguyen. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/fse14.pdf" target="_blank">Building Call Graphs for Embedded Client-Side Code in Dynamic Web Applications</a>. In Proceedings of the ACM SIGSOFT Symposium on the Foundations of Software Engineering (FSE), New York, NY: ACM Press, November 2014. </p> 
+   <p>H. Nguyen, C. Kästner, and T. Nguyen. <a href="https://www.cs.cmu.edu/%7Eckaestne/pdf/icse15_varis_demo.pdf" target="_blank">Varis: IDE Support for Embedded Client Code in PHP Web Applications</a>. In Proceedings of the 37th International Conference on Software Engineering (ICSE), May 2015. Formal Demonstration paper. </p> 
+   <p>H. Nguyen, C. Kästner, and T. Nguyen. Cross-language Program Slicing for Dynamic Web Applications. In Proceedings of the European Software Engineering Conference and ACM SIGSOFT Symposium on the Foundations of Software Engineering (ESEC/FSE), New York, NY: ACM Press, August 2015. </p> 
+  </blockquote> 
+  <p>For an overview of <strong>variability-aware analysis</strong> in general, please refer to the a technical report on the following webpage <a href="http://fosd.net/spl-strategies" target="_blank">http://fosd.net/spl-strategies</a> and the following reports:</p> 
+  <blockquote> 
+   <p>T. Thüm, S. Apel, C. Kästner, M. Kuhlemann, I. Schaefer, and G. Saake. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/tr_analysis12.pdf" target="_blank">Analysis Strategies for Software Product Lines</a>. Technical Report FIN-2012-04, Magdeburg, Germany: University of Magdeburg, April 2012.</p> 
+   <p>A. von Rhein, S. Apel, C. Kästner, T. Thüm, and I. Schaefer. <a href="https://github.com/ckaestne/typechef/blob/master" target="_blank">The PLA Model: On the Combination of Product-Line Analyses</a>. In Proceedings of the 7th Int'l Workshop on Variability Modelling of Software-Intensive Systems (VaMoS), pages 14:1--14:8, New York, NY: ACM Press, January 2013.</p> 
+  </blockquote> 
+  <p>Finally, an early overview of the project with a very preliminary implementation (now terribly outdated and superseeded by the papers above) was published at</p> 
+  <blockquote> 
+   <p>Andy Kenner, Christian Kästner, Steffen Haase, and Thomas Leich. <a href="http://www.cs.cmu.edu/%7Eckaestne/pdf/FOSD10-typechef.pdf" target="_blank">TypeChef: Toward Type Checking #ifdef Variability in C</a>. In Proceedings of the Second Workshop on Feature-Oriented Software Development (FOSD) (Eindhoven, The Netherlands), pages 25-32, New York, NY, USA, October 2010. ACM Press.</p> 
+  </blockquote> 
+  <h2><a id="user-content-change-log" class="anchor" href="https://github.com/ckaestne/typechef#change-log" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change Log</h2> 
+  <ul> 
+   <li>v0.3.7 (November 2014) 
+    <ul> 
+     <li>Updated to Scala 2.11.4</li> 
+     <li>Lots of minor changes to type system and control flow graph</li> 
+     <li>Preparations to run on newer version of Linux</li> 
+    </ul></li> 
+   <li>v0.3.4 (March 2013) 
+    <ul> 
+     <li>Updated to Scala 2.10.1</li> 
+     <li>Various fixes and extensions to the type system (e.g., support for both styles of parameter declarations in C, better handling of ignored types, correct type for sizeOf)</li> 
+     <li>Fixed bug in parser that caused duplicated subtrees and subtrees with unsatisfiable conditions in some cases of undisciplined ifdefs</li> 
+     <li>Report #error and #warning tags again during lexing</li> 
+     <li>Experimental integration of Xtc/SuperC lexer</li> 
+     <li>Changed defaults of several command line parameters</li> 
+     <li>Supports now the entire X86 setup for the Linux kernel</li> 
+     <li>And several more</li> 
+    </ul></li> 
+   <li>v0.3.3 (June 2012)</li> 
+   <li>v0.3.2 (May 2012)</li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/ckaestne/typechef#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>TypeChef is published as open source under LGPL 3.0. See <a href="https://github.com/ckaestne/typechef/blob/master/TypeChef/blob/master/LICENSE" target="_blank">LICENSE</a>.</p> 
+ </article>
+</div>

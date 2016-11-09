@@ -1,0 +1,71 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-work-pulling-actors" class="anchor" href="https://github.com/kovacshuni/work-pulling-actors#work-pulling-actors" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Work Pulling Actors</h1> 
+  <p>Work pulling with <a href="http://akka.io/" target="_blank">Akka actors</a>. A balanced, workload routing solution.</p> 
+  <p>There's a master that will receive work units and delegates them to its workers. Work is forwarded to workers only when they are finished with their previous job and request a new one. Until then, work units received in the master are kept in a collection. That is pluggable, you decide what kind of collection, it just has to fulfill a small contract, the <code>WorkBuffer</code> trait defined. If it's bounded and excessive work is coming, the master won't accept it but reply with a message saying it is busy.</p> 
+  <ul> 
+   <li>To define the work that the workers must do, just implement the function <code>doWork</code>.</li> 
+   <li>Results are sent back wrapped in Try objects, so both Success and Failure are permitted.</li> 
+   <li>Results are sent back paired with the original work units so that they could be identified and matched if necessary.</li> 
+   <li>Even though Failures should be properly built and handled, if a worker happens to crash, it will be discarded and replaced by a new worker, ignoring the problematic work unit.</li> 
+  </ul> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/kovacshuni/work-pulling-actors#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <pre><code>git clone https://github.com/kovacshuni/work-pulling-actors.git
+cd work-pulling-actors/example
+sbt run
+</code></pre> 
+  <p>Add this in your dependencies:</p> 
+  <p><code>libraryDependencies += "com.hunorkovacs" %% "work-pulling-actors" % "1.0.0"</code></p> 
+  <p>Define what working means by extending worker:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyWorker</span> <span class="pl-k">extends</span> <span class="pl-e">Worker</span>[<span class="pl-k">String</span>, <span class="pl-k">Int</span>] {
+
+  <span class="pl-k">import</span> <span class="pl-v">context.</span><span class="pl-v">dispatcher</span>
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">doWork</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-en">Future</span>(s.toInt)
+}</pre>
+  </div> 
+  <p>Define how to create worker in master:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyMaster</span>(<span class="pl-v">nWorkers</span>: <span class="pl-k">Int</span>, <span class="pl-v">workBuffer</span>: <span class="pl-en">WorkBuffer</span>[<span class="pl-k">String</span>]) <span class="pl-k">extends</span> <span class="pl-e">Master</span>[<span class="pl-k">String</span>, <span class="pl-k">Int</span>](nWorkers, workBuffer) {
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">newWorkerProps</span> <span class="pl-k">=</span> <span class="pl-en">Props</span>(<span class="pl-c1">classOf</span>[<span class="pl-en">MyWorker</span>])
+}</pre>
+  </div> 
+  <p>Run it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">master</span> <span class="pl-k">=</span> sys.actorOf(<span class="pl-en">Props</span>(<span class="pl-c1">classOf</span>[<span class="pl-en">MyMaster</span>], <span class="pl-c1">3</span>, queue))
+<span class="pl-k">val</span> <span class="pl-en">inbox</span> <span class="pl-k">=</span> <span class="pl-en">Inbox</span>.create(sys)
+
+(<span class="pl-c1">1</span> to n) foreach { i <span class="pl-k">=&gt;</span>
+  inbox.send(master, <span class="pl-en">WorkFrom</span>[<span class="pl-k">String</span>](i.toString))
+}
+
+<span class="pl-k">val</span> <span class="pl-en">sum</span> <span class="pl-k">=</span> (<span class="pl-c1">1</span> to n).foldLeft(<span class="pl-c1">0</span>) { (acc, _) <span class="pl-k">=&gt;</span>
+  acc <span class="pl-k">+</span> inbox.receive(<span class="pl-c1">2</span> seconds).<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">Result</span>[<span class="pl-k">String</span>, <span class="pl-k">Int</span>]].result.get
+}</pre>
+  </div> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/kovacshuni/work-pulling-actors#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Just create a pull-request, we'll discuss it, i'll try to be quick.</p> 
+  <h2><a id="user-content-owner" class="anchor" href="https://github.com/kovacshuni/work-pulling-actors#owner" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Owner</h2> 
+  <p>Hunor Kovács <a href="mailto:kovacshuni@yahoo.com" target="_blank">kovacshuni@yahoo.com</a> <a href="http://www.hunorkovacs.com" target="_blank">hunorkovacs.com</a></p> 
+  <p>This solution was based off of Michael Pollmeier's <a href="https://github.com/mpollmeier/akka-patterns" target="_blank">akka-patterns</a>, but it was changed a lot.</p> 
+  <h2><a id="user-content-licence" class="anchor" href="https://github.com/kovacshuni/work-pulling-actors#licence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Licence</h2> 
+  <p>Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a> .</p> 
+ </article>
+</div>

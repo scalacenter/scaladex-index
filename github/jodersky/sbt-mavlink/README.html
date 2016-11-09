@@ -1,0 +1,151 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sbt-mavlink-plugin" class="anchor" href="https://github.com/jodersky/sbt-mavlink#sbt-mavlink-plugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT-MAVLink Plugin</h1> 
+  <p>This plugin provides generation of Scala sources from MAVLink message definition files. It translates a MAVLink dialect defined in XML to useable scala objects and provides utilities for parsing and creating MAVLink packets.</p> 
+  <h2><a id="user-content-generated-code" class="anchor" href="https://github.com/jodersky/sbt-mavlink#generated-code" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Generated Code</h2> 
+  <h3><a id="user-content-general" class="anchor" href="https://github.com/jodersky/sbt-mavlink#general" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>General</h3> 
+  <p>The generated code is in general used as the following examples illustrates.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.mavlink.</span><span class="pl-v">_</span>
+
+<span class="pl-c">//parser to transform an incoming byte stream into packets</span>
+<span class="pl-k">val</span> <span class="pl-en">parser</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Parser</span>(
+  (<span class="pl-v">pckt</span>: <span class="pl-en">Packet</span>) <span class="pl-k">=&gt;</span> {
+    <span class="pl-k">val</span> <span class="pl-en">msg</span><span class="pl-k">:</span> <span class="pl-en">Message</span> <span class="pl-k">=</span> <span class="pl-en">Message</span>.unpack(pckt.messageId, pckt.payload)
+    println(<span class="pl-s"><span class="pl-pds">"</span>received message: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> msg)
+  },
+  (<span class="pl-v">err</span>: <span class="pl-en">Parser</span>.<span class="pl-en">Errors</span>.<span class="pl-en">Error</span>) <span class="pl-k">=&gt;</span> {
+    sys.error(<span class="pl-s"><span class="pl-pds">"</span>parse error: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> err)
+  }
+)
+
+<span class="pl-c">//assembles messages into packets from a specific sender</span>
+<span class="pl-k">val</span> <span class="pl-en">assembler</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Assembler</span>(<span class="pl-en">SenderSystemId</span>, <span class="pl-en">SenderComponentId</span>)
+
+<span class="pl-c">//create an explicit message</span>
+<span class="pl-k">val</span> <span class="pl-en">message</span> <span class="pl-k">=</span> <span class="pl-en">Heartbeat</span>(<span class="pl-c1">0</span>)
+
+<span class="pl-c">//pack the message into a payload</span>
+<span class="pl-k">val</span> (<span class="pl-v">id</span>: <span class="pl-k">Byte</span>, <span class="pl-v">payload</span>: <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>]) <span class="pl-k">=</span> <span class="pl-en">Message</span>.pack(message)
+
+<span class="pl-c">//assemble into packet</span>
+<span class="pl-k">val</span> <span class="pl-en">packet</span> <span class="pl-k">=</span> assembler.assemble(id, payload)
+
+<span class="pl-c">//simulate wire transfer</span>
+<span class="pl-k">val</span> <span class="pl-en">data</span> <span class="pl-k">=</span> packet.toArray
+parser.push(data)</pre>
+  </div> 
+  <p>The concrete message implementations are generated according to the selected dialect (see section Keys).</p> 
+  <h3><a id="user-content-types" class="anchor" href="https://github.com/jodersky/sbt-mavlink#types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Types</h3> 
+  <h4><a id="user-content-messages" class="anchor" href="https://github.com/jodersky/sbt-mavlink#messages" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Messages</h4> 
+  <p>Every message is mapped to a Scala case class, its name converted to CamelCase. The fields of the case class correspond to the fields defined in the dialect definition (names are converted to camelCase).</p> 
+  <h4><a id="user-content-fields" class="anchor" href="https://github.com/jodersky/sbt-mavlink#fields" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Fields</h4> 
+  <p>Field types are mapped according to the following table</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th>Definition Type</th> 
+     <th>Scala Type</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td>int8_t / uint8_t / char</td> 
+     <td>Byte</td> 
+    </tr> 
+    <tr> 
+     <td>in16_t / uint16_t</td> 
+     <td>Short</td> 
+    </tr> 
+    <tr> 
+     <td>int32_t / uint32_t</td> 
+     <td>Int</td> 
+    </tr> 
+    <tr> 
+     <td>int64_t / uint64_t</td> 
+     <td>Long</td> 
+    </tr> 
+    <tr> 
+     <td>float</td> 
+     <td>Float</td> 
+    </tr> 
+    <tr> 
+     <td>double</td> 
+     <td>Double</td> 
+    </tr> 
+    <tr> 
+     <td>char[]</td> 
+     <td>String</td> 
+    </tr> 
+    <tr> 
+     <td>&lt;type&gt;[]</td> 
+     <td>Array[&lt;type&gt;]</td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>Remarks:</p> 
+  <ol> 
+   <li>Since Scala only supports signed integer types, it is up to the client to interpret the values of fields correctly.</li> 
+   <li>Read-only fields such as uint8_t_mavlink_version don't play well with case classes. These fields are therefore treated as writeable by the user. E.g. when creating a standard heartbeat message, the user must add the mavlink version manually.</li> 
+  </ol> 
+  <h4><a id="user-content-enums" class="anchor" href="https://github.com/jodersky/sbt-mavlink#enums" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Enums</h4> 
+  <p>Enums are mapped to Scala objects, their fields defined as final vals (CamelCase) of type Int.</p> 
+  <p><em>Note that since many MAVLink messages that use enums do not define a dependency on them in XML (no 'enum=' attribute), no type safety can be guaranteed when generating messages.</em></p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/jodersky/sbt-mavlink#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Add the following to your plugins:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.github.jodersky<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-mavlink<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span>)`</pre>
+  </div> 
+  <p>Enable the plugin</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> enablePlugins(<span class="pl-en">SbtMavlink</span>)</pre>
+  </div> 
+  <p>Set a MAVLink dialect</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> mavlinkDialect <span class="pl-k">:</span><span class="pl-k">=</span> baseDirectory.value <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>mavlink<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>dialect.xml<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Compile your project.</p> 
+  <h2><a id="user-content-keys" class="anchor" href="https://github.com/jodersky/sbt-mavlink#keys" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Keys</h2> 
+  <p>All keys are defined in <code>com.github.jodersky.mavlink.sbt.MavlinkKeys</code></p> 
+  <ul> 
+   <li> <code>mavlinkDialect</code> - [Setting] - Specifies the location of the MAVLink dialect definition for which to generate Scala code.</li> 
+   <li><p><code>mavlinkGenerate</code> - [Task] - Generates Scala code to interoperate with MAVLink. In a standard project using this plugin this task is added to <code>sourceGenerators</code>, i.e. it is automatically called before compiling.</p></li> 
+   <li><p><code>mavlinkTarget</code> - [Setting] - Output directory of generated Scala sources. This should be within <code>sourceManaged</code>.</p></li> 
+  </ul> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/jodersky/sbt-mavlink#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p>Copyright (c) 2015 Jakob Odersky</p> 
+  <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p> 
+  <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.</p> 
+  <p>You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/" target="_blank">http://www.gnu.org/licenses/</a>.</p> 
+ </article>
+</div>

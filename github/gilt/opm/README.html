@@ -1,0 +1,73 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>Object Prevalence Model (OPM)</p> 
+  <p><a href="https://www.codacy.com/public/myykseok/opm" target="_blank"><img src="https://camo.githubusercontent.com/13a70022167c314ebf1527378de412e8a221b74a/68747470733a2f2f7777772e636f646163792e636f6d2f70726f6a6563742f62616467652f3631653934653533616462343431383561613436316531313836393836663462" alt="Codacy Badge" data-canonical-src="https://www.codacy.com/project/badge/61e94e53adb44185aa461e1186986f4b" style="max-width:100%;"></a></p> 
+  <p>OPM is a Scala library for managing the value of an object over time as a timeline of changes. It works either in-memory or durably atop MongoDB.</p> 
+  <p>Let’s start with a simple example:</p> 
+  <pre><code>package example
+
+import com.gilt.opm._
+
+trait User extends OpmObject {
+  def name: String
+  def email: Option[String]
+}
+</code></pre> 
+  <p>OPM uses a pure trait to express a data model, and then implements the storage for that data model under the covers. To create an instance of a User, you need to give it an ID, which is always a <code>String</code>:</p> 
+  <pre><code>object Example extends App {
+
+  import OpmFactory._
+
+  val user = instance[User]("ebowman").set(_.name).to("Eric Bowman")
+
+  val newUser = user.set(_.name).to("Eric Lennon Bowman")
+
+  newUser.timeline.foreach(println)
+}
+</code></pre> 
+  <p>Running this shows the complete history of this object:</p> 
+  <pre><code>example.User(opmKey=ebowman,name=Eric Lennon Bowman)
+example.User(opmKey=ebowman,name=Eric Bowman)
+example.User(opmKey=ebowman,)
+</code></pre> 
+  <p>Note this includes the initial state of the object, before it was given a name, which might not be useful. You can avoid this by "pruning" the object to a given state, like:</p> 
+  <pre><code>val user = instance[User]("ebowman").set(_.name).to("Eric Bowman").prune
+</code></pre> 
+  <p>After we call prune, this program prints:</p> 
+  <pre><code>example.User(opmKey=ebowman,name=Eric Lennon Bowman)
+example.User(opmKey=ebowman,name=Eric Bowman)
+</code></pre> 
+  <p>The <code>OpmObject</code> trait provides some useful methods for understanding history and identity:</p> 
+  <pre><code>final def opmKey: String = ""
+final def opmTimestamp: Long = 0L
+</code></pre> 
+  <p>The <code>opmKey</code> method returns the object's id, which gives the object an identity that persists across mutations of that object.</p> 
+  <p>The <code>opmTimestamp</code> method returns the timestamp (in nanoseconds since the epoch) when this particular value was created.</p> 
+  <p>For example,</p> 
+  <pre><code>  val start = System.currentTimeMillis()
+  val user = instance[User]("ebowman").set(_.name).to("Eric Bowman").prune
+  Thread.sleep(1000)
+  val newUser = user.set(_.name).to("Eric Lennon Bowman")
+  newUser.timeline.foreach { user =&gt;
+    println(s"user = $user, created ${user.opmTimestamp / 1000000 - start} ms after program start")
+  }
+}
+</code></pre> 
+  <p>Will print something like:</p> 
+  <pre><code>user = example.User(opmKey=ebowman,name=Eric Lennon Bowman), created 1113 ms after program start
+user = example.User(opmKey=ebowman,name=Eric Bowman), created 112 ms after program start
+</code></pre> 
+  <p>Note that we need to divide the timestamp by 1000000 to convert it to the standard JVM "ms since the epoch".</p> 
+  <p>You can also see in this example, that the head of the stream is the most recent version of the object, and you can traverse backwards in time through the stream.</p> 
+  <p>Suppose you wanted to find the value of an object two hours ago, you might write code like:</p> 
+  <pre><code>import scala.concurrent.duration._
+val twoHoursAgo = System.currentTimeMillis() - 2.hours.toMillis
+
+newUser.timeline.dropWhile(_.opmTimestamp &gt; twoHoursAgo).headOption
+</code></pre> 
+  <h2><a id="user-content-opm-for-builders" class="anchor" href="https://github.com/gilt/opm#opm-for-builders" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>OPM for builders</h2> 
+ </article>
+</div>

@@ -1,0 +1,113 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><em>spray-jwt</em> is a set of utilities for <a href="http://spray.io" target="_blank">spray.io</a>, which perform signing and verification of a JSON Web Token (JWT).</p> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/kikuomax/spray-jwt#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h1> 
+  <p>Add the following dependency to your <code>build.sbt</code>,</p> 
+  <pre><code>libraryDependencies += "com.github.kikuomax" %% "spray-jwt" % "0.0.3"
+</code></pre> 
+  <p>Binaries for Scala 2.10.x and 2.11.x are provided.</p> 
+  <p>If you are using <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless 2</a>; i.e., <code>spray-routing-shapeless2</code>, please try the following,</p> 
+  <pre><code>libraryDependencies += "com.github.kikuomax" %% "spray-jwt-shapeless2" % "0.0.3"
+</code></pre> 
+  <h1><a id="user-content-example" class="anchor" href="https://github.com/kikuomax/spray-jwt#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h1> 
+  <p>The following example is derived from the example code in the documentation for the <code>authenticate</code> directive of <a href="http://spray.io" target="_blank">spray.io</a>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.kikuomax.spray.jwt.JwtDirectives.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kikuomax.spray.jwt.JwtClaimBuilder.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kikuomax.spray.jwt.JwtClaimVerifier.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kikuomax.spray.jwt.</span><span class="pl-v">JwtSignature</span>
+<span class="pl-k">import</span> <span class="pl-v">com.nimbusds.jose.</span><span class="pl-v">JWSAlgorithm</span>
+<span class="pl-k">import</span> <span class="pl-v">com.nimbusds.jwt.</span><span class="pl-v">JWTClaimsSet</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span>{
+  <span class="pl-v">ExecutionContext</span>,
+  <span class="pl-v">Future</span>
+}
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">DurationInt</span>
+<span class="pl-k">import</span> <span class="pl-v">spray.routing.</span><span class="pl-v">HttpService</span>
+<span class="pl-k">import</span> <span class="pl-v">spray.routing.authentication.</span>{
+  <span class="pl-v">BasicAuth</span>,
+  <span class="pl-v">UserPass</span>
+}
+
+<span class="pl-c">/** An example service. */</span>
+<span class="pl-k">trait</span> <span class="pl-en">ExampleService</span> <span class="pl-k">extends</span> <span class="pl-e">HttpService</span> {
+  <span class="pl-c">// you can use Actor's dispatcher as the execution context</span>
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">executionContext</span><span class="pl-k">:</span> <span class="pl-en">ExecutionContext</span>
+
+  <span class="pl-c">// imports implicit signing and verification functions in the scope</span>
+  <span class="pl-k">val</span> <span class="pl-en">signature</span> <span class="pl-k">=</span> <span class="pl-en">JwtSignature</span>(<span class="pl-en">JWSAlgorithm</span>.<span class="pl-en">HS256</span>, <span class="pl-s"><span class="pl-pds">"</span>chiave segreta<span class="pl-pds">"</span></span>)
+  <span class="pl-k">import</span> <span class="pl-v">signature.</span><span class="pl-v">_</span>
+
+  <span class="pl-c">// an implicit claim set building function</span>
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">claimBuilder</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Option</span>[<span class="pl-en">JWTClaimsSet</span>] <span class="pl-k">=</span>
+    claimSubject[<span class="pl-k">String</span>](identity) <span class="pl-k">&amp;&amp;</span>
+    claimIssuer(<span class="pl-s"><span class="pl-pds">"</span>spray-jwt<span class="pl-pds">"</span></span>) <span class="pl-k">&amp;&amp;</span>
+    claimExpiration(<span class="pl-c1">30.</span>minutes)
+
+  <span class="pl-c">// a user authentication function</span>
+  <span class="pl-k">def</span> <span class="pl-en">myUserPassAuthenticator</span>(<span class="pl-v">userPass</span>: <span class="pl-en">Option</span>[<span class="pl-en">UserPass</span>])<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Option</span>[<span class="pl-k">String</span>]] <span class="pl-k">=</span>
+    <span class="pl-en">Future</span> {
+      <span class="pl-k">if</span> (userPass.exists(up <span class="pl-k">=&gt;</span> up.user <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span> <span class="pl-k">&amp;&amp;</span> up.pass <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>p4ssw0rd<span class="pl-pds">"</span></span>))
+        <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>)
+      <span class="pl-k">else</span>
+        <span class="pl-c1">None</span>
+    }
+
+  <span class="pl-k">val</span> <span class="pl-en">route</span> <span class="pl-k">=</span>
+    path(<span class="pl-s"><span class="pl-pds">"</span>authenticate<span class="pl-pds">"</span></span>) {
+      authenticate(<span class="pl-en">BasicAuth</span>(jwtAuthenticator(myUserPassAuthenticator _), <span class="pl-s"><span class="pl-pds">"</span>secure site<span class="pl-pds">"</span></span>)) { jws <span class="pl-k">=&gt;</span>
+        complete(jws.serialize())
+      }
+    } <span class="pl-k">~</span>
+    path(<span class="pl-s"><span class="pl-pds">"</span>verify<span class="pl-pds">"</span></span>) {
+      <span class="pl-c">// a privileging function</span>
+      <span class="pl-k">def</span> <span class="pl-en">privilegeUser</span>(<span class="pl-v">claim</span>: <span class="pl-en">JWTClaimsSet</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+        <span class="pl-en">Option</span>(claim.getSubject()) flatMap {
+          <span class="pl-k">case</span> <span class="pl-v">user</span>: <span class="pl-k">String</span> <span class="pl-k">if</span> user <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(user)
+          <span class="pl-k">case</span> _                              <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>
+        }
+
+      authorizeToken(verifyNotExpired <span class="pl-k">&amp;&amp;</span> privilegeUser) { userName <span class="pl-k">=&gt;</span>
+        complete(s<span class="pl-s"><span class="pl-pds">"</span>The user is $userName<span class="pl-pds">"</span></span>)
+      }
+    }
+}</pre>
+  </div> 
+  <p>You also can find an example application in the <a href="https://github.com/kikuomax/spray-jwt/blob/master/example" target="_blank">example</a> directory. Please read the <a href="https://github.com/kikuomax/spray-jwt/blob/master/example/README.md" target="_blank">README</a> for the example.</p> 
+  <h1><a id="user-content-jwt-library" class="anchor" href="https://github.com/kikuomax/spray-jwt#jwt-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JWT Library</h1> 
+  <p><a href="http://connect2id.com/products/nimbus-jose-jwt" target="_blank">Nimbus JOSE + JWT</a> is used for generating and verifying JWTs.</p> 
+  <h1><a id="user-content-release-notes" class="anchor" href="https://github.com/kikuomax/spray-jwt#release-notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release Notes</h1> 
+  <h2><a id="user-content-003" class="anchor" href="https://github.com/kikuomax/spray-jwt#003" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.3</h2> 
+  <ul> 
+   <li>The minimum resolution of <code>JwtClaimBuilder.claimExpiration</code> is one second.</li> 
+  </ul> 
+  <h2><a id="user-content-002" class="anchor" href="https://github.com/kikuomax/spray-jwt#002" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.2</h2> 
+  <ul> 
+   <li><code>JwtDirectives.authenticateToken</code> can take a directive that extracts a token from an HTTP request.</li> 
+   <li>An example application is introduced.</li> 
+  </ul> 
+  <h1><a id="user-content-license" class="anchor" href="https://github.com/kikuomax/spray-jwt#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h1> 
+  <p><a href="http://opensource.org/licenses/MIT" target="_blank">MIT License</a></p> 
+ </article>
+</div>

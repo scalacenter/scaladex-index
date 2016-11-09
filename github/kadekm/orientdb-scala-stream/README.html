@@ -1,0 +1,176 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><em>This library serves as Proof of Concept! It is not battle (production) tested.</em></p> 
+  <p><em>If you are missing functionality, or something doesn't work, please either raise issue or make a PR. <a href="https://github.com/kadekm/orientdb-scala-stream#info" target="_blank">See info</a> at bottom.</em></p> 
+  <h2><a id="user-content-orientdb-scala-stream" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#orientdb-scala-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>OrientDB Scala Stream</h2> 
+  <p>Library that allows you to execute <code>non blocking queries</code> and <code>live queries</code> on database, and treat results as reactive stream.</p> 
+  <p><strong>If your OrientDB version &lt; 2.2 you need to enable capabilities it in server config! Check OrientDB docs</strong></p> 
+  <pre><code>&lt;handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin"&gt;
+    &lt;parameters&gt;
+            &lt;parameter value="true" name="enabled"/&gt;
+        &lt;/parameters&gt;
+&lt;/handler&gt;
+</code></pre> 
+  <p>Supported</p> 
+  <ul> 
+   <li><a href="https://github.com/kadekm/orientdb-scala-stream#live-queries" target="_blank">Live queries</a> (experimental - <a href="http://orientdb.com/docs/last/Live-Query.html#whats-next" target="_blank">OrientDB documentation</a>)</li> 
+   <li><a href="https://github.com/kadekm/orientdb-scala-stream#non-blocking-queries" target="_blank">Nonblocking queries</a></li> 
+   <li><a href="https://github.com/kadekm/orientdb-scala-stream#non-blocking-queries" target="_blank">Named query execution</a></li> 
+   <li><a href="https://github.com/kadekm/orientdb-scala-stream#non-blocking-queries" target="_blank">Parametrized query execution</a></li> 
+  </ul> 
+  <p>If you're using SBT, add following to build.sbt:</p> 
+  <p><code>libraryDependencies += "com.marekkadek" %% "orientdb-scala-stream" % "0.5.4"</code></p> 
+  <h2><a id="user-content-live-queries" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#live-queries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Live queries</h2> 
+  <p><a href="http://orientdb.com/docs/last/Live-Query.html" target="_blank">(OrientDB documentation)</a></p> 
+  <p>Example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">orientdb.streams.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">db</span><span class="pl-k">:</span> <span class="pl-en">ODatabaseDocumentTx</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">loader</span> <span class="pl-k">=</span> <span class="pl-en">OrientLoaderDeserializing</span>()
+
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">LiveQuery</span>(bufferSize <span class="pl-k">=</span> <span class="pl-c1">1000</span>, <span class="pl-en">OverflowStrategy</span>.<span class="pl-en">DropHead</span>)
+                     (<span class="pl-s"><span class="pl-pds">"</span>LIVE SELECT FROM Person<span class="pl-pds">"</span></span>)
+<span class="pl-en">Source</span>.fromPublisher(query.execute())
+    .collect{ <span class="pl-k">case</span> <span class="pl-en">Created</span>(data) <span class="pl-k">=&gt;</span> data }
+    .takeWhile(_.field(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).toString().contains(<span class="pl-s"><span class="pl-pds">"</span>Pet<span class="pl-pds">"</span></span>))
+    .runForeach(println)</pre>
+  </div> 
+  <p>Once you execute live query you get notifications for following events as they are streamed from OrientDB:</p> 
+  <ul> 
+   <li>Loaded</li> 
+   <li>Updated</li> 
+   <li>Deleted</li> 
+   <li>Created</li> 
+  </ul> 
+  <p>The listener is automatically unsubscribed from OrientDB once the subscription is cancelled (executing command <code>live unsubscribe TOKEN_VALUE</code>)</p> 
+  <p>Live queries have internal buffer (which is being filled by DB, for example, when there is no demand downstreams, but events keep happening on DB) which you configure during creation of query. <a href="https://github.com/kadekm/orientdb-scala-stream#overflow-strategies" target="_blank">Read here on overflow strategies and how to handle if you don't need/want any internal buffer</a>.</p> 
+  <h2><a id="user-content-non-blocking-queries" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#non-blocking-queries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Non blocking queries</h2> 
+  <p><a href="http://orientdb.com/docs/last/Document-Database.html#non-blocking-query-since-v21" target="_blank">(OrientDB documentation)</a></p> 
+  <p>There are two types of queries, both having some advantages and disadvantages:</p> 
+  <ul> 
+   <li>Backpressuring (DB doesn't fetch more data than is demanded downstream)</li> 
+   <li>Buffering (DB fetches data and fills buffer, even without demand, but sends it downstream accordingly)</li> 
+  </ul> 
+  <p>They have same interface, so you can exchange one for another, depending on your need.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">orientdb.streams.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">db</span><span class="pl-k">:</span> <span class="pl-en">ODatabaseDocumentTx</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">loader</span> <span class="pl-k">=</span> <span class="pl-en">OrientLoaderDeserializing</span>()
+
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">NonBlockingQueryBackpressuring</span>[<span class="pl-en">ODocument</span>](<span class="pl-s"><span class="pl-pds">"</span>SELECT * FROM Person<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">src</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>.fromPublisher(query.execute())
+          .runForeach(println)</pre>
+  </div> 
+  <p>This will backpressure the databse - if there is no demand from downstream, database won't perform the fetch - thus non blocking queries have no need for internal buffer.Cancelling subscription will stop database from fetching next rows.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">orientdb.streams.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">db</span><span class="pl-k">:</span> <span class="pl-en">ODatabaseDocumentTx</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">loader</span> <span class="pl-k">=</span> <span class="pl-en">OrientLoaderDeserializing</span>()
+
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">NonBlockingQueryBuffering</span>[<span class="pl-en">ODocument</span>]
+        (bufferSize <span class="pl-k">=</span> <span class="pl-c1">1000</span>, <span class="pl-en">OverflowStrategy</span>.<span class="pl-en">DropHead</span>)
+        (<span class="pl-s"><span class="pl-pds">"</span>SELECT * FROM Person WHERE name = :lookingFor<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">src</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>.fromPublisher(query.executeNamed(<span class="pl-s"><span class="pl-pds">"</span>lookingFor<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Peter<span class="pl-pds">"</span></span>))
+          .map(myMethod)
+          .filter(myFilter)
+          .runFold(...) </pre>
+  </div> 
+  <p>This will start the query on database, and results will be aggregated as database provides them. They will be pushed downstream accordingly to reactive-streams specification (based on demand...). Cancelling subscription will not stop DB from finishing query, but elements will no longer be buffered.</p> 
+  <p>Buffering queries have internal buffer which you configure during creation of query. <a href="https://github.com/kadekm/orientdb-scala-stream#overflow-strategies" target="_blank">More here</a>.</p> 
+  <h2><a id="user-content-overflow-strategies" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#overflow-strategies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Overflow strategies</h2> 
+  <p>Overflow strategies are almost identical to akka-streams strategies. Overflow happens when buffer is full and you receive a message. Overflow strategy decides what will happen next. You can understand the buffer as FIFO collection. Here are illustrations of supported strategies (on left is the oldest element, thus element which is supposed to be emited on next demand). Suppose buffer size is 6:</p> 
+  <table>
+   <thead> 
+    <tr> 
+     <th align="left">Strategy</th> 
+     <th align="left">Description</th> 
+     <th align="left">Buffer visualisation</th> 
+    </tr> 
+   </thead>
+   <tbody> 
+    <tr> 
+     <td align="left">DropHead</td> 
+     <td align="left">drops oldest in buffer</td> 
+     <td align="left"><code>x ~&gt; [b u f f e r]</code> becomes <code>[u f f e r x]</code></td> 
+    </tr> 
+    <tr> 
+     <td align="left">DropTail</td> 
+     <td align="left">drops youngest in buffer</td> 
+     <td align="left"><code>x ~&gt; [b u f f e r]</code> becomes <code>[b u f f e x]</code></td> 
+    </tr> 
+    <tr> 
+     <td align="left">DropBuffer</td> 
+     <td align="left">drops current buffer</td> 
+     <td align="left"><code>x ~&gt; [b u f f e r]</code> becomes <code>[x]</code></td> 
+    </tr> 
+    <tr> 
+     <td align="left">DropNew</td> 
+     <td align="left">drops incoming element</td> 
+     <td align="left"><code>x ~&gt; [b u f f e r]</code> becomes <code>[b u f f e r]</code></td> 
+    </tr> 
+    <tr> 
+     <td align="left">Fail</td> 
+     <td align="left">emits error to stream</td> 
+     <td align="left"><code>x ~&gt; [b u f f e r]</code> emits <code>BufferOverflowException</code></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>You may decide you don't want any internal buffer - for example in LiveQueries, when you are interested in changes that happen only AFTER there is active demand from downstream</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">LiveQuery</span>(bufferSize <span class="pl-k">=</span> <span class="pl-c1">0</span>, <span class="pl-en">OverflowStrategy</span>.<span class="pl-en">DropNew</span>)
+                     (<span class="pl-s"><span class="pl-pds">"</span>LIVE SELECT FROM Person<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Since it's curried you can easily define your own LiveQuery without buffer, such as <code>LiveQueryInstant</code>. Currently it is not provided as standard (as I tried to keep as few interfaces as possible).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">LiveQueryInstant</span>(<span class="pl-s"><span class="pl-pds">"</span>LIVE SELECT FROM Person<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-loader" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#loader" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Loader</h2> 
+  <p>To execute the queries you need following implicit (beside the regular ones):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">loader</span> <span class="pl-k">=</span> <span class="pl-en">OrientLoaderDeserializing</span>()</pre>
+  </div> 
+  <p>Loader specified what to do with your entity before it is sent to the source of the stream (and thus possibly emitted downstreams). <strong>It runs on thread which has database setup as ThreadLocal, so you can call methods which require it</strong>. In stream operations, there is no such guarantee. You can implement your <code>OrientLoader</code>.</p> 
+  <p><strong>The way this works may change in future.</strong></p> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <p>Why does <code>Source.fromPublisher(query.execute()).runForeach(println)</code> produce inconstitent strings ? Sometimes with Person prefix, sometimes without ?</p> 
+  <ul> 
+   <li>Depends on which thread gets to run the execution. It can actually be the thread that has database set in ThreadLocals, which then makes <code>ODocument.toString()</code> to fetch also schema. Please read <em>implicits loader part</em>.</li> 
+  </ul> 
+  <h2><a id="user-content-info" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#info" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Info</h2> 
+  <p>This library is yet in very early stage. There are lots of TODOs, and often you may discover better way to implement something - feel free to raise issue or submit PR, I will very much welcome it.</p> 
+  <h3><a id="user-content-current-todos" class="anchor" href="https://github.com/kadekm/orientdb-scala-stream#current-todos" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Current TODOs</h3> 
+  <ul> 
+   <li>finish some tests and move them from playground to real tests</li> 
+   <li>clean up tests, better setup and teardown logic, remote/local traits</li> 
+   <li>incode TODOs</li> 
+  </ul> 
+ </article>
+</div>

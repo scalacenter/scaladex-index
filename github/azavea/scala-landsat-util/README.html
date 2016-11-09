@@ -1,0 +1,59 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-landsat-api-client-for-scala" class="anchor" href="https://github.com/azavea/scala-landsat-util#landsat-api-client-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Landsat API client for Scala</h1> 
+  <p>This is a scala client for Developmentseed's <a href="https://github.com/developmentseed/landsat-api/" target="_blank">landsat-api</a></p> 
+  <h3><a id="user-content-example-usages" class="anchor" href="https://github.com/azavea/scala-landsat-util#example-usages" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example usages</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">philly</span> <span class="pl-k">=</span> <span class="pl-en">GeoJson</span>.fromFile[<span class="pl-en">Polygon</span>](<span class="pl-s"><span class="pl-pds">"</span>src/test/resources/philly.json<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">images</span> <span class="pl-k">=</span>
+    <span class="pl-en">Landsat8Query</span>()
+      .withStartDate(<span class="pl-k">new</span> <span class="pl-en">DateTime</span>(<span class="pl-c1">2012</span>, <span class="pl-c1">1</span>, <span class="pl-c1">12</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>))
+      .withEndDate(<span class="pl-k">new</span> <span class="pl-en">DateTime</span>(<span class="pl-c1">2015</span>, <span class="pl-c1">11</span>, <span class="pl-c1">5</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>))
+      .withMaxCloudCoverage(<span class="pl-c1">80.0</span>)
+      .intersects(philly)
+      .collect()
+
+  <span class="pl-k">val</span> <span class="pl-en">s3Client</span> <span class="pl-k">=</span> <span class="pl-en">S3Client</span>()
+  <span class="pl-k">val</span> <span class="pl-en">filtered</span> <span class="pl-k">=</span> images.filter(s3Client.imageExists(_))
+
+  filtered
+    .foreach { image <span class="pl-k">=&gt;</span>
+      println(s<span class="pl-s"><span class="pl-pds">"</span>${image.sceneId} - ${image.cloudPercentage}% clouds<span class="pl-pds">"</span></span>)
+      println(s<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span>Aquisition Date: ${image.aquisitionDate}<span class="pl-pds">"</span></span>)
+      println(s<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span>USGS Thumbnail URL: ${image.thumbnailUrl}<span class="pl-pds">"</span></span>)
+      println(s<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span>AWS large thumbnail URL: ${image.largeThumbnail}<span class="pl-pds">"</span></span>)
+      println(s<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span>Google URL: ${image.googleUrl}<span class="pl-pds">"</span></span>)
+      println(s<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span>Footprint GeoJSON: ${image.footprint.toGeoJson}<span class="pl-pds">"</span></span>)
+    }
+
+  println(s<span class="pl-s"><span class="pl-pds">"</span>Results: ${filtered.size} images.<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">d</span> <span class="pl-k">=</span> scala.concurrent.duration.<span class="pl-en">Duration</span>(<span class="pl-c1">30</span>, scala.concurrent.duration.<span class="pl-en">SECONDS</span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span>
+    <span class="pl-en">Landsat8Query</span>()
+      .intersects(<span class="pl-k">-</span><span class="pl-c1">75.65185546874999</span>,<span class="pl-c1">39.69701710019832</span>,<span class="pl-k">-</span><span class="pl-c1">74.718017578125</span>,<span class="pl-c1">40.24009510908543</span>)
+      .execute()
+
+  result <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Some</span>(r) <span class="pl-k">=&gt;</span>
+      <span class="pl-k">for</span>(image <span class="pl-k">&lt;</span><span class="pl-k">-</span> r.images.take(<span class="pl-c1">1</span>)) {
+        println(image.thumbnailUrl)
+        println(image.largeThumbnail)
+        println(image.smallThumbnail)
+      }
+      println(s<span class="pl-s"><span class="pl-pds">"</span>RESULT COUNT: ${r.metadata.total}<span class="pl-pds">"</span></span>)
+    <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span>
+      println(<span class="pl-s"><span class="pl-pds">"</span>No results found!<span class="pl-pds">"</span></span>)
+  }</pre>
+  </div> 
+ </article>
+</div>

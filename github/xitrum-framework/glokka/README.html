@@ -1,0 +1,139 @@
+<div class="announce instapaper_body rst" data-path="README.rst" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>Glokka = Global + Akka</p> 
+  <p>Glokka is a Scala library that allows you to register and lookup actors by names in an Akka cluster. See:</p> 
+  <ul> 
+   <li><a href="http://erlang.org/doc/man/global.html" target="_blank">Erlang's "global" module</a></li> 
+   <li><a href="http://doc.akka.io/docs/akka/2.3.8/scala/cluster-usage.html" target="_blank">Akka's cluster feature</a></li> 
+  </ul> 
+  <p>Glokka is used in <a href="http://xitrum-framework.github.io/" target="_blank">Xitrum</a> to implement its distributed <a href="https://github.com/sockjs/sockjs-client" target="_blank">SockJS</a> feature.</p> 
+  <p>See <a href="http://xitrum-framework.github.io/glokka" target="_blank">Glokka's Scaladoc</a>.</p> 
+  <a name="user-content-sbt" target="_blank" href=""></a> 
+  <h2><a id="user-content-sbt" class="anchor" href="https://github.com/xitrum-framework/glokka#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT</h2> 
+  <pre>libraryDependencies += "com.typesafe.akka" %% "akka-actor"   % "2.3.10"
+libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.3.10"
+libraryDependencies += "com.typesafe.akka" %% "akka-contrib" % "2.3.10"
+
+libraryDependencies += "tv.cntt" %% "glokka" % "2.3"
+</pre> 
+  <a name="user-content-create-registry" target="_blank" href=""></a> 
+  <h2><a id="user-content-create-registry" class="anchor" href="https://github.com/xitrum-framework/glokka#create-registry" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Create registry</h2> 
+  <pre>import akka.actor.ActorSystem
+import glokka.Registry
+
+val system    = ActorSystem("MyClusterSystem")
+val proxyName = "my proxy name"
+val registry  = Registry.start(system, proxyName)
+</pre> 
+  <ul> 
+   <li>You can start multiple registry actors. They must have different <code>proxyName</code>.</li> 
+   <li>For convenience, <code>proxyName</code> can be any String, you don't have to URI-escape it.</li> 
+  </ul> 
+  <a name="user-content-register-actor-by-props" target="_blank" href=""></a> 
+  <h2><a id="user-content-register-actor-by-props" class="anchor" href="https://github.com/xitrum-framework/glokka#register-actor-by-props" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Register actor by props</h2> 
+  <pre>// For convenience, ``actorName`` can be any String, you don't have to URI-escape it.
+val actorName = "my actor name"
+
+// Props to create the actor you want to register.
+val props = ...
+
+registry ! Registry.Register(actorName, props)
+</pre> 
+  <p>If the named actor exists, the registry will just return it. You will receive:</p> 
+  <pre>Registry.Found(actorName, actorRef)
+</pre> 
+  <p>Otherwise <code>props</code> will be used to create the actor locally (when the actor dies, it will be unregistered automatically). You will receive:</p> 
+  <pre>Registry.Created(actorName, actorRef)
+</pre> 
+  <p>If you don't need to differentiate <code>Found</code> and <code>Created</code>:</p> 
+  <pre>registry ! Registry.Register(actorName, props)
+context.become {
+  case msg: Registry.FoundOrCreated =&gt;
+    val actorName = msg.name
+    val actorRef  = msg.ref
+}
+</pre> 
+  <a name="user-content-register-actor-by-ref" target="_blank" href=""></a> 
+  <h2><a id="user-content-register-actor-by-ref" class="anchor" href="https://github.com/xitrum-framework/glokka#register-actor-by-ref" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Register actor by ref</h2> 
+  <pre>registry ! Registry.Register(actorName, actorRefToRegister)
+</pre> 
+  <p>If the actor has not been registered, or has already been registered with the same name, you will receive:</p> 
+  <pre>Registry.Registered(actorName, actorRef)
+</pre> 
+  <p>Otherwise if there's another actor that has been registered with the name, you will receive:</p> 
+  <pre>Registry.Conflict(actorName, otherActorRef, actorRefToRegister)
+</pre> 
+  <p>In this case, you may need to stop <code>actorRefToRegister</code>, depending on your application logic.</p> 
+  <a name="user-content-lookup-actor-by-name" target="_blank" href=""></a> 
+  <h2><a id="user-content-lookup-actor-by-name" class="anchor" href="https://github.com/xitrum-framework/glokka#lookup-actor-by-name" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Lookup actor by name</h2> 
+  <p>Send:</p> 
+  <pre>registry ! Registry.Lookup(actorName)
+</pre> 
+  <p>You will receive:</p> 
+  <pre>Registry.Found(actorName, actorRef)
+</pre> 
+  <p>Or:</p> 
+  <pre>Registry.NotFound(actorName)
+</pre> 
+  <a name="user-content-tell" target="_blank" href=""></a> 
+  <h2><a id="user-content-tell" class="anchor" href="https://github.com/xitrum-framework/glokka#tell" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tell</h2> 
+  <p>If you don't want to lookup and keep the actor reference:</p> 
+  <pre>registry ! Registry.Tell(actorName, msg)
+</pre> 
+  <pre>registry ! Registry.Tell(actorName, props, msg)
+</pre> 
+  <ul> 
+   <li>If the named actor exists, msg will be sent to it.</li> 
+   <li>Otherwise, props will be used to create the named actor, and msg will be sent to it.</li> 
+  </ul> 
+  <a name="user-content-cluster" target="_blank" href=""></a> 
+  <h2><a id="user-content-cluster" class="anchor" href="https://github.com/xitrum-framework/glokka#cluster" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cluster</h2> 
+  <p>Glokka can run in Akka non-cluster mode (local or remote). While developing, you can run Akka in local mode, then later config Akka to run in cluster mode.</p> 
+  <p>In cluster mode, Glokka uses <a href="http://doc.akka.io/docs/akka/2.4.0/contrib/cluster-singleton.html" target="_blank">Akka's Cluster Singleton Pattern</a> to maintain an actor that stores the name -&gt; actorRef lookup table.</p> 
+  <p>Akka config file for a node should look like this (note "ClusterSystem" in the source code example above and the config below):</p> 
+  <pre>akka {
+  actor {
+    provider = "akka.cluster.ClusterActorRefProvider"
+  }
+
+  # This node
+  remote {
+    log-remote-lifecycle-events = off
+    netty.tcp {
+      hostname = "127.0.0.1"
+      port = 2551  # 0 means random port
+    }
+  }
+
+  cluster {
+    seed-nodes = [
+      "akka.tcp://MyClusterSystem@127.0.0.1:2551",
+      "akka.tcp://MyClusterSystem@127.0.0.1:2552"]
+
+    auto-down-unreachable-after = 10s
+  }
+}
+</pre> 
+ </article>
+</div>

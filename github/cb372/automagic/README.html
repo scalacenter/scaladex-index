@@ -1,0 +1,121 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-automagic" class="anchor" href="https://github.com/cb372/automagic#automagic" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Automagic</h1> 
+  <p><a href="https://travis-ci.org/cb372/automagic" target="_blank"><img src="https://camo.githubusercontent.com/d86e21a26bcee4841b92e8c42f9c4c2e44ac4491/68747470733a2f2f7472617669732d63692e6f72672f63623337322f6175746f6d616769632e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/cb372/automagic.png?branch=master" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-whats-this-all-about" class="anchor" href="https://github.com/cb372/automagic#whats-this-all-about" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What's this all about?</h2> 
+  <p>When you want to pass data across a boundary between two <a href="http://martinfowler.com/bliki/BoundedContext.html" target="_blank">bounded contexts</a>, you often have to make a transformation between two very similar models. </p> 
+  <p>For example, you might be passing data from one microservice to another. You don't want to share the same model across both services, because they contain subtle differences and serve different purposes. On the other hand the transformation between them can take a lot of time and effort.</p> 
+  <p>To take an example based on the actual use case that prompted the creation of Automagic, imagine you have a Content Management System (CMS) for creating news content and a backend service that exposes that content on an API for consumption by frontend clients. Whenever somebody creates or updates a news article, the CMS service sends that data to the backend service via a queue.</p> 
+  <p>The backend service takes articles off the queue, transforms them from the CMS's model to its own, and writes them to its datastore.</p> 
+  <p>The models have a lot of fields and are heavily nested, so writing the transformations by hand can be a soul-destroying process:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">transformArticle</span>(<span class="pl-v">input</span>: <span class="pl-en">CMSArticle</span>) <span class="pl-k">=</span> <span class="pl-en">Article</span>(
+    id <span class="pl-k">=</span> input.id,
+    headline <span class="pl-k">=</span> input.headline,
+    body <span class="pl-k">=</span> input.body,
+    trailText <span class="pl-k">=</span> input.trailText,
+    thumbnailUrl <span class="pl-k">=</span> input.thumbnailUrl,
+    legallySensitive <span class="pl-k">=</span> input.legallySensitive,
+    createdAt <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DateTime</span>(input.createdAt),
+    createdBy <span class="pl-k">=</span> transformUser(input.createdBy),
+    tags <span class="pl-k">=</span> input.tags.map(transformTag),
+    <span class="pl-c">// ... and so on, ad nauseum ...</span>
+)
+
+<span class="pl-k">def</span> <span class="pl-en">transformUser</span>(<span class="pl-v">input</span>: <span class="pl-en">CMSUser</span>) <span class="pl-k">=</span> <span class="pl-en">User</span>(
+    id <span class="pl-k">=</span> input.id,
+    firstName <span class="pl-k">=</span> input.firstName,
+    lastName <span class="pl-k">=</span> input.lastName,
+    email <span class="pl-k">=</span> input.email
+)
+
+<span class="pl-k">def</span> <span class="pl-en">transformTag</span>(<span class="pl-v">input</span>: <span class="pl-en">CMSTag</span>) <span class="pl-k">=</span> <span class="pl-en">Tag</span>(
+    id <span class="pl-k">=</span> input.id,
+    name <span class="pl-k">=</span> input.name,
+    description <span class="pl-k">=</span> input.description,
+)</pre>
+  </div> 
+  <p>This is where Automagic comes in. It uses a macro to automagically convert from one model to the other. Behold!</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">automagic.</span><span class="pl-v">_</span>
+
+<span class="pl-k">def</span> <span class="pl-en">transformArticle</span>(<span class="pl-v">input</span>: <span class="pl-en">CMSArticle</span>)<span class="pl-k">:</span> <span class="pl-en">Article</span> <span class="pl-k">=</span> transform[<span class="pl-en">CMSArticle</span>, <span class="pl-en">Article</span>](input,
+    <span class="pl-s"><span class="pl-pds">"</span>createdAt<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-k">new</span> <span class="pl-en">DateTime</span>(input.createdAt),
+    <span class="pl-s"><span class="pl-pds">"</span>createdBy<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> transform[<span class="pl-en">CMSUser</span>, <span class="pl-en">User</span>](input.createdBy),
+    <span class="pl-s"><span class="pl-pds">"</span>tags<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> input.tags.map(tag <span class="pl-k">=&gt;</span> transform[<span class="pl-en">CMSTag</span>, <span class="pl-en">Tag</span>](tag))</pre>
+  </div> 
+  <p>This achieves the same result as the hand-written code, without putting you through boilerplate Hell.</p> 
+  <p>Of course, it doesn't have to be for transforming models between microservices. Converting between DAOs and domain models inside an application would be another use case for Automagic.</p> 
+  <h2><a id="user-content-how-does-it-work" class="anchor" href="https://github.com/cb372/automagic#how-does-it-work" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How does it work?</h2> 
+  <p>The core of Automagic is a Scala macro that constructs an instance of the required type, copying the values of the input object's fields to the newly created object.</p> 
+  <p>In the simplest case (e.g. the transformation of users and tags in the example above), it simply takes the values of the input object's fields and passes them the output object's constructor.</p> 
+  <p>Sometimes things are a little more complicated than that: you might want to add extra fields that aren't provided by the input, or replace the input fields with values that you supply. To deal with this, Automagic lets you supply overrides.</p> 
+  <p>In the transformation of articles in the example above, three of the <code>Article</code> class's constructor parameters (<code>createdAt</code>, <code>createdBy</code> and <code>tags</code>) were supplied via overrides. The rest of the parameters were copied from the fields of the input object.</p> 
+  <h3><a id="user-content-instance-construction" class="anchor" href="https://github.com/cb372/automagic#instance-construction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Instance construction</h3> 
+  <p>To construct an instance, Automagic first tries all <code>apply</code> methods on the companion object. Then it tries the class's primary constructor.</p> 
+  <p>As soon as it finds a constructor it can use (i.e. it successfully fills in all the constructor arguments using the input fields and overrides), it generates code that invokes that constructor.</p> 
+  <p>If it can't use any of the constructors, it gives up and gives you a compile error with details of what it tried.</p> 
+  <p>Automagic can be used to construct case classes, normal classes, and classes built by an <code>apply</code> method in the companion object.</p> 
+  <p>Note that the order of the parameters does not matter. Automagic only identifies parameters using their names and does not care about order.</p> 
+  <h2><a id="user-content-type-safety" class="anchor" href="https://github.com/cb372/automagic#type-safety" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Type safety</h2> 
+  <p>All the types of the input fields and overrides are checked at compile time. If something is amiss, you'll get a nice compile error telling you what went wrong:</p> 
+  <pre><code>[error] /Users/cbirchall/code/myapp/ModelTransformation.scala:177: Failed to find any suitable constructors for class Event. Tried the following:
+[error]
+[error] Event.apply(title: Option[String], venue: Option[String], location: Option[String], price: Option[String], start: Option[org.joda.time.DateTime], end: Option[org.joda.time.DateTime])
+[error]   ↳ Cannot find a suitable value for parameter 'end'
+[error]
+[error] new Event(title: Option[String], venue: Option[String], location: Option[String], price: Option[String], start: Option[org.joda.time.DateTime], end: Option[org.joda.time.DateTime])
+[error]   ↳ Cannot find a suitable value for parameter 'end'
+[error]
+[error]
+[error]   private def transformEvent(event: CMSEvent): Event = transform[CMSEvent, Event](event,
+[error]                                                                                  ^
+[error] one error found
+[error] (compile:compileIncremental) Compilation failed
+</code></pre> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/cb372/automagic#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to use</h2> 
+  <p>In your sbt file:</p> 
+  <pre><code>libraryDependencies += "com.github.cb372" %% "automagic" % "0.1"
+</code></pre> 
+  <p>In your code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">automagic.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">theirModel</span><span class="pl-k">:</span> <span class="pl-en">TheirModel</span> <span class="pl-k">=</span> ...
+
+<span class="pl-k">val</span> <span class="pl-en">myModel</span><span class="pl-k">:</span> <span class="pl-en">MyModel</span> <span class="pl-k">=</span> transform[<span class="pl-en">TheirModel</span>, <span class="pl-en">MyModel</span>](theirModel)
+
+<span class="pl-c">// or, if you need to supply some overrides</span>
+<span class="pl-k">val</span> <span class="pl-en">myModel</span><span class="pl-k">:</span> <span class="pl-en">MyModel</span> <span class="pl-k">=</span> transform[<span class="pl-en">TheirModel</span>, <span class="pl-en">MyModel</span>](theirModel, <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">123</span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>baz<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-requirements" class="anchor" href="https://github.com/cb372/automagic#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h2> 
+  <p>Only works with Scala 2.11.</p> 
+  <h2><a id="user-content-acknowledgements" class="anchor" href="https://github.com/cb372/automagic#acknowledgements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Acknowledgements</h2> 
+  <p><a href="http://www.strongtyped.io/blog/2014/05/23/case-class-related-macros/" target="_blank">This blog post</a> by Luc Duponcheel was really helpful.</p> 
+  <p>I also found plenty of useful information in StackOverflow answers written by the usual suspects, chiefly Travis Brown (@travisbrown).</p> 
+ </article>
+</div>

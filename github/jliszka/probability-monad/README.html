@@ -1,0 +1,179 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-probability-distribution-monad" class="anchor" href="https://github.com/jliszka/probability-monad#probability-distribution-monad" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Probability Distribution Monad</h1> 
+  <p>Makes it easy to create, manipulate and sample probability distributions.</p> 
+  <h2><a id="user-content-installation" class="anchor" href="https://github.com/jliszka/probability-monad#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>Include this in your sbt config:</p> 
+  <pre><code>"org.jliszka" %% "probability-monad" % "1.0.1"
+</code></pre> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/jliszka/probability-monad#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <p>Here's how you would code up the following problem: You are given either a fair coin or a biased coin with equal probability. If you flip it 5 times and it comes up heads each time, what is the probability you have the fair coin?</p> 
+  <pre><code>case class Trial(haveFairCoin: Boolean, flips: List[Coin])
+
+def bayesianCoin(nflips: Int): Distribution[Trial] = {
+  for {
+    haveFairCoin &lt;- tf()
+    c = if (haveFairCoin) coin else biasedCoin(0.9)
+    flips &lt;- c.repeat(nflips)
+  } yield Trial(haveFairCoin, flips)
+}
+
+bayesianCoin(5).given(_.flips.forall(_ == H)).pr(_.haveFairCoin)
+</code></pre> 
+  <p>Or: You repeatedly roll a 6-sided die and keep a running sum. What is the probability the sum reaches exactly 30?</p> 
+  <pre><code>def dieSum(rolls: Int): Distribution[List[Int]] = {
+  markov(rolls, List(0))(runningSum =&gt; for {
+    d &lt;- die
+  } yield (d + runningSum.head) :: runningSum)
+}
+
+dieSum(30).pr(_ contains 30)
+</code></pre> 
+  <p>Or: Each family has children until it has a boy, and then stops. What is the expected fraction of girls in the population?</p> 
+  <pre><code>sealed abstract class Child
+case object Boy extends Child
+case object Girl extends Child
+
+def family = {
+  discreteUniform(List(Boy, Girl)).until(_ contains Boy)
+}
+
+def population(families: Int) = {
+  for {
+    children &lt;- family.repeat(families).map(_.flatten)
+    val girls = children.count(_ == Girl)
+  } yield 1.0 * girls / children.length
+}
+
+population(4).ev
+</code></pre> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/jliszka/probability-monad#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>A <code>Distribution[T]</code> represents a random variable that, when sampled, produces values of type <code>T</code> according to a particular probability distribution. For example, <code>Distribution.uniform</code> is a <code>Distribution[Double]</code> that produces <code>Double</code> values between 0.0 and 1.0, uniformly distributed. <code>Distribution.coin</code> is a <code>Distribution[Coin]</code> that produces the values <code>H</code> and <code>T</code> with equal probability, and <code>Distribution.biasedCoin(0.3)</code> is a <code>Distribution[Coin]</code> that produces the value <code>H</code> 30% of the time and the value <code>T</code> 70% of the time.</p> 
+  <p>You can think of a <code>Distribution[T]</code> as a collection like any other scala collection that you can <code>map</code>, <code>flatMap</code> and <code>filter</code> over. The presence of these methods allow you to use scala's for-comprehensions to manipulate distributions. For example, here's how you would create a distribution that represents the sum of 2 die rolls:</p> 
+  <pre><code>val dice = for {
+  d1 &lt;- die
+  d2 &lt;- die
+} yield d1 + d2
+</code></pre> 
+  <p>Here, <code>die</code> is a <code>Distribution[Int]</code>, and <code>d1</code> and <code>d2</code> are both <code>Int</code>s. The type of <code>dice</code> is <code>Distribution[Int]</code>. You can see that for-comprehensions are an easy way to define new a distribution in terms of individual samples from other distributions.</p> 
+  <p>You can visualize a distribution with <code>hist</code>:</p> 
+  <pre><code>scala&gt; dice.hist
+ 2  2.61% ##
+ 3  5.48% #####
+ 4  8.70% ########
+ 5 10.53% ##########
+ 6 14.21% ##############
+ 7 16.90% ################
+ 8 13.90% #############
+ 9 11.43% ###########
+10  8.35% ########
+11  5.17% #####
+12  2.72% ##
+</code></pre> 
+  <p>If you want more control over the display of continuous distributions, use <code>bucketedHist</code>:</p> 
+  <pre><code>scala&gt; normal.map(_ * 2 + 1).bucketedHist(20)   // 20 buckets, min &amp; max determined automatically
+-7.0  0.02%
+-6.0  0.03%
+-5.0  0.22%
+-4.0  1.01% #
+-3.0  2.69% ##
+-2.0  6.43% ######
+-1.0 12.19% ############
+ 0.0 17.07% #################
+ 1.0 19.74% ###################
+ 2.0 17.55% #################
+ 3.0 12.17% ############
+ 4.0  6.55% ######
+ 5.0  2.92% ##
+ 6.0  1.10% #
+ 7.0  0.23%
+ 8.0  0.06%
+ 9.0  0.01%
+10.0  0.01%
+
+scala&gt; cauchy.bucketedHist(-10, 10, 20)   // min=-10, max=10, #buckets=20
+-10.0  0.20%
+ -9.0  0.38%
+ -8.0  0.44%
+ -7.0  0.55%
+ -6.0  0.82%
+ -5.0  1.23% #
+ -4.0  1.85% #
+ -3.0  2.92% ##
+ -2.0  6.78% ######
+ -1.0 16.78% ################
+  0.0 30.04% ##############################
+  1.0 16.64% ################
+  2.0  6.22% ######
+  3.0  3.06% ###
+  4.0  1.76% #
+  5.0  1.26% #
+  6.0  0.84%
+  7.0  0.67%
+  8.0  0.48%
+  9.0  0.42%
+ 10.0  0.14%
+</code></pre> 
+  <p>This probability monad is based on sampling, so the values and plots produced will be inexact and will vary between runs.</p> 
+  <pre><code>scala&gt; normal.stdev
+res9: Double = 1.0044818262040809
+
+scala&gt; normal.stdev
+res10: Double = 1.0071194147525722
+</code></pre> 
+  <h1><a id="user-content-code-and-examples" class="anchor" href="https://github.com/jliszka/probability-monad#code-and-examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code and examples</h1> 
+  <p><a href="https://github.com/jliszka/probability-monad/blob/master/src/main/scala/probability-monad/Distribution.scala" target="_blank">Distribution.scala</a> contains code for creating and manipulating probability distributions. Built-in distributions include:</p> 
+  <ul> 
+   <li>uniform discrete (including die and fair coin)</li> 
+   <li>weighted discrete (biased coin, uses the <a href="http://www.keithschwarz.com/darts-dice-coins/" target="_blank">alias method</a>)</li> 
+   <li>bernoulli</li> 
+   <li>geometric</li> 
+   <li>binomial</li> 
+   <li>negative binomial</li> 
+   <li>poisson</li> 
+   <li>zipf</li> 
+   <li>uniform continuous</li> 
+   <li>normal</li> 
+   <li>cauchy</li> 
+   <li>chi2</li> 
+   <li>pareto</li> 
+   <li>exponential</li> 
+   <li>lognormal</li> 
+   <li>student's t-distribution</li> 
+   <li>gamma</li> 
+   <li>beta</li> 
+  </ul> 
+  <p>Methods for manipulating distributions include:</p> 
+  <ul> 
+   <li>adding (convolution), subracting (cross-correlation), multiplying and dividing distributions</li> 
+   <li>joint distributions (a flatMap)</li> 
+   <li>marginal distributions (a filter)</li> 
+   <li>creating Markov chains (an iterated flatMap)</li> 
+   <li>finding the probability of arbitrary predicates, conditional probabililty</li> 
+   <li>finding expected values (mean), standard deviation, variance, skewness and kurtosis</li> 
+   <li>sampling, histogram</li> 
+  </ul> 
+  <p><a href="https://github.com/jliszka/probability-monad/blob/master/src/main/scala/probability-monad/Examples.scala" target="_blank">Examples.scala</a> contains some example uses, and possibly a RISK simulator.</p> 
+  <p>To try out some examples, do</p> 
+  <pre><code>$ ./sbt console
+
+scala&gt; runBayesianCoin(5)
+</code></pre> 
+  <p>Contributions welcome!</p> 
+ </article>
+</div>

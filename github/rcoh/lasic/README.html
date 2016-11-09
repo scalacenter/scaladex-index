@@ -1,0 +1,118 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-lasic-" class="anchor" href="https://github.com/rcoh/lasic#lasic-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>lasic <a href="https://travis-ci.org/rcoh/lasic" target="_blank"><img src="https://camo.githubusercontent.com/91996c16d8bf5e0885792591dac0d9e46df9ea91/68747470733a2f2f7472617669732d63692e6f72672f72636f682f6c617369632e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/rcoh/lasic.svg?branch=master" style="max-width:100%;"></a></h1> 
+  <p>Lasic is a small Scala library that allows you to generate JSON serialization on the fly. If you're coming from a functional background, lasic may make more sense described as "runtime lenses converted to JSON". Rather than having to write separate APIs to return different fields of the same object, <code>lasic</code> allows the UI (or anyone else) to request both the fields and pagination they want. It's also completely type safe, verified at compile time, and doesn't use reflection. Here's a quick example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">bio</span>: <span class="pl-k">String</span>, <span class="pl-v">email</span>: <span class="pl-k">String</span>)
+<span class="pl-k">def</span> <span class="pl-en">allUsers</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">User</span>]</pre>
+  </div> 
+  <p>Suppose users had really prolific bios and you didn't want to send them to the UI when the UI only wanted the user's name. Rather than needing to create a separate endpoint, lasic defines a simple query language to allow the UI to request exactly the fields it wants:</p> 
+  <pre><code>// Just the name an email, no bio
+[name,email]
+</code></pre> 
+  <p>It also includes control for pagination:</p> 
+  <pre><code>// Get the name and email for up to 10 users, starting at the 5th
+[name,email]*10+5
+</code></pre> 
+  <p>With these queries, lasic will generate the specific JSON requested by the UI with <em>almost</em> no boilerplate.</p> 
+  <h2><a id="user-content-quick-start" class="anchor" href="https://github.com/rcoh/lasic#quick-start" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quick Start</h2> 
+  <p>Add <code>lasic</code> as a dependency:</p> 
+  <ul> 
+   <li>For SBT:</li> 
+  </ul> 
+  <pre><code>libraryDependencies += "com.github.rcoh" % "lasic_2.11" % "0.2.0"
+</code></pre> 
+  <ul> 
+   <li>For Maven:</li> 
+  </ul> 
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;com.github.rcoh&lt;/groupId&gt;
+  &lt;artifactId&gt;lasic_2.11&lt;/artifactId&gt;
+  &lt;version&gt;0.2.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Take your class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">email</span>: <span class="pl-k">String</span>, <span class="pl-v">bio</span>: <span class="pl-k">String</span>, <span class="pl-v">friends</span>: <span class="pl-en">List</span>[<span class="pl-en">Friend</span>], <span class="pl-v">internalId</span>: <span class="pl-k">Int</span>)</pre>
+  </div> 
+  <p>Annotate the fields you want to expose to the UI:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.rcoh.query.loaders.</span>{<span class="pl-v">Expose</span>, <span class="pl-v">ExposeAlways</span>, <span class="pl-v">Loadable</span>}
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-k">@</span><span class="pl-en">Expose</span> <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-k">@</span><span class="pl-en">ExposeAlways</span> <span class="pl-v">email</span>: <span class="pl-k">String</span>, <span class="pl-k">@</span><span class="pl-en">Expose</span> <span class="pl-v">bio</span>: <span class="pl-k">String</span>, <span class="pl-k">@</span><span class="pl-en">Expose</span> <span class="pl-v">friends</span>: <span class="pl-en">List</span>[<span class="pl-en">User</span>], <span class="pl-v">internalId</span>: <span class="pl-k">Int</span>)</pre>
+  </div> 
+  <p>Generate <code>Loadable[User]</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">userLoadable</span> <span class="pl-k">=</span> <span class="pl-en">Loadable</span>.byAnnotations[<span class="pl-en">User</span>]</pre>
+  </div> 
+  <p>Render some Json:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.rcoh.query.lang.</span><span class="pl-v">QueryParser</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.rcoh.query.render.</span><span class="pl-v">Renderer</span>
+<span class="pl-c">// Get the users name, email, and the name of their first 5 friends</span>
+<span class="pl-k">val</span> <span class="pl-en">user</span><span class="pl-k">:</span> <span class="pl-en">User</span> <span class="pl-k">=</span> <span class="pl-en">User</span>(<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>alice@hotmail.com<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>My bio<span class="pl-pds">"</span></span>, <span class="pl-en">List</span>(<span class="pl-en">User</span>(<span class="pl-s"><span class="pl-pds">"</span>bob<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bob@geocities.net<span class="pl-pds">"</span></span>,  <span class="pl-s"><span class="pl-pds">"</span>bob<span class="pl-pds">"</span></span>, <span class="pl-en">List</span>(), internalId <span class="pl-k">=</span> <span class="pl-c1">0</span>)), internalId <span class="pl-k">=</span> <span class="pl-c1">1</span>)
+<span class="pl-c">// In reality, you'd want to handle the possibility of a ParseError</span>
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">QueryParser</span>.parse(<span class="pl-s"><span class="pl-pds">"</span>[name,friends[name]*5]<span class="pl-pds">"</span></span>).right.get
+
+<span class="pl-k">import</span> <span class="pl-v">org.json4s.native.JsonMethods.</span><span class="pl-v">_</span>
+println(pretty(render(<span class="pl-en">Renderer</span>.render(user, query))))
+<span class="pl-c">/*</span>
+<span class="pl-c">{</span>
+<span class="pl-c">  "name":"Alice",</span>
+<span class="pl-c">  "email":"alice@hotmail.com",</span>
+<span class="pl-c">  "friends":[{</span>
+<span class="pl-c">    "name":"bob",</span>
+<span class="pl-c">    "email":"bob@geocities.net"</span>
+<span class="pl-c">  }]</span>
+<span class="pl-c">}</span>
+<span class="pl-c">*/</span></pre>
+  </div> 
+  <p>The <code>email</code> field appears even though we didn't request it because it's set to <code>ExposeAlways</code>. Note how the renderer properly handles the fact that <code>friends</code> is a list and correctly extracts fields.</p> 
+  <h3><a id="user-content-but-wait-theres-more" class="anchor" href="https://github.com/rcoh/lasic#but-wait-theres-more" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>But wait: there's more!</h3> 
+  <ul> 
+   <li>For cases where you want all the fields:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// As if you put `@ExposeAlways` on each field (not method!!)</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">allFieldsLoader</span> <span class="pl-k">=</span> <span class="pl-en">Loadable</span>.allFieldsAlways[<span class="pl-en">User</span>]
+
+<span class="pl-c">// As if you put `@Expose` on each field</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">byRequest</span> <span class="pl-k">=</span> <span class="pl-en">Loadable</span>.allFieldsByRequest[<span class="pl-en">User</span>]</pre>
+  </div> 
+  <ul> 
+   <li>Lasic also works for traits, normal classes, and objects. It even works if the annotated fields come from different places:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Entity</span> {
+   <span class="pl-k">@</span><span class="pl-en">ExposeAlways</span>
+   <span class="pl-k">def</span> <span class="pl-en">id</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">UserEntity</span> <span class="pl-k">extends</span> <span class="pl-e">Entity</span> {
+   <span class="pl-k">@</span><span class="pl-en">Expose</span>
+   <span class="pl-k">def</span> <span class="pl-en">email</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+
+   <span class="pl-k">@</span><span class="pl-en">Expose</span>
+   <span class="pl-k">def</span> <span class="pl-en">age</span><span class="pl-k">:</span> <span class="pl-k">Int</span>
+}</pre>
+  </div> 
+  <h2><a id="user-content-general-usage" class="anchor" href="https://github.com/rcoh/lasic#general-usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>General Usage</h2> 
+  <p>In general, you'll want to wire up the rendering layer wherever in your webserver you are converting things to JSON to avoid code duplication. The only requirement is that the argument to the render method must be a member of the <code>Loadable</code> typeclass (<code>def foo[A: Loadable](a: A)</code>)</p> 
+  <h2><a id="user-content-under-the-hood" class="anchor" href="https://github.com/rcoh/lasic#under-the-hood" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Under the Hood</h2> 
+  <p>Lasic uses macros to build accesors for fields marked with <code>@Expose</code> and <code>@ExposeAlways</code>. The macro brings classes into the type class <code>Loadable[T]</code>. The macro also verifies that all exposed members of a given class are also <code>Loadable[T]</code>. Given a <code>Loadable[T]</code> the renderer parses the query string and builds the JSON object.</p> 
+ </article>
+</div>
