@@ -21,7 +21,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Versioning</h2> 
-  <p>ScalaCache is available for Scala 2.11.x and 2.12.0-M4.</p> 
+  <p>ScalaCache is available for Scala 2.11.x and 2.12.x.</p> 
   <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/cb372/cacheable#how-to-use" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -231,6 +231,12 @@ put(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</s
     </svg></a>Flags</h3> 
   <p>Cache GETs and/or PUTs can be temporarily disabled using flags. This can be useful if for example you want to skip the cache and read a value from the DB under certain conditions.</p> 
   <p>You can set flags by defining a <a href="https://github.com/cb372/cacheable/blob/master/core/src/main/scala/scalacache/Flags.scala" target="_blank">scalacache.Flags</a> instance in implicit scope.</p> 
+  <p>The detailed behaviour of the flags is as follows:</p> 
+  <ul> 
+   <li>If <code>readsEnabled</code> = false, the cache will not be read, and ScalaCache will behave as if it was a cache miss. This means that memoization will compute the value (e.g. read it from a DB) and then write it to the cache.</li> 
+   <li>If <code>writesEnabled</code> = false, in the case of a cache miss, the value will be computed (e.g. read from a DB) but it will not be written to the cache.</li> 
+   <li>If both flags are false, memoization will not read from the cache or write to the cache.</li> 
+  </ul> 
   <p>Note that your memoized method must take an implicit parameter of type <code>Flags</code>. Otherwise any flags you try to set using an implicit will be silently ignored.</p> 
   <p>Example:</p> 
   <div class="highlight highlight-source-scala">
@@ -249,6 +255,7 @@ put(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</s
   getUser(id)
 }</pre>
   </div> 
+  <p>Tip: Because the flags are passed as a parameter to your method, they will be included in the generated cache key. This means the cache key will vary depending on the value of the flags, which is probably not what you want. In that case, you should exclude the <code>implicit flags: Flags</code> parameter from cache key generation by annotating it with <code>@cacheKeyExclude</code>.</p> 
   <h3><a id="user-content-typed-api" class="anchor" href="https://github.com/cb372/cacheable#typed-api" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -299,7 +306,7 @@ cache.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Google Guava</h3> 
   <p>SBT:</p> 
-  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-guava" % "0.9.2"
+  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-guava" % "0.9.3"
 </code></pre> 
   <p>Usage:</p> 
   <div class="highlight highlight-source-scala">
@@ -322,7 +329,7 @@ cache.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Memcached</h3> 
   <p>SBT:</p> 
-  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-memcached" % "0.9.2"
+  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-memcached" % "0.9.3"
 </code></pre> 
   <p>Usage:</p> 
   <div class="highlight highlight-source-scala">
@@ -355,7 +362,7 @@ cache.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Ehcache</h3> 
   <p>SBT:</p> 
-  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-ehcache" % "0.9.2"
+  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-ehcache" % "0.9.3"
 </code></pre> 
   <p>Usage:</p> 
   <div class="highlight highlight-source-scala">
@@ -374,7 +381,7 @@ cache.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Redis</h3> 
   <p>SBT:</p> 
-  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-redis" % "0.9.2"
+  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-redis" % "0.9.3"
 </code></pre> 
   <p>Usage:</p> 
   <div class="highlight highlight-source-scala">
@@ -399,7 +406,7 @@ cache.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds
     </svg></a>Caffeine</h2> 
   <p>Note that Caffeine requires Java 8 or newer.</p> 
   <p>SBT:</p> 
-  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-caffeine" % "0.9.2"
+  <pre><code>libraryDependencies += "com.github.cb372" %% "scalacache-caffeine" % "0.9.3"
 </code></pre> 
   <p>Usage:</p> 
   <div class="highlight highlight-source-scala">

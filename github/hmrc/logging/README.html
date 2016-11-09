@@ -1,0 +1,39 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-logging" class="anchor" href="https://github.com/hmrc/logging#logging" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>logging</h1> 
+  <p><a href="https://travis-ci.org/hmrc/logging" target="_blank"><img src="https://camo.githubusercontent.com/eeb2a2103fc59a14b832b116d031d37c6fb9b5e7/68747470733a2f2f7472617669732d63692e6f72672f686d72632f6c6f6767696e672e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/hmrc/logging.svg?branch=master" style="max-width:100%;"></a> <a href="https://bintray.com/hmrc/releases/logging/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/d22327b28d5995890dbbfc35d34825383771daad/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f686d72632f72656c65617365732f6c6f6767696e672f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/hmrc/releases/logging/images/download.svg" style="max-width:100%;"> </a></p> 
+  <p>This simple API provides a facade for SLF4J (yes I know that's also a facade). The value of this API is that the logging operations are easily TDD testable.</p> 
+  <ol> 
+   <li>Classes that need to use logging should receive a <code>SimpleLogger</code> via dependency injection.</li> 
+   <li>Wrap the underlying SLF4J logger in a <code>LoggerFacade</code> and inject this. </li> 
+   <li>A test stub, <code>StubLogger</code>, is provided for you to use in your unit tests instead. You can inspect its content to verify that logging operations happened as expected.</li> 
+  </ol> 
+  <p>There is (deliberately) no conditional logging provided here, although it still works at the underlying Logback output level. The cost of message formatting is normally relatively low. Pass expensive objects via the varargs parameter, in the manner normal for SLF4J, to avoid them being unnecessarily converted to strings when logging levels are low.</p> 
+  <p>The <code>StubLogger</code> captures messages and arguments in <code>LogEntry</code>, which tests can inspect. Avoid problems with testing context-dependent values (e.g. time taken) by passing them in the argument list; the exact message contents can then be verified without recourse to fragile regular expressions etc. With this in mind, use the heuristic:</p> 
+  <ul> 
+   <li>for values that are predictable, use Scala interpolation <code>log.info(s"Opened $file")</code></li> 
+   <li>for values that are not predictable, use varags <code>log.info("Parsing took {}.", timeTaken)</code></li> 
+   <li>blend these two as appropriate.</li> 
+  </ul> 
+  <p>In each case, the <code>StubLogger</code> allows your tests to verify the message strings simply by testing equality, e.g.</p> 
+  <pre><code>    log.info(s"LOOKUP origin=$origin postcode=$postcode matches=$matches took {}", timeTaken)
+</code></pre> 
+  <p>then</p> 
+  <pre><code>    assert(log.size === 1)
+    assert(log.infos.head.message === "LOOKUP origin=xyz postcode=BF1 0AX matches=1 took {}")
+</code></pre> 
+  <h3><a id="user-content-hint" class="anchor" href="https://github.com/hmrc/logging#hint" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Hint</h3> 
+  <p>As an alternative testable solution for TDD development, you might also consider <a href="https://github.com/EqualExperts/opslogger" target="_blank">opslogger</a>.</p> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/hmrc/logging#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p>Except for specified exceptions, this code is open source software licensed under the Apache 2.0 License. <code>DiagnosticTimer</code> is licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT Licence</a>.</p> 
+ </article>
+</div>

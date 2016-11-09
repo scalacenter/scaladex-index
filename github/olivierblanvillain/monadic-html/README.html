@@ -10,7 +10,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-html<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>latest.integration<span class="pl-pds">"</span></span></pre>
   </div> 
-  <p>The core value propagation library is also available separately for both platforms as <code>monadic-rx</code>. Integration with <a href="https://github.com/typelevel/cats" target="_blank">cats</a> is optionaly available as <code>monadic-rx-cats</code>.</p> 
+  <p>The core value propagation library is also available separately for both platforms as <code>monadic-rx</code>. Integration with <a href="https://github.com/typelevel/cats" target="_blank">cats</a> is optionally available as <code>monadic-rx-cats</code>.</p> 
   <p>This library is inspired by <a href="https://github.com/ThoughtWorksInc/Binding.scala" target="_blank">Binding.scala</a> and <a href="https://github.com/lihaoyi/scala.rx" target="_blank">Scala.rx</a> which both relies on macros to obtain type-safety and hide monadic context from users.</p> 
   <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#getting-started" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -27,18 +27,21 @@
 <span class="pl-k">import</span> <span class="pl-v">scala.xml.</span><span class="pl-v">Node</span>
 <span class="pl-k">import</span> <span class="pl-v">org.scalajs.</span><span class="pl-v">dom</span>
 
-<span class="pl-k">val</span> <span class="pl-en">count</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Var</span>[<span class="pl-k">Int</span>](<span class="pl-c1">0</span>)
+<span class="pl-k">val</span> <span class="pl-en">count</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Var</span>(<span class="pl-c1">0</span>)
 
-<span class="pl-k">val</span> <span class="pl-en">dogs</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Node</span>]] <span class="pl-k">=</span>
-  count.map(i <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>.fill(i)(&lt;<span class="pl-ent">img</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>doge.png<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">img</span>&gt;))
+<span class="pl-k">val</span> <span class="pl-en">doge</span><span class="pl-k">:</span> <span class="pl-en">Node</span> <span class="pl-k">=</span>
+  &lt;<span class="pl-ent">img</span> <span class="pl-e">style</span>=<span class="pl-s"><span class="pl-pds">"</span>width: 100px;<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>http://doge2048.com/meta/doge-600.png<span class="pl-pds">"</span></span>/&gt;
+
+<span class="pl-k">val</span> <span class="pl-en">rxDoges</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Node</span>]] <span class="pl-k">=</span>
+  count.map(i <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>.fill(i)(doge))
 
 <span class="pl-k">val</span> <span class="pl-en">component</span> <span class="pl-k">=</span> <span class="pl-c">// ← look, you can even use fancy names!</span>
-  &lt;<span class="pl-ent">div</span> <span class="pl-e">style</span>=<span class="pl-s"><span class="pl-pds">"</span>background-color: blue;<span class="pl-pds">"</span></span>&gt;
+  &lt;<span class="pl-ent">div</span>&gt;
     &lt;<span class="pl-ent">button</span> <span class="pl-e">onclick</span>={ () <span class="pl-k">=&gt;</span> count.update(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>) }&gt;<span class="pl-en">Click</span> <span class="pl-en">Me</span><span class="pl-k">!</span>&lt;/<span class="pl-ent">button</span>&gt;
-    &lt;<span class="pl-ent">p</span>&gt;<span class="pl-en">WOW</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">p</span>&gt;
-    &lt;<span class="pl-ent">p</span>&gt;<span class="pl-en">MUCH</span> <span class="pl-en">REACTIVE</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">p</span>&gt;
-    &lt;<span class="pl-ent">p</span>&gt;<span class="pl-en">SUCH</span> <span class="pl-en">BINDING</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">p</span>&gt;
-    {dogs}
+    {count.filter(_ <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>).map(_ <span class="pl-k">=&gt;</span> &lt;<span class="pl-ent">h2</span>&gt;<span class="pl-en">WOW</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">h2</span>&gt;)}
+    {count.filter(_ <span class="pl-k">&gt;</span> <span class="pl-c1">2</span>).map(_ <span class="pl-k">=&gt;</span> &lt;<span class="pl-ent">h2</span>&gt;<span class="pl-en">MUCH</span> <span class="pl-en">REACTIVE</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">h2</span>&gt;)}
+    {count.filter(_ <span class="pl-k">&gt;</span> <span class="pl-c1">5</span>).map(_ <span class="pl-k">=&gt;</span> &lt;<span class="pl-ent">h2</span>&gt;<span class="pl-en">SUCH</span> <span class="pl-en">BINDING</span><span class="pl-k">!!!</span>&lt;/<span class="pl-ent">h2</span>&gt;)}
+    {rxDoges}
   &lt;/<span class="pl-ent">div</span>&gt;
 
 <span class="pl-k">val</span> <span class="pl-en">div</span> <span class="pl-k">=</span> dom.document.createElement(<span class="pl-s"><span class="pl-pds">"</span>div<span class="pl-pds">"</span></span>)
@@ -71,11 +74,17 @@ mount(div, component)</pre>
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>FAQ</h2> 
   <p><strong>Does the compiler catch HTML typos?</strong></p> 
-  <p>No, it only rejects invalid XML literals. I've tried to explain to front-end developers the benefits of type-safety, testability and IDE support (auto-completion, inline documentation, inline error reporting) when writing frontend applications in Scala.js. This is pretty much the answer I always get:</p> 
-  <blockquote> 
-   <p>I make a living writing HTML &amp; CSS. I value fast iteration speeds and using standard HTML over slow compilers and complicated IDE setups.</p> 
-  </blockquote> 
-  <p>Hard to argue against that.</p> 
+  <p>No, only invalid XML literals will be rejected at compile time. However, we do provide <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/src/main/scala/mhtml/settings.scala" target="_blank">configurable settings</a> to emit runtime warnings about unknown elements, attributes, entity references and event handlers. For example, the following piece of XML compiles fine:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">captain</span> <span class="pl-e">yolo</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> <span class="pl-e">onClick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Oh yeah!<span class="pl-pds">"</span></span>) }&gt;{<span class="pl-c1">None</span>}&lt;/<span class="pl-ent">captain</span>&gt;</pre>
+  </div> 
+  <p>But mounting it to the DOM will print warnings in the console:</p> 
+  <pre><code>[mhtml] Warning: Implicitly converted class scala.None$ to it's string representation: "None". Call toString explicitly to remove this warning.
+[mhtml] Warning: Unknown event onClick. Did you mean onclick instead?
+[mhtml] Warning: Unknown attribute yolo. Did you mean cols instead?
+[mhtml] Warning: Unknown element captain. Did you mean caption instead?
+</code></pre> 
+  <p><code>MountSettings.default</code> emit warnings only when compiled to with <code>fastOptJS</code>, and becomes silent (and faster) whe compiled with <code>fullOptJS</code>.</p> 
   <p><strong>Global mutable state, Booo! Booo!!!</strong></p> 
   <p><code>Var</code>s don't have to be globally exposed, you can instantiate them locally:</p> 
   <div class="highlight highlight-source-scala">
@@ -93,6 +102,7 @@ mount(div, component)</pre>
     }
   &lt;/<span class="pl-ent">div</span>&gt;</pre>
   </div> 
+  <p>In an ideal world, you would use exactly one <code>Rx</code> per signal coming from the outside world, which means using a single <code>:=</code> per <code>Rx</code>. Doing so leads to a very nice functional reactive programming style code, analogous to what you would write in <a href="http://elm-lang.org/" target="_blank">Elm</a>.</p> 
   <p><strong>How can I turn a <code>List[Rx[A]]</code> into a <code>Rx[List[A]]</code>?</strong></p> 
   <p>Short answer:</p> 
   <div class="highlight highlight-source-scala">
