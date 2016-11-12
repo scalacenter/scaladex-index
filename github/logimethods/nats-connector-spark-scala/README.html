@@ -43,20 +43,66 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 
 <span class="pl-k">val</span> <span class="pl-en">ssc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">StreamingContext</span>(sc, <span class="pl-k">new</span> <span class="pl-en">Duration</span>(<span class="pl-c1">2000</span>));</pre>
   </div> 
-  <h3><a id="user-content-from-nats-streaming-to-spark" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-to-spark" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-from-nats-to-spark" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-to-spark" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From NATS Streaming to Spark</h3> 
+    </svg></a>From NATS to Spark</h3> 
+  <p>The reception of NATS Messages as Spark Steam is done through the <code>NatsToSparkConnector.receiveFromNats(classOf[Class], ...)</code> method, where <code>[Class]</code> is the Java Class of the objects to deserialize.</p> 
+  <h4><a id="user-content-deserialization-of-the-primitive-types" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#deserialization-of-the-primitive-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Deserialization of the primitive types</h4> 
+  <p>Those objects need first to be serialized as <code>byte[]</code> using the right protocol before being stored into the NATS messages payload.</p> 
+  <p>By default, the (Java) primitive types are then automatically decoded by the connector.</p> 
+  <h4><a id="user-content-custom-deserialization" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#custom-deserialization" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom Deserialization</h4> 
+  <p>For more complex types, you should provide your own decoder through the <code>withDataDecoder(scala.Function1&lt;byte[], V&gt; dataDecoder)</code> method.</p> 
+  <p>Let's say that the payload have been encoded that way:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">encodePayload</span>(<span class="pl-v">date</span>: <span class="pl-en">LocalDateTime</span>, <span class="pl-v">value</span>: <span class="pl-k">Float</span>)<span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> {
+  <span class="pl-c">// https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html</span>
+  <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">ByteBuffer</span>.allocate(<span class="pl-c1">4</span><span class="pl-k">+</span><span class="pl-c1">8</span>);
+  buffer.putLong(date.atZone(zoneId).toEpochSecond())
+  buffer.putFloat(value)
+
+  <span class="pl-k">return</span> buffer.array()    
+}</pre>
+  </div> 
+  <p>You should provide your own decoder:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">dataDecoder</span><span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=&gt;</span> <span class="pl-en">Tuple2</span>[<span class="pl-k">Long</span>,<span class="pl-k">Float</span>] <span class="pl-k">=</span> bytes <span class="pl-k">=&gt;</span> {
+      <span class="pl-k">import</span> <span class="pl-v">java.nio.</span><span class="pl-v">ByteBuffer</span>
+      <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">ByteBuffer</span>.wrap(bytes);
+      <span class="pl-k">val</span> <span class="pl-en">epoch</span> <span class="pl-k">=</span> buffer.getLong()
+      <span class="pl-k">val</span> <span class="pl-en">voltage</span> <span class="pl-k">=</span> buffer.getFloat()
+      (epoch, voltage)  
+    }
+
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.streaming.dstream.</span><span class="pl-v">_</span>
+<span class="pl-k">val</span> <span class="pl-en">messages</span><span class="pl-k">:</span> <span class="pl-en">ReceiverInputDStream</span>[(<span class="pl-k">String</span>, (<span class="pl-k">Long</span>, <span class="pl-k">Float</span>))] <span class="pl-k">=</span>
+  <span class="pl-en">NatsToSparkConnector</span>
+    .receiveFromNatsStreaming(<span class="pl-c1">classOf</span>[<span class="pl-en">Tuple2</span>[<span class="pl-k">Long</span>,<span class="pl-k">Float</span>]], <span class="pl-en">StorageLevel</span>.<span class="pl-en">MEMORY_ONLY</span>, clusterId)
+    .withNatsURL(natsUrl)
+    .withSubjects(inputSubject)
+    .withDataDecoder(dataDecoder)
+    .asStreamOfKeyValue(ssc)</pre>
+  </div> 
+  <h4><a id="user-content-from-nats-streaming-to-spark" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-to-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>From NATS Streaming to Spark</h4> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> <span class="pl-en">NatsToSparkConnector</span>.receiveFromNatsStreaming(<span class="pl-c1">classOf</span>[<span class="pl-k">String</span>], <span class="pl-en">StorageLevel</span>.<span class="pl-en">MEMORY_ONLY</span>, clusterId)
                                  .withNatsURL(natsUrl)
                                  .withSubjects(inputSubject)
                                  .asStreamOf(ssc)</pre>
   </div> 
-  <h3><a id="user-content-from-nats-streaming-to-spark-1" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-to-spark-1" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-from-nats-streaming-to-spark-1" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-to-spark-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From NATS <del>Streaming</del> to Spark</h3> 
+    </svg></a>From NATS <del>Streaming</del> to Spark</h4> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">properties</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Properties</span>()
 <span class="pl-k">val</span> <span class="pl-en">natsUrl</span> <span class="pl-k">=</span> <span class="pl-en">System</span>.getenv(<span class="pl-s"><span class="pl-pds">"</span>NATS_URI<span class="pl-pds">"</span></span>)
@@ -65,10 +111,10 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
                                  .withSubjects(inputSubject)
                                  .asStreamOf(ssc)</pre>
   </div> 
-  <h3><a id="user-content-from-nats-streaming-or-not-to-spark-as-keyvalue-pairs" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-or-not-to-spark-as-keyvalue-pairs" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-from-nats-streaming-or-not-to-spark-as-keyvalue-pairs" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-nats-streaming-or-not-to-spark-as-keyvalue-pairs" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From NATS (Streaming or not) to Spark as <em>Key/Value Pairs</em></h3> 
+    </svg></a>From NATS (Streaming or not) to Spark as <em>Key/Value Pairs</em></h4> 
   <p>The Spark Stream is there made of Key/Value Pairs, where the Key is the <em>Subject</em> and the Value is the <em>Payload</em> of the NATS Messages.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> <span class="pl-en">NatsToSparkConnector</span>.receiveFromNats[<span class="pl-en">Streaming</span>](...)
@@ -77,20 +123,49 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
                                  .asStreamOfKeyValue(ssc)
 stream.groupByKey().print()</pre>
   </div> 
-  <h3><a id="user-content-from-spark-to-nats-streaming" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-to-nats-streaming" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-from-spark-to-nats" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-to-nats" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From Spark to NATS Streaming</h3> 
+    </svg></a>From Spark to NATS</h3> 
+  <h4><a id="user-content-serialization-of-the-primitive-types" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#serialization-of-the-primitive-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Serialization of the primitive types</h4> 
+  <p>The Spark elements are first serialized as <code>byte[]</code> before being sent to NATS. By default, the (Java) primitive types are encoded through the <code>com.logimethods.connector.nats_spark.NatsSparkUtilities.encodeData(Object obj)</code> method.</p> 
+  <h4><a id="user-content-custom-serialization" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#custom-serialization" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom Serialization</h4> 
+  <p>Custom serialization can be performed by a <code>java.util.function.Function&lt;[Class], byte[]&gt; &amp; Serializable)</code> function provided through the <code>.publishToNats(...)</code> method, like:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">stream</span><span class="pl-k">:</span> <span class="pl-en">DStream</span>[(<span class="pl-k">String</span>, (<span class="pl-k">Long</span>, <span class="pl-k">Float</span>))] <span class="pl-k">=</span> ...<span class="pl-k">/</span>...
+
+<span class="pl-k">def</span> <span class="pl-en">longFloatTupleEncoder</span><span class="pl-k">:</span> <span class="pl-en">Tuple2</span>[<span class="pl-k">Long</span>,<span class="pl-k">Float</span>] <span class="pl-k">=&gt;</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> tuple <span class="pl-k">=&gt;</span> {        
+      <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-en">ByteBuffer</span>.allocate(<span class="pl-c1">8</span><span class="pl-k">+</span><span class="pl-c1">4</span>);
+      buffer.putLong(tuple._1)
+      buffer.putFloat(tuple._2)        
+      buffer.array()    
+    }
+
+<span class="pl-en">SparkToNatsConnectorPool</span>.newStreamingPool(clusterId)
+                        .withNatsURL(natsUrl)
+                        .withSubjects(outputSubject)
+                        .publishToNatsAsKeyValue(stream, longFloatTupleEncoder)</pre>
+  </div> 
+  <h4><a id="user-content-from-spark-to-nats-streaming" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-to-nats-streaming" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>From Spark to NATS Streaming</h4> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-en">SparkToNatsConnectorPool</span>.newStreamingPool(clusterId)
                         .withNatsURL(natsUrl)
                         .withSubjects(outputSubject)
                         .publishToNats(stream)</pre>
   </div> 
-  <h3><a id="user-content-from-spark-to-nats-streaming-1" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-to-nats-streaming-1" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-from-spark-to-nats-streaming-1" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-to-nats-streaming-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From Spark to NATS <del>Streaming</del></h3> 
+    </svg></a>From Spark to NATS <del>Streaming</del></h4> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-en">SparkToNatsConnectorPool</span>.newPool()
                         .withProperties(properties)
@@ -98,25 +173,27 @@ stream.groupByKey().print()</pre>
                         .publishToNats(stream)
 </pre>
   </div> 
-  <h3><a id="user-content-from-spark-as-keyvalue-pairs-to-nats-streaming-or-not" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-as-keyvalue-pairs-to-nats-streaming-or-not" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-from-spark-as-keyvalue-pairs-to-nats-streaming-or-not" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#from-spark-as-keyvalue-pairs-to-nats-streaming-or-not" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>From Spark as <em>Key/Value Pairs</em> to NATS (Streaming or not)</h3> 
+    </svg></a>From Spark as <em>Key/Value Pairs</em> to NATS (Streaming or not)</h4> 
   <p>The Spark Stream should there be made of Key/Value Pairs. <code>.storedAsKeyValue()</code> will publish NATS Messages where the Subject is a composition of the (optional) <em>Global Subject(s)</em> and the <em>Key</em> of the Pairs ; while the NATS <em>Payload</em> will be the Pair's <em>Value</em>.</p> 
-  <pre><code>stream.groupByKey().print()
+  <div class="highlight highlight-source-scala">
+   <pre>stream.groupByKey().print()
 
-SparkToNatsConnectorPool.new[Streaming]Pool(...)
+<span class="pl-en">SparkToNatsConnectorPool</span>.new[<span class="pl-en">Streaming</span>]<span class="pl-en">Pool</span>(...)
                         ...
-                        .withSubjects("A1.", "A2.")
-                        .publishToNatsAsKeyValue(stream)
-</code></pre> 
+                        .withSubjects(<span class="pl-s"><span class="pl-pds">"</span>A1.<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>A2.<span class="pl-pds">"</span></span>)
+                        .publishToNatsAsKeyValue(stream)</pre>
+  </div> 
   <p>will send to NATS such [subject:payload] messages:</p> 
-  <pre><code>[A1.key1:string1]
-[A2.key1:string1]
-[A1.key2:string2]
-[A2.key2:string2]
-...
-</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre>[<span class="pl-en">A1</span>.key1<span class="pl-k">:</span>string1]
+[<span class="pl-en">A2</span>.key1<span class="pl-k">:</span>string1]
+[<span class="pl-en">A1</span>.key2<span class="pl-k">:</span>string2]
+[<span class="pl-en">A2</span>.key2<span class="pl-k">:</span>string2]
+...</pre>
+  </div> 
   <h2><a id="user-content-code-samples" class="anchor" href="https://github.com/logimethods/nats-connector-spark-scala#code-samples" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
