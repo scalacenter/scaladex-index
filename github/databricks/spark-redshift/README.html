@@ -8,7 +8,10 @@
   <p>A library to load data into Spark SQL DataFrames from Amazon Redshift, and write them back to Redshift tables. Amazon S3 is used to efficiently transfer data in and out of Redshift, and JDBC is used to automatically trigger the appropriate <code>COPY</code> and <code>UNLOAD</code> commands on Redshift.</p> 
   <p>This library is more suited to ETL than interactive queries, since large amounts of data could be extracted to S3 for each query execution. If you plan to perform many queries against the same Redshift tables then we recommend saving the extracted data in a format such as Parquet.</p> 
   <ul> 
-   <li><a href="https://github.com/databricks/spark-redshift#installation" target="_blank">Installation</a></li> 
+   <li><a href="https://github.com/databricks/spark-redshift#installation" target="_blank">Installation</a> 
+    <ul> 
+     <li><a href="https://github.com/databricks/spark-redshift#snapshot-builds" target="_blank">Snapshot builds</a></li> 
+    </ul></li> 
    <li>Usage: 
     <ul> 
      <li>Data sources API: <a href="https://github.com/databricks/spark-redshift#scala" target="_blank">Scala</a>, <a href="https://github.com/databricks/spark-redshift#python" target="_blank">Python</a>, <a href="https://github.com/databricks/spark-redshift#sql" target="_blank">SQL</a>, <a href="https://github.com/databricks/spark-redshift#r" target="_blank">R</a></li> 
@@ -54,6 +57,33 @@ version: 3.0.0-preview1
   <p>You will also need to provide a JDBC driver that is compatible with Redshift. Amazon recommend that you use <a href="http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-connection.html" target="_blank">their driver</a>, which is distributed as a JAR that is hosted on Amazon's website. This library has also been successfully tested using the Postgres JDBC driver.</p> 
   <p><strong>Note on Hadoop versions</strong>: This library depends on <a href="https://github.com/databricks/spark-avro" target="_blank"><code>spark-avro</code></a>, which should automatically be downloaded because it is declared as a dependency. However, you may need to provide the corresponding <code>avro-mapred</code> dependency which matches your Hadoop distribution. In most deployments, however, this dependency will be automatically provided by your cluster's Spark assemblies and no additional action will be required.</p> 
   <p><strong>Note on Amazon SDK dependency</strong>: This library declares a <code>provided</code> dependency on components of the AWS Java SDK. In most cases, these libraries will be provided by your deployment environment. However, if you get ClassNotFoundExceptions for Amazon SDK classes then you will need to add explicit dependencies on <code>com.amazonaws.aws-java-sdk-core</code> and <code>com.amazonaws.aws-java-sdk-s3</code> as part of your build / runtime configuration. See the comments in <code>project/SparkRedshiftBuild.scala</code> for more details.</p> 
+  <h3><a id="user-content-snapshot-builds" class="anchor" href="https://github.com/databricks/spark-redshift#snapshot-builds" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Snapshot builds</h3> 
+  <p>Master snapshot builds of this library are built using <a href="https://jitpack.io/" target="_blank">jitpack.io</a>. In order to use these snapshots in your build, you'll need to add the JitPack repository to your build file.</p> 
+  <ul> 
+   <li><p><strong>In Maven</strong>:</p> <pre><code>&lt;repositories&gt;
+  &lt;repository&gt;
+    &lt;id&gt;jitpack.io&lt;/id&gt;
+    &lt;url&gt;https://jitpack.io&lt;/url&gt;
+  &lt;/repository&gt;
+&lt;/repositories&gt;
+</code></pre> <p>then</p> <pre><code>&lt;dependency&gt;
+ &lt;groupId&gt;com.github.databricks&lt;/groupId&gt;
+ &lt;artifactId&gt;spark-redshift_2.10&lt;/artifactId&gt;  &lt;!-- For Scala 2.11, use spark-redshift_2.11 instead --&gt;
+ &lt;version&gt;master-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></li> 
+   <li><p><strong>In SBT</strong>:</p> <pre><code>resolvers += "jitpack" at "https://jitpack.io"
+</code></pre> <p>then</p> <pre><code>libraryDependencies += "com.github.databricks" %% "spark-redshift" % "master-SNAPSHOT"
+</code></pre></li> 
+   <li><p>In Databricks: use the "Advanced Options" toggle in the "Create Library" screen to specify a custom Maven repository:</p> <p><a href="https://cloud.githubusercontent.com/assets/50748/20371277/6c34a8d2-ac18-11e6-879f-d07320d56fa4.png" target="_blank"><img src="https://cloud.githubusercontent.com/assets/50748/20371277/6c34a8d2-ac18-11e6-879f-d07320d56fa4.png" alt="" style="max-width:100%;"></a></p> <p>Use <code>https://jitpack.io</code> as the repository.</p> 
+    <ul> 
+     <li>For Scala 2.10: use the coordinate <code>com.github.databricks:spark-redshift_2.10:master-SNAPSHOT</code></li> 
+     <li>For Scala 2.11: use the coordinate <code>com.github.databricks:spark-redshift_2.11:master-SNAPSHOT</code></li> 
+    </ul></li> 
+  </ul> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/databricks/spark-redshift#usage" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

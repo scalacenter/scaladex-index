@@ -17,56 +17,60 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Examples</h2> 
   <p>Here's how you would code up the following problem: You are given either a fair coin or a biased coin with equal probability. If you flip it 5 times and it comes up heads each time, what is the probability you have the fair coin?</p> 
-  <pre><code>case class Trial(haveFairCoin: Boolean, flips: List[Coin])
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Trial</span>(<span class="pl-v">haveFairCoin</span>: <span class="pl-k">Boolean</span>, <span class="pl-v">flips</span>: <span class="pl-en">List</span>[<span class="pl-en">Coin</span>])
 
-def bayesianCoin(nflips: Int): Distribution[Trial] = {
-  for {
-    haveFairCoin &lt;- tf()
-    c = if (haveFairCoin) coin else biasedCoin(0.9)
-    flips &lt;- c.repeat(nflips)
-  } yield Trial(haveFairCoin, flips)
+<span class="pl-k">def</span> <span class="pl-en">bayesianCoin</span>(<span class="pl-v">nflips</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Distribution</span>[<span class="pl-en">Trial</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">for</span> {
+    haveFairCoin <span class="pl-k">&lt;</span><span class="pl-k">-</span> tf()
+    c <span class="pl-k">=</span> <span class="pl-k">if</span> (haveFairCoin) coin <span class="pl-k">else</span> biasedCoin(<span class="pl-c1">0.9</span>)
+    flips <span class="pl-k">&lt;</span><span class="pl-k">-</span> c.repeat(nflips)
+  } <span class="pl-k">yield</span> <span class="pl-en">Trial</span>(haveFairCoin, flips)
 }
 
-bayesianCoin(5).given(_.flips.forall(_ == H)).pr(_.haveFairCoin)
-</code></pre> 
+bayesianCoin(<span class="pl-c1">5</span>).given(_.flips.forall(_ <span class="pl-k">==</span> <span class="pl-en">H</span>)).pr(_.haveFairCoin)</pre>
+  </div> 
   <p>Or: You repeatedly roll a 6-sided die and keep a running sum. What is the probability the sum reaches exactly 30?</p> 
-  <pre><code>def dieSum(rolls: Int): Distribution[List[Int]] = {
-  markov(rolls, List(0))(runningSum =&gt; for {
-    d &lt;- die
-  } yield (d + runningSum.head) :: runningSum)
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">dieSum</span>(<span class="pl-v">rolls</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Distribution</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> {
+  markov(rolls, <span class="pl-en">List</span>(<span class="pl-c1">0</span>))(runningSum <span class="pl-k">=&gt;</span> <span class="pl-k">for</span> {
+    d <span class="pl-k">&lt;</span><span class="pl-k">-</span> die
+  } <span class="pl-k">yield</span> (d <span class="pl-k">+</span> runningSum.head) <span class="pl-k">::</span> runningSum)
 }
 
-dieSum(30).pr(_ contains 30)
-</code></pre> 
+dieSum(<span class="pl-c1">30</span>).pr(_ contains <span class="pl-c1">30</span>)</pre>
+  </div> 
   <p>Or: Each family has children until it has a boy, and then stops. What is the expected fraction of girls in the population?</p> 
-  <pre><code>sealed abstract class Child
-case object Boy extends Child
-case object Girl extends Child
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Child</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Boy</span> <span class="pl-k">extends</span> <span class="pl-e">Child</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Girl</span> <span class="pl-k">extends</span> <span class="pl-e">Child</span>
 
-def family = {
-  discreteUniform(List(Boy, Girl)).until(_ contains Boy)
+<span class="pl-k">def</span> <span class="pl-en">family</span> <span class="pl-k">=</span> {
+  discreteUniform(<span class="pl-en">List</span>(<span class="pl-en">Boy</span>, <span class="pl-en">Girl</span>)).until(_ contains <span class="pl-en">Boy</span>)
 }
 
-def population(families: Int) = {
-  for {
-    children &lt;- family.repeat(families).map(_.flatten)
-    val girls = children.count(_ == Girl)
-  } yield 1.0 * girls / children.length
+<span class="pl-k">def</span> <span class="pl-en">population</span>(<span class="pl-v">families</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> {
+  <span class="pl-k">for</span> {
+    children <span class="pl-k">&lt;</span><span class="pl-k">-</span> family.repeat(families).map(_.flatten)
+    <span class="pl-k">val</span> <span class="pl-en">girls</span> <span class="pl-k">=</span> children.count(_ <span class="pl-k">==</span> <span class="pl-en">Girl</span>)
+  } <span class="pl-k">yield</span> <span class="pl-c1">1.0</span> <span class="pl-k">*</span> girls <span class="pl-k">/</span> children.length
 }
 
-population(4).ev
-</code></pre> 
+population(<span class="pl-c1">4</span>).ev</pre>
+  </div> 
   <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/jliszka/probability-monad#how-it-works" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>How it works</h2> 
   <p>A <code>Distribution[T]</code> represents a random variable that, when sampled, produces values of type <code>T</code> according to a particular probability distribution. For example, <code>Distribution.uniform</code> is a <code>Distribution[Double]</code> that produces <code>Double</code> values between 0.0 and 1.0, uniformly distributed. <code>Distribution.coin</code> is a <code>Distribution[Coin]</code> that produces the values <code>H</code> and <code>T</code> with equal probability, and <code>Distribution.biasedCoin(0.3)</code> is a <code>Distribution[Coin]</code> that produces the value <code>H</code> 30% of the time and the value <code>T</code> 70% of the time.</p> 
   <p>You can think of a <code>Distribution[T]</code> as a collection like any other scala collection that you can <code>map</code>, <code>flatMap</code> and <code>filter</code> over. The presence of these methods allow you to use scala's for-comprehensions to manipulate distributions. For example, here's how you would create a distribution that represents the sum of 2 die rolls:</p> 
-  <pre><code>val dice = for {
-  d1 &lt;- die
-  d2 &lt;- die
-} yield d1 + d2
-</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">dice</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+  d1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> die
+  d2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> die
+} <span class="pl-k">yield</span> d1 <span class="pl-k">+</span> d2</pre>
+  </div> 
   <p>Here, <code>die</code> is a <code>Distribution[Int]</code>, and <code>d1</code> and <code>d2</code> are both <code>Int</code>s. The type of <code>dice</code> is <code>Distribution[Int]</code>. You can see that for-comprehensions are an easy way to define new a distribution in terms of individual samples from other distributions.</p> 
   <p>You can visualize a distribution with <code>hist</code>:</p> 
   <pre><code>scala&gt; dice.hist

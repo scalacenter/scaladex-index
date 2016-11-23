@@ -24,6 +24,7 @@
      <li>(Must be configured to use this mode)</li> 
      <li>Special handling of Option-/Optional-properties using oneOf.</li> 
     </ul></li> 
+   <li>Supports custom Class-to-format-Mapping</li> 
   </ul> 
   <p><strong>Benefits</strong></p> 
   <ul> 
@@ -82,6 +83,17 @@
 
     <span class="pl-k">val</span> <span class="pl-en">jsonSchemaAsString</span><span class="pl-k">:</span><span class="pl-k">String</span> <span class="pl-k">=</span> objectMapper.writeValueAsString(jsonSchema)</pre>
   </div> 
+  <p>This is how to generate jsonSchema using custom type-to-format-mapping using Scala:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">objectMapper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ObjectMapper</span>
+    <span class="pl-k">val</span> <span class="pl-en">config</span><span class="pl-k">:</span><span class="pl-en">JsonSchemaConfig</span> <span class="pl-k">=</span> <span class="pl-en">JsonSchemaConfig</span>.vanillaJsonSchemaDraft4.copy(
+      customType2FormatMapping <span class="pl-k">=</span> <span class="pl-en">Map</span>( <span class="pl-s"><span class="pl-pds">"</span>java.time.OffsetDateTime<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>date-time-ABC-Special<span class="pl-pds">"</span></span> )
+    )
+    <span class="pl-k">val</span> <span class="pl-en">jsonSchemaGenerator</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">JsonSchemaGenerator</span>(objectMapper, config <span class="pl-k">=</span> config)
+    <span class="pl-k">val</span> <span class="pl-en">jsonSchema</span><span class="pl-k">:</span><span class="pl-en">JsonNode</span> <span class="pl-k">=</span> jsonSchemaGenerator.generateJsonSchema(<span class="pl-c1">classOf</span>[<span class="pl-en">YourPOJO</span>])
+
+    <span class="pl-k">val</span> <span class="pl-en">jsonSchemaAsString</span><span class="pl-k">:</span><span class="pl-k">String</span> <span class="pl-k">=</span> objectMapper.writeValueAsString(jsonSchema)</pre>
+  </div> 
   <p><strong>Note about Scala and Option[Int]</strong>:</p> 
   <p>Due to Java's Type Erasure it impossible to resolve the type T behind Option[T] when T is Int, Boolean, Double. Ass a workaround, you have to use the <em>@JsonDeserialize</em>-annotation in such cases. See <a href="https://github.com/FasterXML/jackson-module-scala/wiki/FAQ#deserializing-optionint-and-other-primitive-challenges" target="_blank">https://github.com/FasterXML/jackson-module-scala/wiki/FAQ#deserializing-optionint-and-other-primitive-challenges</a> for more info.</p> 
   <p>Example:</p> 
@@ -105,6 +117,11 @@
 
     <span class="pl-c">// If using JsonSchema to generate HTML5 GUI:</span>
     <span class="pl-c">// JsonSchemaGenerator html5 = new JsonSchemaGenerator(objectMapper, JsonSchemaConfig.html5EnabledSchema() );</span>
+
+    <span class="pl-c">// If you want to confioure it manually:</span>
+    <span class="pl-c">// JsonSchemaConfig config = JsonSchemaConfig.create(...);</span>
+    <span class="pl-c">// JsonSchemaGenerator generator = new JsonSchemaGenerator(objectMapper, config);</span>
+
 
     <span class="pl-smi">JsonNode</span> jsonSchema <span class="pl-k">=</span> jsonSchemaGenerator<span class="pl-k">.</span>generateJsonSchema(<span class="pl-smi">YourPOJO</span><span class="pl-k">.</span>class);
 

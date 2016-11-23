@@ -10,20 +10,20 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Overview</h2> 
-  <p>Package allows to query GitHub API v3 to fetch pull request information. Launches first requests on driver to list available pull requests, and creates tasks with pull requests details to execute. PRs are cached in <code>cacheDir</code> value to save rate limit. It is recommended to use token to remove 60 requests/hour constraint. Most of JSON keys are supported, see schema <a href="https://github.com/lightcopy/spark-github-pr/blob/master/src/main/scala/com/github/lightcopy/spark/pr/PullRequestRelation.scala#L106" target="_blank">here</a>, here is an example output for subset of columns you might see:</p> 
-  <div class="highlight highlight-source-shell">
-   <pre>scala<span class="pl-k">&gt;</span> df.<span class="pl-k">select</span>(<span class="pl-s"><span class="pl-pds">"</span>number<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>state<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>base.repo.full_name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>user.login<span class="pl-pds">"</span></span>,
-  <span class="pl-s"><span class="pl-pds">"</span>commits<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>additions<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>deletions<span class="pl-pds">"</span></span>)
+  <p>Package allows to query GitHub API v3 to fetch pull request information. Launches first requests on driver to list available pull requests, and creates tasks with pull requests details to execute. PRs are cached in <code>cacheDir</code> value to save rate limit. It is recommended to use token to remove 60 requests/hour constraint. Package also supports loading pull requests using structured streaming (experimental, for Spark 2.x only), see usage example below.</p> 
+  <p>Most of JSON keys are supported, see schema <a href="https://github.com/lightcopy/spark-github-pr/blob/master/src/main/scala/com/github/lightcopy/spark/pr/PullRequestRelation.scala#L106" target="_blank">here</a>, here is an example output for subset of columns you might see:</p> 
+  <pre><code>scala&gt; df.select("number", "title", "state", "base.repo.full_name", "user.login",
+  "commits", "additions", "deletions")
 
 +------+--------------------+-----+------------+------------+-------+---------+---------+
-<span class="pl-k">|</span>number<span class="pl-k">|</span>               title<span class="pl-k">|</span>state<span class="pl-k">|</span>   full_name<span class="pl-k">|</span>       login<span class="pl-k">|</span>commits<span class="pl-k">|</span>additions<span class="pl-k">|</span>deletions<span class="pl-k">|</span>
+|number|               title|state|   full_name|       login|commits|additions|deletions|
 +------+--------------------+-----+------------+------------+-------+---------+---------+
-<span class="pl-k">|</span> 15599<span class="pl-k">|</span>[SPARK-18022][SQL...<span class="pl-k">|</span> open<span class="pl-k">|</span>apache/spark<span class="pl-k">|</span>      srowen<span class="pl-k">|</span>      1<span class="pl-k">|</span>        1<span class="pl-k">|</span>        1<span class="pl-k">|</span>
-<span class="pl-k">|</span> 15598<span class="pl-k">|</span>[SPARK-18027][YAR...<span class="pl-k">|</span> open<span class="pl-k">|</span>apache/spark<span class="pl-k">|</span>      srowen<span class="pl-k">|</span>      1<span class="pl-k">|</span>        2<span class="pl-k">|</span>        0<span class="pl-k">|</span>
-<span class="pl-k">|</span> 15597<span class="pl-k">|</span>[SPARK-18063][SQL...<span class="pl-k">|</span> open<span class="pl-k">|</span>apache/spark<span class="pl-k">|</span> jiangxb1987<span class="pl-k">|</span>      2<span class="pl-k">|</span>       16<span class="pl-k">|</span>        6<span class="pl-k">|</span>
-<span class="pl-k">|</span> 15596<span class="pl-k">|</span>[SQL] Remove shuf...<span class="pl-k">|</span> open<span class="pl-k">|</span>apache/spark<span class="pl-k">|</span>      viirya<span class="pl-k">|</span>      1<span class="pl-k">|</span>       13<span class="pl-k">|</span>       12<span class="pl-k">|</span>
-+------+--------------------+-----+------------+------------+-------+---------+---------+</pre>
-  </div> 
+| 15599|[SPARK-18022][SQL...| open|apache/spark|      srowen|      1|        1|        1|
+| 15598|[SPARK-18027][YAR...| open|apache/spark|      srowen|      1|        2|        0|
+| 15597|[SPARK-18063][SQL...| open|apache/spark| jiangxb1987|      2|       16|        6|
+| 15596|[SQL] Remove shuf...| open|apache/spark|      viirya|      1|       13|       12|
++------+--------------------+-----+------------+------------+-------+---------+---------+
+</code></pre> 
   <h2><a id="user-content-requirements" class="anchor" href="https://github.com/lightcopy/spark-github-pr#requirements" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -38,11 +38,11 @@
    <tbody> 
     <tr> 
      <td>1.6.x</td> 
-     <td><a href="http://spark-packages.org/package/lightcopy/spark-github-pr" target="_blank">1.1.0</a></td> 
+     <td><a href="http://spark-packages.org/package/lightcopy/spark-github-pr" target="_blank">1.2.0</a></td> 
     </tr> 
     <tr> 
      <td>2.x.x</td> 
-     <td><a href="http://spark-packages.org/package/lightcopy/spark-github-pr" target="_blank">1.1.0</a></td> 
+     <td><a href="http://spark-packages.org/package/lightcopy/spark-github-pr" target="_blank">1.2.0</a></td> 
     </tr> 
    </tbody>
   </table> 
@@ -52,9 +52,9 @@
     </svg></a>Linking</h2> 
   <p>The spark-github-pr package can be added to Spark by using the <code>--packages</code> command line option. For example, run this to include it when starting the spark shell:</p> 
   <div class="highlight highlight-source-shell">
-   <pre> <span class="pl-smi">$SPARK_HOME</span>/bin/spark-shell --packages lightcopy:spark-github-pr:1.1.0-s_2.10</pre>
+   <pre> <span class="pl-smi">$SPARK_HOME</span>/bin/spark-shell --packages lightcopy:spark-github-pr:1.2.0-s_2.10</pre>
   </div> 
-  <p>Change to <code>lightcopy:spark-github-pr:1.1.0-s_2.11</code> for Scala 2.11.x</p> 
+  <p>Change to <code>lightcopy:spark-github-pr:1.2.0-s_2.11</code> for Scala 2.11.x</p> 
   <h3><a id="user-content-options" class="anchor" href="https://github.com/lightcopy/spark-github-pr#options" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -143,6 +143,15 @@ USING <span class="pl-c1">com</span>.<span class="pl-c1">github</span>.<span cla
 OPTIONS (user <span class="pl-s"><span class="pl-pds">"</span>apache<span class="pl-pds">"</span></span>, repo <span class="pl-s"><span class="pl-pds">"</span>spark<span class="pl-pds">"</span></span>);
 
 <span class="pl-k">SELECT</span> <span class="pl-k">number</span>, title <span class="pl-k">FROM</span> prs <span class="pl-k">LIMIT</span> <span class="pl-c1">10</span>;</pre>
+  </div> 
+  <h3><a id="user-content-structured-streaming-api" class="anchor" href="https://github.com/lightcopy/spark-github-pr#structured-streaming-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Structured Streaming API</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">df</span> <span class="pl-k">=</span> spark.readStream.format(<span class="pl-s"><span class="pl-pds">"</span>com.github.lightcopy.spark.pr<span class="pl-pds">"</span></span>).load()
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> df.select(<span class="pl-s"><span class="pl-pds">"</span>number<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>user.login<span class="pl-pds">"</span></span>).
+  writeStream.format(<span class="pl-s"><span class="pl-pds">"</span>console<span class="pl-pds">"</span></span>).option(<span class="pl-s"><span class="pl-pds">"</span>checkpointLocation<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>./checkpoint<span class="pl-pds">"</span></span>).start()</pre>
   </div> 
   <h2><a id="user-content-building-from-source" class="anchor" href="https://github.com/lightcopy/spark-github-pr#building-from-source" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

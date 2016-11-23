@@ -5,7 +5,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Spark Ryft Connector</h1> 
-  <p>This library lets you expose Ryft as Spark RDDs or Data Frames by consuming ryft rest api.</p> 
+  <p>This library lets you expose Ryft as Spark RDDs or Data Frames by consuming Ryft REST api.</p> 
   <h2><a id="user-content-installation" class="anchor" href="https://github.com/getryft/spark-ryft-connector#installation" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -30,15 +30,15 @@
    <li>SimpleQuery</li> 
    <li>RecordQuery</li> 
   </ol> 
-  <p><code>SimpleQuery</code> represents RAW_TEXT search for one or more search queries. This type of query only uses the CONTAINS relational operator. For two or more search queries, use the OR logical operator. For example: We need a free text search for 3 words ‘query0’, ‘query1’, ‘query2’</p> 
+  <p><code>SimpleQuery</code> represents RAW_TEXT search for one or more search queries. This type of query only uses the CONTAINS relational operator. For two or more search queries, use the OR logical operator. For example, to conduct a free text search for 3 words ‘query0’, ‘query1’, ‘query2’ use this statement:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-en">SimpleQuery</span>(<span class="pl-en">List</span>(“query0”,”query1”,”query2”))</pre>
   </div> 
-  <p>It will be transformed into:</p> 
+  <p>It's transformed into this command:</p> 
   <pre><code>((RAW_TEXT CONTAINS “query0”)OR(RAW_TEXT CONTAINS ”query1”)OR(RAW_TEXT CONTAINS “query2"))
 </code></pre> 
-  <p><code>RecordQuery</code> is a bit complex. It allows you to use Ryft RECORD and RECORD.field queries. You can use method chaining mechanism to create nested queries.</p> 
-  <p>For example:</p> 
+  <p><code>RecordQuery</code> provides more complexity. It allows you to use Ryft RECORD and RECORD.field queries to search on an entire record set or specific fields within record sets. You can use method chaining mechanism to create nested queries.</p> 
+  <p>Here are two examples:</p> 
   <ul> 
    <li>search for all records where field desc contains <code>VEHICLE</code></li> 
   </ul> 
@@ -51,33 +51,33 @@
   <div class="highlight highlight-source-shell">
    <pre>RecordQuery(record, contains, <span class="pl-s"><span class="pl-pds">"</span>VEHICLE<span class="pl-pds">"</span></span>) -<span class="pl-k">&gt;</span> (RECORD CONTAINS “VEHICLE”) </pre>
   </div> 
-  <p>RecordQuery allows you to combine two or more queries via method chaining:</p> 
+  <p>RecordQuery allows you to combine two or more queries by chaining the commands. If the original query is this: </p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-en">RecordQuery</span>(recordField(<span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span>), contains, <span class="pl-s"><span class="pl-pds">"</span>VEHICLE<span class="pl-pds">"</span></span>)
       .or(recordField(<span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span>), contains, <span class="pl-s"><span class="pl-pds">"</span>BIKE<span class="pl-pds">"</span></span>)  </pre>
   </div> 
-  <p>producing the following query:</p> 
+  <p>Then RecordQuery will convert it to produce this query:</p> 
   <pre><code>((RECORD.desc CONTAINS “VEHICLE”)OR(RECORD.desc CONTAINS “BIKE”))
 </code></pre> 
-  <p>or even complex nested queries:</p> 
+  <p>You can also create complex nested queries, like this:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-en">RecordQuery</span>(
       <span class="pl-en">RecordQuery</span>(recordField(<span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span>), contains, <span class="pl-s"><span class="pl-pds">"</span>VEHICLE<span class="pl-pds">"</span></span>)
       .or(recordField(<span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span>), contains, <span class="pl-s"><span class="pl-pds">"</span>BIKE<span class="pl-pds">"</span></span>)
       .or(recordField(<span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span>), contains, <span class="pl-s"><span class="pl-pds">"</span>MOTO<span class="pl-pds">"</span></span>))</pre>
   </div> 
-  <p>producing the following query: </p> 
+  <p>Producing the following query: </p> 
   <pre><code>(((RECORD.desc CONTAINS “VEHICLE”)OR(RECORD.desc CONTAINS “BIKE”)OR(RECORD.desc CONTAINS “MOTO”)))
 </code></pre> 
   <h1><a id="user-content-date-expression" class="anchor" href="https://github.com/getryft/spark-ryft-connector#date-expression" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Date expression</h1> 
-  <p>Different date ranges can be searched for by modifying the expression provided. There are two supported general expression types: DATE(DateFormat operator ValueB) DATE(ValueA operator DateFormat operator ValueB) Where DateFormat is a file-specific date (e.g. 'MM/DD/YYYY' for '02/04/2015') and operator is a math comparison operator (e.g. &lt;, &gt;=, = or !=). You should use simple DSL to specify date field:</p> 
+  <p>Record queries provide a mechanism to search on "dates." Different date ranges can be searched for by modifying the expression provided. There are two supported general expression types: DATE(DateFormat operator ValueB) DATE(ValueA operator DateFormat operator ValueB) Where DateFormat is a file-specific date (e.g. 'MM/DD/YYYY' for '02/04/2015') and operator is a math comparison operator (e.g. &lt;, &gt;=, = or !=). You should use simple DSL to specify date field:</p> 
   <pre><code>RecordQuery(recordField("Date"), contains, DateValue(Format("MM/DD/YYYY") equalTo Date("04/05/2015")))
 RecordQuery(recordField("Date"), contains, DateValue(Date("01/05/2015") &lt; Format("MM/DD/YYYY") &lt; Date("04/05/2015")))
 </code></pre> 
-  <p>producing following queries:</p> 
+  <p>It produces the following queries:</p> 
   <pre><code>(RECORD.Date CONTAINS DATE(MM/DD/YYYY = 04/05/2015))
 (RECORD.Date CONTAINS DATE(01/05/2015 &lt; MM/DD/YYYY &lt; 04/05/2015))
 </code></pre> 
@@ -85,11 +85,11 @@ RecordQuery(recordField("Date"), contains, DateValue(Date("01/05/2015") &lt; For
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Time expression</h1> 
-  <p>Different time ranges can be searched for by modifying the expression provided. There are two general supported expression types: TIME(TimeFormat operator ValueB) TIME(ValueA operator TimeFormat operator ValueB) Where TimeFormat is a file-specific time (e.g. 'HH:MM:SS' for '09:15:00') and operator is a math comparison operator (e.g. &lt;, &gt;=, = or !=).</p> 
+  <p>Different time ranges can be searched for by modifying the expression provided. There are two general supported expression types: TIME(TimeFormat operator ValueB) TIME(ValueA operator TimeFormat operator ValueB) Where TimeFormat is a file-specific time (e.g. 'HH:MM:SS' for '09:15:00') and operator is a math comparison operator (e.g. &lt;, &gt;=, = or !=). Here is an example:</p> 
   <pre><code>RecordQuery(recordField("Date"), contains, TimeValue(Format("HH:MM:SS") equalTo Time("12:00:00")))
 RecordQuery(recordField("Date"), contains, TimeValue(Time("12:00:00") &lt; Format("HH:MM:SS") &lt;= Time("12:30:00")))
 </code></pre> 
-  <p>producing following queries:</p> 
+  <p>Producing following queries:</p> 
   <pre><code>(RECORD.Date CONTAINS TIME(HH:MM:SS = 12:00:00))
 (RECORD.Date CONTAINS TIME(12:00:00 &lt; HH:MM:SS &lt;= 12:30:00))
 </code></pre> 
@@ -98,11 +98,13 @@ RecordQuery(recordField("Date"), contains, TimeValue(Time("12:00:00") &lt; Forma
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Numeric expression</h1> 
   <p>Different numeric ranges can be searched for by modifying the expression provided. There are two general supported expression types: NUMBER(NUM operator1 ValueA, "subitizer", "decimal") NUMBER(ValueA operator1 NUM operator2 ValueB, "subitizer", "decimal")</p> 
-  <p>The subitizer is defined as the separating character to use. For example, for standard US numbers, a comma would be specified. The decimal is defined as the decimal specifier to use. For example, for standard US numbers, a period would be specified. Note that the subitizer and decimal must be different.</p> 
+  <p>The "subitizer" is defined as the separating character to use. For example, for standard US numbers, a comma would be specified. The "decimal" is defined as the decimal specifier to use. For example, for standard US numbers, a period would be specified.</p> 
+  <p>NOTE: The character specified for subitizer and decimal must be different.</p> 
+  <p>Here is the code example:</p> 
   <pre><code>SimpleQuery(NumericValue(NUM &lt;= Number(50), ",", "."))
 SimpleQuery(NumericValue(Number(35) &lt; NUM &lt;= Number(50), ",", "."))
 </code></pre> 
-  <p>producing following queries:</p> 
+  <p>It produces the following queries:</p> 
   <pre><code>(RAW_TEXT CONTAINS NUMBER(NUM &lt;= "50", ",", "."))
 (RAW_TEXT CONTAINS NUMBER("35" &lt; NUM &lt;= "50", ",", "."))
 </code></pre> 
@@ -110,12 +112,16 @@ SimpleQuery(NumericValue(Number(35) &lt; NUM &lt;= Number(50), ",", "."))
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Currency expression</h1> 
-  <p>Currency Searches are a type of number searches and extend the general relational expression defined previouslyю Different currency ranges can be searched for by modifying the expression provided. There are two general supported expression types: CURRENCY(CUR operator1 ValueA, "currency","subitizer","decimal") CURRENCY(ValueA operator1 CUR operator2 ValueB, "currency","subitizer", "decimal")</p> 
-  <p>Subitizer is optional parameter for currency expression </p> 
+  <p>Currency searches are a type of number searches and extend the general relational expression defined previously. Different currency ranges can be searched for by modifying the expression provided. There are two general supported expression types:</p> 
+  <pre><code>CURRENCY(CUR operator1 ValueA, "currency","subitizer","decimal")
+CURRENCY(ValueA operator1 CUR operator2 ValueB, "currency","subitizer", "decimal")
+</code></pre> 
+  <p>"Subitizer" is an optional parameter for currency expression. In the US, a comma is used as the subitizer, and a period is used for the decimal, like this: $20,450.36. In Europe and elsewhere, it is the opposite (period is subitizer and comma is decimal), like this: €20.460,36.</p> 
+  <p>Here is the code example:</p> 
   <pre><code>SimpleQuery(CurrencyValue(CUR &gt;= Currency("$500"), "$", "."))
 SimpleQuery(CurrencyValue(Currency("$300") &lt; CUR &lt;= Currency("$500"), "$", ",", "."))
 </code></pre> 
-  <p>producing following queries:</p> 
+  <p>It produces the following queries:</p> 
   <pre><code>(RAW_TEXT CONTAINS CURRENCY(CUR &gt;= "$500", "$", "", "."))
 (RAW_TEXT CONTAINS CURRENCY("$300" &lt; CUR &lt;= "$500", "$", ",", "."))
 </code></pre> 
@@ -133,17 +139,17 @@ SimpleQuery(CurrencyValue(Currency("$300") &lt; CUR &lt;= Currency("$500"), "$",
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Hamming &amp; Edit search expressions</h1> 
-  <p>FHS(Value,CS,DIST,WIDTH) FEDS(Value,CS,DIST,WIDTH)</p> 
+  <p>There are two ways the Fuzzy Hamming and Fuzzy Edit Distance searches are expressed, respectively: FHS(Value,CS,DIST,WIDTH) FEDS(Value,CS,DIST,WIDTH) These are the parameters:</p> 
   <ul> 
    <li>Value: search expression</li> 
    <li>CS: denotes the case sensitive selection, true|false (optional false by default)</li> 
    <li>DIST: search distance for the primitive</li> 
-   <li>WIDTH: surrounding width</li> 
+   <li>WIDTH: surrounding width Here is the code example:</li> 
   </ul> 
   <pre><code>SimpleQuery(HammingValue("Jones", 1, 10))
 SimpleQuery(EditValue("Jones", 2, 10, true))
 </code></pre> 
-  <p>producing following query:</p> 
+  <p>It produces the following query:</p> 
   <pre><code>(RAW_TEXT CONTAINS FHS("Jones", CS=false, DIST=1, WIDTH=10))
 (RAW_TEXT CONTAINS FEDS("Jones", CS=true, DIST=2, WIDTH=10))
 </code></pre> 
@@ -151,12 +157,12 @@ SimpleQuery(EditValue("Jones", 2, 10, true))
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Expansion Of Search Types</h1> 
-  <p>Query builder DSL allows users to mix different types of query into one. It would be decomposed and processed on the Ryft REST side, e.g.:</p> 
+  <p>Query builder DSL allows users to mix different types of query into one. It would be decomposed and processed on the Ryft REST side, like this:</p> 
   <pre><code>RecordQuery(recordField("Description"), contains, HammingValue("vehycle", 1, 0))
     .and(recordField("ID"), contains, EditValue("10029", 3, 0))
     .and(recordField("Date"), contains, TimeValue(Time("11:50:00") &lt; Format("HH:MM:SS") &lt;= Time("11:55:00")))
 </code></pre> 
-  <p>producing following query:</p> 
+  <p>It produces the following query:</p> 
   <pre><code>((RECORD.Date CONTAINS TIME(11:50:00 &lt; HH:MM:SS &lt;= 11:55:00))
     AND(RECORD.ID CONTAINS FEDS("10029", CS=false, DIST=3, WIDTH=0))
     AND(RECORD.Description CONTAINS FHS("vehycle", CS=false, DIST=1, WIDTH=0)))
@@ -180,14 +186,16 @@ SimpleQuery(EditValue("Jones", 2, 10, true))
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>DataFrame support</h2> 
-  <p>Current connector supports registering as data frames in spark sql context so that they can be queried using SparkSQL. All that's need is to describe a data schema. You should also register the list of files to be searched by the query and the format of the file structure (xml or json). You can use Date\Time Ryft expressions. It will work out of the box; you only need to specify Date\Time type in schema and provide <code>date_format</code> option while registering data frame. Also you can use following optional parameters:</p> 
+  <p>Current connector supports registering as data frames in Spark SQL context so that they can be queried using SparkSQL. You need to do the following:</p> 
   <ul> 
+   <li>Describe a data schema. </li> 
+   <li>Register the list of files to be searched by the query and the format of the file structure (xml or json). You can use Date\Time Ryft expressions; they work out of the box. You only need to specify Date/Time type in the schema and provide <code>date_format</code> option while registering data frame. Also you can use following optional parameters:</li> 
    <li><code>partitioner</code> - Class name that implements partitioning logic for data partitioning.</li> 
    <li><code>date_format</code> - Date\Time format.</li> 
-   <li><code>subitizer</code> - the separating character used for numeric values.</li> 
-   <li><code>decimal</code> - the decimal specifier used for numeric values.</li> 
+   <li><code>subitizer</code> - Separating character used for numeric values.</li> 
+   <li><code>decimal</code> - Decimal specifier used for numeric values.</li> 
   </ul> 
-  <p>Optional parameters should be passed wrapped into scala Map.</p> 
+  <p>Optional parameters should be passed wrapped into Scala Map.</p> 
   <p>Here's an example in <code>scala</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre>  <span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> <span class="pl-en">StructType</span>(<span class="pl-en">Seq</span>(
@@ -229,7 +237,7 @@ df <span class="pl-k">=</span> sqlContext.sql(<span class="pl-s"><span class="pl
 <span class="pl-s">       ORDER BY Date<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <blockquote> 
-   <p>Attention: Since Data Frames use record fields name for both data output and query generation, it is important to have the field names in RDF be the same as the names of the tagger record. In example below, the <code>name</code> field is properly defined where the <code>job</code> is not.</p> 
+   <p>NOTE: Since Data Frames use record fields name for both data output and query generation, it is important to have the field names in RDF be the same as the names of the tagger record. In example below, the <code>name</code> field is properly defined where the <code>job</code> is not.</p> 
   </blockquote> 
   <pre><code>...
 record_start  = "&lt;log&gt;";
@@ -262,7 +270,7 @@ fields = {
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Data Partitioning and locality support</h2> 
-  <p>If setting <code>spark.ryft.rest.url</code> to multiple endpoints, by default search request will be done to each of the servers and results, combined. If you need to override this logic to either do round-robin requests or do requests depending on query value, then you can specify partitioning function or class. </p> 
+  <p>If setting <code>spark.ryft.rest.url</code> to multiple endpoints, then by default, search requests will be done on each of the servers and the results will be combined. To override this logic, do round-robin requests or execute requests depending on query value, then you can specify partitioning function or class. </p> 
   <p>The Partitioning class can be used with both RDD and DataFrame examples regardless of programming language. It is applied by loading jar file in spark context with the class that extends <code>com.ryft.spark.connector.partitioner.RyftPartitioner</code> and specifying its cannonical name via <code>spark.ryft.partitioner</code> configuration value. It can be done globally or on per query level. See <a href="https://github.com/getryft/spark-ryft-connector/blob/master/examples/src/main/scala/com/ryft/spark/connector/examples/DataFrameExample.scala" target="_blank">full example</a> or this code snippet:</p> 
   <div class="highlight highlight-source-scala">
    <pre>  sqlContext.read.ryft(schema, <span class="pl-s"><span class="pl-pds">"</span>*.pcrime<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>temp_table<span class="pl-pds">"</span></span>, <span class="pl-c1">classOf</span>[<span class="pl-en">ArrestPartitioner</span>].getCanonicalName)
@@ -292,7 +300,7 @@ fields = {
 }
 </pre>
   </div> 
-  <p>The partitioning function works for RDD requests in java and scala and can be specified as a parameter to the RDD methods. For example:</p> 
+  <p>The partitioning function works for RDD requests in Java and Scala, and can be specified as a parameter to the RDD methods. For example:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c">// If country name starts with [a-n] go to ryftone-2:8765</span>
 <span class="pl-c">// Otherwise go to ryftone-2:8765</span>
@@ -313,7 +321,7 @@ sc.ryftRDD(<span class="pl-en">List</span>(query), qoptions, byCountry)
 
 println(<span class="pl-s"><span class="pl-pds">"</span>query2: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> sqlc.table(<span class="pl-s"><span class="pl-pds">"</span>query2<span class="pl-pds">"</span></span>).count)</pre>
   </div> 
-  <p>In case of spark node running on Ryft ONE box, you can use partitioning to implement co-location strategy. For example:</p> 
+  <p>In case of Spark node running on Ryft ONE box, you can use partitioning to implement co-location strategy. For example:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">java.net.</span><span class="pl-v">URL</span>
 
@@ -333,7 +341,7 @@ sc.ryftRDD(<span class="pl-en">List</span>(query), qoptions, nopart, sameNodeSel
 
 println(<span class="pl-s"><span class="pl-pds">"</span>query3: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> sqlc.table(<span class="pl-s"><span class="pl-pds">"</span>query3<span class="pl-pds">"</span></span>).count)</pre>
   </div> 
-  <p>When multiple partitioning rules are applied, the one with most priority is used from low to high: <code>partition class in sparkConfig</code>, <code>partition class in query</code>, <code>partition function</code>.</p> 
+  <p>NOTE: When multiple partitioning rules are applied, the one with most priority is used from low to high: <code>partition class in sparkConfig</code>, <code>partition class in query</code>, <code>partition function</code>.</p> 
   <h2><a id="user-content-ci-and-publishing" class="anchor" href="https://github.com/getryft/spark-ryft-connector#ci-and-publishing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

@@ -26,6 +26,10 @@
    </thead>
    <tbody> 
     <tr> 
+     <td><code>0.2.17</code> (auto plugin)</td> 
+     <td align="center"><code>1.16</code></td> 
+    </tr> 
+    <tr> 
      <td><code>0.2.16</code> (auto plugin)</td> 
      <td align="center"><code>1.14.1</code></td> 
     </tr> 
@@ -88,7 +92,7 @@
   <p>Since sbt-jmh is an <strong>AutoPlugin</strong> all you need to do in order to activate it in your project is to add the below line to your <code>project/plugins.sbt</code> file:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c">// project/plugins.sbt</span>
-addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>pl.project13.scala<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-jmh<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.16<span class="pl-pds">"</span></span>)</pre>
+addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>pl.project13.scala<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-jmh<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.17<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <p>and enable it in the projects where you want to (useful in multi-project builds, as you can enable it only where you need it):</p> 
   <div class="highlight highlight-source-scala">
@@ -102,21 +106,24 @@ enablePlugins(<span class="pl-en">JmhPlugin</span>)</pre>
   <p>You can read more about <a href="http://www.scala-sbt.org/0.13/tutorial/Using-Plugins.html#Enabling+and+disabling+auto+plugins" target="_blank">auto plugins in sbt on it's documentation page</a>.</p> 
   <p>Write your benchmarks in <code>src/main/scala</code>. They will be picked up and instrumented by the plugin.</p> 
   <p>JMH has a very specific way of working (it generates loads of code), so you should prepare a separate project for your benchmarks. In it, just type <code>run</code> in order to run your benchmarks. All JMH options work as expected. For help type <code>run -h</code>. Another example of running it is:</p> 
-  <pre><code>jmh:run -i 3 -wi 3 -f1 -t1 .*FalseSharing.*
-</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre>jmh<span class="pl-k">:</span>run <span class="pl-k">-</span>i <span class="pl-c1">3</span> <span class="pl-k">-</span>wi <span class="pl-c1">3</span> <span class="pl-k">-</span>f1 <span class="pl-k">-</span>t1 .<span class="pl-k">*</span><span class="pl-en">FalseSharing</span>.<span class="pl-k">*</span></pre>
+  </div> 
   <p>Which means "3 iterations" "3 warmup iterations" "1 fork" "1 thread". Please note that benchmarks should be usually executed at least in 10 iterations (as a rule of thumb), but more is better.</p> 
   <p><strong>For "real" results we recommend to at least warm up 10 to 20 iterations, and then measure 10 to 20 iterations again. Forking the JVM is required to avoid falling into specific optimisations (no JVM optimisation is really "completely" predictable)</strong></p> 
   <p>If your benchmark should be a module in a multimodule project and needs access to another modules test classes then you might want to define your benchmarks in <code>src/test</code> as well (because <a href="https://youtrack.jetbrains.com/issue/SCL-8396" target="_blank">Intellij does not support "compile-&gt;test" dependencies</a>). While this is not directly supported it can be achieved with some tweaks. Assuming the benchmarks live in a module <code>bench</code> and need access to test classes from <code>anotherModule</code>, you have to define this dependency in your main <code>build.sbt</code>:</p> 
-  <pre><code>lazy val bench = project.dependsOn(anotherModule % "test-&gt;test").enablePlugins(JmhPlugin)
-</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">bench</span> <span class="pl-k">=</span> project.dependsOn(anotherModule <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>test-&gt;test<span class="pl-pds">"</span></span>).enablePlugins(<span class="pl-en">JmhPlugin</span>)</pre>
+  </div> 
   <p>In <code>bench/build.sbt</code> you need to tweak some settings:</p> 
-  <pre><code>sourceDirectory in Jmh := (sourceDirectory in Test).value
-classDirectory in Jmh := (classDirectory in Test).value
-dependencyClasspath in Jmh := (dependencyClasspath in Test).value
-// rewire tasks, so that 'jmh:run' automatically invokes 'jmh:compile' (otherwise a clean 'jmh:run' would fail)
-compile in Jmh &lt;&lt;= (compile in Jmh) dependsOn (compile in Test)
-run in Jmh &lt;&lt;= (run in Jmh) dependsOn (Keys.compile in Jmh)
-</code></pre> 
+  <div class="highlight highlight-source-scala">
+   <pre>sourceDirectory in <span class="pl-en">Jmh</span> <span class="pl-k">:</span><span class="pl-k">=</span> (sourceDirectory in <span class="pl-en">Test</span>).value
+classDirectory in <span class="pl-en">Jmh</span> <span class="pl-k">:</span><span class="pl-k">=</span> (classDirectory in <span class="pl-en">Test</span>).value
+dependencyClasspath in <span class="pl-en">Jmh</span> <span class="pl-k">:</span><span class="pl-k">=</span> (dependencyClasspath in <span class="pl-en">Test</span>).value
+<span class="pl-c">// rewire tasks, so that 'jmh:run' automatically invokes 'jmh:compile' (otherwise a clean 'jmh:run' would fail)</span>
+compile in <span class="pl-en">Jmh</span> <span class="pl-k">&lt;&lt;=</span> (compile in <span class="pl-en">Jmh</span>) dependsOn (compile in <span class="pl-en">Test</span>)
+run in <span class="pl-en">Jmh</span> <span class="pl-k">&lt;&lt;=</span> (run in <span class="pl-en">Jmh</span>) dependsOn (<span class="pl-en">Keys</span>.compile in <span class="pl-en">Jmh</span>)</pre>
+  </div> 
   <h2><a id="user-content-options" class="anchor" href="https://github.com/ktoso/sbt-jmh#options" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -210,8 +217,8 @@ run in Jmh &lt;&lt;= (run in Jmh) dependsOn (Keys.compile in Jmh)
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Advanced: Using custom Runners</h2> 
   <p>It is possible to hand over the running of JMH to an <code>App</code> implemented by you, which allows you to programmatically access all test results and modify JMH arguments before you actually invoke it.</p> 
-  <p>To use a custom runner class with <code>runMain</code>, simply use it: <code>jmh:runMain com.example.MyRunner -i 10 .*</code> – an example for this is available in <a href="https://github.com/ktoso/sbt-jmh/blob/master/src/sbt-test/sbt-jmh/runMain" target="_blank">src/sbt-test/sbt-jmh/runMain</a> (open the <code>test</code> file).</p> 
-  <p>To replace the runner class which is used when you type <code>jmh:run</code>, you can set the class in your build file – an example for this is available in <a href="https://github.com/ktoso/sbt-jmh/blob/master/src/sbt-test/sbt-jmh/custom-runner" target="_blank">src/sbt-test/sbt-jmh/custom-runner</a> (open the <code>build.sbt</code> file).</p> 
+  <p>To use a custom runner class with <code>runMain</code>, simply use it: <code>jmh:runMain com.example.MyRunner -i 10 .*</code> – an example for this is available in <a href="https://github.com/ktoso/sbt-jmh/blob/master/plugin/src/sbt-test/sbt-jmh/runMain" target="_blank">plugin/src/sbt-test/sbt-jmh/runMain</a> (open the <code>test</code> file).</p> 
+  <p>To replace the runner class which is used when you type <code>jmh:run</code>, you can set the class in your build file – an example for this is available in <a href="https://github.com/ktoso/sbt-jmh/blob/master/plugin/src/sbt-test/sbt-jmh/custom-runner" target="_blank">plugin/src/sbt-test/sbt-jmh/custom-runner</a> (open the <code>build.sbt</code> file).</p> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/ktoso/sbt-jmh#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

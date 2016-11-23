@@ -47,7 +47,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ProductItem</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">attributes</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Any</span>], <span class="pl-v">lastUpdated</span>: <span class="pl-en">DateTime</span>)</pre>
   </div> 
-  <p>The AdStax Scala SDK provides an implementation of <code>ProductFeederClient</code> using a RPC system built around AdStax's message bus, which is supported by the <a href="https://www.rabbitmq.com/" target="_blank">RabbitMQ</a> message broker software. In order to create a <code>ProductFeederRmqRpcClient</code> it is necessary to have access to a <a href="http://doc.akka.io/api/akka/2.4.4/index.html#akka.actor.ActorRefFactory" target="_blank"><code>ActorRefFactory</code></a> from Akka. <code>ActorSystem</code> and <code>AkkaContext</code> both implement <code>ActorRefFactory</code>. You must also provide the configuration parameters both for RabbitMQ and the RPC protocol. These are supplied through <a href="https://typesafehub.github.io/config/latest/api/com/typesafe/config/Config.html" target="_blank">Typesafe config</a>. Here's the default configuration, present in <code>reference.conf</code>:</p> 
+  <p>The AdStax Scala SDK provides an implementation of <code>ProductFeederClient</code> using a RPC system built around AdStax <a href="https://www.amqp.org/" target="_blank">AMQP-compatible</a> message bus. In order to create a <code>ProductFeederAmqpRpcClient</code> it is necessary to have access to a <a href="http://doc.akka.io/api/akka/2.4.4/index.html#akka.actor.ActorRefFactory" target="_blank"><code>ActorRefFactory</code></a> from Akka. <code>ActorSystem</code> and <code>AkkaContext</code> both implement <code>ActorRefFactory</code>. You must also provide the configuration parameters both for AMQP and the RPC protocol. These are supplied through <a href="https://typesafehub.github.io/config/latest/api/com/typesafe/config/Config.html" target="_blank">Typesafe config</a>. Here's the default configuration, present in <code>reference.conf</code>:</p> 
   <pre><code>{
   host = "localhost"
   port = 5672
@@ -56,13 +56,13 @@
   timeout = 5m
 }
 </code></pre> 
-  <p>The RPC protocol needs to be configured at the level of the RabbitMQ exchange name and routing key prefix to use in the requests. Here's the default configuration object:</p> 
+  <p>The RPC protocol needs to be configured at the level of the AMQP exchange name and routing key prefix to use in the requests. Here's the default configuration object:</p> 
   <pre><code>{
   exchange-name = "sf.data"
   routing-key-prefix = "productfeeder."
 }
 </code></pre> 
-  <p>The <code>ProductFeederRmqRpcClient</code> constructor also requires an implicit <code>ExecutionContext</code> to deal with futures. Here's how you create a product feeder client and interact with it. We're assuming the RabbitMQ message broker is available at <code>mq.sample-adstax-instance.dev.adstax.io</code> (with credentials <code>guest</code>/<code>guest</code>) and using the default RPC configuration:</p> 
+  <p>The <code>ProductFeederAmqpRpcClient</code> constructor also requires an implicit <code>ExecutionContext</code> to deal with futures. Here's how you create a product feeder client and interact with it. We're assuming the AMQP message broker is available at <code>mq.sample-adstax-instance.dev.adstax.io</code> (with credentials <code>guest</code>/<code>guest</code>) and using the default RPC configuration:</p> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.productfeeder.api.rpc.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.productfeeder.api.rpc.</span><span class="pl-v">_</span>
@@ -76,8 +76,8 @@ system<span class="pl-k">:</span> akka.actor.<span class="pl-en">ActorSystem</sp
 scala<span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ec</span> <span class="pl-k">=</span> system.dispatcher
 ec<span class="pl-k">:</span> scala.concurrent.<span class="pl-en">ExecutionContextExecutor</span> <span class="pl-k">=</span> <span class="pl-en">Dispatcher</span>[akka.actor.default<span class="pl-k">-</span>dispatcher]
 
-scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ProductFeederRmqRpcClient</span>()
-client<span class="pl-k">:</span> eu.shiftforward.adstax.productfeeder.api.rpc.<span class="pl-en">ProductFeederRmqRpcClient</span> <span class="pl-k">=</span> eu.shiftforward.adstax.productfeeder.api.rpc.<span class="pl-en">ProductFeederRmqRpcClient</span><span class="pl-k">@</span>227fdc4e
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">ProductFeederAmqpRpcClient</span>()
+client<span class="pl-k">:</span> eu.shiftforward.adstax.productfeeder.api.rpc.<span class="pl-en">ProductFeederAmqpRpcClient</span> <span class="pl-k">=</span> eu.shiftforward.adstax.productfeeder.api.rpc.<span class="pl-en">ProductFeederAmqpRpcClient</span><span class="pl-k">@</span>227fdc4e
 
 scala<span class="pl-k">&gt;</span> client.updateProduct(<span class="pl-s"><span class="pl-pds">"</span>client1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>site1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>p1<span class="pl-pds">"</span></span>, <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>, <span class="pl-s"><span class="pl-pds">"</span>somethingElse<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>xpto<span class="pl-pds">"</span></span>)).onComplete(println)
 <span class="pl-en">Success</span>(<span class="pl-c1">true</span>)
@@ -133,7 +133,7 @@ scala<span class="pl-k">&gt;</span> client.getProduct(<span class="pl-s"><span c
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ArrayAttrValue</span>(<span class="pl-v">arr</span>: <span class="pl-en">Seq</span>[<span class="pl-en">AttributeValue</span>]) <span class="pl-k">extends</span> <span class="pl-e">AttributeValue</span>
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MapAttrValue</span>(<span class="pl-v">map</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AttributeValue</span>]) <span class="pl-k">extends</span> <span class="pl-e">AttributeValue</span></pre>
   </div> 
-  <p>The AdStax Scala SDK provides an implementation of <code>UserProfileStorageClient</code> using a RPC system built around AdStax's message bus, which is supported by the <a href="https://www.rabbitmq.com/" target="_blank">RabbitMQ</a> message broker software. In order to create a <code>UserProfileStorageRmqRpcClient</code> it is necessary to have access to a <a href="http://doc.akka.io/api/akka/2.4.4/index.html#akka.actor.ActorRefFactory" target="_blank"><code>ActorRefFactory</code></a> from Akka. <code>ActorSystem</code> and <code>AkkaContext</code> both implement <code>ActorRefFactory</code>. You must also provide the configuration parameters both for RabbitMQ and the RPC protocol. These are supplied through <a href="https://typesafehub.github.io/config/latest/api/com/typesafe/config/Config.html" target="_blank">Typesafe config</a>. Here's the default configuration, present in <code>reference.conf</code>:</p> 
+  <p>The AdStax Scala SDK provides an implementation of <code>UserProfileStorageClient</code> using a RPC system built around AdStax <a href="https://www.amqp.org/" target="_blank">AMQP-compatible</a> message bus. In order to create a <code>UserProfileStorageAmqpRpcClient</code> it is necessary to have access to a <a href="http://doc.akka.io/api/akka/2.4.4/index.html#akka.actor.ActorRefFactory" target="_blank"><code>ActorRefFactory</code></a> from Akka. <code>ActorSystem</code> and <code>AkkaContext</code> both implement <code>ActorRefFactory</code>. You must also provide the configuration parameters both for AMQP and the RPC protocol. These are supplied through <a href="https://typesafehub.github.io/config/latest/api/com/typesafe/config/Config.html" target="_blank">Typesafe config</a>. Here's the default configuration, present in <code>reference.conf</code>:</p> 
   <pre><code>{
   host = "localhost"
   port = 5672
@@ -142,13 +142,13 @@ scala<span class="pl-k">&gt;</span> client.getProduct(<span class="pl-s"><span c
   timeout = 5m
 }
 </code></pre> 
-  <p>The RPC protocol needs to be configured at the level of the RabbitMQ exchange name and routing key prefix to use in the requests. Here's the default configuration object:</p> 
+  <p>The RPC protocol needs to be configured at the level of the AMQP exchange name and routing key prefix to use in the requests. Here's the default configuration object:</p> 
   <pre><code>{
   exchange-name = "sf.data"
   routing-key-prefix = "user-profile-storage."
 }
 </code></pre> 
-  <p>The <code>UserProfileStorageRmqRpcClient</code> constructor also requires an implicit <code>ExecutionContext</code> to deal with futures. Here's how you create a user profile storage client and interact with it. We're assuming the RabbitMQ message broker is available at <code>mq.sample-adstax-instance.dev.adstax.io</code> (with credentials <code>guest</code>/<code>guest</code>) and using the default RPC configuration:</p> 
+  <p>The <code>UserProfileStorageAmqpRpcClient</code> constructor also requires an implicit <code>ExecutionContext</code> to deal with futures. Here's how you create a user profile storage client and interact with it. We're assuming the AMQP message broker is available at <code>mq.sample-adstax-instance.dev.adstax.io</code> (with credentials <code>guest</code>/<code>guest</code>) and using the default RPC configuration:</p> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.ups.api.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.ups.api.</span><span class="pl-v">_</span>
@@ -165,8 +165,8 @@ system<span class="pl-k">:</span> akka.actor.<span class="pl-en">ActorSystem</sp
 scala<span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ec</span> <span class="pl-k">=</span> system.dispatcher
 ec<span class="pl-k">:</span> scala.concurrent.<span class="pl-en">ExecutionContextExecutor</span> <span class="pl-k">=</span> <span class="pl-en">Dispatcher</span>[akka.actor.default<span class="pl-k">-</span>dispatcher]
 
-scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">UserProfileStorageRmqRpcClient</span>()
-client<span class="pl-k">:</span> eu.shiftforward.adstax.ups.api.rpc.<span class="pl-en">UserProfileStorageRmqRpcClient</span> <span class="pl-k">=</span> eu.shiftforward.adstax.storage.rpc.<span class="pl-en">UserProfileStorageRmqRpcClient</span><span class="pl-k">@</span>750147c3
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">UserProfileStorageAmqpRpcClient</span>()
+client<span class="pl-k">:</span> eu.shiftforward.adstax.ups.api.rpc.<span class="pl-en">UserProfileStorageAmqpRpcClient</span> <span class="pl-k">=</span> eu.shiftforward.adstax.storage.rpc.<span class="pl-en">UserProfileStorageAmqpRpcClient</span><span class="pl-k">@</span>750147c3
 
 scala<span class="pl-k">&gt;</span> client.update(<span class="pl-s"><span class="pl-pds">"</span>user1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>client1<span class="pl-pds">"</span></span>, <span class="pl-en">UserAttributes</span>(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>nAttr<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">NumericAttrValue</span>(<span class="pl-c1">2.0</span>), <span class="pl-s"><span class="pl-pds">"</span>sAttr<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">StringAttrValue</span>(<span class="pl-s"><span class="pl-pds">"</span>val<span class="pl-pds">"</span></span>)))).onComplete(println)
 <span class="pl-en">Success</span>(<span class="pl-c1">true</span>)
@@ -190,7 +190,7 @@ scala<span class="pl-k">&gt;</span> client.get(<span class="pl-s"><span class="p
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Spark Jobs</h3> 
-  <p>The AdStax Scala SDK allows one to define jobs to run on Spark and that are able to access AdStax's events. In order to define a spark job, one should create a class that implements the <code>SparkJob</code> trait. The <code>SparkJob</code> trait has the following interface:</p> 
+  <p>The AdStax Scala SDK allows one to define jobs to run on Spark and that are able to access AdStax events. In order to define a spark job, one should create a class that implements the <code>SparkJob</code> trait. The <code>SparkJob</code> trait has the following interface:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">trait</span> <span class="pl-en">SparkJob</span> {
   <span class="pl-k">def</span> <span class="pl-en">name</span><span class="pl-k">:</span> <span class="pl-k">String</span>
@@ -201,7 +201,7 @@ scala<span class="pl-k">&gt;</span> client.get(<span class="pl-s"><span class="p
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">def</span> <span class="pl-en">eventsRDD</span>(<span class="pl-v">eventTypes</span>: <span class="pl-en">Set</span>[<span class="pl-k">String</span>], <span class="pl-v">startDateTime</span>: <span class="pl-en">DateTime</span>, <span class="pl-v">endDateTime</span>: <span class="pl-en">DateTime</span>)<span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-k">String</span>]</pre>
   </div> 
-  <p>The returned <code>RDD</code> provides access to the events in JSON format. Refer to AdStax's public documentation for the expected event format. Once implemented, you can submit the Spark job to run on your AdStax instance using the <a href="https://github.com/ShiftForward/adstax-spark-job-manager" target="_blank"><code>adstax-spark-job-manager</code></a> command line utility.</p> 
+  <p>The returned <code>RDD</code> provides access to the events in JSON format. Refer to AdStax public documentation for the expected event format. Once implemented, you can submit the Spark job to run on your AdStax instance using the <a href="https://github.com/ShiftForward/adstax-spark-job-manager" target="_blank"><code>adstax-spark-job-manager</code></a> command line utility.</p> 
   <h3><a id="user-content-tracking" class="anchor" href="https://github.com/shiftforward/adstax-sdk-scala#tracking" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -218,7 +218,7 @@ scala<span class="pl-k">&gt;</span> client.get(<span class="pl-s"><span class="p
   }
 }</pre>
   </div> 
-  <p>After providing the RabbitMQ and the routing keys in the same way as the modules above, you can start having the AdStax events forwarded to your actor:</p> 
+  <p>After providing the AMQP configuration and the routing keys in the same way as the modules above, you can start having the AdStax events forwarded to your actor:</p> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.tracking.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">eu.shiftforward.adstax.tracking.</span><span class="pl-v">_</span>

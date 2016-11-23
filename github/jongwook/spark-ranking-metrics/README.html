@@ -1,0 +1,55 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-spark-ranking-metrics" class="anchor" href="https://github.com/jongwook/spark-ranking-metrics#spark-ranking-metrics" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark-ranking-metrics</h1> 
+  <p>Ranking is an important component for building recommender systems, and there are various methods to evaluate the offline performance of ranking algorithms [1].</p> 
+  <p>Users are usually provided with a certain number of recommended items, so it is usual to measure the performance of only the top-<em>k</em> recommended items, and this is why the metrics are often suffixed by "@<em>k</em>".</p> 
+  <p>Currently, Spark's implementations for ranking metrics are <a href="http://spark.apache.org/docs/2.0.0/api/scala/index.html#org.apache.spark.mllib.evaluation.RankingMetrics" target="_blank">quite limited</a>, and its NDCG implementation assumes that the relevance is always binary, producing <a href="https://gist.github.com/jongwook/5d4e78290eaef22cb69abbf68b52e597" target="_blank">different numbers</a>. Meanwhile, <a href="https://github.com/recommenders/rival" target="_blank">RiVal</a> aims to be a toolkit for reproducible recommender system evaluation and provides a robust implementation for a few ranking metrics, but it is written as a single-threaded application and therefore is not applicable to the scale which Spark users typically encounter.</p> 
+  <p>To complement this, <a href="https://github.com/jongwook/spark-ranking-metrics/blob/master/src/main/scala/com/github/jongwook/SparkRankingMetrics.scala" target="_blank"><code>SparkRankingMetrics</code></a> contains scalable implementations for NDCG, MAP, Precision, and Recall, using Spark's DataFrame/Dataset idioms.</p> 
+  <blockquote> 
+   <p>[1] Gunawardana, A., &amp; Shani, G. (2015). Evaluating recommendation systems. In <em>Recommender systems handbook</em> (pp. 265-308). Springer US.</p> 
+  </blockquote> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/jongwook/spark-ranking-metrics#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.apache.spark.mllib.recommendation.</span><span class="pl-v">MatrixFactorizationModel</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.mllib.recommendation.</span><span class="pl-v">Rating</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.rdd.</span><span class="pl-v">RDD</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.jongwook.</span><span class="pl-v">SparkRankingMetrics</span>
+
+<span class="pl-c">// A recommendation model obtained by Spark's ALS</span>
+<span class="pl-k">val</span> <span class="pl-en">model</span> <span class="pl-k">=</span> <span class="pl-en">MatrixFactorizationModel</span>.load(sc, <span class="pl-s"><span class="pl-pds">"</span>path/to/model<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[(<span class="pl-k">Int</span>, <span class="pl-en">Array</span>[<span class="pl-en">Rating</span>])] <span class="pl-k">=</span> model.recommendProductsForUsers(<span class="pl-c1">20</span>)
+
+<span class="pl-c">// A flattened RDD that contains all Ratings in the result</span>
+<span class="pl-k">val</span> <span class="pl-en">prediction</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">Rating</span>] <span class="pl-k">=</span> result.values.flatMap(ratings <span class="pl-k">=&gt;</span> ratings)
+<span class="pl-k">val</span> <span class="pl-en">groundTruth</span><span class="pl-k">:</span> <span class="pl-en">RDD</span>[<span class="pl-en">Rating</span>] <span class="pl-k">=</span> <span class="pl-c">/* the ground-truth dataset */</span>
+
+<span class="pl-c">// create DataFrames using the RDDs above</span>
+<span class="pl-k">val</span> <span class="pl-en">predictionDF</span> <span class="pl-k">=</span> spark.createDataFrame(prediction)
+<span class="pl-k">val</span> <span class="pl-en">groundTruthDF</span> <span class="pl-k">=</span> spark.createDataFrame(groundTruth)
+
+<span class="pl-c">// instantiate using either DataFrames or Datasets</span>
+<span class="pl-k">val</span> <span class="pl-en">metrics</span> <span class="pl-k">=</span> <span class="pl-en">SparkRankingMetrics</span>(predictionDF, groundTruthDF)
+
+<span class="pl-c">// override the non-default column names</span>
+metrics.setItemCol(<span class="pl-s"><span class="pl-pds">"</span>product<span class="pl-pds">"</span></span>)
+metrics.setPredictionCol(<span class="pl-s"><span class="pl-pds">"</span>rating<span class="pl-pds">"</span></span>)
+
+<span class="pl-c">// print the metrics</span>
+println(metrics.ndcgAt(<span class="pl-c1">10</span>))
+println(metrics.mapAt(<span class="pl-c1">15</span>))
+println(metrics.precisionAt(<span class="pl-c1">5</span>))
+println(metrics.recallAt(<span class="pl-c1">20</span>))</pre>
+  </div> 
+  <h2><a id="user-content-validation" class="anchor" href="https://github.com/jongwook/spark-ranking-metrics#validation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Validation</h2> 
+  <p>This repository contains <a href="https://github.com/jongwook/spark-ranking-metrics/blob/master/src/test/scala/com/github/jongwook/TestEquality.scala" target="_blank">a test case</a> that checks the numbers produced by <code>SparkRankingMetrics</code> are identical to what RiVal's corresponding implementations produce, using the <a href="http://grouplens.org/datasets/movielens/100k/" target="_blank">MovieLens 100K dataset</a>. The result is: <a href="https://travis-ci.org/jongwook/spark-ranking-metrics" target="_blank"><img src="https://camo.githubusercontent.com/7125a896b56423d73a22435685ca0c43ecace64c/68747470733a2f2f7472617669732d63692e6f72672f6a6f6e67776f6f6b2f737061726b2d72616e6b696e672d6d6574726963732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/jongwook/spark-ranking-metrics.svg?branch=master" style="max-width:100%;"></a></p> 
+ </article>
+</div>

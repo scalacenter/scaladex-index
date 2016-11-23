@@ -1,0 +1,58 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-bluetooth" class="anchor" href="https://github.com/mwylde/scala-bluetooth#scala-bluetooth" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-bluetooth</h1> 
+  <p>This project contains experimental Scala binding to bluez (Linux's bluetooth stack) over DBus (a popular Linux IPC system), with support for Bluetooth low energy (BLE). Use this library if you've ever wanted to control your BLE smart lights, get battery status from your headphones, or connect to your smart toaster from Scala.</p> 
+  <p>Bluetooth <a href="https://learn.adafruit.com/introduction-to-bluetooth-low-energy?view=all" target="_blank">is complicated</a> and DBus <a href="https://dbus.freedesktop.org/doc/dbus-specification.html" target="_blank">is <em>extremely</em> complicated</a>. This library aims to hide most of the complication of dealing with DBus, but does not abstract much over the underlying Bluetooth concepts.</p> 
+  <p>Enough talk. You just want to make a sweet light display:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> <span class="pl-k">object</span> <span class="pl-en">DanceParty</span> {
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+    <span class="pl-k">val</span> <span class="pl-en">manager</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BluetoothManager</span>
+    <span class="pl-k">val</span> <span class="pl-en">adapter</span> <span class="pl-k">=</span> manager.defaultAdapter.get
+    <span class="pl-k">if</span> (<span class="pl-k">!</span>adapter.powered) {
+      <span class="pl-en">Await</span>.result(adapter.powered <span class="pl-k">=</span> <span class="pl-c1">true</span>, <span class="pl-c1">10</span> seconds)
+    }
+    adapter.startDiscovery()
+    <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">1000</span>)
+
+    <span class="pl-k">val</span> <span class="pl-en">lights</span> <span class="pl-k">=</span> manager.devices.filter(_.name.startsWith(<span class="pl-s"><span class="pl-pds">"</span>LEDBlue<span class="pl-pds">"</span></span>))
+    lights.foreach(_.connect(stayConnected <span class="pl-k">=</span> <span class="pl-c1">true</span>))
+
+    <span class="pl-en">Range</span>(<span class="pl-c1">0</span>, <span class="pl-c1">100</span>).foreach((i) <span class="pl-k">=&gt;</span> {
+      <span class="pl-k">val</span> <span class="pl-en">color</span> <span class="pl-k">=</span> (<span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>))
+      <span class="pl-k">val</span> <span class="pl-en">message</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">0x56</span>, color._1, color._2, color._3, <span class="pl-c1">0x00</span>, <span class="pl-c1">0xf0</span>, <span class="pl-c1">0xaa</span>)
+      lights.toParArray.foreach(light <span class="pl-k">=&gt;</span> {
+        light.getCharForUUID(<span class="pl-s"><span class="pl-pds">"</span>0000ffe9<span class="pl-pds">"</span></span>)
+          .foreach((char) <span class="pl-k">=&gt;</span> char.writeValue(message.map(_.toByte)))
+      })
+      <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">200</span>)
+    })
+
+    lights.foreach(_.disconnect())
+    manager.close()
+  }
+}</pre>
+  </div> 
+  <p>See <a href="https://github.com/mwylde/scala-bluetooth/tree/master/examples" target="_blank">here</a> for more examples.</p> 
+  <h3><a id="user-content-setup" class="anchor" href="https://github.com/mwylde/scala-bluetooth#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h3> 
+  <p>Releases are hosted on maven central. To add to your build:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.micahw<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scala-bluetooth<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Unfortunately, support for BLE over DBus is still experimental in bluez, so you will need to run the daemon in experimental mode:</p> 
+  <pre><code>$ sudo bluetoothd -e
+</code></pre> 
+  <p>You will also need to install dbus-java. For Ubuntu, this looks like:</p> 
+  <pre><code>$ sudo apt-get install libdbus-java
+</code></pre> 
+  <p>And make sure that the dbus jar is on the classpath (for Ubuntu, this looks like <code>java -cp /usr/share/java/dbus-2.8.jar/dbus-2.8.jar</code>). The dbus java also relies on the native libunix-java.so, so make sure that your JVM knows where to find that. The easiest way to do this system wide is to link it into to /usr/lib. In Ubuntu, it's placed by default in /usr/lib/jni, so this can be done with</p> 
+  <pre><code>sudo ln -s /usr/lib/jni/libunix-java.so /usr/lib/libunix-java.so
+</code></pre> 
+ </article>
+</div>
