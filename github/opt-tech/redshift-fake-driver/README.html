@@ -15,7 +15,6 @@
    <li>COPY 
     <ul> 
      <li>JSON with jsonpaths</li> 
-     <li>CSV (T.B.D.)</li> 
      <li>MANIFEST</li> 
     </ul></li> 
    <li>UNLOAD</li> 
@@ -24,7 +23,7 @@
      <li>just drop Redshift specific directives (e.g. DISTSTYLE, DISTKEY, ...)</li> 
     </ul></li> 
   </ul> 
-  <p>Some options are currently not working.</p> 
+  <p>Some options are currently not supported.</p> 
   <p>Contributions are welcome !</p> 
   <h2><a id="user-content-requirements" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#requirements" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -83,18 +82,37 @@
   <h3><a id="user-content-write-an-application" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#write-an-application" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Write an application.</h3> 
-  <p>You should configure Redshift connection as follows only in local environment.</p> 
-  <ul> 
-   <li>driver 
-    <ul> 
-     <li><code>jp.ne.opt.redshiftfake.postgres.FakePostgresqlDriver</code></li> 
-    </ul></li> 
-   <li>url 
-    <ul> 
-     <li>replace <code>jdbc:postgresql</code> with <code>jdbc:postgresqlredshift</code></li> 
-    </ul></li> 
-  </ul> 
+    </svg></a>Write an application</h3> 
+  <h4><a id="user-content-example-in-scala" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#example-in-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example in Scala</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Class</span>.forName(<span class="pl-s"><span class="pl-pds">"</span>jp.ne.opt.redshiftfake.postgres.FakePostgresqlDriver<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">endpoint</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>http://localhost:9444/<span class="pl-pds">"</span></span> <span class="pl-c">// in production, this will "s3://"</span>
+
+<span class="pl-k">val</span> <span class="pl-en">url</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:postgresqlredshift://localhost:5432/foo<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">prop</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Properties</span>()
+prop.setProperty(<span class="pl-s"><span class="pl-pds">"</span>driver<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>jp.ne.opt.redshiftfake.postgres.FakePostgresqlDriver<span class="pl-pds">"</span></span>)
+prop.setProperty(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>sa<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> <span class="pl-en">DriverManager</span>.getConnection(url, prop)
+<span class="pl-k">val</span> <span class="pl-en">stmt</span> <span class="pl-k">=</span> conn.createStatement()
+
+<span class="pl-k">val</span> <span class="pl-en">unloadSql</span> <span class="pl-k">=</span>
+  s<span class="pl-s"><span class="pl-pds">"""</span>unload ('select * from foo') to '${endpoint}foo/unloaded_'</span>
+<span class="pl-s">      |credentials 'aws_access_key_id=AKIAXXXXXXXXXXXXXXX;aws_secret_access_key=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY' </span>
+<span class="pl-s">      |manifest<span class="pl-pds">"""</span></span>.stripMargin
+stmt.execute(unloadSql)
+
+<span class="pl-k">val</span> <span class="pl-en">copySql</span> <span class="pl-k">=</span>
+  s<span class="pl-s"><span class="pl-pds">"""</span>copy bar from '${endpoint}foo/unloaded_manifest'</span>
+<span class="pl-s">      |credentials 'aws_access_key_id=AKIAXXXXXXXXXXXXXXX;aws_secret_access_key=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'</span>
+<span class="pl-s">      |manifest<span class="pl-pds">"""</span></span>.stripMargin
+
+stmt.execute(copySql)</pre>
+  </div> 
   <h3><a id="user-content-run-the-application" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#run-the-application" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -106,7 +124,7 @@
   <ul> 
    <li>Specify region via <code>fake.awsRegion</code> system property. 
     <ul> 
-     <li>If you do not specify region, the default is <code>ap-northeast-1</code>.</li> 
+     <li><code>ap-northeast-1</code> by default</li> 
     </ul></li> 
   </ul> 
   <h4><a id="user-content-with-fake-s3" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#with-fake-s3" aria-hidden="true" target="_blank">
@@ -116,7 +134,7 @@
   <ul> 
    <li>Specify s3 endpoint via <code>fake.awsS3Endpoint</code> system property. 
     <ul> 
-     <li>if you started a <code>fake-s3</code> server on <code>http://localhost:9444/</code>, system property will be <code>-Dfake.awsS3Endpoint="http://localhost:9444/"</code>. (trailing slash is needed)</li> 
+     <li>if you started a <code>fake-s3</code> server on <code>http://localhost:9444/</code>, specify <code>-Dfake.awsS3Endpoint="http://localhost:9444/"</code>. (trailing slash is needed)</li> 
     </ul></li> 
   </ul> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/opt-tech/redshift-fake-driver#license" aria-hidden="true" target="_blank">
