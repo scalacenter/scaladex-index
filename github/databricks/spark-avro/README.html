@@ -98,7 +98,7 @@ $ bin/spark-shell --packages com.databricks:spark-avro_2.11:3.0.1
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Supported types for Avro -&gt; Spark SQL conversion</h2> 
-  <p>This library supports reading all Avro types, with the exception of complex <code>union</code> types. It uses the following mapping from Avro types to Spark SQL types:</p> 
+  <p>This library supports reading all Avro types. It uses the following mapping from Avro types to Spark SQL types:</p> 
   <table>
    <thead> 
     <tr> 
@@ -155,14 +155,19 @@ $ bin/spark-shell --packages com.databricks:spark-avro_2.11:3.0.1
      <td>fixed</td> 
      <td>BinaryType</td> 
     </tr> 
+    <tr> 
+     <td>union</td> 
+     <td>See below</td> 
+    </tr> 
    </tbody>
   </table> 
-  <p>In addition to the types listed above, it supports reading of three types of <code>union</code> types:</p> 
+  <p>In addition to the types listed above, it supports reading <code>union</code> types. The following three types are considered basic <code>union</code> types:</p> 
   <ol> 
-   <li><code>union(int, long)</code></li> 
-   <li><code>union(float, double)</code></li> 
-   <li><code>union(something, null)</code>, where <code>something</code> is one of the supported Avro types listed above or is one of the supported <code>union</code> types.</li> 
+   <li><code>union(int, long)</code> will be mapped to <code>LongType</code>.</li> 
+   <li><code>union(float, double)</code> will be mapped to <code>DoubleType</code>.</li> 
+   <li><code>union(something, null)</code>, where <code>something</code> is any supported Avro type. This will be mapped to the same Spark SQL type as that of <code>something</code>, with <code>nullable</code> set to <code>true</code>.</li> 
   </ol> 
+  <p>All other <code>union</code> types are considered complex. They will be mapped to <code>StructType</code> where field names are <code>member0</code>, <code>member1</code>, etc., in accordance with members of the <code>union</code>. This is consistent with the behavior when converting between Avro and Parquet.</p> 
   <p>At the moment, it ignores docs, aliases and other properties present in the Avro file.</p> 
   <h2><a id="user-content-supported-types-for-spark-sql---avro-conversion" class="anchor" href="https://github.com/databricks/spark-avro#supported-types-for-spark-sql---avro-conversion" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

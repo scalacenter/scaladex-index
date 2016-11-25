@@ -1,0 +1,277 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scalatra-forms" class="anchor" href="https://github.com/gitbucket/scalatra-forms#scalatra-forms" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scalatra-forms</h1> 
+  <p>A library to validate and map request parameters for Scalatra.</p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/gitbucket/scalatra-forms#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h2> 
+  <p>At first, add the following dependency into your build.sbt to use scalatra-forms.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.github.gitbucket<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalatra-forms<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Next, add <code>ValidationJavaScriptProvider</code> to Bootstrap of your Scalatra application.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">io.github.gitbucket.scalatra.forms.</span><span class="pl-v">_</span>
+
+<span class="pl-k">class</span> <span class="pl-en">ScalatraBootstrap</span> <span class="pl-k">extends</span> <span class="pl-e">LifeCycle</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">init</span>(<span class="pl-v">context</span>: <span class="pl-en">ServletContext</span>) {
+    ...
+    context.mount(<span class="pl-k">new</span> <span class="pl-en">ValidationJavaScriptProvider,</span> <span class="pl-s"><span class="pl-pds">"</span>/assets/js/*<span class="pl-pds">"</span></span>)
+    ...
+  }
+}</pre>
+  </div> 
+  <p>scalatra-forms is now ready.</p> 
+  <p>Define a form mapping. It's a similar to Play2, but scalatra-forms is more flexible.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">io.github.gitbucket.scalatra.forms.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">RegisterForm</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">description</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">form</span> <span class="pl-k">=</span> mapping(
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>        <span class="pl-k">-</span><span class="pl-k">&gt;</span> text(required, maxlength(<span class="pl-c1">40</span>)), 
+  <span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> text()
+)(<span class="pl-en">RegisterForm</span>.apply)</pre>
+  </div> 
+  <p>Next, create a servlet (or filter) which extends ScalatraServlet (or ScalatraFilter). It also mixed in <code>FormSupport</code> or <code>ClientSideValidationFormSupport</code>. The object which is mapped request parameters is passed as an argument of action.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">RegisterServlet</span> <span class="pl-k">extends</span> <span class="pl-e">ScalatraServlet</span> <span class="pl-k">with</span> <span class="pl-e">ClientSideValidationFormSupport</span> {
+  post(<span class="pl-s"><span class="pl-pds">"</span>/register<span class="pl-pds">"</span></span>, form) { <span class="pl-v">form</span>: <span class="pl-en">RegisterForm</span> <span class="pl-k">=&gt;</span>
+    ...
+  }
+}</pre>
+  </div> 
+  <p>In the HTML, you have to do two things below.</p> 
+  <ul> 
+   <li>Add <code>&lt;script&gt;</code> to import jQuery which is required by validation.js</li> 
+   <li>Add <code>&lt;script&gt;</code> to import validation.js which helps client side validation provided by <code>ValidationJavaScriptProvider</code></li> 
+   <li>Add <code>validation="true"</code> to your <code>&lt;form&gt;</code></li> 
+  </ul> 
+  <p>scalatra-forms registers a submit event listener to validate form contents. This listener posts all the form contents to <code>FORM_ACTION/validate</code>. This action is registered by scalatra-forms automatically to validate form contents. It returns validation results as JSON.</p> 
+  <p>In the client side, scalatra-forms puts error messages into <code>span#error-FIELD_NAME</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>http://code.jquery.com/jquery-2.0.3.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>/assets/js/validation.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+...
+&lt;<span class="pl-ent">form</span> <span class="pl-e">method</span>=<span class="pl-s"><span class="pl-pds">"</span>POST<span class="pl-pds">"</span></span> <span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>/register<span class="pl-pds">"</span></span> <span class="pl-e">validation</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>&gt;
+  <span class="pl-en">Name</span><span class="pl-k">:</span> &lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>&gt;
+  &lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>error-name<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">span</span>&gt;
+  &lt;<span class="pl-ent">br</span>/&gt;
+  <span class="pl-en">Description</span><span class="pl-k">:</span> &lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>&gt;
+  &lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>error-description<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">span</span>&gt;
+  &lt;<span class="pl-ent">br</span>/&gt;
+  &lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>Register<span class="pl-pds">"</span></span>/&gt;
+&lt;/<span class="pl-ent">form</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-custom-validation" class="anchor" href="https://github.com/gitbucket/scalatra-forms#custom-validation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Custom Validation</h2> 
+  <p>You can create custom <code>Constraint</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">identifier</span><span class="pl-k">:</span> <span class="pl-en">Constraint</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Constraint</span>(){
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">validate</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">value</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+    <span class="pl-k">if</span>(<span class="pl-k">!</span>value.matches(<span class="pl-s"><span class="pl-pds">"</span>^[a-zA-Z0-9<span class="pl-cce">\\</span>-_]+$<span class="pl-pds">"</span></span>)){
+      <span class="pl-en">Some</span>(s<span class="pl-s"><span class="pl-pds">"</span>${name} contains invalid character.<span class="pl-pds">"</span></span>)
+    } <span class="pl-k">else</span> {
+      <span class="pl-c1">None</span>
+    }
+}
+
+<span class="pl-k">val</span> <span class="pl-en">form</span> <span class="pl-k">=</span> mapping(
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>        <span class="pl-k">-</span><span class="pl-k">&gt;</span> text(required, identifier), 
+  <span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> text()
+)(<span class="pl-en">RegisterForm</span>.apply)</pre>
+  </div> 
+  <p>You can also create multi field validator by overriding <code>validate(String, String, Map[String, String])</code>. It's possible to look up other field value via <code>params</code>.</p> 
+  <p>Other way to create multi field validator is calling <code>verifying</code> for mapping. You can give the function yo validate the mapped case class. This function takes the mapped value and returns <code>Seq[(String, String)]</code> which contains errors or <code>Nil</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">form</span> <span class="pl-k">=</span> mapping(
+  <span class="pl-s"><span class="pl-pds">"</span>reason<span class="pl-pds">"</span></span>      <span class="pl-k">-</span><span class="pl-k">&gt;</span> number(required), 
+  <span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> optional(text)
+)(<span class="pl-en">ReasonForm</span>.apply).verifying { value <span class="pl-k">=&gt;</span>
+  <span class="pl-k">if</span>(value.reason <span class="pl-k">==</span> <span class="pl-c1">4</span> <span class="pl-k">&amp;&amp;</span> value.descripsion){
+    <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>If reason is 'Other' then description is required.<span class="pl-pds">"</span></span>)
+  } <span class="pl-k">else</span> {
+    <span class="pl-c1">Nil</span>
+  }
+}</pre>
+  </div> 
+  <h2><a id="user-content-ajax" class="anchor" href="https://github.com/gitbucket/scalatra-forms#ajax" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ajax</h2> 
+  <p>For the Ajax action, use <code>ajaxGet</code> or <code>ajaxPost</code> instead of <code>get</code> or <code>post</code>. Actions which defined by <code>ajaxGet</code> or <code>ajaxPost</code> return validation result as JSON response.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">RegisterServlet</span> <span class="pl-k">extends</span> <span class="pl-e">ScalatraServlet</span> <span class="pl-k">with</span> <span class="pl-e">ClientSideValidationFormSupport</span> {
+  ajaxPost(<span class="pl-s"><span class="pl-pds">"</span>/register<span class="pl-pds">"</span></span>, form) { <span class="pl-v">form</span>: <span class="pl-en">RegisterForm</span> <span class="pl-k">=&gt;</span>
+    ...
+  }
+}</pre>
+  </div> 
+  <p>In the client side, you can render error messages using <code>displayErrors()</code>. </p> 
+  <div class="highlight highlight-source-js">
+   <pre><span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">'</span>#register<span class="pl-pds">'</span></span>).<span class="pl-c1">click</span>(<span class="pl-k">function</span>(<span class="pl-smi">e</span>){
+  <span class="pl-smi">$</span>.<span class="pl-en">ajax</span>(<span class="pl-en">$</span>(<span class="pl-v">this</span>).<span class="pl-en">attr</span>(<span class="pl-s"><span class="pl-pds">'</span>action<span class="pl-pds">'</span></span>), {
+    type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>POST<span class="pl-pds">'</span></span>,
+    data<span class="pl-k">:</span> {
+      name       <span class="pl-k">:</span> <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">'</span>#name<span class="pl-pds">'</span></span>).<span class="pl-en">val</span>(),
+      description<span class="pl-k">:</span> <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">'</span>#description<span class="pl-pds">'</span></span>).<span class="pl-en">val</span>()
+    }
+  })
+  .<span class="pl-en">done</span>(<span class="pl-k">function</span>(<span class="pl-smi">data</span>){
+    <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">'</span>#result<span class="pl-pds">'</span></span>).<span class="pl-c1">text</span>(<span class="pl-s"><span class="pl-pds">'</span>Registered!<span class="pl-pds">'</span></span>);
+  })
+  .<span class="pl-en">fail</span>(<span class="pl-k">function</span>(<span class="pl-smi">data</span>, <span class="pl-smi">status</span>){
+    <span class="pl-en">displayErrors</span>(<span class="pl-smi">$</span>.<span class="pl-en">parseJSON</span>(<span class="pl-smi">data</span>.<span class="pl-c1">responseText</span>));
+  });
+});</pre>
+  </div> 
+  <h2><a id="user-content-release-notes" class="anchor" href="https://github.com/gitbucket/scalatra-forms#release-notes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release Notes</h2> 
+  <h3><a id="user-content-110---25-nov-2016" class="anchor" href="https://github.com/gitbucket/scalatra-forms#110---25-nov-2016" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>1.1.0 - 25 Nov 2016</h3> 
+  <ul> 
+   <li>Scalatra 2.5.0 and Scala 2.12 support</li> 
+  </ul> 
+  <h3><a id="user-content-100---31-dec-2015" class="anchor" href="https://github.com/gitbucket/scalatra-forms#100---31-dec-2015" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>1.0.0 - 31 Dec 2015</h3> 
+  <ul> 
+   <li>Move to GitBucket organization.</li> 
+   <li>Change group id and package name to <code>io.github.gitbucket</code>.</li> 
+   <li>Add <code>put()</code>, <code>delete()</code>, <code>ajaxPut()</code> and <code>ajaxDelete()</code> to <code>ClientSidevalidationFormSupport</code>.</li> 
+  </ul> 
+  <h3><a id="user-content-020---18-nov-2015" class="anchor" href="https://github.com/gitbucket/scalatra-forms#020---18-nov-2015" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.2.0 - 18 Nov 2015</h3> 
+  <ul> 
+   <li>Fix performance issue</li> 
+  </ul> 
+  <h3><a id="user-content-010---9-jul-2014" class="anchor" href="https://github.com/gitbucket/scalatra-forms#010---9-jul-2014" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.1.0 - 9 Jul 2014</h3> 
+  <ul> 
+   <li>Support Scala 2.11 and Scalatra 2.3</li> 
+  </ul> 
+  <h3><a id="user-content-0014---19-feb-2014" class="anchor" href="https://github.com/gitbucket/scalatra-forms#0014---19-feb-2014" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.14 - 19 Feb 2014</h3> 
+  <ul> 
+   <li>Bug fix about form state after after validation succeeded.</li> 
+  </ul> 
+  <h3><a id="user-content-0013---2-feb-2014" class="anchor" href="https://github.com/gitbucket/scalatra-forms#0013---2-feb-2014" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.13 - 2 Feb 2014</h3> 
+  <ul> 
+   <li>Bug fix for <code>long</code> value type.</li> 
+  </ul> 
+  <h3><a id="user-content-0012---29-dec-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#0012---29-dec-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.12 - 29 Dec 2013</h3> 
+  <ul> 
+   <li>Formatting (such as <code>%s</code>) is available in custom messages as same as default messages.</li> 
+  </ul> 
+  <h3><a id="user-content-0011---12-dec-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#0011---12-dec-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.11 - 12 Dec 2013</h3> 
+  <ul> 
+   <li>Fix <code>dummy()</code> bug.</li> 
+  </ul> 
+  <h3><a id="user-content-0010---10-dec-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#0010---10-dec-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.10 - 10 Dec 2013</h3> 
+  <ul> 
+   <li>Add <code>long</code> value type.</li> 
+   <li>Fix <code>list</code> bug for un-nested properties.</li> 
+  </ul> 
+  <h3><a id="user-content-009---6-dec-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#009---6-dec-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.9 - 6 Dec 2013</h3> 
+  <ul> 
+   <li>Add <code>dummy</code> value type.</li> 
+  </ul> 
+  <h3><a id="user-content-008---14-nov-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#008---14-nov-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.8 - 14 Nov 2013</h3> 
+  <ul> 
+   <li>Fix nested property handling problem.</li> 
+   <li>Fix <code>verifying()</code> for <code>MappingValueType</code> and remove <code>MappingConstraint</code> instead of it.</li> 
+   <li>Add <code>length</code> constraint.</li> 
+  </ul> 
+  <h3><a id="user-content-007---12-nov-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#007---12-nov-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.7 - 12 Nov 2013</h3> 
+  <ul> 
+   <li>Add <code>MappingConstraint</code> to validate converted object by <code>MappingValueType</code>.</li> 
+  </ul> 
+  <h3><a id="user-content-006---8-nov-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#006---8-nov-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.6 - 8 Nov 2013</h3> 
+  <ul> 
+   <li>Add <code>list()</code> mapping for <code>SingleValueType</code>.</li> 
+   <li><code>ValidationJavaScriptProvider</code> adds Content-Type header for validation.js.</li> 
+   <li>Fix to run parent validations before number checking.</li> 
+  </ul> 
+  <h3><a id="user-content-005---3-nov-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#005---3-nov-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.5 - 3 Nov 2013</h3> 
+  <ul> 
+   <li>Add <code>oneOf()</code> constraint which checks whether the value is one of specified strings.</li> 
+   <li>Fix to retrieve error message for <code>number()</code> and <code>double()</code> from ResourceBundle.</li> 
+  </ul> 
+  <h3><a id="user-content-004---2-nov-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#004---2-nov-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.4 - 2 Nov 2013</h3> 
+  <ul> 
+   <li>Add <code>double()</code> and <code>date()</code> mapping.</li> 
+   <li>Add I18N support for error messages.</li> 
+  </ul> 
+  <h3><a id="user-content-003---18-oct-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#003---18-oct-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.3 - 18 Oct 2013</h3> 
+  <ul> 
+   <li>Add <code>ValidationJavaScriptProvoider</code>.</li> 
+   <li>Add <code>list()</code> mapping for List property.</li> 
+  </ul> 
+  <h3><a id="user-content-002---10-aug-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#002---10-aug-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.2 - 10 Aug 2013</h3> 
+  <ul> 
+   <li>Improved nested property support.</li> 
+   <li>Add <code>validate(String, String, Map[String, String])</code> to <code>Constraint</code>. It makes possible to access other parameter in single field validation.</li> 
+   <li>Add <code>verify()</code> to <code>MappingValueType</code> which validates the mapped instance.</li> 
+  </ul> 
+  <h3><a id="user-content-001---04-aug-2013" class="anchor" href="https://github.com/gitbucket/scalatra-forms#001---04-aug-2013" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>0.0.1 - 04 Aug 2013</h3> 
+  <ul> 
+   <li>This is the first public release.</li> 
+  </ul> 
+ </article>
+</div>

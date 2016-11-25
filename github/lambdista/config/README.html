@@ -15,6 +15,7 @@
     <ul> 
      <li><a href="https://github.com/lambdista/config#caseClassConversion" target="_blank">Automatic conversion to a case class</a></li> 
      <li><a href="https://github.com/lambdista/config#valueByValueConversion" target="_blank">Value-by-value conversion</a></li> 
+     <li><a href="https://github.com/lambdista/config#dynamicValueByValueConversion" target="_blank">Dynamic value-by-value conversion</a></li> 
     </ul></li> 
    <li><a href="https://github.com/lambdista/config#configLoaders" target="_blank">Config loaders</a> 
     <ul> 
@@ -52,7 +53,7 @@
     </svg></a>Usage</h2> 
   <p>As a first step you need to add the dependency to your build file:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.lambdista<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>config<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.4<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.lambdista<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>config<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.5.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Scala 2.12.x, 2.11.x and 2.10.x are supported.</p> 
   <p>Ok, let's see the typical usage scenarios. As a use case consider the following configuration, unless otherwise specified:</p> 
@@ -63,6 +64,10 @@
   baz = 42,
   list = [1, // comment 3
           2, 3],
+  map = {
+    alpha = "hello",
+    beta = 42
+  },
   mapList = [
     {
       alpha = "hello",
@@ -115,7 +120,8 @@
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">FooConfig</span>(
     <span class="pl-v">bar</span>: <span class="pl-k">String</span>, 
     <span class="pl-v">baz</span>: <span class="pl-en">Option</span>[<span class="pl-k">Int</span>], 
-    <span class="pl-v">list</span>: <span class="pl-en">List</span>[<span class="pl-k">Int</span>], 
+    <span class="pl-v">list</span>: <span class="pl-en">List</span>[<span class="pl-k">Int</span>],
+    <span class="pl-v">map</span>: <span class="pl-en">Greek</span>,
     <span class="pl-v">mapList</span>: <span class="pl-en">List</span>[<span class="pl-en">Greek</span>], 
     <span class="pl-v">range</span>: <span class="pl-en">Range</span>, 
     <span class="pl-v">duration</span>: <span class="pl-en">Duration</span>,
@@ -129,7 +135,7 @@
   </div> 
   <p>The value of <code>fooConfig</code> will be:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-en">Success</span>(<span class="pl-en">FooConfig</span>(hello,<span class="pl-en">Some</span>(<span class="pl-c1">42</span>),<span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>),<span class="pl-en">List</span>(<span class="pl-en">Greek</span>(hello,<span class="pl-c1">42</span>), <span class="pl-en">Greek</span>(world,<span class="pl-c1">24</span>)),<span class="pl-en">Range</span>(<span class="pl-c1">2</span>, <span class="pl-c1">4</span>, <span class="pl-c1">6</span>, <span class="pl-c1">8</span>, <span class="pl-c1">10</span>),<span class="pl-c1">5</span> seconds))</pre>
+   <pre><span class="pl-en">Success</span>(<span class="pl-en">FooConfig</span>(hello,<span class="pl-en">Some</span>(<span class="pl-c1">42</span>),<span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>),<span class="pl-en">Greek</span>(hello,<span class="pl-c1">42</span>),<span class="pl-en">List</span>(<span class="pl-en">Greek</span>(hello,<span class="pl-c1">42</span>), <span class="pl-en">Greek</span>(world,<span class="pl-c1">24</span>)),<span class="pl-en">Range</span>(<span class="pl-c1">2</span>, <span class="pl-c1">4</span>, <span class="pl-c1">6</span>, <span class="pl-c1">8</span>, <span class="pl-c1">10</span>),<span class="pl-c1">5</span> seconds))</pre>
   </div> 
   <p>Here you can already notice some interesting features of this library:</p> 
   <ul> 
@@ -232,6 +238,23 @@
 <span class="pl-en">Success</span>(<span class="pl-en">Set</span>(<span class="pl-c1">4</span>, <span class="pl-c1">2</span>, <span class="pl-c1">8</span>, <span class="pl-c1">6</span>, <span class="pl-c1">10</span>)) <span class="pl-c">// rangeAsSet</span></pre>
   </div> 
   <p>Notice, however, that in case of <code>Set</code> the order is not guaranteed because of the very nature of sets.</p> 
+  <p><a name="user-content-dynamicValueByValueConversion" target="_blank" href=""></a></p> 
+  <h3><a id="user-content-dynamic-value-by-value-conversion" class="anchor" href="https://github.com/lambdista/config#dynamic-value-by-value-conversion" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dynamic value-by-value conversion</h3> 
+  <p>You can also use a dynamic syntax to access the configuration values by <em>pretending</em> the <code>Config</code> object has those fields:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">alpha</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-k">for</span> {
+  conf <span class="pl-k">&lt;</span><span class="pl-k">-</span> config
+  result <span class="pl-k">&lt;</span><span class="pl-k">-</span> conf.map.alpha.as[<span class="pl-k">String</span>] <span class="pl-c">// equivalent to: conf.getAs[String]("map.alpha")</span>
+} <span class="pl-k">yield</span> result</pre>
+  </div> 
+  <p>The value of <code>alpha</code> will be:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Success</span>(<span class="pl-s"><span class="pl-pds">"</span>hello<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p><strong>Warning</strong>: Of course, IDEs will mark <code>map.alpha</code> as an error since they just don't know about the dynamic nature of those fields. Nevertheless, your code will keep compiling and working like a charm.</p> 
   <p><a name="user-content-configLoaders" target="_blank" href=""></a></p> 
   <h2><a id="user-content-config-loaders" class="anchor" href="https://github.com/lambdista/config#config-loaders" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -287,7 +310,7 @@
     </svg></a>Loading a config from Typesafe Config</h3> 
   <p>Here's how simple is loading a configuration passing through Typesafe config library. First thing first, you need to add the dependency for the Typesafe config adapter:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.lambdista<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>config-typesafe<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.4<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.lambdista<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>config-typesafe<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.5.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>The example configuration is the following:</p> 
   <pre><code>string = "hello"
