@@ -1,0 +1,209 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-relaxed-json-update" class="anchor" href="https://github.com/andyglow/relaxed-json-update#relaxed-json-update" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Relaxed JSON Update</h1> 
+  <p><a href="https://travis-ci.org/andyglow/relaxed-json-update" target="_blank"><img src="https://camo.githubusercontent.com/ba64aad35078418f6070c717ccc2b7d18f375128/68747470733a2f2f7472617669732d63692e6f72672f616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/andyglow/relaxed-json-update.svg" style="max-width:100%;"></a> <a href="https://codecov.io/gh/andyglow/relaxed-json-update" target="_blank"><img src="https://camo.githubusercontent.com/9458ad432218cf9a1cd7494bd2be67d075e2541d/68747470733a2f2f636f6465636f762e696f2f67682f616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652f6272616e63682f6d61737465722f67726170682f62616467652e737667" alt="codecov" data-canonical-src="https://codecov.io/gh/andyglow/relaxed-json-update/branch/master/graph/badge.svg" style="max-width:100%;"></a></p> 
+  <p>Relaxed (partial) case class update with json.</p> 
+  <h2><a id="user-content-problem" class="anchor" href="https://github.com/andyglow/relaxed-json-update#problem" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Problem</h2> 
+  <p>Sometime, especially dealing with http/rest services, we want to have an ability to receive and update only certain fields of our resource/entity. Let me provide some short example (spray used).</p> 
+  <p>Suppose we are working on some Profile API</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Profile</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">password</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>So we have already created these scenarios</p> 
+  <ul> 
+   <li><code>GET /profiles</code> <code>get &amp; path("profiles")</code></li> 
+   <li><code>GET /profiles/:id</code> <code>get &amp; path("profiles" / Segment)</code></li> 
+   <li><code>POST /profiles</code> <code>post &amp; path("profiles" / Segment) &amp; entity(as[Profile])</code></li> 
+   <li><code>DELETE /profiles/:id</code> <code>delete &amp; path("profiles" / Segment)</code></li> 
+  </ul> 
+  <p>And now we are about to implement</p> 
+  <ul> 
+   <li><p><code>PUT /profiles/:id</code></p> 
+    <blockquote> 
+     <p>For simplicity of examples let's assume we use <strong>sync</strong> API here, but of course you should think twice, how this feet your needs. Almost always you should use <strong>async</strong> approach.</p> 
+    </blockquote></li> 
+  </ul> 
+  <h3><a id="user-content-step-0" class="anchor" href="https://github.com/andyglow/relaxed-json-update#step-0" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 0</h3> 
+  <p>The very first idea that come to our mind is to reuse <code>Profile</code> instance like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> (put &amp; path(<span class="pl-s"><span class="pl-pds">"</span>profiles<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-en">Segment</span>) &amp; entity(as[<span class="pl-en">Profile</span>])) { (id, update) <span class="pl-k">=&gt;</span>
+   rejectEmptyResponse {
+     complete {
+       <span class="pl-k">val</span> <span class="pl-en">entity</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Profile</span>] <span class="pl-k">=</span> db get id
+       <span class="pl-k">for</span> {
+         entity <span class="pl-k">&lt;</span><span class="pl-k">-</span> entity
+         updated <span class="pl-k">=</span> entity.copy(
+           name <span class="pl-k">=</span> update.name,
+           password <span class="pl-k">=</span> update.password)
+       } <span class="pl-k">yield</span> {
+         db.update(id, updated)
+         updated
+       } 
+     }
+   }
+ }</pre>
+  </div> 
+  <p><em>Pros &amp; Cons</em></p> 
+  <ul> 
+   <li><code>id</code> field, which was defined as <code>String</code> has to be specified in payload, otherwise unmarshalling will fail.</li> 
+   <li>We still can't update only certain fields.</li> 
+  </ul> 
+  <h3><a id="user-content-step-1" class="anchor" href="https://github.com/andyglow/relaxed-json-update#step-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 1</h3> 
+  <p>Make <code>id</code> optional</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Profile</span>(<span class="pl-v">id</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">password</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p><em>Pros &amp; Cons</em></p> 
+  <p>From one side it resolves issue with necessity to specify <code>id</code> twice in <code>uri</code> and in payload.</p> 
+  <p>From another side it brings us to an optional id hell as now we have to deal with it in our services handling it every time by <code>getOrElse { throw new IllegalStateException }</code> or something.</p> 
+  <p>And we still can't update partially.</p> 
+  <h3><a id="user-content-step-2" class="anchor" href="https://github.com/andyglow/relaxed-json-update#step-2" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 2</h3> 
+  <p>Make Form case class where all fields are optional and <code>id</code> field is absent.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Profile</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">password</span>: <span class="pl-k">String</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ProfileUpdate</span>(<span class="pl-v">name</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-v">password</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>])</pre>
+  </div> 
+  <p><em>Pros &amp; Cons</em></p> 
+  <ul> 
+   <li>Now you we can omit <code>id</code> in payload.</li> 
+   <li>You can update only necessary fields.</li> 
+  </ul> 
+  <p>But</p> 
+  <ul> 
+   <li>you have to have another one class. Just try to imagine how could it look like if you have a rich class with many fields.</li> 
+   <li>you still have to handle all that fields manually. For example:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ProfileUpdate</span>(<span class="pl-v">name</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-v">password</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>]) {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">profile</span>: <span class="pl-en">Profile</span>)<span class="pl-k">:</span> <span class="pl-en">Profile</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">_name</span> <span class="pl-k">=</span> name getOrElse profile.name 
+    <span class="pl-k">val</span> <span class="pl-en">_password</span> <span class="pl-k">=</span> password getOrElse profile.password
+
+    profile.copy(
+      name <span class="pl-k">=</span> _name,
+      password <span class="pl-k">=</span> _password) 
+  }
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre> (put &amp; path(<span class="pl-s"><span class="pl-pds">"</span>profiles<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-en">Segment</span>) &amp; entity(as[<span class="pl-en">ProfileUpdate</span>])) { (id, update) <span class="pl-k">=&gt;</span>
+   rejectEmptyResponse {
+     complete {
+       <span class="pl-k">val</span> <span class="pl-en">entity</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Profile</span>] <span class="pl-k">=</span> db get id
+       <span class="pl-k">for</span> {
+         entity <span class="pl-k">&lt;</span><span class="pl-k">-</span> entity
+         updated <span class="pl-k">=</span> update apply entity
+       } <span class="pl-k">yield</span> {
+         db.update(id, updated)
+         updated
+       } 
+     }
+   }
+ }</pre>
+  </div> 
+  <p>This solution is much better but have one significant drawback. You have to write lot of boilerplate code. Again. Just think about necessity to support this solution having rich class structure. It may become a nightmare.</p> 
+  <h3><a id="user-content-step-3" class="anchor" href="https://github.com/andyglow/relaxed-json-update#step-3" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 3</h3> 
+  <p>What if we try to solve it without additional classes.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(put &amp; path(<span class="pl-s"><span class="pl-pds">"</span>profiles<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-en">Segment</span>) &amp; entity(as[<span class="pl-en">JsValue</span>])) { (id, json) <span class="pl-k">=&gt;</span>
+  rejectEmptyResponse {
+    complete {
+      <span class="pl-k">val</span> <span class="pl-en">entity</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Profile</span>] <span class="pl-k">=</span> db get id
+      <span class="pl-k">for</span> {entity <span class="pl-k">&lt;</span><span class="pl-k">-</span> entity} <span class="pl-k">yield</span> {
+        <span class="pl-k">for</span> {
+          name <span class="pl-k">&lt;</span><span class="pl-k">-</span> (json \ <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).validateOpt[<span class="pl-k">String</span>]
+          password <span class="pl-k">&lt;</span><span class="pl-k">-</span> (json \ <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>).validateOpt[<span class="pl-k">String</span>]
+        } <span class="pl-k">yield</span> {
+          <span class="pl-k">val</span> <span class="pl-en">updated</span> <span class="pl-k">=</span> entity.copy(
+            name <span class="pl-k">=</span> name,
+            password <span class="pl-k">=</span> password)
+
+          db.update(id, updated)
+          updated
+        } toOption
+      } 
+    }
+  }
+}</pre>
+  </div> 
+  <p><em>Pros &amp; Cons</em></p> 
+  <p>Event better as we can skip creating additional infrastructure (Form classes, Marshallers).</p> 
+  <h2><a id="user-content-idea" class="anchor" href="https://github.com/andyglow/relaxed-json-update#idea" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Idea</h2> 
+  <p>So what exactly this solution does is automate the approach we invented on step 3 by involving scala macros.</p> 
+  <ol> 
+   <li>You don't need to write special <code>*Update</code> classes.</li> 
+   <li>You don't need to write <code>copy</code> boilerplate.</li> 
+  </ol> 
+  <p>How your code could look like by using this solution:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> <span class="pl-k">import</span> <span class="pl-v">com.github.andyglow.relaxed.</span><span class="pl-v">_</span>
+ <span class="pl-k">import</span> <span class="pl-v">com.github.andyglow.relaxed.PlayJsonSupport.</span><span class="pl-v">_</span>
+
+ (put &amp; path(<span class="pl-s"><span class="pl-pds">"</span>profiles<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-en">Segment</span>) &amp; entity(as[<span class="pl-en">JsValue</span>])) { (id, update) <span class="pl-k">=&gt;</span>
+   rejectEmptyResponse {
+     complete {
+       <span class="pl-k">val</span> <span class="pl-en">entity</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Profile</span>] <span class="pl-k">=</span> db get id
+       <span class="pl-k">for</span> {
+         entity <span class="pl-k">&lt;</span><span class="pl-k">-</span> entity
+         updated <span class="pl-k">=</span> <span class="pl-en">Relaxed</span>(entity) updated update
+       } <span class="pl-k">yield</span> {
+         db.update(id, updated)
+         updated
+       } 
+     }
+   }
+ }</pre>
+  </div> 
+  <p>The same will work for <code>akka-http</code> as well.</p> 
+  <p>It is also possible to mark certain fields as not participating in update.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Profile</span>(<span class="pl-k">@</span>skip <span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">password</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <h3><a id="user-content-sbt" class="anchor" href="https://github.com/andyglow/relaxed-json-update#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-api<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+<span class="pl-c">// and one of</span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-play-json<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-spray-json<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-jackson<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-circe<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-upickle<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-argonaut<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.andyglow<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>relaxed-json-update-json4s<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>${LATEST_VERSION}<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <ul> 
+   <li>api <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-api/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/acea59c057d05551ab5cb9c74966641e80ca774a/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d6170692f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-api/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-api_2.11" target="_blank"><img src="https://camo.githubusercontent.com/4339226075f20cb6330f7a369315107b39a17f9c/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d6170695f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-api_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>play-json <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-play-json/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/dc030ddc6d5420147b596849764d61bb6914d867/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d706c61792d6a736f6e2f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-play-json/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-play-json_2.11" target="_blank"><img src="https://camo.githubusercontent.com/9ad9d27b4cc00d3a4d665a86de20058f4ac208b9/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d706c61792d6a736f6e5f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-play-json_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>spray-json <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-spray-json/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/f4c9341aaad142b31543a0feb4c7de504d9fa76e/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d73707261792d6a736f6e2f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-spray-json/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-spray-json_2.11" target="_blank"><img src="https://camo.githubusercontent.com/15960bbe47fa89d2a88fb18bfea3f34666c8f92f/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d73707261792d6a736f6e5f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-spray-json_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>jackson (scala module) <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-jackson/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/c530bcf96364f5f4ffee1afe140a4aa5fbd58979/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d6a61636b736f6e2f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-jackson/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-jackson_2.11" target="_blank"><img src="https://camo.githubusercontent.com/de2103f97ffd26729f783fcd931b2f06f3bf84cd/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d6a61636b736f6e5f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-jackson_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>circe <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-circe/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/35dcd70edced96dbaab350f3127fa0edc8c35d06/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d63697263652f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-circe/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-circe_2.11" target="_blank"><img src="https://camo.githubusercontent.com/639eef6304fdc4b3cfe9f3cb8a95752c9285150f/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d63697263655f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-circe_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>upickle <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-upickle/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/8cf1c680de314c0b8ec80c710e92e22cbb513b2d/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d757069636b6c652f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-upickle/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-upickle_2.11" target="_blank"><img src="https://camo.githubusercontent.com/18eaa15ec7d93d71658e3ec394ac9e6c84ba5506/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d757069636b6c655f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-upickle_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>argonaut <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-argonaut/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/560951ae02754521951f436c368af8be60c20358/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d6172676f6e6175742f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-argonaut/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-argonaut_2.11" target="_blank"><img src="https://camo.githubusercontent.com/da9de01c6cb09a72d65c16aca44ff5cb79bc3adc/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d6172676f6e6175745f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-argonaut_2.11/badge.svg" style="max-width:100%;"></a></li> 
+   <li>json4s <a href="https://bintray.com/andyglow/scala-tools/relaxed-json-update-json4s/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/2b514bf04261dde99f60f78daa0589d5b0e26ac8/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f616e6479676c6f772f7363616c612d746f6f6c732f72656c617865642d6a736f6e2d7570646174652d6a736f6e34732f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/andyglow/scala-tools/relaxed-json-update-json4s/images/download.svg" style="max-width:100%;"> </a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-json4s_2.11" target="_blank"><img src="https://camo.githubusercontent.com/671234c46e1cf42ae1f2ad2d1fe147126bd5fc61/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e6479676c6f772f72656c617865642d6a736f6e2d7570646174652d6a736f6e34735f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andyglow/relaxed-json-update-json4s_2.11/badge.svg" style="max-width:100%;"></a></li> 
+  </ul> 
+ </article>
+</div>
