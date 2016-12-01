@@ -32,7 +32,7 @@
      <li><a href="https://github.com/kailuowang/henkan/issues/15" target="_blank">Error when the last field is a nested class</a></li> 
     </ul></li> 
    <li><p><code>henkan.k</code> building blocks for generic function compositions.</p></li> 
-   <li><p><code>henkan.optional</code> conversion between case classes with optional fields and case class with required fields.</p></li> 
+   <li><p><code>henkan.optional</code> conversion between case classes with optional fields and case class with required fields. One of the use cases for such conversions is conversion between scalaPB generated classes where most fields are Options and internal case classes where you have required fields.</p></li> 
   </ol> 
   <h2><a id="user-content-get-started" class="anchor" href="https://github.com/kailuowang/henkan#get-started" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -155,7 +155,7 @@ res3<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="p
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">cats.data.</span><span class="pl-v">Validated</span>
 <span class="pl-k">import</span> <span class="pl-v">cats.implicits.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">henkan.optional.syntax.fromOptional.</span><span class="pl-v">_</span></pre>
+<span class="pl-k">import</span> <span class="pl-v">henkan.optional.all.</span><span class="pl-v">_</span></pre>
   </div> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> validate(<span class="pl-en">Message</span>(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>), <span class="pl-en">Some</span>(<span class="pl-c1">2</span>))).to[<span class="pl-en">Domain</span>]
@@ -170,14 +170,11 @@ res1<span class="pl-k">:</span> henkan.optional.<span class="pl-en">ValidateFrom
   </div> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> validate(<span class="pl-en">MessageWithMissingField</span>(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>))).to[<span class="pl-en">Domain</span>]
-&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span><span class="pl-k">:</span> <span class="pl-v">error</span>: <span class="pl-en">Cannot</span> build conversion from <span class="pl-en">MessageWithMissingField</span> to <span class="pl-en">Domain</span>, possibly due to missing fields in <span class="pl-en">MessageWithMissingField</span> or missing cats instances (`<span class="pl-en">Traverse</span>` instances are needed to convert fields in containers)
+&lt;<span class="pl-ent">console</span>&gt;<span class="pl-k">:</span><span class="pl-c1">24</span><span class="pl-k">:</span> <span class="pl-v">error</span>: <span class="pl-en">Cannot</span> build validate function from <span class="pl-en">MessageWithMissingField</span> to <span class="pl-en">Domain</span>, possibly due to missing fields in <span class="pl-en">MessageWithMissingField</span> or missing cats instances (`<span class="pl-en">Traverse</span>` instances are needed to convert fields in containers)
        validate(<span class="pl-en">MessageWithMissingField</span>(<span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>))).to[<span class="pl-en">Domain</span>]
                                                       ^</pre>
   </div> 
   <p>You can convert in the opposite direction as well</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">henkan.optional.syntax.toOptional.</span><span class="pl-v">_</span></pre>
-  </div> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> from(<span class="pl-en">Domain</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-c1">2</span>)).toOptional[<span class="pl-en">Message</span>]
 res4<span class="pl-k">:</span> <span class="pl-en">Message</span> <span class="pl-k">=</span> <span class="pl-en">Message</span>(<span class="pl-en">Some</span>(a),<span class="pl-en">Some</span>(<span class="pl-c1">2</span>))</pre>
@@ -190,7 +187,8 @@ res4<span class="pl-k">:</span> <span class="pl-en">Message</span> <span class="
    <pre>scala<span class="pl-k">&gt;</span> from(<span class="pl-en">DomainWithMissingField</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>)).toOptional[<span class="pl-en">Message</span>]
 res5<span class="pl-k">:</span> <span class="pl-en">Message</span> <span class="pl-k">=</span> <span class="pl-en">Message</span>(<span class="pl-en">Some</span>(a),<span class="pl-c1">None</span>)</pre>
   </div> 
-  <p><code>cats.optional</code> supports nested case classes as well.</p> 
+  <p><code>henkan.optional</code> supports nested case classes as well.</p> 
+  <p>Note that if you are converting scalaPB generated case class, it generates <code>Seq</code> for repeated items, although the underlying implementation is actually List. <code>henkan.optional.all</code> has a <code>Traverse</code> instance for <code>Seq</code> but only works fine when the underlying implementation is either a <code>List</code> or <code>Vector</code></p> 
   <h3><a id="user-content-other-examples-can-be-found-in-examples-including-a-typesafe-config-transformer" class="anchor" href="https://github.com/kailuowang/henkan#other-examples-can-be-found-in-examples-including-a-typesafe-config-transformer" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
