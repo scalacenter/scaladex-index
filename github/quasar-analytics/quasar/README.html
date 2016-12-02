@@ -159,7 +159,16 @@
     </svg></a>Couchbase</h5> 
   <p>To connect to Couchbase use the following <code>connectionUri</code> format:</p> 
   <p><code>couchbase://&lt;host&gt;[:&lt;port&gt;]?username=&lt;username&gt;&amp;password=&lt;password&gt;[&amp;queryTimeoutSeconds=&lt;seconds&gt;]</code></p> 
-  <p>Known limitations:</p> 
+  <p>Prerequisites</p> 
+  <ul> 
+   <li>Couchbase Server 4.5.1 or greater</li> 
+   <li>A "default" bucket with anonymous access</li> 
+   <li>Documents must have a "type" field to be listed</li> 
+   <li>Primary index on queried buckets</li> 
+   <li>Secondary index on "type" field for queried buckets</li> 
+   <li>Additional indices and tuning as recommended by Couchbase for proper N1QL performance</li> 
+  </ul> 
+  <p>Known Limitations</p> 
   <ul> 
    <li>Slow queries — query optimization hasn't been applied</li> 
    <li>Join unimplemented — future support planned</li> 
@@ -178,6 +187,34 @@
     </svg></a>MarkLogic</h5> 
   <p>To connect to MarkLogic, specify an <a href="https://docs.marklogic.com/guide/xcc/concepts#id_55196" target="_blank">XCC URL</a> as the <code>connectionUri</code>:</p> 
   <p><code>xcc://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;</code></p> 
+  <p>Prerequisites</p> 
+  <ul> 
+   <li>MarkLogic 8.0+</li> 
+   <li>Documents must to be organized under directories to be found by Quasar.</li> 
+   <li>Namespaces used in queries must be defined on the server.</li> 
+   <li>Loading schema definitions into the server, while not required, will improve sorting and other operations on types other than <code>xs:string</code>. Otherwise, non-string fields may require casting in queries using <a href="http://docs.slamdata.com/en/v4.0/sql-squared-reference.html#section-11-data-type-conversion" target="_blank">SQL² conversion functions</a>.</li> 
+  </ul> 
+  <p><a href="https://github.com/quasar-analytics/quasar/issues?utf8=%E2%9C%93&amp;q=is%3Aissue%20is%3Aopen%20label%3AMarkLogic" target="_blank">Known Limitations</a></p> 
+  <ul> 
+   <li>Only XML documents are currently supported (JSON support is coming soon, see <a href="https://github.com/quasar-analytics/quasar/issues/1704" target="_blank">#1704</a>).</li> 
+   <li>It is not yet possible to reference XML attributes in queries (<a href="https://github.com/quasar-analytics/quasar/issues/1701" target="_blank">#1701</a>).</li> 
+   <li>Most joins do not yet work (<a href="https://github.com/quasar-analytics/quasar/issues/1581" target="_blank">#1581</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1560" target="_blank">#1560</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1539" target="_blank">#1539</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1505" target="_blank">#1505</a>).</li> 
+   <li>Field aliases must currently be valid <a href="https://www.w3.org/TR/xml-names/#NT-QName" target="_blank">XML QNames</a> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
+   <li>"Default" numeric field names are prefixed with an underscore ("_") in order to make them valid QNames. For example, <code>select count((1, 2, 3, 4))</code> will result in <code>{"_1": 4}</code> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
+   <li>Index usage is currently poor, so performance may degrade on large directories and/or complex queries. This should improve as optimizations are applied both to the MarkLogic connector and the <code>QScript</code> compiler.</li> 
+  </ul> 
+  <p>Quasar's data model is JSON-ish and thus there is a bit of translation required when applying it to XML. The current mapping aims to be intuitive while still taking advantage of the XDM as much as possible. Take note of the following:</p> 
+  <ul> 
+   <li>Projecting a field will result in the child element(s) having the given name. If more than one element matches, the result will be an array.</li> 
+   <li>As the children of an element form a sequence, they may be treated both as a mapping from element names to values and as an array of values. That is to say, given a document like <code>&lt;foo&gt;&lt;bar&gt;1&lt;/bar&gt;&lt;baz&gt;2&lt;/baz&gt;&lt;/foo&gt;</code>, <code>foo.bar</code> and <code>foo[0]</code> both refer to <code>&lt;bar&gt;1&lt;/bar&gt;</code>.</li> 
+   <li>XML document results are currently serialized to JSON with an emphasis on producting idiomatic JSON: 
+    <ul> 
+     <li>An element is serialized to a singleton object with the element name as the only key and an object representing the children as its value. The child object will contain an entry for each child element with repeated elements collected into an array.</li> 
+     <li>An element without attributes containing only text content will be serialized as a singleton object with the element name as the only key and the text content as its value.</li> 
+     <li>Element attributes are serialized to an object at the <code>_attributes</code> key.</li> 
+     <li>Text content of elements containing mixed text and element children or attributes will be available at the <code>_text</code> key.</li> 
+    </ul></li> 
+  </ul> 
   <h4><a id="user-content-view-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#view-mounts" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

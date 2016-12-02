@@ -28,13 +28,8 @@
    <tbody> 
     <tr> 
      <td>2.4</td> 
-     <td>1.0.12</td> 
+     <td>1.1.0</td> 
      <td><a href="https://github.com/NextGenTel/akka-tools" target="_blank">master</a></td> 
-    </tr> 
-    <tr> 
-     <td>2.3.x</td> 
-     <td>0.9.0</td> 
-     <td><a href="https://github.com/NextGenTel/akka-tools/tree/akka_2.3" target="_blank">akka_2.3</a></td> 
     </tr> 
    </tbody>
   </table> 
@@ -42,156 +37,12 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Changelog</h2> 
-  <p>Version 1.0.13 - NOT RELEASED YET</p> 
-  <ul> 
-   <li>Added AggregateStateBase - It is now possible to return new/extra event from inside state-transition</li> 
-  </ul> 
-  <p>Version 1.0.12 - 2016-11-16</p> 
-  <ul> 
-   <li>Added error-logging to JdbcEventsByPersistenceIdActor</li> 
-   <li>Journal now supports injecting timestamp from db into Events extending EventWithInjectableTimestamp</li> 
-   <li>Built for Scala 2.12</li> 
-  </ul> 
-  <p>Version 1.0.11 - 2016-09-13</p> 
-  <ul> 
-   <li>Upgraded to Akka 2.4.10</li> 
-   <li>PersistenceQuery's EventsByPersistenceId now also loads new events instantly - No more waiting for the next scheduled read 
-    <ul> 
-     <li>This is achieved using a Distributed pubSub-mechanism</li> 
-    </ul></li> 
-   <li>Exceptions thrown by JacksonJsonSerializer.toBinary when sending msg via akka-remoting no longer <a href="https://github.com/akka/akka/issues/21343" target="_blank">brings the connection down</a></li> 
-  </ul> 
-  <p>Version 1.0.10 - 2016-08-26</p> 
-  <ul> 
-   <li>PersistenceQuery's EventsByTag now loads new events instantly - No more waiting for the next scheduled read 
-    <ul> 
-     <li>This is achieved using a Distributed pubSub-mechanism</li> 
-    </ul></li> 
-   <li>Upgraded to Akka 2.4.9</li> 
-  </ul> 
-  <p>Version 1.0.9.1 - 2016-08-04</p> 
-  <ul> 
-   <li>Fixing bug in DMGeneratingVersion - Now saving NewDMGeneratingVersionEvent also when there is nothing to fix</li> 
-  </ul> 
-  <p>Version 1.0.9 - 2016-08-03</p> 
-  <ul> 
-   <li>Added the concept of DMGeneratingVersion 
-    <ul> 
-     <li>If you (by mistake?) change the behaviour of an aggregate in such a way that it now sends a different amount of DMs based on the same events, this will (by default) confuse Akka's AtLeastOnceDelivery-mechanism which will try to resend what it believes is old unconfirmed messages. This can now be fixed by setting DMGeneratingVersion to a higher int-value. If this is the case, we will see that this is the case, prevent these messages from beeing sent, and store the info so we wont have this issue in the future. This feature can be used mulitple times (with multiple new versions) over time. <a href="https://github.com/NextGenTel/akka-tools/blob/master/akka-tools-persistence/src/test/scala/no/nextgentel/oss/akkatools/aggregate/TestingAggregateNowSendingMoreDMs.scala" target="_blank">See test for more info</a></li> 
-    </ul></li> 
-  </ul> 
-  <p>Version 1.0.8 - 2016-06-24</p> 
-  <ul> 
-   <li>Fixed bug in ClusterListener-errorDetection - It could wrongly detect error when it saw other alive nodes before it self has joined cluster..</li> 
-   <li>Fixed NPE bug when reading empty snapshots - Oracle treats empty BLOBs as NULL</li> 
-   <li>Introduced GeneralAggregateV2 and AggregateStateV2 which let you co-locate all related logic: 
-    <ul> 
-     <li>each different state-implementation has their own cmdToEvent, eventToDMs( old name: generateDMs) and eventToState (old name: transition)</li> 
-    </ul></li> 
-   <li>InternalCommands (e.g GetState) are now logged with debug even though it is configured to log commands as info</li> 
-   <li>Added skipErrorHandler:Boolean to AggregateError. If true, we skip invoking the custom onError-errorHandler attached to eventResult</li> 
-   <li>Fixed bug in JdbcSnapshotStore related to reading snapshots when not using serializerId</li> 
-  </ul> 
-  <p>Version 1.0.7.1 - 2016-05-18</p> 
-  <ul> 
-   <li>Upgraded to akka 2.4.5 - including changes need to work with new Java PersistenceQuery-api</li> 
-   <li>Fixed regression in JdbcJournal - Now we're back to being backward compile-compatible</li> 
-  </ul> 
-  <p>Version 1.0.7 - 2016-05-13</p> 
-  <ul> 
-   <li>Added new config-file param 'jdbcJournalRuntimeDataFactory' which can be used when using multiple journals with different configuration at the same time.</li> 
-   <li>Introduced GeneralAggregateBase in favor of now deprecated GeneralAggregate 
-    <ul> 
-     <li>GeneralAggregateBase has a simpler more generic approach to generateDM</li> 
-    </ul></li> 
-   <li>Preventing un-needed re-persisting of DurableMessageReceived when we receive the same one multiple times</li> 
-   <li>Added automatic handling of re-received old commands (via DM) 
-    <ul> 
-     <li>Before: We would process it as a regular command which would fail since we have already processed it and changed our state.</li> 
-     <li>Now: We see that we have successfully processed this command before (sender is re-sending it because it has not yet gotten our confirmation), so we ignore it and re-send the confirm</li> 
-    </ul></li> 
-   <li>Improved SeedNodeResolving and Cluster-ErrorDetection 
-    <ul> 
-     <li><strong>Note!</strong> - This fix requires a <strong>change to the database layout</strong> as described here: <a href="https://github.com/NextGenTel/akka-tools/tree/master/akka-tools-jdbc-journal" target="_blank">JdbcJournal</a></li> 
-    </ul></li> 
-  </ul> 
-  <p>Version 1.0.6 - 2016-03-14</p> 
-  <ul> 
-   <li>Added canSendAsDurableMessage():Boolean - Use it to check if it is possible to send DM</li> 
-   <li>Fixed bug in findHighestSequenceNr when using (not full) persisteceIds / wildcards</li> 
-   <li>Deprecated generateResultingDurableMessages in GeneralAggregate. Instead use new <em>generateDM</em> (via state), <em>generateDMBefore</em> (via Event), or <em>generateDMAfter</em> (via Event) 
-    <ul> 
-     <li>generateDMBefore - gets event as input and is invoked BEFORE event has been applied to state ( same as old generateResultingDurableMessages)</li> 
-     <li>generateDMAfter - gets event as input and is invoked AFTER event has been applied to state.</li> 
-     <li>generateDM - gets state as input and is invoked AFTER event has been applied</li> 
-    </ul></li> 
-   <li>Fixing <a href="https://github.com/NextGenTel/akka-tools/issues/15" target="_blank">#15</a> - Snapshot-journal now supports SerializerWithStringManifest 
-    <ul> 
-     <li><strong>Note!</strong> - This fix requires a <strong>change to the database layout</strong> as described here: <a href="https://github.com/NextGenTel/akka-tools/tree/master/akka-tools-jdbc-journal" target="_blank">JdbcJournal</a></li> 
-    </ul></li> 
-  </ul> 
-  <p>Version 1.0.5 - 2016-03-01</p> 
-  <ul> 
-   <li>Mitigating akka bug <a href="https://github.com/akka/akka/issues/19893" target="_blank">19893</a></li> 
-   <li>ResultingEvent now uses function that return events instead of just returning the events directly. This allows us to use the onError-impl for both resolving and applying events 
-    <ul> 
-     <li>This change requires you to recompile your code against the new version</li> 
-    </ul></li> 
-  </ul> 
-  <p>Version 1.0.4.1 - 2016-01-06</p> 
-  <ul> 
-   <li>Fixing <a href="https://github.com/NextGenTel/akka-tools/issues/14" target="_blank">#14</a> Exceptions when applying events in EnhancedPersistentActor are now only logged - preventing infinit retrying</li> 
-   <li>GeneralAggregate.stateInfo() is no longer final - it can now be overridden</li> 
-   <li>Improved some tests which sometimes failed</li> 
-   <li>GeneralAggregate's <em>myDispatcher</em> is now using the more describing name <strong>dmSelf</strong>. You can now use dmSelf = null to fallback to self() which will make dm.confirm() work as expected in testing.</li> 
-  </ul> 
-  <p>Version 1.0.4 - 2015-12-15</p> 
-  <ul> 
-   <li>It is now optional to implement generateResultingDurableMessages()</li> 
-   <li>Improving Java 8 support by introducing AbstractGeneralAggregate - Similar to AbstractActor</li> 
-   <li>Removed some old naming: Using 'persistenceId' instead of old 'processorId' almost everywhere now</li> 
-   <li>Added <strong>Persistence Query</strong>-support to the <a href="https://github.com/NextGenTel/akka-tools/tree/master/akka-tools-jdbc-journal" target="_blank">JdbcJournal</a></li> 
-   <li>Fixing bug in SeedNodesListOrderingResolver when ourNode is not listed in the seedNode-list and should therefor not be in the ordered seedNode-list</li> 
-   <li>Fixed bug related to Journal TCK's testcase 'not reset highestSequenceNr after message deletion'</li> 
-   <li>Upgraded to Akka 2.4.1</li> 
-  </ul> 
-  <p>Version 1.0.3.2 - 2015-12-01</p> 
-  <ul> 
-   <li>Fixing issue with proxying to clusterSingleton created by ClusterSingletonHelper</li> 
-  </ul> 
-  <p>Version 1.0.3.1 - 2015-11-19</p> 
-  <ul> 
-   <li>Fixing regression in 1.0.3 caused by 'successHandler is now executed at the right time' - Now inbound DM cleanup is performed AFTER success-handler has been executed</li> 
-  </ul> 
-  <p>Version 1.0.3 - 2015-11-18</p> 
-  <ul> 
-   <li>Improved default idleTimeout - It is now calculated based on redeliverInterval and warnAfterNumberOfUnconfirmedAttempts<br></li> 
-   <li>Improved bootstrapping of Aggregates using AggregateStarter <a href="https://github.com/NextGenTel/akka-tools/commit/448bd1" target="_blank">commit</a></li> 
-   <li>More fluent api when using ActorWithDMSupport</li> 
-   <li>Introduced nextState() which holds the soon-to-be state when inside generateResultingDurableMessages()</li> 
-   <li>Improved ResultingEvents-API</li> 
-   <li>successHandler is now executed at the right time - after all events are actually persisted</li> 
-  </ul> 
-  <p>Version 1.0.2 - 2015-10-26</p> 
-  <ul> 
-   <li>Fixing <a href="https://github.com/NextGenTel/akka-tools/issues/9" target="_blank">#9</a> - Restructured how persistenceId's are resolved - Now using persitenceIdBase - Introduces some changes to the GeneralAggregate-API <a href="https://github.com/NextGenTel/akka-tools/commit/ab45697" target="_blank">commit</a></li> 
-  </ul> 
-  <p>Version 1.0.1 - 2015-10-23</p> 
-  <ul> 
-   <li>Fixes <a href="https://github.com/NextGenTel/akka-tools/issues/8" target="_blank">#8</a> Explicit closing sql statements to prevent leakage <a href="https://github.com/NextGenTel/akka-tools/commit/95baa1" target="_blank">commit</a></li> 
-  </ul> 
-  <p>Version 1.0.0 - 2015-10-21</p> 
-  <ul> 
-   <li>Changed GeneralAggregateBuilder so that it is possible to initiate views with initialState based on aggregateId <a href="https://github.com/NextGenTel/akka-tools/commit/3b9cfea" target="_blank">commit</a></li> 
-   <li>Added ActorWithDMSupport which makes it easy to implement regular Actors interacting with DMs <a href="https://github.com/NextGenTel/akka-tools/commit/1a8511d" target="_blank">commit</a></li> 
-   <li>Using <strong>Akka 2.4</strong></li> 
-   <li>Added another example: Trust Account Creation System <a href="https://github.com/NextGenTel/akka-tools/commit/64671b" target="_blank">commit</a></li> 
-   <li>Changed signature of onCmdToEvent to use AggregateCmd instead of AnyRef <a href="https://github.com/NextGenTel/akka-tools/commit/b0be41b" target="_blank">commit</a></li> 
-  </ul> 
-  <p>Version 0.9.0 - 2015-09-23</p> 
-  <ul> 
-   <li>First released open-source version of the original internal NextGenTel project - using Akka 2.3</li> 
-  </ul> 
+  <p>The changes can be found in this <a href="https://github.com/nextgentel/akka-tools/blob/master/CHANGES.md" target="_blank">file</a>.</p> 
+  <h2><a id="user-content-migration-from-akka-tools-10x" class="anchor" href="https://github.com/nextgentel/akka-tools#migration-from-akka-tools-10x" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration from akka-tools 1.0.x</h2> 
+  <p>Info about how to migrate your source from akka-tools 1.0.x to 1.1.x can be found in <a href="https://github.com/nextgentel/akka-tools/blob/master/MIGRATION-info.md" target="_blank">MIGRATION-info.md</a>.</p> 
   <p>Below is a summary of the various modules</p> 
   <h2><a id="user-content-akka-tools-persistence" class="anchor" href="https://github.com/nextgentel/akka-tools#akka-tools-persistence" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

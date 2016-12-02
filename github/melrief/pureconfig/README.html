@@ -50,13 +50,13 @@
   <p>Add the library. For scala <code>2.11</code> and <code>2.12</code></p> 
   <div class="highlight highlight-source-scala">
    <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
-  <span class="pl-s"><span class="pl-pds">"</span>com.github.melrief<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>pureconfig<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.3<span class="pl-pds">"</span></span>
+  <span class="pl-s"><span class="pl-pds">"</span>com.github.melrief<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>pureconfig<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span>
 )</pre>
   </div> 
   <p>For scala <code>2.10</code> you need also the scala macro paradise plugin:</p> 
   <div class="highlight highlight-source-scala">
    <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
-  <span class="pl-s"><span class="pl-pds">"</span>com.github.melrief<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>pureconfig<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.3<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>com.github.melrief<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>pureconfig<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span>,
 compilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>paradise<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.0.1<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full)
 )</pre>
   </div> 
@@ -140,7 +140,7 @@ could not find <span class="pl-k">implicit</span> value <span class="pl-k">for</
   </div> 
   <p><code>pureconfig</code> can be extended to support those types. To do so, an instance for the <code>ConfigConvert</code> typeclass must be provided implicitly, like</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">foocc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.stringConvert[<span class="pl-en">Foo</span>](x <span class="pl-k">=&gt;</span> <span class="pl-k">new</span> <span class="pl-en">Foo</span>(x.toInt), foo <span class="pl-k">=&gt;</span> foo.bar.toString)
+   <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">foocc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.stringConvert[<span class="pl-en">Foo</span>](s <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>(<span class="pl-k">new</span> <span class="pl-en">Foo</span>(s.toInt)), foo <span class="pl-k">=&gt;</span> foo.bar.toString)
 <span class="pl-k">&gt;</span> loadConfig[<span class="pl-en">Foo</span>]
 <span class="pl-en">Foo</span>(<span class="pl-c1">1</span>)</pre>
   </div> 
@@ -156,7 +156,7 @@ util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span clas
   </div> 
   <p>Now let's say that we want to override this behaviour such that <code>String</code>s are always read lower case. We can do:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">overridestrcc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.fromString(_.toLowerCase)
+   <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">overridestrcc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.fromString(s <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>(s.toLowerCase))
 <span class="pl-k">&gt;</span> <span class="pl-en">ConfigConvert</span>[<span class="pl-k">String</span>].from(<span class="pl-en">ConfigValueFactory</span>.fromAnyRef(<span class="pl-s"><span class="pl-pds">"</span>FooBar<span class="pl-pds">"</span></span>))
 util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(foobar)</pre>
   </div> 
@@ -188,7 +188,7 @@ dirwatch.email.sender="sender"
 <span class="pl-k">import</span> <span class="pl-v">java.nio.file.</span><span class="pl-v">Paths</span>
 <span class="pl-k">import</span> <span class="pl-v">scala.util.</span><span class="pl-v">Try</span>
 
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">deriveStringConvertForPath</span> <span class="pl-k">=</span> fromString[<span class="pl-en">Path</span>](<span class="pl-en">Paths</span>.get)</pre>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">deriveStringConvertForPath</span> <span class="pl-k">=</span> fromString[<span class="pl-en">Path</span>](s <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>(<span class="pl-en">Paths</span>.get(s)))</pre>
   </div> 
   <p>And then we load the configuration</p> 
   <div class="highlight highlight-source-scala">
