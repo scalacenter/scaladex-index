@@ -75,10 +75,36 @@ val myVal = Val[Int](myVar + 5)           // Create a Val containing the sum of 
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Channels</h3> 
   <p>As we saw above, <code>Var</code> and <code>Val</code> retain the state of the value assigned to them. A <code>Channel</code> on the other hand is like a <code>Var</code> (in that you can set values to it), but no state is retained. This is useful for representing firing of events or some other action that is meant to be observed but not stored.</p> 
+  <h2><a id="user-content-nifty-features" class="anchor" href="https://github.com/outr/props#nifty-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Nifty Features</h2> 
+  <h3><a id="user-content-dependency-variables" class="anchor" href="https://github.com/outr/props#dependency-variables" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependency Variables</h3> 
+  <p>The core functionality is complete and useful, but we can build upon it for numeric values that are dependent on other numeric values or numeric values that may have multiple representations. For example, consider a graphical element on screen. It may have a <code>left</code> position for the X value originating on the left side of the element, but if we want to right-align something we have to make sure we account for the width in doing so and vice-versa for determining the right edge. We can simplify things by leveraging a <code>Dep</code> instance to represent it. Currently <code>Dep</code> only supports <code>Double</code> values, but we can easily represent our values as so:</p> 
+  <pre><code>val width: Var[Double] = Var(0.0)
+
+val left: Var[Double] = Var(0.0)
+val center: Dep = Dep(left, width / 2.0)
+val right: Dep = Dep(left, width)
+</code></pre> 
+  <p>Notice we've even added a <code>center</code> representation. These are dependent on <code>left</code> but their value is derived from a formula based on <code>left</code> and <code>width</code>. Of course, if representing the value alone were all we care about then a simple <code>Val(left + width)</code> could be used as our <code>right</code> value, but we also want to be able to modify <code>center</code> or <code>right</code> and have it properly reflect in <code>left</code>. Any changes made to <code>Dep</code> will properly update the variable it depends on <code>left</code> in this case. See <code>DepsSpec</code> for more detailed examples.</p> 
   <h2><a id="user-content-versions" class="anchor" href="https://github.com/outr/props#versions" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Versions</h2> 
+  <h3><a id="user-content-features-for-110-in-progress" class="anchor" href="https://github.com/outr/props#features-for-110-in-progress" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features for 1.1.0 (In-Progress)</h3> 
+  <ul class="contains-task-list"> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Dep for dependency representation</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Transitioning support to adjust values over time</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Transitioning DSL</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Transitioning Easing support</li> 
+  </ul> 
   <h3><a id="user-content-features-for-100-released-20161115" class="anchor" href="https://github.com/outr/props#features-for-100-released-20161115" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

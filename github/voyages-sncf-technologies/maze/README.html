@@ -33,9 +33,9 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Using sbt (preferred)</h3> 
   <div class="highlight highlight-source-scala">
-   <pre>scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">2.12</span>
+   <pre>scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.12.0<span class="pl-pds">"</span></span>
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>fr.vsct.dt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>maze<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.4<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>fr.vsct.dt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>maze<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.6<span class="pl-pds">"</span></span></pre>
   </div> 
   <h3><a id="user-content-using-maven" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#using-maven" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -46,7 +46,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 &lt;<span class="pl-ent">dependency</span>&gt;
   &lt;<span class="pl-ent">groupId</span>&gt;fr.vsct.dt&lt;/<span class="pl-ent">groupId</span>&gt;
   &lt;<span class="pl-ent">artifactId</span>&gt;maze_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
-  &lt;<span class="pl-ent">version</span>&gt;1.0.4&lt;/<span class="pl-ent">version</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;1.0.6&lt;/<span class="pl-ent">version</span>&gt;
 &lt;/<span class="pl-ent">dependency</span>&gt;
 ...
 &lt;<span class="pl-ent">plugin</span>&gt;
@@ -77,24 +77,60 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Developing a test using maze</h2> 
-  <p>Afin d'utiliser les différents outils, les tests sont configurés en étendant un trait de configuration. Ce trait a pour but de mettre dans le contexte des tests tous les différents paramètres implicites.</p> 
-  <p>Ainsi, la configuration de tel ou tel composant peut être facilement différents d'un test à un autre.</p> 
-  <h2><a id="user-content-les-objets-de-type-dsl-et-les-opérations-supportées" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#les-objets-de-type-dsl-et-les-opérations-supportées" aria-hidden="true" target="_blank">
+  <p>Step 1: Dockerize the application you want to test Step 2: Configure nodes for it </p> 
+  <div class="highlight highlight-source-scala">
+   <pre>...
+<span class="pl-k">import</span> <span class="pl-v">fr.vsct.dt.maze.core.Predef.</span><span class="pl-v">_</span>
+...
+
+<span class="pl-k">class</span> <span class="pl-en">MyAwesomeApplicationNode</span> <span class="pl-k">extends</span> <span class="pl-e">SingleContainerClusterNode</span> {
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">servicePort</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">9000</span>
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">serviceContainer</span><span class="pl-k">:</span> <span class="pl-en">CreateContainerCmd</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some/image:1.2.3<span class="pl-pds">"</span></span>.withEnv(<span class="pl-s"><span class="pl-pds">"</span>SOME_VARIABLE=some-value<span class="pl-pds">"</span></span>)
+} </pre>
+  </div> 
+  <p>Maze uses docker-java to interact with docker, more information on container creation there.</p> 
+  <p>Step 3: Create your cluster</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MyAwesomeApplicationCluster</span> <span class="pl-k">extends</span> <span class="pl-e">Cluster</span>[<span class="pl-en">MyAwesomeApplicationNode</span>]
+</pre>
+  </div> 
+  <p>Step 4: Create a unit test</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>...
+<span class="pl-k">import</span> <span class="pl-v">fr.vsct.dt.maze.core.Predef.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">fr.vsct.dt.maze.core.Commands.</span><span class="pl-v">_</span>
+...
+
+<span class="pl-k">class</span> <span class="pl-en">MyAwesomeApplicationTest</span> <span class="pl-k">extends</span> <span class="pl-e">TechnicalTest</span> {
+
+  <span class="pl-k">var</span> <span class="pl-en">myAwesomeCluster</span><span class="pl-k">:</span> <span class="pl-en">MyAwesomeApplicationCluster</span> <span class="pl-k">=</span> _
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">beforeEach</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    myAwesomeCluster <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyAwesomeApplicationCluster</span>
+    myAwesomeCluster.add(<span class="pl-c1">3.</span>nodes named <span class="pl-s"><span class="pl-pds">"</span>my-awesome-node<span class="pl-pds">"</span></span> constructedLike(<span class="pl-k">new</span> <span class="pl-en">MyAwesomeApplicationNode))</span>
+    myAwesomeCluster.start()
+  }
+
+  <span class="pl-s"><span class="pl-pds">"</span>my awesome applications<span class="pl-pds">"</span></span> should <span class="pl-s"><span class="pl-pds">"</span>response to http requests<span class="pl-pds">"</span></span> in {
+    <span class="pl-c">// Do all your testing logic here, for instance:</span>
+    <span class="pl-k">val</span> <span class="pl-en">someNode</span> <span class="pl-k">=</span> myAwesomeCluster.nodes.head
+    expectThat(<span class="pl-en">Http</span>.get(s<span class="pl-s"><span class="pl-pds">"</span>http://${someNode.externalIp}:${someNode.mappedPort.get}/healthcheck<span class="pl-pds">"</span></span>).status is <span class="pl-c1">200</span>)
+  }
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">afterEach</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    myAwesomeCluster.stop()
+  }
+
+}
+</pre>
+  </div> 
+  <h2><a id="user-content-execution-and-predicates" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#execution-and-predicates" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Les objets de type DSL et les opérations supportées</h2> 
-  <hr> 
-  <p>Les objets de type DSL permettent de répéter des opérations et avoir des assertions sur les résultats dans un langage qui se veut lisible.</p> 
-  <p>Actuellement, les cas d'usage de ces objets sont :</p> 
-  <ul> 
-   <li>Attendre qu'une condition se réalise (par exemple attendre qu'un serveur finisse de se lancer, qu'une élection master / slave se produise, etc..)</li> 
-   <li>Avoir des assertions sur certaines conditions. Ce point est mitigé par le fait que scalatest fournisse également des assertions riches.</li> 
-  </ul> 
-  <p>Le trait DSL (l'implémentation des méthodes a été supprimée pour plus de clarté) :</p> 
+    </svg></a>Execution and predicates</h2> 
+  <p>Technical tests often require observation: wait for a cluster to recover, for some messages to be consumed, and so on. That's why we need to create repeatable commands and checks. These commands are subclasses of the Execution trait :</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">trait</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] {
-
-  <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span>
 
   <span class="pl-k">def</span> <span class="pl-en">execute</span>()<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>]
 
@@ -104,97 +140,285 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 
   <span class="pl-k">def</span> <span class="pl-en">value</span>()<span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> get().result.get
 
+  <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span>
   <span class="pl-k">def</span> <span class="pl-en">labelled</span>(<span class="pl-v">text</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> ...
 
 }</pre>
   </div> 
-  <p>Dans sa forme la plus simple, un objet de type DSL contient :</p> 
+  <p>This trait describes commands that can be executed, returning a new result with each execution.</p> 
   <ul> 
-   <li>une description : stringFragment</li> 
-   <li>une méthode pour calculer un résultat : get()</li> 
+   <li>the execute method will do the actual method call, which will certainly include side effects, and would have many reasons to be in error.</li> 
+   <li>The map / flaMap method allows to compose the execution the same way as it can be dome with any other monad. FlatMap also allows the use of for-comprehensions.</li> 
+   <li>the value method returns the result of an execution, throwing an exception if an error occurred</li> 
+   <li>The field / methods label / labelled allow to describe the execution in a human readable way. This allows better error messages.</li> 
   </ul> 
-  <p>Ensuite, d'autres méthodes plus utilitaires viennent l'enrichir :</p> 
-  <ul> 
-   <li>La méthode withText permet de changer la dercription d'un objet DSL. Cette méthode est principalement utile après l'utilisation de map ou flatmap</li> 
-   <li>La méthode value() permet de récupérer la valeur calculée sans enrobage, mais lance une exception si le calcule de la valeur a lancé une exception</li> 
-   <li>Les méthodes map et flatmap permettent des transformations analogues à la manipulation d'objets de type Option ou Try, et permettent l'utilisation de patterns scala, tels que le for-comprehension.</li> 
-  </ul> 
-  <p>Enrichir les objets DSL selon leur type :</p> 
-  <p>Afin d'enrichir les objets de type DSL sans polluer le trait de base, des méthodes sont ajoutées aux objets, selon le type qu'ils enveloppent.</p> 
-  <p>Ainsi, un objet de type Execution[String] aura des méthodes telles que length ou contains. De même, pour tout objet de type Execution (Execution[Any]), certaines méthodes sont ajoutées, telles que is ou isNot.</p> 
-  <p>Cet enrichissement est fait par le mécanisme de conversions implicites.</p> 
-  <p>Ainsi, la classe com.vsct.dt.dsl.RichDsl va ajouter des méthodes à tous les objets de type DSL, la classe com.vsct.dt.dsl.ArrayDsl va ajouter des méthodes à tous les objets DSL mappant des tableaux, etc.</p> 
-  <p>Afin que les conversions puissent être utilisées ensuite, il suffit de les déclarer dans le trait com.vsct.dt.dsl.RicherDsl</p> 
-  <h2><a id="user-content-les-objets-bas-niveau" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#les-objets-bas-niveau" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Les objets bas niveau</h2> 
-  <hr> 
-  <h3><a id="user-content-lobjet-docker" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#lobjet-docker" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>L'objet Docker</h3> 
-  <p>L'objet docker encapsule tous les appels à l'api docker-java.</p> 
-  <p>Afin de fonctionner correctement, l'objet docker a besoin, en implicite, d'une instance de com.github.dockerjava.api.DockerClient. Le plus simple est d'utiliser le trait com.vsct.dt.configuration.DockerDefaultConfiguration, également contenu dans com.vsct.dt.configuration.DockerDefaultConfiguration. Cette configuration permet l'utilisation de variables d'environnement pour spécifier le DOCKER_HOST, etc..</p> 
-  <p>L'objet Docker ne devrait pas être utilisé directement dans les classes de test unitaire, mais être utilisés dans les modules fonctionnels.</p> 
-  <h3><a id="user-content-lobjet-network" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#lobjet-network" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>L'objet Network</h3> 
-  <p>L'objet Network permet de jouer sur le réseau. Il supporte pour le moment les points suivants :</p> 
-  <ul> 
-   <li>Gestion du réseau docker</li> 
-   <li>Ajout de latence à un conteneur</li> 
-   <li>Possibilité de splitter créer des partitions réseau puis de rétablir la situation</li> 
-  </ul> 
-  <p>Cet objet peut être utilisé dans les tests unitaires.</p> 
-  <h3><a id="user-content-lobjet-http" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#lobjet-http" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>L'objet Http</h3> 
-  <p>Cet objet sert à effecter des requêtes http et retourne des DSL. Il est conseillé d'encapsuler les appels à l'objet Http dans les modules fonctionnels.</p> 
-  <p>Attention : afin de pouvoir effectuer les appels, les ports doivent être "bindés" sur le host, sinon, il est possible que le réseau créé précédemment crée des problèmes de routage (gateway à ajouter sur le poste local)</p> 
-  <h2><a id="user-content-les-objets-fonctionnels" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#les-objets-fonctionnels" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Les objets fonctionnels</h2> 
-  <hr> 
-  <p>Les objets fonctionnels sont des objets utilitaires spécialisés pour l'utilisation d'un outil donné. Ces objets doivent savoir gérer des clusters et leurs noeuds.</p> 
-  <h3><a id="user-content-gestion-des-clusters" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#gestion-des-clusters" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Gestion des clusters</h3> 
-  <p>L'unité de base est le noeud du cluster. Pour les créer, il faut hériter de la classe com.vsct.dt.dsl.ClusterNode.</p> 
-  <p>Cette class abstraite prend en paramètre de constructeur une spécification de conteneur Docker, décrivant comment lancer le noeud. Cette dernière peut être crée à partir de l'objet docker. Ainsi, lors de la création du cluster, les différent noeuds sont créés depuis ces définitions.</p> 
-  <p>Ensuite, pour contrôler ces noeuds, il suffit d'étendre de la classe com.vsct.dt.dsl.Cluster. Cette classe prend en paramètre de constructeur un ensemble de noeuds.</p> 
-  <p>Ainsi, les opérations de base (start, stop, kill, etc.) sont implémentées</p> 
-  <h3><a id="user-content-opérations-spécifiques" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#opérations-spécifiques" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Opérations spécifiques</h3> 
-  <p>Les objets fonctionnels permettent des opérations riches basées sur l'outil à tester. Il est conseillé d'y mettre les méthodes utilitaires de création de cluster.</p> 
-  <p>Par exemple, dans com.vsct.dt.components.Zookeeper :</p> 
+  <p>A special case of these executions are the boolean executions: when we have one, there cases when you'd want to apply a function Boolean =&gt; A is quite rare (or maybe you wanted to use something more meaningful then a boolean?), and in most of case, you'll have at most boolean operations (and, or, not). </p> 
+  <p>Since these Execution[Boolean] can be seen as leaves, and that the 3 states (true, false, error) are important, maze defines a Predicate class. A predicate class is like an Execution[Boolean], but less generic.</p> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">def</span> <span class="pl-en">cluster</span>(<span class="pl-v">nodes</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">dockerClient</span>: <span class="pl-en">DockerClient</span>) <span class="pl-k">=</span> {
+   <pre><span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Predicate</span> {
+  <span class="pl-v">self</span> <span class="pl-k">=&gt;</span>
 
-      <span class="pl-k">val</span> <span class="pl-en">range</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> to nodes
+  <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span>
 
-      <span class="pl-k">val</span> <span class="pl-en">servers</span> <span class="pl-k">=</span> range.map(s <span class="pl-k">=&gt;</span> s<span class="pl-s"><span class="pl-pds">"</span>zk$s<span class="pl-pds">"</span></span>).mkString(<span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>)
+  <span class="pl-k">def</span> <span class="pl-en">get</span>()<span class="pl-k">:</span> <span class="pl-en">PredicateResult</span>
 
-      <span class="pl-k">new</span> <span class="pl-en">ZookeeperCluster</span>(range map { i <span class="pl-k">=&gt;</span>
-        <span class="pl-k">new</span> <span class="pl-en">ZookeeperNode</span>(<span class="pl-en">Docker</span>.prepareCreateContainer(<span class="pl-s"><span class="pl-pds">"</span>dockerregistrydev.socrate.vsct.fr/resilience/zookeeper:3.4.6<span class="pl-pds">"</span></span>)
-          .withEnv(s<span class="pl-s"><span class="pl-pds">"</span>SERVERS=$servers<span class="pl-pds">"</span></span>, s<span class="pl-s"><span class="pl-pds">"</span>MYID=$i<span class="pl-pds">"</span></span>)
-          .withHostName(s<span class="pl-s"><span class="pl-pds">"</span>zk$i<span class="pl-pds">"</span></span>)
-          .withName(s<span class="pl-s"><span class="pl-pds">"</span>zk$i<span class="pl-pds">"</span></span>)
-          .withNetworkMode(<span class="pl-s"><span class="pl-pds">"</span>technical-tests<span class="pl-pds">"</span></span>) <span class="pl-c">// Docker 1.10 : specify a network other than default network will give you a free dns.</span>
-          , i)
-      }<span class="pl-k">:</span>_<span class="pl-k">*</span>)
-    }</pre>
+  <span class="pl-k">def</span> <span class="pl-en">execute</span>()<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">labeled</span>(<span class="pl-v">text</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">unary_!</span> <span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> ...
+
+  def <span class="pl-k">&amp;&amp;</span>(<span class="pl-v">other</span>: <span class="pl-en">Predicate</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">||</span>(<span class="pl-v">other</span>: <span class="pl-en">Predicate</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> ...
+
+}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">PredicateResult</span>(<span class="pl-v">result</span>: <span class="pl-en">Try</span>[<span class="pl-k">Boolean</span>], <span class="pl-v">message</span>: <span class="pl-k">String</span>)
+</pre>
   </div> 
-  <p>Ainsi la création d'un cluster zookeeper se fait ainsi :</p> 
+  <p>The results of the predicates include the boolean result, but also a message. This message is meant to be a human readable message to display to the user.</p> 
+  <p>This makes error message readable.</p> 
+  <p>In order to create a Predicate from an execution, the most simple way is to use the toPredicate method:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">val</span> <span class="pl-en">zookeeperCluster</span> <span class="pl-k">=</span> <span class="pl-en">Zookeeper</span>.cluster(nodes <span class="pl-k">=</span> <span class="pl-c1">3</span>)</pre>
+   <pre><span class="pl-k">def</span> <span class="pl-en">is</span>(<span class="pl-v">other</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.toPredicate(s<span class="pl-s"><span class="pl-pds">"</span>${self.label} is '$other'?<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">case</span> a <span class="pl-k">if</span> a <span class="pl-k">==</span> other <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.success
+  <span class="pl-k">case</span> a <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.failure(s<span class="pl-s"><span class="pl-pds">"</span>Expected '$a' to be '$other'<span class="pl-pds">"</span></span>)
+}</pre>
   </div> 
-  <p>Le paramètre implicite dockerClient est fourni par la configuration.</p> 
+  <p>This example is taken from the core of maze. </p> 
+  <p>These executions and predicate are then to be manipulated with the commands.</p> 
+  <h2><a id="user-content-the-commands" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#the-commands" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The commands</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">commands</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">expectThat</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">print</span>(<span class="pl-v">dsl</span>: <span class="pl-en">Execution</span>[_])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">exec</span>[<span class="pl-en">A</span>](<span class="pl-v">execution</span>: <span class="pl-en">Execution</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">waitFor</span>(<span class="pl-v">duration</span>: <span class="pl-en">FiniteDuration</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">waitUntil</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">waitWhile</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">repeatWhile</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)(<span class="pl-v">doSomething</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">def</span> <span class="pl-en">doIf</span>(<span class="pl-v">condition</span>: <span class="pl-en">Predicate</span>)(<span class="pl-v">code</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">IfResult</span> <span class="pl-k">=</span> ...
+
+  <span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">ElseResult</span> {
+    <span class="pl-k">def</span> <span class="pl-en">onError</span>(<span class="pl-v">code</span>: <span class="pl-en">Exception</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>) <span class="pl-k">=</span> {}
+  }
+
+  <span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">IfResult</span> <span class="pl-k">extends</span> <span class="pl-e">ElseResult</span> {
+    <span class="pl-k">def</span> <span class="pl-en">orElse</span>(<span class="pl-v">code</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">ElseResult</span> <span class="pl-k">=</span> <span class="pl-v">this</span>
+  }
+
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">expectThat</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+<span class="pl-c">// For instance:</span>
+
+expectThat(<span class="pl-en">Http</span>.get(<span class="pl-s"><span class="pl-pds">"</span>http://www.google.fr<span class="pl-pds">"</span></span>).status is <span class="pl-c1">200</span>)</pre>
+  </div> 
+  <p>Expects that a given Predicate will return Success(true). If not, throws an exception using the label of the predicate and the message of the PredicateResult.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">print</span>(<span class="pl-v">dsl</span>: <span class="pl-en">Execution</span>[_])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...</pre>
+  </div> 
+  <p>Prints the label and result of an Execution</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">exec</span>[<span class="pl-en">A</span>](<span class="pl-v">execution</span>: <span class="pl-en">Execution</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> ...</pre>
+  </div> 
+  <p>Executes an Execution right away, throwing an Exception if an error occurs</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">waitFor</span>(<span class="pl-v">duration</span>: <span class="pl-en">FiniteDuration</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+<span class="pl-c">// for instance</span>
+waitFor(<span class="pl-c1">1</span> minute)</pre>
+  </div> 
+  <p>A more expressive way to wait than Thread.sleep.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">waitUntil</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)<span class="pl-k">:</span> <span class="pl-en">Duration</span> <span class="pl-k">=</span> ...
+
+<span class="pl-k">def</span> <span class="pl-en">waitWhile</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)<span class="pl-k">:</span> <span class="pl-en">Duration</span> <span class="pl-k">=</span> ...
+
+<span class="pl-k">def</span> <span class="pl-en">repeatWhile</span>(<span class="pl-v">predicate</span>: <span class="pl-en">Predicate</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-en">FiniteDuration</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes)(<span class="pl-v">doSomething</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">Duration</span> <span class="pl-k">=</span> ...</pre>
+  </div> 
+  <p>Loop on predicate conditions and returns the time taken for the condition to happen. For Instance:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>waitUntil(<span class="pl-en">Http</span>.get(<span class="pl-s"><span class="pl-pds">"</span>http://some-url<span class="pl-pds">"</span></span>).status is <span class="pl-c1">200</span>, <span class="pl-v">butNoLongerThan</span>: <span class="pl-c1">30</span> seconds)
+
+<span class="pl-c">// Or you can also write:</span>
+
+waitUntil(<span class="pl-en">Http</span>.get(<span class="pl-s"><span class="pl-pds">"</span>http://some-url<span class="pl-pds">"</span></span>).status is <span class="pl-c1">200</span>) butNoLongerThan(<span class="pl-c1">30</span> seconds)</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">doIf</span>(<span class="pl-v">condition</span>: <span class="pl-en">Predicate</span>)(<span class="pl-v">code</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">IfResult</span> <span class="pl-k">=</span> ...
+
+<span class="pl-c">// For instance</span>
+doIf(somePredicate) {
+  expectThat(...)
+} orElse {
+  expectThat(...)
+} onError { e <span class="pl-k">=&gt;</span>
+    ...
+}</pre>
+  </div> 
+  <h2><a id="user-content-introducing-perturbations-in-your-test" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#introducing-perturbations-in-your-test" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introducing perturbations in your test</h2> 
+  <p>Maze can introduce some system / network perturbations in your nodes, in order to test the resilience of the system.</p> 
+  <p>To be able to introduce these perturbations, maze will need:</p> 
+  <ul> 
+   <li>Some rights on container (containers are run as privileged with a few capabilities added)</li> 
+   <li>Some tools available in the container, for instance iptables or tc.</li> 
+  </ul> 
+  <h3><a id="user-content-stopping-nodes" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#stopping-nodes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Stopping nodes</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Stops the node using docker stop</span>
+node.stop()
+
+<span class="pl-c">// Stops the node by sending a SIGTERM signal to the process</span>
+node.kill()
+
+<span class="pl-c">// Stops the node by sending a KILL signal to the process</span>
+node.crash()</pre>
+  </div> 
+  <h3><a id="user-content-network-isolation--partition" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#network-isolation--partition" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Network isolation / partition</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>tag(injector <span class="pl-k">+</span> master) as <span class="pl-s"><span class="pl-pds">"</span>Isolated injector and master<span class="pl-pds">"</span></span>
+<span class="pl-en">DockerNetwork</span>.isolate(<span class="pl-s"><span class="pl-pds">"</span>Isolated injector and master<span class="pl-pds">"</span></span>)
+
+...
+
+<span class="pl-en">DockerNetwork</span>.cancelIsolation()</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">DockerNetwork</span>.split(node1 <span class="pl-k">+</span> node2, node3)
+
+...
+
+<span class="pl-en">DockerNetwork</span>.cancelIsolation()</pre>
+  </div> 
+  <h3><a id="user-content-network-lag" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#network-lag" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Network lag</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Adds network lag on node to anything</span>
+node.lag(<span class="pl-c1">2</span> seconds)
+
+
+<span class="pl-c">// Adds lag towards another node</span>
+<span class="pl-k">val</span> <span class="pl-en">sourceNode</span> <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">destinationNode</span> <span class="pl-k">=</span> ...
+
+<span class="pl-en">DockerNetwork</span>.setLag(from <span class="pl-k">=</span> sourceNode.containerId, to <span class="pl-k">=</span> destinationNode.containerId, lag <span class="pl-k">=</span> <span class="pl-c1">2</span> seconds)
+
+
+<span class="pl-c">// Adds lag to an external host</span>
+<span class="pl-en">DockerNetwork</span>.setLagToExternalHost(on <span class="pl-k">=</span> node.containerId, externalHost <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>10.11.12.13<span class="pl-pds">"</span></span>, lag <span class="pl-k">=</span> <span class="pl-c1">2</span> seconds)
+
+
+
+<span class="pl-c">// Remove lag</span>
+<span class="pl-en">DockerNetwork</span>.removeLag(on <span class="pl-k">=</span> node.containerId)</pre>
+  </div> 
+  <h2><a id="user-content-making-executions-richer" class="anchor" href="https://github.com/voyages-sncf-technologies/maze#making-executions-richer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Making executions richer</h2> 
+  <p>The execution trait is simple, map / flatMap allow almost anything, but don't make user friendly code (someone not too much used to scala will need time to read it well).</p> 
+  <p>In order to make them richer, methods are added to Executions, according to the type of it. These are added using implicits. In order to use the basinc implicits, you must import the maze Predef package.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">fr.vsct.dt.maze.core.Predef.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>For instance, the following implicits are available on any execution:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">RichExecution</span>[<span class="pl-en">A</span>](<span class="pl-k">val</span> <span class="pl-en">self</span><span class="pl-k">:</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span> {
+    <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">toExecutionWrappingExecuted</span><span class="pl-k">:</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> {
+      <span class="pl-k">val</span> <span class="pl-en">returnValue</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.execute()
+      <span class="pl-k">new</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] {
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">execute</span>()<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> returnValue
+
+        <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.label
+      }
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">withSnapshot</span>[<span class="pl-en">B</span>](<span class="pl-v">fn</span>: (<span class="pl-en">Execution</span>[<span class="pl-en">A</span>]) <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">B</span> <span class="pl-k">=</span> fn(toExecutionWrappingExecuted)
+
+    <span class="pl-k">def</span> <span class="pl-en">untilSuccess</span><span class="pl-k">:</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Execution</span>[<span class="pl-en">A</span>] {
+      <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.label
+
+      <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">execute</span>()<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> {
+        <span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-v">self</span>.execute()
+        result <span class="pl-k">match</span> {
+          <span class="pl-k">case</span> <span class="pl-en">Success</span>(_) <span class="pl-k">=&gt;</span> result
+          <span class="pl-k">case</span> <span class="pl-en">Failure</span>(_) <span class="pl-k">=&gt;</span> <span class="pl-v">this</span>.execute()
+        }
+      }
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">is</span>(<span class="pl-v">other</span>: <span class="pl-en">Execution</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-v">self</span> is other.execute().get
+
+    <span class="pl-k">def</span> <span class="pl-en">is</span>(<span class="pl-v">other</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.toPredicate(s<span class="pl-s"><span class="pl-pds">"</span>${self.label} is '$other'?<span class="pl-pds">"</span></span>) {
+      <span class="pl-k">case</span> a <span class="pl-k">if</span> a <span class="pl-k">==</span> other <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.success
+      <span class="pl-k">case</span> a <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.failure(s<span class="pl-s"><span class="pl-pds">"</span>Expected '$a' to be '$other'<span class="pl-pds">"</span></span>)
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">isNot</span>(<span class="pl-v">other</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.toPredicate(s<span class="pl-s"><span class="pl-pds">"</span>${self.label} isn't '$other'?<span class="pl-pds">"</span></span>) {
+      <span class="pl-k">case</span> a <span class="pl-k">if</span> a <span class="pl-k">!=</span> other <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.success
+      <span class="pl-k">case</span> a <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.failure(s<span class="pl-s"><span class="pl-pds">"</span>Expected '$a' to be different from '$other'<span class="pl-pds">"</span></span>)
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">isError</span><span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Predicate</span> {
+      <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">get</span>()<span class="pl-k">:</span> <span class="pl-en">PredicateResult</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.execute() <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">Failure</span>(_) <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.success
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.failure(<span class="pl-s"><span class="pl-pds">"</span>Expected execution to be in error, but it is not.<span class="pl-pds">"</span></span>)
+      }
+
+
+      <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.label <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span> is in error?<span class="pl-pds">"</span></span>
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">isSuccess</span><span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Predicate</span> {
+
+      <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">get</span>()<span class="pl-k">:</span> <span class="pl-en">PredicateResult</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.execute() <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">Success</span>(_) <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.success
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.failure(<span class="pl-s"><span class="pl-pds">"</span>Expected execution to be in success, but it is not.<span class="pl-pds">"</span></span>)
+      }
+
+      <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.label <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span> is in success?<span class="pl-pds">"</span></span>
+    }
+
+
+    <span class="pl-k">def</span> <span class="pl-en">toPredicate</span>(<span class="pl-v">predicateLabel</span>: <span class="pl-k">String</span>)(<span class="pl-v">fn</span>: <span class="pl-en">PartialFunction</span>[<span class="pl-en">A</span>, <span class="pl-en">PredicateResult</span>])<span class="pl-k">:</span> <span class="pl-en">Predicate</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Predicate</span> {
+      <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">label</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> predicateLabel
+
+      <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">get</span>()<span class="pl-k">:</span> <span class="pl-en">PredicateResult</span> <span class="pl-k">=</span> {
+        <span class="pl-v">self</span>.execute() <span class="pl-k">match</span> {
+          <span class="pl-k">case</span> <span class="pl-en">Success</span>(r) <span class="pl-k">=&gt;</span> fn(r)
+          <span class="pl-k">case</span> <span class="pl-en">Failure</span>(e) <span class="pl-k">=&gt;</span> <span class="pl-en">Result</span>.exception(e)
+        }
+      }
+    }
+
+  }</pre>
+  </div> 
+  <p>Using this mechanism, it's easy to create your own rich executions.</p> 
  </article>
 </div>

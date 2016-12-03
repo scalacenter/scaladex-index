@@ -285,10 +285,27 @@ assert(<span class="pl-en">Await</span>.result(aSource2.via(aFlow2).toMat(<span 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">s2</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">StreamMessage</span>[<span class="pl-k">String</span>], <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> s1.send(<span class="pl-s"><span class="pl-pds">"</span>seda:q2<span class="pl-pds">"</span></span>)</pre>
   </div> 
-  <p>This initiates an in-only message <a href="http://camel.apache.org/exchange.html" target="_blank">exchange</a> with an endpoint and continues the stream with the sent <code>StreamMessage</code>. The <code>send</code> combinator is not only available for <code>Source</code>s, <code>Flow</code>s and <code>SubFlow</code>s of <code>StreamMessage</code>s but also for <code>Source</code>s, <code>Flow</code>s and <code>SubFlow</code>s of message bodies:</p> 
+  <p>This initiates an in-only message <a href="http://camel.apache.org/exchange.html" target="_blank">exchange</a> with an endpoint and continues the stream with the sent <code>StreamMessage</code>. </p> 
+  <p>The <code>send</code> combinator is not only available for sources of type <code>Source[StreamMessage[A], M]</code> but more generally for any source of type <code>Source[A, M]</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">s2b</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-k">String</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> s1b.send(<span class="pl-s"><span class="pl-pds">"</span>seda:q2<span class="pl-pds">"</span></span>)</pre>
   </div> 
+  <p>If <code>A</code> is not a <code>StreamMessage</code>, <code>send</code> automatically wraps the message into a <code>StreamMessage[A]</code> before sending it to the endpoint and continues the stream with the unwrapped <code>A</code>. The <code>send</code> combinator is also available for flows of type <code>Flow[A, B, M]</code>, <code>SubFlow[A, M, Source[A, M]#Repr, Source[A, M]#Closed]</code> and <code>SubFlow[B, M, Flow[A, B, M]#Repr, Flow[A, B, M]#Closed]</code>. Instead of using the implicit <code>send</code> combinator, applications can also use the <code>akkadsl.send</code> graph stage </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package object</span> <span class="pl-en">akkadsl</span> {
+  <span class="pl-c">// ...</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">send</span>[<span class="pl-en">I</span>](<span class="pl-v">uri</span>: <span class="pl-k">String</span>, <span class="pl-v">parallelism</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">context</span>: <span class="pl-en">StreamContext</span>)<span class="pl-k">:</span> 
+    <span class="pl-en">Graph</span>[<span class="pl-en">FlowShape</span>[<span class="pl-en">StreamMessage</span>[<span class="pl-en">I</span>], <span class="pl-en">StreamMessage</span>[<span class="pl-en">I</span>]], <span class="pl-en">NotUsed</span>]
+
+  <span class="pl-c">// ...</span>
+}</pre>
+  </div> 
+  <p>together with the Akka Streams <code>via</code> combinator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">s2</span> <span class="pl-k">=</span> s1.via(send(<span class="pl-s"><span class="pl-pds">"</span>seda:q2<span class="pl-pds">"</span></span>, parallelism <span class="pl-k">=</span> <span class="pl-c1">3</span>))</pre>
+  </div> 
+  <p>The <code>parallelism</code> parameter determines how many sends can be executed in parallel. It is required for the <code>akkadsl.send</code> graph stage but optional for the <code>send</code> combinator that uses a default value of 1. For values greater than 1 , the message order is still preserved by <code>send</code>.</p> 
   <h4><a id="user-content-requesting-from-an-endpoint-1" class="anchor" href="https://github.com/krasserm/streamz#requesting-from-an-endpoint-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -297,10 +314,27 @@ assert(<span class="pl-en">Await</span>.result(aSource2.via(aFlow2).toMat(<span 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">s3</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">StreamMessage</span>[<span class="pl-k">Int</span>], <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> s2.request[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>bean:service?method=weight<span class="pl-pds">"</span></span>)</pre>
   </div> 
-  <p>This initiates an in-out message exchange with the endpoint and continues the stream with the output <code>StreamMessage</code>. Here, a <a href="https://camel.apache.org/bean.html" target="_blank">Bean endpoint</a> is used to call the <code>weight(String): Int</code> method on an object that is registered in the <code>CamelContext</code> under the name <code>service</code>. The input message body is used as <code>weight</code> call argument, the output message body is assigned the return value. The <code>receive</code> type parameter (<code>Int</code>) specifies the expected output value type. The output message body can also be converted to another type provided that an appropriate Camel type converter is available, (<code>Double</code>, for example). The <code>request</code> combinator is not only available for <code>Source</code>s, <code>Flow</code>s and <code>SubFlow</code>s of <code>StreamMessage</code>s but also for <code>Source</code>s, <code>Flow</code>s and <code>SubFlow</code>s of message bodies:</p> 
+  <p>This initiates an in-out message exchange with the endpoint and continues the stream with the output <code>StreamMessage</code>. Here, a <a href="https://camel.apache.org/bean.html" target="_blank">Bean endpoint</a> is used to call the <code>weight(String): Int</code> method on an object that is registered in the <code>CamelContext</code> under the name <code>service</code>. The input message body is used as <code>weight</code> call argument, the output message body is assigned the return value. The <code>receive</code> type parameter <code>[Int]</code> specifies the expected output value type. The output message body can also be converted to another type provided that an appropriate Camel type converter is available, (<code>Double</code>, for example). </p> 
+  <p>The <code>request</code> combinator is not only available for sources of type <code>Source[StreamMessage[A], M]</code> but more generally for any source of type <code>Source[A, M]</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">s3b</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-k">Int</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> s2b.request[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>bean:service?method=weight<span class="pl-pds">"</span></span>)</pre>
   </div> 
+  <p>If <code>A</code> is not a <code>StreamMessage</code>, <code>request</code> automatically wraps the message into a <code>StreamMessage[A]</code> before sending it to the endpoint and continues the stream with the unwrapped message body <code>B</code> of the output <code>StreamMessage[B]</code>. The <code>request</code> combinator is also available for flows of type <code>Flow[A, B, M]</code>, <code>SubFlow[A, M, Source[A, M]#Repr, Source[A, M]#Closed]</code> and <code>SubFlow[B, M, Flow[A, B, M]#Repr, Flow[A, B, M]#Closed]</code>. Instead of using the implicit <code>request</code> combinator, applications can also use the <code>akkadsl.request</code> graph stage </p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package object</span> <span class="pl-en">akkadsl</span> {
+  <span class="pl-c">// ...</span>
+
+  <span class="pl-k">def</span> <span class="pl-en">request</span>[<span class="pl-en">I</span>, <span class="pl-en">O</span>](<span class="pl-v">uri</span>: <span class="pl-k">String</span>, <span class="pl-v">parallelism</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">context</span>: <span class="pl-en">StreamContext</span>, <span class="pl-v">tag</span>: <span class="pl-en">ClassTag</span>[<span class="pl-en">O</span>])<span class="pl-k">:</span> 
+    <span class="pl-en">Graph</span>[<span class="pl-en">FlowShape</span>[<span class="pl-en">StreamMessage</span>[<span class="pl-en">I</span>], <span class="pl-en">StreamMessage</span>[<span class="pl-en">O</span>]], <span class="pl-en">NotUsed</span>]
+
+  <span class="pl-c">// ...</span>
+}</pre>
+  </div> 
+  <p>together with the Akka Streams <code>via</code> combinator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">s3</span> <span class="pl-k">=</span> s2.via(request[<span class="pl-k">String</span>, <span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>bean:service?method=weight<span class="pl-pds">"</span></span>, parallelism <span class="pl-k">=</span> <span class="pl-c1">3</span>))</pre>
+  </div> 
+  <p>The <code>parallelism</code> parameter determines how many requests can be executed in parallel. It is required for the <code>akkadsl.request</code> graph stage but optional for the <code>request</code> combinator that uses a default value of 1. For values greater than 1 , the message order is still preserved by <code>request</code>.</p> 
   <p>A Java version of the Camel DSL for Akka Streams is coming soon.</p> 
   <p><a name="user-content-example-application" target="_blank" href=""></a></p>
   <a name="user-content-example-application" target="_blank" href=""> </a>
