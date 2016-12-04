@@ -1,0 +1,61 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h3><a id="user-content-background-on-si-9871" class="anchor" href="https://github.com/xeno-by/workaround9871#background-on-si-9871" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Background on SI-9871</h3> 
+  <p>Scala 2.12.0 introduces support for SAM types, which is one of the key features for Java 8 support in Scala. Unfortunately, this new feature has the potential to break existing code.</p> 
+  <p>For example, the code snippet below compiles just fine in Scala 2.11.8 (because the overload that takes <code>MyFunction1[Int, Int]</code> is more specific that the overload that takes <code>Function1[Int, Int]</code>):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">MyFunction1</span>[<span class="pl-en">T</span>, <span class="pl-en">U</span>] <span class="pl-k">extends</span> <span class="pl-e">Function1</span>[<span class="pl-en">T</span>, <span class="pl-en">U</span>]
+
+<span class="pl-k">object</span> <span class="pl-en">Test</span> {
+  <span class="pl-k">def</span> <span class="pl-en">foo</span>(<span class="pl-v">x</span>: <span class="pl-en">Function1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>]) <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">foo</span>(<span class="pl-v">x</span>: <span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>]) <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">myf</span><span class="pl-k">:</span> <span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  foo(myf)
+}</pre>
+  </div> 
+  <p>However, the same code snippet doesn't compile in Scala 2.12.0:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Test</span>.scala<span class="pl-k">:</span><span class="pl-c1">8</span><span class="pl-k">:</span> <span class="pl-v">error</span>: ambiguous reference to overloaded definition,
+both method foo in <span class="pl-k">object</span> <span class="pl-en">Test</span> of type (<span class="pl-v">x</span>: <span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>,<span class="pl-k">Int</span>])<span class="pl-en">Nothing</span>
+and  method foo in <span class="pl-k">object</span> <span class="pl-en">Test</span> of type (<span class="pl-v">x</span>: <span class="pl-k">Int</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Int</span>)<span class="pl-en">Nothing</span>
+<span class="pl-k">match</span> argument types (<span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>,<span class="pl-k">Int</span>])
+  foo(myf)
+  ^</pre>
+  </div> 
+  <p>We have submitted this issue to the Scala compiler issue tracker under <a href="https://issues.scala-lang.org/browse/SI-9871" target="_blank">SI-9871</a>.</p> 
+  <p>In the discussion that ensued, @adriaanm from the Scala team at Lightbend confirmed that this behavior is intentional. According to the type compatibility rules introduced in Scala 2.12.0, <code>Function1[Int, Int]</code> is compatible with <code>MyFunction1[Int, Int]</code> (because <code>MyFunction1</code> is a SAM), which means that none of the two overloads is more specific than the other.</p> 
+  <p>This is an unfortunate issue that blocks our migration from Scala 2.11 to Scala 2.12.</p> 
+  <h3><a id="user-content-working-around-si-9871" class="anchor" href="https://github.com/xeno-by/workaround9871#working-around-si-9871" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Working around SI-9871</h3> 
+  <p>One idea suggested by @adriaanm to work around the issue is to introduce <code>@notASam</code>, a new annotation that would let programmers opt out from automatic promotion of eligible types to SAM types.</p> 
+  <p>Inspired by this idea, I hacked up a small compiler plugin that implements <code>@notASam</code>. With the compiler plugin enabled, the following code compiles equally well in both Scala 2.11.8 and Scala 2.12.0:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">scala.annotation</span> {
+  <span class="pl-k">class</span> <span class="pl-en">notASam</span> <span class="pl-k">extends</span> <span class="pl-e">StaticAnnotation</span>
+}
+
+<span class="pl-k">@</span>scala.annotation.notASam
+<span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">MyFunction1</span>[<span class="pl-en">T</span>, <span class="pl-en">U</span>] <span class="pl-k">extends</span> <span class="pl-e">Function1</span>[<span class="pl-en">T</span>, <span class="pl-en">U</span>]
+
+<span class="pl-k">object</span> <span class="pl-en">Test</span> {
+  <span class="pl-k">def</span> <span class="pl-en">foo</span>(<span class="pl-v">x</span>: <span class="pl-en">Function1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>]) <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">foo</span>(<span class="pl-v">x</span>: <span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>]) <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">myf</span><span class="pl-k">:</span> <span class="pl-en">MyFunction1</span>[<span class="pl-k">Int</span>, <span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  foo(myf)
+}</pre>
+  </div> 
+  <p>Enjoy!</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>)
+
+addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.github.xenoby<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>workaround9871<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0<span class="pl-pds">"</span></span> cross <span class="pl-en">CrossVersion</span>.full)</pre>
+  </div> 
+ </article>
+</div>
