@@ -35,6 +35,7 @@
     optional Data2      field_gpb = 10;                     // REQUIRED
     optional bytes      field_blob = 11;                    // REQUIRED
     repeated MapMessage field_map = 12;                     // OPTIONAL
+    repeated Data2      field_gpb_repeated = 13;            // OPTIONAL
 }
 
 message Data2 {
@@ -65,6 +66,7 @@ message MapMessage {
   <span class="pl-v">fieldGpb</span>: <span class="pl-en">CaseClassB</span>,
   <span class="pl-v">fieldGpbOption</span>: <span class="pl-en">Option</span>[<span class="pl-en">CaseClassB</span>],
   <span class="pl-v">fieldGpbOptionEmpty</span>: <span class="pl-en">Option</span>[<span class="pl-en">CaseClassB</span>],
+  <span class="pl-v">fieldGpbRepeated</span>: <span class="pl-en">Seq</span>[<span class="pl-en">CaseClassB</span>],
   <span class="pl-v">fieldStrings</span>: immutable.<span class="pl-en">Seq</span>[<span class="pl-k">String</span>],
   <span class="pl-v">fieldOptionIntegers</span>: <span class="pl-en">Seq</span>[<span class="pl-k">Int</span>],
   <span class="pl-v">fieldOptionIntegersEmpty</span>: <span class="pl-en">List</span>[<span class="pl-k">Int</span>],
@@ -86,6 +88,8 @@ message MapMessage {
    .setFieldBlob(<span class="pl-en">ByteString</span>.copyFromUtf8(<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>))
    .build()
 
+  <span class="pl-k">val</span> <span class="pl-en">dataRepeated</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(gpbInternal, gpbInternal, gpbInternal)
+
   <span class="pl-k">val</span> <span class="pl-en">gpb</span> <span class="pl-k">=</span> <span class="pl-en">TestMessage</span>.<span class="pl-en">Data</span>.newBuilder()
    .setField(<span class="pl-s"><span class="pl-pds">"</span>ahoj<span class="pl-pds">"</span></span>)
    .setFieldIntName(<span class="pl-c1">9</span>)
@@ -97,6 +101,7 @@ message MapMessage {
    .addAllFieldStringsName(<span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>).asJava)
    .addAllFieldOptionIntegers(<span class="pl-en">Seq</span>(<span class="pl-c1">3</span>, <span class="pl-c1">6</span>).map(int2Integer).asJava)
    .addAllFieldMap(map.map { <span class="pl-k">case</span> (key, value) <span class="pl-k">=&gt;</span> <span class="pl-en">TestMessage</span>.<span class="pl-en">MapMessage</span>.newBuilder().setKey(key).setValue(value).build() }.asJava)
+   .addAllFieldGpbRepeated(dataRepeated.asJava)
    .build()
 
   gpb.asCaseClass[<span class="pl-en">CaseClassA</span>] <span class="pl-k">match</span> {
@@ -131,6 +136,7 @@ message MapMessage {
     optional Data2      field_gpb_option_empty = 9;         // OPTIONAL
     optional Data2      field_gpb = 10;                     // REQUIRED
     optional bytes      field_blob = 11;                    // REQUIRED
+    repeated Data2      field_gpb_repeated = 12;            // OPTIONAL
 }
 
 message Data2 {
@@ -151,6 +157,7 @@ message Data2 {
   <span class="pl-v">fieldGpb</span>: <span class="pl-en">CaseClassB</span>,
   <span class="pl-v">fieldGpbOption</span>: <span class="pl-en">Option</span>[<span class="pl-en">CaseClassB</span>],
   <span class="pl-v">fieldGpbOptionEmpty</span>: <span class="pl-en">Option</span>[<span class="pl-en">CaseClassB</span>],
+  <span class="pl-v">fieldGpbRepeated</span>: <span class="pl-en">Seq</span>[<span class="pl-en">CaseClassB</span>],
   <span class="pl-v">fieldStringsList</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>],
   <span class="pl-v">fieldOptionIntegersList</span>: <span class="pl-en">Option</span>[<span class="pl-en">Seq</span>[<span class="pl-k">Int</span>]],
   <span class="pl-v">fieldOptionIntegersEmptyList</span>: <span class="pl-en">Option</span>[<span class="pl-en">List</span>[<span class="pl-k">Int</span>]])
@@ -161,6 +168,10 @@ message Data2 {
 <span class="pl-k">object</span> <span class="pl-en">Test</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
   <span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.</span><span class="pl-v">_</span>
 
+  <span class="pl-k">val</span> <span class="pl-en">caseClassB</span> <span class="pl-k">=</span> <span class="pl-en">CaseClassB</span>(<span class="pl-c1">0.9</span>, <span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">caseClassBRepeated</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(caseClassB, caseClassB, caseClassB)
+
   <span class="pl-k">val</span> <span class="pl-en">caseClass</span> <span class="pl-k">=</span> <span class="pl-en">CaseClassA</span>(
     field <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>ahoj<span class="pl-pds">"</span></span>,
     fieldInt <span class="pl-k">=</span> <span class="pl-c1">9</span>,
@@ -168,8 +179,9 @@ message Data2 {
     fieldBlob <span class="pl-k">=</span> <span class="pl-en">ByteString</span>.<span class="pl-en">EMPTY</span>,
     fieldStrings2 <span class="pl-k">=</span> <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>),
     fieldGpb <span class="pl-k">=</span> <span class="pl-en">CaseClassB</span>(<span class="pl-c1">0.9</span>, <span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>),
-    fieldGpbOption <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">CaseClassB</span>(<span class="pl-c1">0.9</span>, <span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>)),
+    fieldGpbOption <span class="pl-k">=</span> <span class="pl-en">Some</span>(caseClassB),
     fieldGpbOptionEmpty <span class="pl-k">=</span> <span class="pl-c1">None</span>,
+    fieldGpbRepeated <span class="pl-k">=</span> caseClassBRepeated,
     fieldStringsList <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>),
     fieldOptionIntegersList <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">Seq</span>(<span class="pl-c1">3</span>, <span class="pl-c1">6</span>)),
     fieldOptionIntegersEmptyList <span class="pl-k">=</span> <span class="pl-c1">None</span>
