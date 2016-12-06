@@ -1,0 +1,120 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-akka-streams-source-and-sink-for-cloud-pubsub" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#akka-streams-source-and-sink-for-cloud-pubsub" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka Streams Source and Sink for Cloud Pub/Sub</h1> 
+  <p>This repository contains an <a href="http://doc.akka.io/docs/akka/2.4/scala/stream/index.html" target="_blank">Akka Streams</a> <code>Source</code> and <code>Sink</code> implementation that can be used with Google's <a href="https://cloud.google.com/pubsub/" target="_blank">Cloud Pub/Sub</a> messaging middleware. The Cloud Pub/Sub sinks and sources provided in this repository have been in production at <a href="http://www.qubit.com/" target="_blank">Qubit</a> for several months and is used to process a Cloud Pub/Sub stream that averages over a billion messages a day in real time.</p> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <p>Currently only Scala 2.11 artifacts are published.</p> 
+  <p>SBT:</p> 
+  <pre><code>"com.qubit" % "akka-cloudpubsub_2.11" % "1.0.0"
+</code></pre> 
+  <p>Maven:</p> 
+  <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.qubit&lt;/groupId&gt;
+    &lt;artifactId&gt;akka-cloudpubsub_2.11&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>From source:</p> 
+  <pre><code>sbt localInstall
+</code></pre> 
+  <h2><a id="user-content-reading-from-cloud-pubsub-source" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#reading-from-cloud-pubsub-source" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reading from Cloud Pub/Sub (Source)</h2> 
+  <p><code>PubSubSource</code> is backpressure aware and only reads from Pub/Sub when there's demand downstream. By default, messages are acked every 10 seconds or when the ack buffer is full (default size 100). The ack interval, buffer size and several other properties are configurable via attributes.</p> 
+  <p>Creating a source reading from the <code>foo-sub</code> subscription in the <code>foo-project</code> with the default settings:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Source</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSource</span>(<span class="pl-en">PubSubSubscription</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-sub<span class="pl-pds">"</span></span>)))</pre>
+  </div> 
+  <p>Overriding the ack interval to 30 seconds:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Source</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSource</span>(<span class="pl-en">PubSubSubscription</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-sub<span class="pl-pds">"</span></span>)), <span class="pl-c1">30.</span>seconds)</pre>
+  </div> 
+  <p>Customise the ack interval, buffer size, pull timeout, max retries and retry jitter:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">attributes</span> <span class="pl-k">=</span> <span class="pl-en">Attributes</span>(<span class="pl-en">List</span>(
+    <span class="pl-en">PubSubPullTimeoutAttribute</span>(<span class="pl-c1">60.</span>seconds),
+    <span class="pl-en">PubSubStageBufferSizeAttribute</span>(<span class="pl-c1">200</span>),
+    <span class="pl-en">PubSubStageMaxRetriesAttribute</span>(<span class="pl-c1">100</span>),
+    <span class="pl-en">PubSubStageRetryJitterAttribute</span>(<span class="pl-c1">1</span>, <span class="pl-c1">5</span>)))
+<span class="pl-en">Source</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSource</span>(<span class="pl-en">PubSubSubscription</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-sub<span class="pl-pds">"</span></span>)), <span class="pl-c1">30.</span>seconds).withAttributes(attributes)</pre>
+  </div> 
+  <h2><a id="user-content-writing-to-cloud-pubsub-sink" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#writing-to-cloud-pubsub-sink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing to Cloud Pub/Sub (Sink)</h2> 
+  <p><code>PubSubSink</code> flushes messages either when the buffer is full (size is 100 by default) or after the messages have been in the buffer for <code>maxDelay</code> (30 seconds by default).</p> 
+  <p>Creating a sink writing to <code>foo-topic</code> topic in the <code>foo-project</code> with the default settings:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Sink</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSink</span>(<span class="pl-en">PubSubTopic</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-topic<span class="pl-pds">"</span></span>)))</pre>
+  </div> 
+  <p>Overriding the max delay to 10 seconds:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Sink</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSink</span>(<span class="pl-en">PubSubTopic</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-topic<span class="pl-pds">"</span></span>)), <span class="pl-c1">10.</span>seconds)</pre>
+  </div> 
+  <p>Customise the max delay, buffer size, publish timeout, max retries and retry jitter:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">attributes</span> <span class="pl-k">=</span> <span class="pl-en">Attributes</span>(<span class="pl-en">List</span>(
+    <span class="pl-en">PubSubStageBufferSizeAttribute</span>(<span class="pl-c1">200</span>),
+    <span class="pl-en">PubSubStageMaxRetriesAttribute</span>(<span class="pl-c1">100</span>),
+    <span class="pl-en">PubSubStageRetryJitterAttribute</span>(<span class="pl-c1">1</span>, <span class="pl-c1">5</span>),
+    <span class="pl-en">PubSubPublishTimeoutAttribute</span>(<span class="pl-c1">60.</span>seconds)))
+<span class="pl-en">Sink</span>.fromGraph(<span class="pl-k">new</span> <span class="pl-en">PubSubSink</span>(<span class="pl-en">PubSubTopic</span>(<span class="pl-s"><span class="pl-pds">"</span>foo-project<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo-topic<span class="pl-pds">"</span></span>))).withAttributes(attributes)</pre>
+  </div> 
+  <h2><a id="user-content-using-the-cloud-pubsub-client" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#using-the-cloud-pubsub-client" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using the Cloud Pub/Sub Client</h2> 
+  <p>The sink and the source both make use of a custom client library implemented using the gRPC API definitions published by Google. This client can be used as a standalone Pub/Sub client even if you are not interested in using Akka streams.</p> 
+  <p>In almost all cases, you should be using the <code>RetryingPubSubClient</code> which supports customizable retry policies using the <a href="http://zman.io/atmos/" target="_blank">Atmos library</a>. Custom retry policies and retry execution contexts need to be provided as implicit parameters to the client when it is created. See <code>com.qubit.pubsub.client.retry.RetryPolicyDefaults</code> for the default values used for these parameters.</p> 
+  <p>Creating the default client:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">RetryingPubSubClient</span>(<span class="pl-en">PubSubGrpcClient</span>())</pre>
+  </div> 
+  <p>Overriding the Pub/Sub endpoint and transport security (for tests using the Pub/Sub emulator):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">PubSubApiConfig</span>(apiHost <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>, apiPort <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>8897<span class="pl-pds">"</span></span>, tlsEnabled <span class="pl-k">=</span> <span class="pl-c1">false</span>)
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">RetryingPubSubClient</span>(<span class="pl-en">PubSubGrpcClient</span>(config))</pre>
+  </div> 
+  <h1><a id="user-content-development" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#development" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Development</h1> 
+  <h2><a id="user-content-running-tests" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#running-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running Tests</h2> 
+  <p>The integration tests require the Pub/Sub emulator to be running. </p> 
+  <p>On a new terminal window:</p> 
+  <pre><code>mkdir -p /tmp/pubsub &amp;&amp; gcloud beta emulators pubsub start --data-dir /tmp/pubsub
+</code></pre> 
+  <p>On another terminal window:</p> 
+  <p>Change directory to source root and</p> 
+  <pre><code>eval $(gcloud beta emulators pubsub env-init --data-dir /tmp/pubsub)
+sbt test it:test
+</code></pre> 
+  <h2><a id="user-content-releasing-to-sonatype-ossrh" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#releasing-to-sonatype-ossrh" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Releasing to Sonatype OSSRH</h2> 
+  <p>Ensure that credentials and PGP settings are correctly configured as documented at <a href="http://www.scala-sbt.org/release/docs/Using-Sonatype.html" target="_blank">http://www.scala-sbt.org/release/docs/Using-Sonatype.html</a></p> 
+  <pre><code>sbt release
+sbt releaseSonatype
+</code></pre> 
+  <h1><a id="user-content-contributing" class="anchor" href="https://github.com/qubitproducts/akka-cloudpubsub#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h1> 
+  <ul> 
+   <li>Please make sure that the code is formatted using <a href="https://olafurpg.github.io/scalafmt/" target="_blank">scalafmt</a> using the provided formatting configuration</li> 
+   <li>Add tests to exercise the new additions/modifications</li> 
+   <li>Create an issue on Github before submitting your pull request</li> 
+  </ul> 
+ </article>
+</div>
