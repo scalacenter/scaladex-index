@@ -1,0 +1,49 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-indexedrdd-for-apache-spark" class="anchor" href="https://github.com/amplab/spark-indexedrdd#indexedrdd-for-apache-spark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>IndexedRDD for Apache Spark</h1> 
+  <p>An efficient updatable key-value store for <a href="http://spark.apache.org" target="_blank">Apache Spark</a>.</p> 
+  <p>IndexedRDD extends <code>RDD[(K, V)]</code> by enforcing key uniqueness and pre-indexing the entries for efficient joins and point lookups, updates, and deletions. It is implemented by (1) hash-partitioning the entries by key, (2) maintaining a radix tree (<a href="https://github.com/ankurdave/part" target="_blank">PART</a>) index within each partition, and (3) using this immutable and efficiently updatable data structure to enable efficient modifications and deletions.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/amplab/spark-indexedrdd#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Add the dependency to your SBT project by adding the following to <code>build.sbt</code> (see the <a href="http://spark-packages.org/package/amplab/spark-indexedrdd" target="_blank">Spark Packages listing</a> for spark-submit and Maven instructions):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Spark Packages Repo<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>http://dl.bintray.com/spark-packages/maven<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>amplab<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>spark-indexedrdd<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Then use IndexedRDD as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">edu.berkeley.cs.amplab.spark.indexedrdd.</span><span class="pl-v">IndexedRDD</span>
+<span class="pl-k">import</span> <span class="pl-v">edu.berkeley.cs.amplab.spark.indexedrdd.IndexedRDD.</span><span class="pl-v">_</span>
+
+<span class="pl-c">// Create an RDD of key-value pairs with Long keys.</span>
+<span class="pl-k">val</span> <span class="pl-en">rdd</span> <span class="pl-k">=</span> sc.parallelize((<span class="pl-c1">1</span> to <span class="pl-c1">1000000</span>).map(x <span class="pl-k">=&gt;</span> (x.toLong, <span class="pl-c1">0</span>)))
+<span class="pl-c">// Construct an IndexedRDD from the pairs, hash-partitioning and indexing</span>
+<span class="pl-c">// the entries.</span>
+<span class="pl-k">val</span> <span class="pl-en">indexed</span> <span class="pl-k">=</span> <span class="pl-en">IndexedRDD</span>(rdd).cache()
+
+<span class="pl-c">// Perform a point update.</span>
+<span class="pl-k">val</span> <span class="pl-en">indexed2</span> <span class="pl-k">=</span> indexed.put(<span class="pl-c1">1234L</span>, <span class="pl-c1">10873</span>).cache()
+<span class="pl-c">// Perform a point lookup. Note that the original IndexedRDD remains</span>
+<span class="pl-c">// unmodified.</span>
+indexed2.get(<span class="pl-c1">1234L</span>) <span class="pl-c">// =&gt; Some(10873)</span>
+indexed.get(<span class="pl-c1">1234L</span>) <span class="pl-c">// =&gt; Some(0)</span>
+
+<span class="pl-c">// Efficiently join derived IndexedRDD with original.</span>
+<span class="pl-k">val</span> <span class="pl-en">indexed3</span> <span class="pl-k">=</span> indexed.innerJoin(indexed2) { (id, a, b) <span class="pl-k">=&gt;</span> b }.filter(_._2 <span class="pl-k">!=</span> <span class="pl-c1">0</span>)
+indexed3.collect <span class="pl-c">// =&gt; Array((1234L, 10873))</span>
+
+<span class="pl-c">// Perform insertions and deletions.</span>
+<span class="pl-k">val</span> <span class="pl-en">indexed4</span> <span class="pl-k">=</span> indexed2.put(<span class="pl-k">-</span><span class="pl-c1">100L</span>, <span class="pl-c1">111</span>).delete(<span class="pl-en">Array</span>(<span class="pl-c1">998L</span>, <span class="pl-c1">999L</span>)).cache()
+indexed2.get(<span class="pl-k">-</span><span class="pl-c1">100L</span>) <span class="pl-c">// =&gt; None</span>
+indexed4.get(<span class="pl-k">-</span><span class="pl-c1">100L</span>) <span class="pl-c">// =&gt; Some(111)</span>
+indexed2.get(<span class="pl-c1">999L</span>) <span class="pl-c">// =&gt; Some(0)</span>
+indexed4.get(<span class="pl-c1">999L</span>) <span class="pl-c">// =&gt; None</span></pre>
+  </div> 
+ </article>
+</div>

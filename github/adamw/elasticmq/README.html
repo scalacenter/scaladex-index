@@ -10,7 +10,7 @@
     </svg></a>tl;dr</h2> 
   <ul> 
    <li>message queue system</li> 
-   <li>runs stand-alone (<a href="https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.11.1.jar" target="_blank">download</a>) or embedded</li> 
+   <li>runs stand-alone (<a href="https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.12.0.jar" target="_blank">download</a>) or embedded</li> 
    <li><a href="http://aws.amazon.com/sqs/" target="_blank">Amazon SQS</a>-compatible interface</li> 
    <li>fully asynchronous implementation, no blocking calls</li> 
   </ul> 
@@ -36,13 +36,13 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation: stand-alone</h2> 
-  <p>You can download the stand-alone distribution here: <a href="https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.11.1.jar" target="_blank">https://s3/.../elasticmq-server-0.11.1.jar</a></p> 
+  <p>You can download the stand-alone distribution here: <a href="https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.12.0.jar" target="_blank">https://s3/.../elasticmq-server-0.12.0.jar</a></p> 
   <p>Java 6 or above is required for running the server.</p> 
   <p>Simply run the jar and you should get a working server, which binds to <code>localhost:9324</code>:</p> 
-  <pre><code>java -jar elasticmq-server-0.11.1.jar
+  <pre><code>java -jar elasticmq-server-0.12.0.jar
 </code></pre> 
   <p>ElasticMQ uses <a href="https://github.com/typesafehub/config" target="_blank">Typesafe Config</a> for configuration. To specify custom configuration values, create a file (e.g. <code>custom.conf</code>), fill it in with the desired values, and pass it to the server:</p> 
-  <pre><code>java -Dconfig.file=custom.conf -jar elasticmq-server-0.11.1.jar
+  <pre><code>java -Dconfig.file=custom.conf -jar elasticmq-server-0.12.0.jar
 </code></pre> 
   <p>The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:</p> 
   <pre><code>include classpath("application.conf")
@@ -64,12 +64,16 @@ rest-sqs {
     sqs-limits = strict
 }
 
+// Should the node-address be generated from the bind port/hostname
+// Set this to true e.g. when assigning port automatically by using port 0.
+generate-node-address = false
+
 queues {
     // See next section
 }
 </code></pre> 
   <p>You can also provide an alternative <a href="http://logback.qos.ch/" target="_blank">Logback</a> configuration file (the <a href="https://github.com/adamw/elasticmq/blob/master/server/src/main/resources/logback.xml" target="_blank">default</a> is configured to log INFO logs and above to the console):</p> 
-  <pre><code>java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.11.1.jar
+  <pre><code>java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.12.0.jar
 </code></pre> 
   <h2><a id="user-content-how-are-queue-urls-created" class="anchor" href="https://github.com/adamw/elasticmq#how-are-queue-urls-created" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -77,12 +81,12 @@ queues {
     </svg></a>How are queue URLs created</h2> 
   <p>Some of the responses include a queue URL. By default the urls will use <code>http://localhost:9324</code> as the base URL. To customize, you should properly set the protocol/host/port/context in the <code>node-address</code> setting (see above).</p> 
   <p>You can also set <code>node-address.host</code> to a special value, <code>"*"</code>, which will cause any queue URLs created during a request to use the path of the incoming request. This might be useful e.g. in containerized (Docker) deployments.</p> 
-  <p>Note that changing the <code>bind-port</code> and <code>bind-hostname</code> settings does not affect the queue URLs in any way.</p> 
+  <p>Note that changing the <code>bind-port</code> and <code>bind-hostname</code> settings does not affect the queue URLs in any way unless <code>generate-node-address</code> is <code>true</code>. In that case, the bind host/port are used to create the node address. This is useful when the port should be automatically assigned (use port <code>0</code> in such case, the selected port will be visible in the logs).</p> 
   <h2><a id="user-content-automatically-creating-queues-on-startup" class="anchor" href="https://github.com/adamw/elasticmq#automatically-creating-queues-on-startup" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Automatically creating queues on startup</h2> 
-  <p>Queues can be automatically created on startup by providing appropriate configuration (since 0.9.3):</p> 
+  <p>Queues can be automatically created on startup by providing appropriate configuration:</p> 
   <p>The queues are specified in a custom configuration file. For example, create a <code>custom.conf</code> file with the following:</p> 
   <pre><code>include classpath("application.conf")
 
@@ -149,13 +153,13 @@ queue = client.get_queue_by_name(QueueName='queue1')
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>ElasticMQ dependencies in SBT</h2> 
   <pre><code>// Scala 2.11
-val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.11.1"
+val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.12.0"
 
 // Scala 2.10
 val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
 </code></pre> 
   <p>If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the <code>core</code> module:</p> 
-  <pre><code>val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.11.1"
+  <pre><code>val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.12.0"
 </code></pre> 
   <p>If you want to use a snapshot version, you will need to add the <a href="https://oss.sonatype.org/content/repositories/snapshots/" target="_blank">https://oss.sonatype.org/content/repositories/snapshots/</a> repository to your configuration.</p> 
   <h2><a id="user-content-elasticmq-dependencies-in-maven" class="anchor" href="https://github.com/adamw/elasticmq#elasticmq-dependencies-in-maven" aria-hidden="true" target="_blank">
@@ -166,7 +170,7 @@ val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7
   <pre><code>&lt;dependency&gt;
     &lt;groupId&gt;org.elasticmq&lt;/groupId&gt;
     &lt;artifactId&gt;elasticmq-rest-sqs_2.11&lt;/artifactId&gt;
-    &lt;version&gt;0.11.1&lt;/version&gt;
+    &lt;version&gt;0.12.0&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre> 
   <p>If you want to use a snapshot version, you will need to add the <a href="https://oss.sonatype.org/content/repositories/snapshots/" target="_blank">https://oss.sonatype.org/content/repositories/snapshots/</a> repository to your configuration.</p> 
@@ -179,8 +183,8 @@ val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Current versions</h2> 
-  <p><em>Stable</em>: 0.11.1, 0.8.12</p> 
-  <p><em>Development</em>: 0.11.1-SNAPSHOT</p> 
+  <p><em>Stable</em>: 0.12.0, 0.8.12</p> 
+  <p><em>Development</em>: 0.12.0-SNAPSHOT</p> 
   <h2><a id="user-content-logging" class="anchor" href="https://github.com/adamw/elasticmq#logging" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -237,6 +241,14 @@ Overall rest-sqs + in-memory throughput: 2600.002600
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Change log</h2> 
+  <h4><a id="user-content-version-0120-7-dec-2016" class="anchor" href="https://github.com/adamw/elasticmq#version-0120-7-dec-2016" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.12.0 (7 Dec 2016)</h4> 
+  <ul> 
+   <li>support for dynamic port allocation</li> 
+   <li>node address is generated from bind address if not specified</li> 
+  </ul> 
   <h4><a id="user-content-version-0111-30-nov-2016" class="anchor" href="https://github.com/adamw/elasticmq#version-0111-30-nov-2016" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
