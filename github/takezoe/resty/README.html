@@ -186,7 +186,7 @@ $ sbt ~jetty:start
    <li><code>String</code> is responded as <code>text/plain; charset=UTF-8</code></li> 
    <li><code>Array[Byte]</code>, <code>InputStream</code>, <code>java.io.File</code> are responded as <code>application/octet-stream</code></li> 
    <li><code>AnyRef</code> is responded as <code>application/json</code></li> 
-   <li><code>ActionResult</code> is responded as specified status, headers and body</li> 
+   <li><code>ActionResult[_]</code> is responded as specified status, headers and body</li> 
   </ul> 
   <h2><a id="user-content-servlet-api" class="anchor" href="https://github.com/takezoe/resty#servlet-api" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -208,11 +208,51 @@ $ sbt ~jetty:start
     </svg></a>Swagger integration</h2> 
   <p>Resty provides Swagger integration in default. Swagger JSON is provided at <code>http://localhost:8080/swagger.json</code> and also Swagger UI is available at <code>http://localhost:8080/swagger-ui/</code>.</p> 
   <p><a href="https://github.com/takezoe/resty/blob/master/swagger.png" target="_blank"><img src="https://github.com/takezoe/resty/raw/master/swagger.png" alt="Swagger integration" style="max-width:100%;"></a></p> 
+  <p>Add following parameter to <code>web.xml</code> to enable Swagger integration:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">context-param</span>&gt;
+  &lt;<span class="pl-ent">param-name</span>&gt;resty.swagger&lt;/<span class="pl-ent">param-name</span>&gt;
+  &lt;<span class="pl-ent">param-value</span>&gt;enable&lt;/<span class="pl-ent">param-value</span>&gt;
+&lt;/<span class="pl-ent">context-param</span>&gt;</pre>
+  </div> 
   <h2><a id="user-content-hystrix-integration" class="anchor" href="https://github.com/takezoe/resty#hystrix-integration" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Hystrix integration</h2> 
   <p>Resty also provides Hystrix integration in default. Metrics are published for each operations. The stream endpoint is available at <code>http://localhost:8080/hystrix.stream</code>. Register this endpoint to the Hystrix dashboard.</p> 
   <p><a href="https://github.com/takezoe/resty/blob/master/hystrix.png" target="_blank"><img src="https://github.com/takezoe/resty/raw/master/hystrix.png" alt="Hystrix integration" style="max-width:100%;"></a></p> 
+  <p>Add following parameter to <code>web.xml</code> to enable Hystrix integration:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">context-param</span>&gt;
+  &lt;<span class="pl-ent">param-name</span>&gt;resty.hystrix&lt;/<span class="pl-ent">param-name</span>&gt;
+  &lt;<span class="pl-ent">param-value</span>&gt;enable&lt;/<span class="pl-ent">param-value</span>&gt;
+&lt;/<span class="pl-ent">context-param</span>&gt;</pre>
+  </div> 
+  <h2><a id="user-content-zipkin-integration" class="anchor" href="https://github.com/takezoe/resty#zipkin-integration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Zipkin integration</h2> 
+  <p>Furthermore, Resty supports Zipkin as well. You can send execution results to the Zipkin server by enabling Zipkin support and using <code>HttpClientSupport</code> for calling other APIs.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">HelloController</span> <span class="pl-k">extends</span> <span class="pl-e">HttpClientSupport</span> {
+  <span class="pl-k">@</span><span class="pl-en">Action</span>(method <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>GET<span class="pl-pds">"</span></span>, path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>/hello/{id}<span class="pl-pds">"</span></span>)
+  <span class="pl-k">def</span> <span class="pl-en">hello</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Message</span> <span class="pl-k">=</span> {
+    <span class="pl-c">// Call other API using methods provided by HttpClientSupport</span>
+    <span class="pl-k">val</span> <span class="pl-en">user</span> <span class="pl-k">=</span> httpGet[<span class="pl-en">User</span>](s<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080/user/${id}<span class="pl-pds">"</span></span>)
+    <span class="pl-en">Message</span>(s<span class="pl-s"><span class="pl-pds">"</span>Hello ${user.name}!<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>Add following parameter to <code>web.xml</code> to enable Zipkin integration:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">context-param</span>&gt;
+  &lt;<span class="pl-ent">param-name</span>&gt;resty.zipkin&lt;/<span class="pl-ent">param-name</span>&gt;
+  &lt;<span class="pl-ent">param-value</span>&gt;enable&lt;/<span class="pl-ent">param-value</span>&gt;
+&lt;/<span class="pl-ent">context-param</span>&gt;
+&lt;<span class="pl-ent">context-param</span>&gt;
+  &lt;<span class="pl-ent">param-name</span>&gt;resty.zipkin.server.url&lt;/<span class="pl-ent">param-name</span>&gt;
+  &lt;<span class="pl-ent">param-value</span>&gt;http://127.0.0.1:9411/api/v1/spans&lt;/<span class="pl-ent">param-value</span>&gt;
+&lt;/<span class="pl-ent">context-param</span>&gt;</pre>
+  </div> 
  </article>
 </div>
