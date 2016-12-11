@@ -8,13 +8,18 @@
   <p><strong>Note:</strong> Doesn't allow normal indexwriting, but can only be created by migrating another ready index, e.g. in Scala:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">iwc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IndexWriterConfig</span>(analyzer)
-iwc.setCodec(<span class="pl-k">new</span> <span class="pl-en">FSTOrdTermVectorsCodec</span>())
+<span class="pl-k">val</span> <span class="pl-en">codec</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">FSTOrdTermVectorsCoded</span>()
+iwc.setCodec(codec)
 iwc.setMergePolicy(<span class="pl-k">new</span> <span class="pl-en">UpgradeIndexMergePolicy</span>(iwc.getMergePolicy()))
+iwc.setMergePolicy(<span class="pl-k">new</span> <span class="pl-en">UpgradeIndexMergePolicy</span>(iwc.getMergePolicy()) {
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">shouldUpgradeSegment</span>(<span class="pl-v">si</span>: <span class="pl-en">SegmentCommitInfo</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span>  <span class="pl-k">!</span>si.info.getCodec.equals(codec)
+})
 <span class="pl-k">val</span> <span class="pl-en">miw</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IndexWriter</span>(<span class="pl-k">new</span> <span class="pl-en">MMapDirectory</span>(<span class="pl-en">FileSystems</span>.getDefault.getPath(path)), iwc)
 miw.forceMerge(<span class="pl-c1">1</span>)
 miw.commit()
 miw.close()
 miw.getDirectory.close()</pre>
   </div> 
+  <p>The above restriction comes from the fact that in the normal default indexing chain, term vectors are written before the term dictionary. For my use case, I didn't want or need to muck around with the index chain to make it work. Luckily, it turned out that in segment merging, the process happens the other way round, so the term-&gt;ord dictionary is available when coding the term vectors.</p> 
  </article>
 </div>
