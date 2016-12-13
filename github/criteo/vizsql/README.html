@@ -1,0 +1,110 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-vizsql" class="anchor" href="https://github.com/criteo/vizsql#vizsql" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>VizSQL</h1> 
+  <p><a href="https://travis-ci.org/criteo/vizsql" target="_blank"><img src="https://camo.githubusercontent.com/804a5e894b8489a0c74224a85022a83f6263d0d3/68747470733a2f2f7472617669732d63692e6f72672f63726974656f2f76697a73716c2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/criteo/vizsql.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-vizsql-is-a-sql-parser--typer-for-scala" class="anchor" href="https://github.com/criteo/vizsql#vizsql-is-a-sql-parser--typer-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>VizSQL is a SQL parser &amp; typer for scala</h2> 
+  <p>VizSQL provides support for parsing SQL statements into a scala AST. This AST can then be used to support many interesting transformations. We provide for example a static optimizer and an OLAP query rewriter. It also support typing the query to retrieve the resultset columns returned by a SQL statement.</p> 
+  <h3><a id="user-content-tldr" class="anchor" href="https://github.com/criteo/vizsql#tldr" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>tl;dr</h3> 
+  <p>Here we use VizSQL to parse a SQL SELECT statement based on the SAKILA database, and to retrieve the column names and types of the returned resultset.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.criteo.vizatra.</span><span class="pl-v">vizsql</span>
+
+<span class="pl-k">val</span> <span class="pl-en">resultColumns</span> <span class="pl-k">=</span>
+  <span class="pl-en">VizSQL</span>.parseQuery(
+    <span class="pl-s"><span class="pl-pds">"""</span>SELECT country_id, max(last_update) as updated from City as x<span class="pl-pds">"""</span></span>,
+    <span class="pl-en">SAKILA</span>
+  )
+  .fold(e <span class="pl-k">=&gt;</span> sys.error(s<span class="pl-s"><span class="pl-pds">"</span>SQL syntax error: $e<span class="pl-pds">"</span></span>), identity)
+  .columns
+  .fold(e <span class="pl-k">=&gt;</span> sys.error(s<span class="pl-s"><span class="pl-pds">"</span>SQL error: $e<span class="pl-pds">"</span></span>), identity)
+
+assert(
+  resultColumns <span class="pl-k">==</span> <span class="pl-en">List</span>(
+    <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>country_id<span class="pl-pds">"</span></span>, <span class="pl-en">INTEGER</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">false</span>)),
+    <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>updated<span class="pl-pds">"</span></span>, <span class="pl-en">TIMESTAMP</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>))
+  )
+)</pre>
+  </div> 
+  <p>Note that the query is not executed. It is just parsed, validated, analyzed and typed using the SAKILA database schema. The schema can be provided directly or extracted at runtime from a JDBC connection if needed. Here is for example the minimum SAKILA schema we need to provide so VizSQL is able to type the previous query:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">SAKILA</span> <span class="pl-k">=</span> <span class="pl-en">DB</span>(schemas <span class="pl-k">=</span> <span class="pl-en">List</span>(
+  <span class="pl-en">Schema</span>(
+    <span class="pl-s"><span class="pl-pds">"</span>sakila<span class="pl-pds">"</span></span>,
+    tables <span class="pl-k">=</span> <span class="pl-en">List</span>(
+      <span class="pl-en">Table</span>(
+        <span class="pl-s"><span class="pl-pds">"</span>City<span class="pl-pds">"</span></span>,
+        columns <span class="pl-k">=</span> <span class="pl-en">List</span>(
+          <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>city_id<span class="pl-pds">"</span></span>, <span class="pl-en">INTEGER</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">false</span>)),
+          <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>city<span class="pl-pds">"</span></span>, <span class="pl-en">STRING</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>)),
+          <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>country_id<span class="pl-pds">"</span></span>, <span class="pl-en">INTEGER</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">false</span>)),
+          <span class="pl-en">Column</span>(<span class="pl-s"><span class="pl-pds">"</span>last_update<span class="pl-pds">"</span></span>, <span class="pl-en">TIMESTAMP</span>(nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>))
+        )
+      )
+    )
+  )
+))</pre>
+  </div> 
+  <h3><a id="user-content-dialects" class="anchor" href="https://github.com/criteo/vizsql#dialects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dialects</h3> 
+  <p>VizSQL support several dialects allowing to understand specific SQL syntax or functions for different databases. We started the core one based on the <em>SQL99</em> standard. Then we enriched it to create specific dialects for <strong>Vertica</strong> and <strong>Hive</strong>. This is of course a work in progress (even for the SQL99 one).</p> 
+  <h3><a id="user-content-in-browser-vizsql" class="anchor" href="https://github.com/criteo/vizsql#in-browser-vizsql" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>In-browser VizSQL</h3> 
+  <p>Yes, VizSQL can run in browsers, thanks to Scala.js, the project can be compiled to JavaScript, so that your front-end code can also be equipped with VizSQL.</p> 
+  <p>To compile to JavaScript:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt fullOptJS</pre>
+  </div> 
+  <p>then <code>vizsql-opt.js</code> is generated in the <code>target</code> folder, it's packed as a CommonJS (node.js) module</p> 
+  <p>To use VizSQL:</p> 
+  <div class="highlight highlight-source-js">
+   <pre><span class="pl-k">const</span> <span class="pl-c1">Database</span> <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>vizsql<span class="pl-pds">'</span></span>).<span class="pl-smi">Database</span>;
+<span class="pl-k">const</span> <span class="pl-c1">db</span> <span class="pl-k">=</span> <span class="pl-en">Database</span>().<span class="pl-en">from</span>({
+    <span class="pl-c">/* db definitions */</span>
+});
+
+<span class="pl-k">const</span> <span class="pl-c1">parseResult</span> <span class="pl-k">=</span> <span class="pl-smi">db</span>.<span class="pl-c1">parse</span>(<span class="pl-s"><span class="pl-pds">"</span>SELECT * FROM table<span class="pl-pds">"</span></span>);</pre>
+  </div> 
+  <p>the parse result contains <code>{ error, select }</code>:</p> 
+  <ul> 
+   <li>error (object), null if no error is present</li> 
+  </ul> 
+  <div class="highlight highlight-source-js">
+   <pre>  {
+    msg<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>err<span class="pl-pds">'</span></span> <span class="pl-c">// message of the error</span>
+    pos<span class="pl-k">:</span> <span class="pl-c1">1</span> <span class="pl-c">// position of the error</span>
+  }</pre>
+  </div> 
+  <ul> 
+   <li>select (object), null if there's an error</li> 
+  </ul> 
+  <div class="highlight highlight-source-js">
+   <pre>  {
+    columns<span class="pl-k">:</span> [<span class="pl-k">...</span>], <span class="pl-c">// columns in the query</span>
+    tables<span class="pl-k">:</span> [<span class="pl-k">...</span>]   <span class="pl-c">// tables in the query</span>
+  }</pre>
+  </div> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/criteo/vizsql#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h3> 
+  <p>This project is licensed under the Apache 2.0 license.</p> 
+  <h3><a id="user-content-copyright" class="anchor" href="https://github.com/criteo/vizsql#copyright" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright</h3> 
+  <p>Copyright © <a href="http://labs.criteo.com" target="_blank">Criteo</a>, 2016.</p> 
+ </article>
+</div>
