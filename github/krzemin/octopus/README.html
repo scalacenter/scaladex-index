@@ -1,0 +1,148 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-octopus" class="anchor" href="https://github.com/krzemin/octopus#octopus" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Octopus</h1> 
+  <p><a href="https://travis-ci.org/krzemin/octopus" target="_blank"><img src="https://camo.githubusercontent.com/02c3bc907e732c613530cb18ed5e3ec421c0dba7/68747470733a2f2f7472617669732d63692e6f72672f6b727a656d696e2f6f63746f7075732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/krzemin/octopus.svg?branch=master" style="max-width:100%;"></a> <a href="http://codecov.io/github/krzemin/octopus?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/11090d55308496244d1970725aaa285f45e7fce8/687474703a2f2f636f6465636f762e696f2f6769746875622f6b727a656d696e2f6f63746f7075732f636f7665726167652e7376673f6272616e63683d6d6173746572" alt="codecov.io" data-canonical-src="http://codecov.io/github/krzemin/octopus/coverage.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>Octopus is a Scala library for boilerplate-free validation.</p> 
+  <p>It defines <code>Validator[T]</code> type-class, provide composable DSL for defining validation rules for user-defined type and can automatically derive validators for case classes, tuples, sealed hierarchies and various stadard Scala types by composing other defined or derived validators.</p> 
+  <h3><a id="user-content-example" class="anchor" href="https://github.com/krzemin/octopus#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h3> 
+  <p>Let's consider example business domain.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">UserId</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Email</span>(<span class="pl-v">address</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">PostalCode</span>(<span class="pl-v">code</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Address</span>(<span class="pl-v">street</span>: <span class="pl-k">String</span>,
+                   <span class="pl-v">postalCode</span>: <span class="pl-en">PostalCode</span>,
+                   <span class="pl-v">city</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">id</span>: <span class="pl-en">UserId</span>,
+                <span class="pl-v">email</span>: <span class="pl-en">Email</span>,
+                <span class="pl-v">address</span>: <span class="pl-en">Address</span>)</pre>
+  </div> 
+  <p>Let's define validation rules as implicit type class instances.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c">// Usually you wan't to put them into companion objects</span>
+<span class="pl-c">// or group them together in a module.</span>
+
+<span class="pl-k">import</span> <span class="pl-v">octopus.</span><span class="pl-v">_</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">userIdValidator</span><span class="pl-k">:</span> <span class="pl-en">Validator</span>[<span class="pl-en">UserId</span>] <span class="pl-k">=</span> <span class="pl-en">Validator</span>[<span class="pl-en">UserId</span>]
+  .rule(_.id <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>, <span class="pl-s"><span class="pl-pds">"</span>must be positive number<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">emailValidator</span><span class="pl-k">:</span> <span class="pl-en">Validator</span>[<span class="pl-en">Email</span>] <span class="pl-k">=</span> <span class="pl-en">Validator</span>[<span class="pl-en">Email</span>]
+  .rule(_.address.nonEmpty, <span class="pl-s"><span class="pl-pds">"</span>must not be empty<span class="pl-pds">"</span></span>)
+  .rule(_.address.contains(<span class="pl-s"><span class="pl-pds">"</span>@<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>must contain @<span class="pl-pds">"</span></span>)
+  .rule(_.address.split(<span class="pl-c1">'@'</span>).last.contains(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>must contain . after @<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">potalCodeValidator</span><span class="pl-k">:</span> <span class="pl-en">Validator</span>[<span class="pl-en">PostalCode</span>] <span class="pl-k">=</span> <span class="pl-en">Validator</span>[<span class="pl-en">PostalCode</span>]
+  .ruleVC((<span class="pl-v">_</span>: <span class="pl-k">String</span>).length <span class="pl-k">==</span> <span class="pl-c1">5</span>, <span class="pl-s"><span class="pl-pds">"</span>must be of length 5<span class="pl-pds">"</span></span>)
+  .ruleVC((<span class="pl-v">_</span>: <span class="pl-k">String</span>).forall(_.isDigit), <span class="pl-s"><span class="pl-pds">"</span>must contain only digits<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">addressValidator</span><span class="pl-k">:</span> <span class="pl-en">Validator</span>[<span class="pl-en">Address</span>] <span class="pl-k">=</span> <span class="pl-en">Validator</span>
+  .derived[<span class="pl-en">Address</span>] <span class="pl-c">// derives default validator for Address</span>
+  .ruleField(<span class="pl-en">'city</span>, (<span class="pl-v">_</span>: <span class="pl-k">String</span>).nonEmpty, <span class="pl-s"><span class="pl-pds">"</span>must not be empty<span class="pl-pds">"</span></span>)
+  .ruleField(<span class="pl-en">'street</span>, (<span class="pl-v">_</span>: <span class="pl-k">String</span>).nonEmpty, <span class="pl-s"><span class="pl-pds">"</span>must not be empty<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Then, having validator instances imported, we can validate our bigger case classes for free, without any additional boilerplate!</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">octopus.syntax.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">user1</span> <span class="pl-k">=</span> <span class="pl-en">User</span>(
+  <span class="pl-en">UserId</span>(<span class="pl-c1">1</span>),
+  <span class="pl-en">Email</span>(<span class="pl-s"><span class="pl-pds">"</span>abc@example.com<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Address</span>(<span class="pl-s"><span class="pl-pds">"</span>Love Street<span class="pl-pds">"</span></span>, <span class="pl-en">PostalCode</span>(<span class="pl-s"><span class="pl-pds">"</span>12345<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>Los Angeles<span class="pl-pds">"</span></span>)
+)
+
+<span class="pl-k">val</span> <span class="pl-en">user2</span> <span class="pl-k">=</span> <span class="pl-en">User</span>(
+  <span class="pl-en">UserId</span>(<span class="pl-c1">0</span>),
+  <span class="pl-en">Email</span>(<span class="pl-s"><span class="pl-pds">"</span>abc@xyz<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Address</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-en">PostalCode</span>(<span class="pl-s"><span class="pl-pds">"</span>qqqqqq<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>   <span class="pl-pds">"</span></span>)
+)
+
+user1.isValid <span class="pl-c">// : Boolean = true</span>
+
+user1.validate.toEither <span class="pl-c">// : Either[octopus.ValidationError, User] = Right(user1)</span>
+
+user2.isValid <span class="pl-c">// : Boolean = false</span>
+
+user2.validate.toFieldErrMapping
+<span class="pl-c">// : List[(String, String)] = List(</span>
+<span class="pl-c">//     (id,must be positive number), </span>
+<span class="pl-c">//     (email,must contain . after @),</span>
+<span class="pl-c">//     (address.postalCode,must be of length 5), </span>
+<span class="pl-c">//     (address.postalCode,must contain only digits),</span>
+<span class="pl-c">//     (address.street,must not be empty)</span>
+<span class="pl-c">// )</span></pre>
+  </div> 
+  <h3><a id="user-content-getting-started" class="anchor" href="https://github.com/krzemin/octopus#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting started</h3> 
+  <p>Octopus is currently available for Scala 2.12.</p> 
+  <p>To get started with SBT, add following line to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/krzemin/octopus#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>See <a href="https://github.com/krzemin/octopus/blob/master/USAGE.md" target="_blank">USAGE.md</a></p> 
+  <h2><a id="user-content-design-details" class="anchor" href="https://github.com/krzemin/octopus#design-details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Design details</h2> 
+  <p>See <a href="https://github.com/krzemin/octopus/blob/master/DESIGN.md" target="_blank">DESIGN.md</a></p> 
+  <h2><a id="user-content-todo" class="anchor" href="https://github.com/krzemin/octopus#todo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TODO</h2> 
+  <p>Things to implement/consider:</p> 
+  <ul class="contains-task-list"> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> abstraction over error message types</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> asynchronous validations</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> write about usage</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> scala.js port</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> write about design details</li> 
+  </ul> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/krzemin/octopus#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <h4><a id="user-content-how-its-different-that-catsscalaz-validation-data-types" class="anchor" href="https://github.com/krzemin/octopus#how-its-different-that-catsscalaz-validation-data-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it's different that Cats/Scalaz validation data types?</h4> 
+  <p>They main differece between Octopus and Cats/Scalaz validation types is an approach to composability of validations.</p> 
+  <p>Cats/Scalaz validations are kind of disjunction types that hold successfully validated value or some validation error(s). They can be composed usually with simple combinators or applicative builder syntax. When having lot of case classes with many fields and you want to compose validators of their fields, you have to do this manually which results with rather lot amount of boilerplate code.</p> 
+  <p>Octopus approach is a bit different. The <code>Validator[T]</code> type-class holds a function that will perform validation at some point of time. There are actually two levels of composability: </p> 
+  <ul> 
+   <li>validation rules for single type - can be composed using provided DSL,</li> 
+   <li>field validators that composes and create case class validator - that is achieved automatically by using type-class derivation mechanism; still you can override validation rules for certain types in local contexts.</li> 
+  </ul> 
+  <h4><a id="user-content-what-about-asynchronous-validations" class="anchor" href="https://github.com/krzemin/octopus#what-about-asynchronous-validations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What about asynchronous validations?</h4> 
+  <p>When defining validators usually we use predicate functions <code>T =&gt; Boolean</code> to decide satisfiability of certain rule. This work work well as long as we can answer this question only having access to value being validated.</p> 
+  <p>But sometimes this restriction is too limiting to decide a validation - in some cases it's necessary to query some external data source (like database). Thus, we would want to have asynchronous predicates like <code>T =&gt; Future[Boolean]</code>.</p> 
+  <p>Currently Octopus doesn't support asynchronous validations. You can always deal with them in another layer of your application.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/krzemin/octopus#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Copyright 2016 Piotr Krzemiński</p> 
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
+  <pre><code>http://www.apache.org/licenses/LICENSE-2.0
+</code></pre> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>
