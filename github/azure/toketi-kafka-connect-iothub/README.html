@@ -156,12 +156,73 @@ BatchSize=100
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Data format</h3> 
-  <p>The data in the IoT Hub is retrieved and pumped into the specified Kafka topic as a JSON blob string, with the following format. This allows data with any schema to be copied over to Kafka for consumption downstream.</p> 
+  <p>The data in the IoT Hub is retrieved and pumped into the specified Kafka topic with the following schema. Note that it contains the most relevant properties at the top level (like deviceId, offset, enqueuedTime, sequenceNumber, etc.). While all these properties are set by IoT Hub, contentType needs to be set by the device. The actual payload from the device is contained in the "content" property as a JSON blob. This allows payload with any schema to be copied over to Kafka for consumption downstream. </p> 
   <div class="highlight highlight-source-json">
    <pre>{
-  <span class="pl-s"><span class="pl-pds">"</span>content<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>The raw content sent by the device<span class="pl-pds">"</span></span>,
-  <span class="pl-s"><span class="pl-pds">"</span>systemProperties<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Map of key-value pairs containing system properties<span class="pl-pds">"</span></span>,
-  <span class="pl-s"><span class="pl-pds">"</span>properties<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Map of key-value pairs containing any custom properties set by the device<span class="pl-pds">"</span></span>
+  <span class="pl-s"><span class="pl-pds">"</span>schema<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>struct<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>fields<span class="pl-pds">"</span></span>: [
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>deviceId<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>offset<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>contentType<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>enqueuedTime<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>int64<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>sequenceNumber<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>content<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>map<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>keys<span class="pl-pds">"</span></span>: {
+          <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+          <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>
+        },
+        <span class="pl-s"><span class="pl-pds">"</span>values<span class="pl-pds">"</span></span>: {
+          <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+          <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>
+        },
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>systemProperties<span class="pl-pds">"</span></span>
+      },
+      {
+        <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>map<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>keys<span class="pl-pds">"</span></span>: {
+          <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+          <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>
+        },
+        <span class="pl-s"><span class="pl-pds">"</span>values<span class="pl-pds">"</span></span>: {
+          <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>,
+          <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>
+        },
+        <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>properties<span class="pl-pds">"</span></span>
+      }
+    ],
+    <span class="pl-s"><span class="pl-pds">"</span>optional<span class="pl-pds">"</span></span>: <span class="pl-c1">false</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>iothub.kafka.connect<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>: <span class="pl-c1">1</span>
+  }
 }</pre>
   </div> 
   <h2><a id="user-content-future-work" class="anchor" href="https://github.com/azure/toketi-kafka-connect-iothub#future-work" aria-hidden="true" target="_blank">
