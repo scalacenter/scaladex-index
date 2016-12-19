@@ -12,7 +12,7 @@
     </svg></a>Setup</h2> 
   <p>lucene4s is published to Sonatype OSS and Maven Central currently supporting Scala 2.11 and 2.12.</p> 
   <p>Configuring the dependency in SBT simply requires:</p> 
-  <pre><code>libraryDependencies += "com.outr" %% "lucene4s" % "1.3.0"
+  <pre><code>libraryDependencies += "com.outr" %% "lucene4s" % "1.4.1"
 </code></pre> 
   <h2><a id="user-content-using" class="anchor" href="https://github.com/outr/lucene4s#using" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -194,23 +194,67 @@ paged.entries.foreach { person <span class="pl-k">=&gt;</span>
     </svg></a>Additional Information</h4> 
   <p>All <code>Searchable</code> implementations automatically define a <code>docType</code> field that is used to uniquely separate different <code>Searchable</code> instances so you don't have to worry about multiple different instances overlapping.</p> 
   <p>For more examples see <a href="https://github.com/outr/lucene4s/blob/master/src/test/scala/tests/SearchableSpec.scala" target="_blank">https://github.com/outr/lucene4s/blob/master/src/test/scala/tests/SearchableSpec.scala</a></p> 
+  <h3><a id="user-content-geospatial-support" class="anchor" href="https://github.com/outr/lucene4s#geospatial-support" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Geospatial Support</h3> 
+  <p>One of the great features of Lucene is geospatial querying and what Lucene wrapper would be complete without it?</p> 
+  <h4><a id="user-content-creating-a-spatial-field" class="anchor" href="https://github.com/outr/lucene4s#creating-a-spatial-field" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Creating a Spatial Field</h4> 
+  <p>In order to create a stored, queryable, filterable, and sortable latitude and longitude you need only create a <code>SpatialPoint</code> field:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">location</span><span class="pl-k">:</span> <span class="pl-en">Field</span>[<span class="pl-en">SpatialPoint</span>] <span class="pl-k">=</span> lucene.create.field[<span class="pl-en">SpatialPoint</span>](<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h4><a id="user-content-sorting-nearest-a-point" class="anchor" href="https://github.com/outr/lucene4s#sorting-nearest-a-point" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sorting Nearest a Point</h4> 
+  <p>Most of the time it's most useful to take an existing latitude and longitude and sort your results returning the nearest documents to that location:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">paged</span> <span class="pl-k">=</span> lucene.query().sort(<span class="pl-en">Sort</span>.nearest(location, <span class="pl-en">SpatialPoint</span>(<span class="pl-c1">40.7142</span>, <span class="pl-k">-</span><span class="pl-c1">74.0119</span>))).search()</pre>
+  </div> 
+  <h4><a id="user-content-filtering-by-distance" class="anchor" href="https://github.com/outr/lucene4s#filtering-by-distance" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Filtering by Distance</h4> 
+  <p>If you want to filter your results to only include entries within a certain range of a location:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">squants.space.LengthConversions.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">newYorkCity</span> <span class="pl-k">=</span> <span class="pl-en">SpatialPoint</span>(<span class="pl-c1">40.7142</span>, <span class="pl-k">-</span><span class="pl-c1">74.0119</span>)
+<span class="pl-k">val</span> <span class="pl-en">paged</span> <span class="pl-k">=</span> lucene
+  .query()
+  .sort(<span class="pl-en">Sort</span>.nearest(location, newYorkCity))
+  .filter(spatialDistance(location, newYorkCity, <span class="pl-c1">50.</span>miles))
+  .search()</pre>
+  </div> 
+  <p>Note the import from <code>squants</code>. We use Squants (<a href="https://github.com/typelevel/squants" target="_blank">https://github.com/typelevel/squants</a>) for distance representations so that you can use <code>miles</code>, <code>meters</code>, or whatever measurement of distance desirable.</p> 
   <h2><a id="user-content-versions" class="anchor" href="https://github.com/outr/lucene4s#versions" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Versions</h2> 
-  <h3><a id="user-content-features-for-140-future" class="anchor" href="https://github.com/outr/lucene4s#features-for-140-future" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-features-for-150-in-progress" class="anchor" href="https://github.com/outr/lucene4s#features-for-150-in-progress" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Features for 1.4.0 (Future)</h3> 
+    </svg></a>Features for 1.5.0 (In-Progress)</h3> 
   <ul class="contains-task-list"> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Scala.js support for Query parsing and URL mapping (QueryURL)</li> 
-   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Geospatial features</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Numeric Seq support</li> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Complete ScalaDocing</li> 
   </ul> 
-  <h3><a id="user-content-features-for-130-in-progress" class="anchor" href="https://github.com/outr/lucene4s#features-for-130-in-progress" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-features-for-140-released-20161217" class="anchor" href="https://github.com/outr/lucene4s#features-for-140-released-20161217" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Features for 1.3.0 (In-Progress)</h3> 
+    </svg></a>Features for 1.4.0 (Released 2016.12.17)</h3> 
+  <ul class="contains-task-list"> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Geospatial features</li> 
+  </ul> 
+  <h3><a id="user-content-features-for-130-released-20161206" class="anchor" href="https://github.com/outr/lucene4s#features-for-130-released-20161206" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features for 1.3.0 (Released 2016.12.06)</h3> 
   <ul class="contains-task-list"> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Better Highlighting support</li> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Add Scala 2.12 support</li> 

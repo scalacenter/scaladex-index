@@ -115,8 +115,18 @@ pip install future
    <li>pySpark with pySparkling</li> 
   </ul> 
   <hr> 
-  <p>H2O cloud is created automatically during the call of <code>H2OContext.getOrCreate</code>. Since it's not technically possible to get number of executors in Spark, we try to discover all executors at the initiation of <code>H2OContext</code> and we start H2O instance inside of each discovered executor. This solution is easiest to deploy; however when Spark or YARN kills the executor - which is not an unusual case - the whole H2O cluster goes down since h2o doesn't support high availability. </p> 
-  <p>Here we show a few examples how H2OContext can be started.</p> 
+  <h2><a id="user-content-sparkling-water-cluster-backends" class="anchor" href="https://github.com/0xdata/sparkling-water#sparkling-water-cluster-backends" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sparkling Water cluster backends</h2> 
+  <p>Sparkling water supports two backend/deployment modes. We call them internal and external back-ends. Sparkling Water applications are independent on selected backend, the before <code>H2OContext</code> is created we need to tell it which backend used.</p> 
+  <h3><a id="user-content-internal-backend" class="anchor" href="https://github.com/0xdata/sparkling-water#internal-backend" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Internal backend</h3> 
+  <p>In internal backend, H2O cloud is created automatically during the call of <code>H2OContext.getOrCreate</code>. Since it's not technically possible to get number of executors in Spark, we try to discover all executors at the initiation of <code>H2OContext</code> and we start H2O instance inside of each discovered executor. This solution is easiest to deploy; however when Spark or YARN kills the executor - which is not an unusual case - the whole H2O cluster goes down since h2o doesn't support high availability. </p> 
+  <p>Internal backend is default for behaviour for Sparkling Water. It can be changed via spark configuration property <code>spark.ext.h2o.backend.cluster.mode</code> to <code>external</code> or <code>internal</code>. Another way how to change type of backend is by calling <code>setExternalClusterMode()</code> or <code>setInternalClusterMode()</code> method on <code>H2OConf</code> class. <code>H2OConf</code> is simple wrapper around <code>SparkConf</code> and inherits all properties in spark configuration.</p> 
+  <p>Here we show a few examples how H2OContext can be started with internal backend.</p> 
   <p>Explicitly specify internal backend on <code>H2OConf</code></p> 
   <pre><code>val conf = new H2OConf(sc).setInternalClusterMode()
 val h2oContext = H2OContext.getOrCreate(sc, conf)
@@ -126,6 +136,23 @@ val h2oContext = H2OContext.getOrCreate(sc, conf)
 </code></pre> 
   <p>or</p> 
   <pre><code>val conf = new H2OConf(sc)
+val h2oContext = H2OContext.getOrCreate(sc, conf)
+</code></pre> 
+  <h3><a id="user-content-external-backend" class="anchor" href="https://github.com/0xdata/sparkling-water#external-backend" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>External backend</h3> 
+  <p>In external cluster mode we expected that H2O cluster is already running and we connect to it from Spark driver (actually H2O node in special client mode running in spark driver). </p> 
+  <p>Few examples how to Sparkling Water in external backend mode.</p> 
+  <p>This piece of code tries to connect to existing h2o cloud with name "h2o-cloud". The H2O cloud is located using multicast and is assumed that all h2o nodes were started without <code>-flatfile</code> option and with <code>-md5skip</code> option. For example like:</p> 
+  <pre><code>java -jar h2o.jar -name h2o-cloud -md5skip
+</code></pre> 
+  <p>The following code will not work since specifying flatfile on h2o nodes and not in the H2O configuration ends up with spark not being able to connect to the rest of the cloud.</p> 
+  <pre><code>java -jar h2o.jar -name h2o-cloud -md5skip -flatfile path_to_flat_file
+</code></pre> 
+  <p>Since multicast communication is often limited in the network, this code connects to H2O cluster "h2o-cluster" using direct communication with arbitrary h2o node. Method <code>setH2OCluster</code> automatically sets external backend mode. It is internally using <a href="https://github.com/h2oai/h2o-3/blob/master/h2o-docs/src/product/howto/H2O-DevCmdLine.md#flatfile" target="_blank">H2O's flatfile configuration property</a>.</p> 
+  <p>This is also why all H2O nodes has to be started with <code>-flatfile</code> option and at least one node has to have ip and port of h2o client in it's flatfile. We can also specify the IP address of h2o client using method <code>setClientIP</code> and then use the provided ip address in the flatfile mentioned earlier.</p> 
+  <pre><code>val conf = new H2OConf(sc).setH2OCluster(host, port).setClientIp(ip).setCloudName("h2o-cloud")
 val h2oContext = H2OContext.getOrCreate(sc, conf)
 </code></pre> 
   <p><a name="user-content-SparkShell" target="_blank" href=""></a></p> 

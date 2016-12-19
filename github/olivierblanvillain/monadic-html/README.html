@@ -96,15 +96,43 @@ mount(div, component)</pre>
   <p><strong>Does the compiler catch HTML typos?</strong></p> 
   <p>No, only invalid XML literals will be rejected at compile time. However, we do provide <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/src/main/scala/mhtml/settings.scala" target="_blank">configurable settings</a> to emit runtime warnings about unknown elements, attributes, entity references and event handlers. For example, the following piece of XML compiles fine:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>&lt;<span class="pl-ent">captain</span> <span class="pl-e">yolo</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> <span class="pl-e">onClick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Oh yeah!<span class="pl-pds">"</span></span>) }&gt;{<span class="pl-c1">None</span>}&lt;/<span class="pl-ent">captain</span>&gt;</pre>
+   <pre>&lt;<span class="pl-ent">captain</span> <span class="pl-e">yolo</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> <span class="pl-e">onClick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Oh yeah!<span class="pl-pds">"</span></span>) }&gt;&lt;/<span class="pl-ent">captain</span>&gt;</pre>
   </div> 
   <p>But mounting it to the DOM will print warnings in the console:</p> 
-  <pre><code>[mhtml] Warning: Implicitly converted class scala.None$ to it's string representation: "None". Call toString explicitly to remove this warning.
-[mhtml] Warning: Unknown event onClick. Did you mean onclick instead?
+  <pre><code>[mhtml] Warning: Unknown event onClick. Did you mean onclick instead?
 [mhtml] Warning: Unknown attribute yolo. Did you mean cols instead?
 [mhtml] Warning: Unknown element captain. Did you mean caption instead?
 </code></pre> 
   <p><code>MountSettings.default</code> emit warnings only when compiled to with <code>fastOptJS</code>, and becomes silent (and faster) whe compiled with <code>fullOptJS</code>.</p> 
+  <p><strong>Can I insert Any values into xml literals?</strong></p> 
+  <p>No. Monadic-html uses a fork of scala-xml that puts type constraints on what values are allowed in xml element or attribute position. Here is a summary of what types are allowed to be embedded in attribute or element position.</p> 
+  <h4><a id="user-content-both-attributes-and-elements" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#both-attributes-and-elements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Both attributes and elements:</h4> 
+  <ul> 
+   <li><code>String</code></li> 
+   <li><code>mhtml.Var[T], mhtml.Rx[T] where T is itself embeddable</code></li> 
+   <li><code>Option[T] where T can itself be embedded (None → remove from the DOM)</code></li> 
+  </ul> 
+  <h4><a id="user-content-attributes" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#attributes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Attributes</h4> 
+  <ul> 
+   <li><code>Boolean (false → remove from the DOM)</code></li> 
+   <li><code>() =&gt; Unit, T =&gt; Unit event handler</code></li> 
+  </ul> 
+  <h4><a id="user-content-elements" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#elements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Elements</h4> 
+  <ul> 
+   <li><code>Int, Long, Double, Float, Char (silently converted with .toString)</code></li> 
+   <li><code>xml.Node</code></li> 
+   <li><code>Seq[xml.Node]</code></li> 
+  </ul> 
+  <p>For examples of how each type is rendered into dom nodes, take a look at the <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/tests/src/test/scala/mhtml/RenderTests.scala" target="_blank">tests</a>.</p> 
   <p><strong>Global mutable state, Booo! Booo!!!</strong></p> 
   <p><code>Var</code>s don't have to be globally exposed, you can instantiate them locally:</p> 
   <div class="highlight highlight-source-scala">

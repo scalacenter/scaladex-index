@@ -6,7 +6,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Scopus</h2> 
   <p>Scopus is a Scala interface to the <a href="http://www.opus-codec.org" target="_blank">Opus</a> and <a href="http://www.speex.org/" target="_blank">Speex</a> codecs. There is also a PCM "codec" which is effectively a NULL codec and is useful in testing.</p> 
-  <p>It is light and thin by design and gives programmers access to the bulk of thefunctionality to the codecs. It uses JNI to handle the native code and works for Linux (amd64 and i386) and OSX. Benchmarks performed on the encoder show that it is 10% slower than a native C implementation. For example, on a 3.5Ghz i5, the Opus coder runs at 360 times real time (complexity factor set to 2). The Opus decoder runs at around 1600 times real time. A native benchmark shows the encoder to run at 400 times real time. The LLVM C compiler (clang v3.4) pips GCC by about 5%.</p> 
+  <p>It is light and thin by design and gives programmers access to the bulk of the functionality to the codecs. It uses JNI to handle the native code and works for Linux (amd64 and i386) and OSX. Benchmarks performed on the encoder show that it is 10% slower than a native C implementation. For example, on a 3.5Ghz i5, the Opus coder runs at 360 times real time (complexity factor set to 2). The Opus decoder runs at around 1600 times real time. A native benchmark shows the encoder to run at 400 times real time. The LLVM C compiler (clang v3.4) pips GCC by about 5%.</p> 
   <p>There is support for the Speex <a href="http://www.speex.org/docs/manual/speex-manual/node7.html#SECTION00740000000000000000" target="_blank">echo cancellation API</a>. Like the rest of the library, this is a thin layer over the underlying C libraries. See the tests for an example of how to use this.</p> 
   <p>The sources for Opus can be downloaded <a href="http://www.opus-codec.org/downloads/" target="_blank">here</a> and those for Speex are <a href="http://www.speex.org/downloads/" target="_blank">here</a>.</p> 
   <p>Note that the Opus codec is better in most aspects than the Speex codec. The latter demonstrates that the framework can manage multiple codecs without running into patent issues.</p> 
@@ -27,6 +27,12 @@
    <li>For OSX, <code>otool</code> and <code>install_name_tool</code> are your friends. See <a href="http://www.tribler.org/trac/wiki/MacBinaries" target="_blank">here</a> for more details.</li> 
   </ul> 
   <p>This library explicitly copies the dynamic libraries out of the resources directory in the jar file to a unique location (something like <code>/tmp/scopus_418af7c0b63</code> on Linux systems) from where it loads them. The temporary files are deleted when the JVM exits. Note that if you have existing installations of Opus, the linker will likely find that library rather than the bundled one (demonstrated for Linux). This may cause the test cases to fail.</p> 
+  <p>The Opus codec performance improves if compiled with <code>clang</code>. Configure, build and test it as follows:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>CC=clang CFLAGS=-O3 ./configure
+make
+make check</pre>
+  </div> 
   <p>If you feel the need to generate header prototypes, build the Scala code then run <code>javah</code> from the root directory of the project as follows:</p> 
   <div class="highlight highlight-source-shell">
    <pre>javah  -classpath target/scala-2.10/classes:/usr/local/lib/scala-2.10.4/lib/<span class="pl-k">*</span>\
@@ -41,7 +47,7 @@
   <div class="highlight highlight-source-scala">
    <pre>  resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>sonatype-public<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/groups/public<span class="pl-pds">"</span></span>
 
-  libaryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>za.co.monadic<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.6<span class="pl-pds">"</span></span></pre>
+  libaryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>za.co.monadic<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.8<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Encoding a stream is pretty simple. Return types are Scala are wrapped in a <code>Try[_]</code> so it is up to you to manage errors reported by the decoder or the encoder.</p> 
   <div class="highlight highlight-source-scala">
