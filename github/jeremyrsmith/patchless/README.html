@@ -39,8 +39,8 @@
 <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, <span class="pl-c1">22</span>, <span class="pl-c1">true</span>)
 <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>patched<span class="pl-pds">"</span></span>, <span class="pl-c1">22</span>, <span class="pl-c1">true</span>)
 <span class="pl-k">val</span> <span class="pl-en">patch</span> <span class="pl-k">=</span> <span class="pl-en">Patch</span>.diff(a, b)
-patch(a) <span class="pl-c">// Foo("patched", 22, true)</span>
-patch(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>wibble<span class="pl-pds">"</span></span>, <span class="pl-c1">44</span>, <span class="pl-c1">false</span>)) <span class="pl-c">// Foo("patched", 44, false)</span></pre>
+patch(a) <span class="pl-c"><span class="pl-c">//</span> Foo("patched", 22, true)</span>
+patch(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>wibble<span class="pl-pds">"</span></span>, <span class="pl-c1">44</span>, <span class="pl-c1">false</span>)) <span class="pl-c"><span class="pl-c">//</span> Foo("patched", 44, false)</span></pre>
   </div> 
   <p>Additionally, the <code>patchless-circe</code> module provides decoders directly from JSON to <code>Patch[T]</code>. See <a href="https://github.com/jeremyrsmith/patchless#patchless-circe" target="_blank">below</a> for details.</p> 
   <h3><a id="user-content-using-the-patch-fields" class="anchor" href="https://github.com/jeremyrsmith/patchless#using-the-patch-fields" aria-hidden="true" target="_blank">
@@ -50,7 +50,7 @@ patch(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</
   <p>The primary advantage of <code>Patch[T]</code> over simply <code>T =&gt; T</code> is that the updated fields can be accessed as a shapeless <code>Record</code> of <code>Option</code>s. Each field retains the name from the original case class <code>T</code>, but its value type is lifted to an <code>Option</code> of the original type within the case class.</p> 
   <p>The <code>Record</code> is accessible in two ways. The first is simply by the <code>updates</code> member of the <code>Patch</code> value:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>println(patch) <span class="pl-c">// Some("patched") :: None :: None :: HNil</span></pre>
+   <pre>println(patch) <span class="pl-c"><span class="pl-c">//</span> Some("patched") :: None :: None :: HNil</span></pre>
   </div> 
   <p>This alone doesn't turn out to be all that useful from a typelevel standpoint - Scala doesn't inherently know the type of the <code>updates</code> field, so your options there are limited.</p> 
   <p>So patchless does some additional type voodoo to allow you to recover a statically known <code>Record</code> for a <code>Patch[T]</code> of a concrete, statically known type <code>T</code>. This is done with the implicit enrichment method <code>patchUpdates</code>, which allows you to do typelevel things like mapping over the updates <code>HList</code> or summoning typeclasses for it:</p> 
@@ -63,7 +63,7 @@ patch(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</
   }
 }
 patch.patchUpdates.map(mapUpdates).toList
-<span class="pl-c">// List(("a", "Some(patched)"), ("b", "None"), ("c", "None")) </span></pre>
+<span class="pl-c"><span class="pl-c">//</span> List(("a", "Some(patched)"), ("b", "None"), ("c", "None")) </span></pre>
   </div> 
   <p>Please note that this only works for a concrete <code>T</code>. If <code>T</code> is abstract (such as in a polymorphic method over <code>Patch</code> types) then you'll still have to parameterize over various <code>HList</code> types and require various implicit shapeless <code>Aux</code> typeclasses over them as usual – starting with <code>Patchable.Aux[T, U]</code> where <code>U</code> will be inferred to the type of the <code>Updates</code> record for <code>T</code>.</p> 
   <div class="highlight highlight-source-scala">
@@ -89,13 +89,13 @@ patch.patchUpdates.map(mapUpdates).toList
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">io.circe.generic.auto.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">patchless.circe.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">cats.syntax.either.</span><span class="pl-v">_ </span><span class="pl-c">// for working with results</span>
+<span class="pl-k">import</span> <span class="pl-v">cats.syntax.either.</span><span class="pl-v">_ </span><span class="pl-c"><span class="pl-c">//</span> for working with results</span>
 
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">aString</span>: <span class="pl-k">String</span>, <span class="pl-v">bInt</span>: <span class="pl-k">Int</span>)
 <span class="pl-k">val</span> <span class="pl-en">parsed</span> <span class="pl-k">=</span> io.circe.parser.parse(<span class="pl-s"><span class="pl-pds">"""</span>{"aString": "patched"}<span class="pl-pds">"""</span></span>)
 parsed.valueOr(<span class="pl-k">throw</span> _).as[<span class="pl-en">Patch</span>[<span class="pl-en">Foo</span>]].valueOr(<span class="pl-k">throw</span> _)
-parsed.updates          <span class="pl-c">// Some("patched") :: None :: HNil</span>
-parsed(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>blah<span class="pl-pds">"</span></span>, <span class="pl-c1">22</span>)) <span class="pl-c">// Foo("patched", 22)</span></pre>
+parsed.updates          <span class="pl-c"><span class="pl-c">//</span> Some("patched") :: None :: HNil</span>
+parsed(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>blah<span class="pl-pds">"</span></span>, <span class="pl-c1">22</span>)) <span class="pl-c"><span class="pl-c">//</span> Foo("patched", 22)</span></pre>
   </div> 
   <p>Configurable derivation is the same, but import <code>patchless.circe.extras._</code> instead; your implicit <code>Configuration</code> will be used to derive the decoders for <code>Patch</code> types.</p> 
   <p>Encoders work the same way, but be aware that the JSON output depends on the printer used – in particular, you'll typically want to <code>dropNullKeys</code> if you're outputting <code>Patch</code> values to JSON.</p> 

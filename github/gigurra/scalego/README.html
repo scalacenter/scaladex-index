@@ -16,52 +16,52 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.github.gigurra.scalego.core.</span><span class="pl-v">_</span>
 
-<span class="pl-c">// Decide the types you want to use as entity/system Ids</span>
+<span class="pl-c"><span class="pl-c">//</span> Decide the types you want to use as entity/system Ids</span>
 <span class="pl-k">type</span> <span class="pl-en">StringIds</span> <span class="pl-k">=</span> <span class="pl-en">IdTypes</span> {
   <span class="pl-k">type</span> <span class="pl-en">SystemId</span> <span class="pl-k">=</span> <span class="pl-k">String</span>
   <span class="pl-k">type</span> <span class="pl-en">EntityId</span> <span class="pl-k">=</span> <span class="pl-k">String</span>
 }
 
-<span class="pl-c">// Define your component types</span>
+<span class="pl-c"><span class="pl-c">//</span> Define your component types</span>
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Position</span>(<span class="pl-v">x</span>: <span class="pl-k">Int</span>, <span class="pl-v">y</span>: <span class="pl-k">Int</span>)
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Velocity</span>(<span class="pl-v">x</span>: <span class="pl-k">Int</span>, <span class="pl-v">y</span>: <span class="pl-k">Int</span>)
 
-<span class="pl-c">// Create your systems - All component data is stored inside these systems. </span>
-<span class="pl-c">// You can pick the backing storage type yourself, as long as you implement scala's mutable.Map trait. </span>
-<span class="pl-c">// In these examples I will use scala's regular mutable.HashMap</span>
+<span class="pl-c"><span class="pl-c">//</span> Create your systems - All component data is stored inside these systems. </span>
+<span class="pl-c"><span class="pl-c">//</span> You can pick the backing storage type yourself, as long as you implement scala's mutable.Map trait. </span>
+<span class="pl-c"><span class="pl-c">//</span> In these examples I will use scala's regular mutable.HashMap</span>
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">positionSystem</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">System</span>[<span class="pl-en">Position</span>, <span class="pl-en">StringIds</span>](<span class="pl-s"><span class="pl-pds">"</span>position<span class="pl-pds">"</span></span>, mutable.<span class="pl-en">HashMap</span>())
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">velocitySystem</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">System</span>[<span class="pl-en">Velocity</span>, <span class="pl-en">StringIds</span>](<span class="pl-s"><span class="pl-pds">"</span>velocity<span class="pl-pds">"</span></span>, mutable.<span class="pl-en">HashMap</span>())
 
-<span class="pl-c">// Create the ECS</span>
+<span class="pl-c"><span class="pl-c">//</span> Create the ECS</span>
 <span class="pl-k">val</span> <span class="pl-en">ecs</span> <span class="pl-k">=</span> <span class="pl-en">ECS</span>(positionSystem, velocitySystem)
 
-<span class="pl-c">// Add some entities. When you execute the .build(entityId) method the </span>
-<span class="pl-c">// components get added to the relevant systems. The Entity class actually</span>
-<span class="pl-c">// has no other fields than the entityId</span>
+<span class="pl-c"><span class="pl-c">//</span> Add some entities. When you execute the .build(entityId) method the </span>
+<span class="pl-c"><span class="pl-c">//</span> components get added to the relevant systems. The Entity class actually</span>
+<span class="pl-c"><span class="pl-c">//</span> has no other fields than the entityId</span>
 <span class="pl-k">val</span> <span class="pl-en">e1</span> <span class="pl-k">=</span> <span class="pl-en">Entity</span>.<span class="pl-en">Builder</span> <span class="pl-k">+</span> <span class="pl-en">Position</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>) <span class="pl-k">+</span> <span class="pl-en">Velocity</span>(<span class="pl-c1">0</span>, <span class="pl-c1">0</span>) build(entityId <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">e2</span> <span class="pl-k">=</span> <span class="pl-en">Entity</span>.<span class="pl-en">Builder</span> <span class="pl-k">+</span> <span class="pl-en">Position</span>(<span class="pl-c1">0</span>, <span class="pl-c1">0</span>) build(entityId <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>)
 
-<span class="pl-c">// Or just add components manually</span>
-ecs.system[<span class="pl-en">Position</span>].put(<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-en">Position</span>(<span class="pl-c1">5</span>, <span class="pl-c1">6</span>)) <span class="pl-c">// From the ECS ..</span>
-velocitySystem.put(<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-en">Velocity</span>(<span class="pl-c1">7</span>, <span class="pl-c1">8</span>)) <span class="pl-c">// Or on the system ..</span>
-e1 <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Velocity</span>(<span class="pl-c1">3</span>,<span class="pl-c1">4</span>) <span class="pl-c">// Or directly on the Entity itself</span>
+<span class="pl-c"><span class="pl-c">//</span> Or just add components manually</span>
+ecs.system[<span class="pl-en">Position</span>].put(<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-en">Position</span>(<span class="pl-c1">5</span>, <span class="pl-c1">6</span>)) <span class="pl-c"><span class="pl-c">//</span> From the ECS ..</span>
+velocitySystem.put(<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>, <span class="pl-en">Velocity</span>(<span class="pl-c1">7</span>, <span class="pl-c1">8</span>)) <span class="pl-c"><span class="pl-c">//</span> Or on the system ..</span>
+e1 <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Velocity</span>(<span class="pl-c1">3</span>,<span class="pl-c1">4</span>) <span class="pl-c"><span class="pl-c">//</span> Or directly on the Entity itself</span>
 
-<span class="pl-c">// Extract the component data from the ECS ..</span>
+<span class="pl-c"><span class="pl-c">//</span> Extract the component data from the ECS ..</span>
 ecs.system[<span class="pl-en">Position</span>].apply(<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>) shouldBe <span class="pl-en">Position</span>(<span class="pl-c1">1</span>,<span class="pl-c1">2</span>)
 ecs.system[<span class="pl-en">Velocity</span>].get(<span class="pl-s"><span class="pl-pds">"</span>2<span class="pl-pds">"</span></span>) shouldBe <span class="pl-en">Some</span>(<span class="pl-en">Velocity</span>(<span class="pl-c1">7</span>,<span class="pl-c1">8</span>))
 
-<span class="pl-c">// From the systems ..</span>
+<span class="pl-c"><span class="pl-c">//</span> From the systems ..</span>
 positionSystem(<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span>) shouldBe <span class="pl-en">Position</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>)
 positionSystem.get(<span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>) shouldBe <span class="pl-c1">None</span>
 
-<span class="pl-c">// Or directly on the entities themselves - This is achieved by using the implicit System variables above</span>
+<span class="pl-c"><span class="pl-c">//</span> Or directly on the entities themselves - This is achieved by using the implicit System variables above</span>
 e1[<span class="pl-en">Position</span>] shouldBe <span class="pl-en">Position</span>(<span class="pl-c1">1</span>,<span class="pl-c1">2</span>)
 e1[<span class="pl-en">Velocity</span>] shouldBe <span class="pl-en">Velocity</span>(<span class="pl-c1">3</span>,<span class="pl-c1">4</span>)
 e2.get[<span class="pl-en">Position</span>] shouldBe <span class="pl-en">Some</span>(<span class="pl-en">Position</span>(<span class="pl-c1">5</span>,<span class="pl-c1">6</span>))
 e2.get[<span class="pl-en">Velocity</span>] shouldBe <span class="pl-en">Some</span>(<span class="pl-en">Velocity</span>(<span class="pl-c1">7</span>,<span class="pl-c1">8</span>))
 
-<span class="pl-c">// Systems can be treated as mutable.Map's</span>
-<span class="pl-c">// Entities can be thought of as lenses</span>
+<span class="pl-c"><span class="pl-c">//</span> Systems can be treated as mutable.Map's</span>
+<span class="pl-c"><span class="pl-c">//</span> Entities can be thought of as lenses</span>
 
 </pre>
   </div> 
@@ -79,14 +79,14 @@ e2.get[<span class="pl-en">Velocity</span>] shouldBe <span class="pl-en">Some</s
    <pre><span class="pl-k">import</span> <span class="pl-v">com.github.gigurra.scalego.serialization.json.</span><span class="pl-v">JsonSerializer</span>
 
 <span class="pl-k">val</span> <span class="pl-en">serializer</span> <span class="pl-k">=</span> <span class="pl-en">JsonSerializer</span>[<span class="pl-en">StringIds</span>]()
-<span class="pl-k">import</span> <span class="pl-v">serializer.</span><span class="pl-v">_ </span><span class="pl-c">// Adds a .toJson method to the ECS class</span>
+<span class="pl-k">import</span> <span class="pl-v">serializer.</span><span class="pl-v">_ </span><span class="pl-c"><span class="pl-c">//</span> Adds a .toJson method to the ECS class</span>
 
 <span class="pl-k">val</span> <span class="pl-en">ugly</span> <span class="pl-k">=</span> ecs.toJson(pretty <span class="pl-k">=</span> <span class="pl-c1">false</span>)
 <span class="pl-k">val</span> <span class="pl-en">pretty</span> <span class="pl-k">=</span> ecs.toJson(pretty <span class="pl-k">=</span> <span class="pl-c1">true</span>)
 
 ugly shouldBe <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>systems<span class="pl-cce">\"</span>:[{<span class="pl-cce">\"</span>systemId<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>position<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>components<span class="pl-cce">\"</span>:[{<span class="pl-cce">\"</span>id<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>2<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>:{<span class="pl-cce">\"</span>x<span class="pl-cce">\"</span>:5,<span class="pl-cce">\"</span>y<span class="pl-cce">\"</span>:6}},{<span class="pl-cce">\"</span>id<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>1<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>:{<span class="pl-cce">\"</span>x<span class="pl-cce">\"</span>:1,<span class="pl-cce">\"</span>y<span class="pl-cce">\"</span>:2}}]},{<span class="pl-cce">\"</span>systemId<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>velocity<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>components<span class="pl-cce">\"</span>:[{<span class="pl-cce">\"</span>id<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>2<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>:{<span class="pl-cce">\"</span>x<span class="pl-cce">\"</span>:7,<span class="pl-cce">\"</span>y<span class="pl-cce">\"</span>:8}},{<span class="pl-cce">\"</span>id<span class="pl-cce">\"</span>:<span class="pl-cce">\"</span>1<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>data<span class="pl-cce">\"</span>:{<span class="pl-cce">\"</span>x<span class="pl-cce">\"</span>:3,<span class="pl-cce">\"</span>y<span class="pl-cce">\"</span>:4}}]}]}<span class="pl-pds">"</span></span>
 
-<span class="pl-c">// Or the opposite case, perhaps reading a game world from a file or sent over the network.</span>
+<span class="pl-c"><span class="pl-c">//</span> Or the opposite case, perhaps reading a game world from a file or sent over the network.</span>
 <span class="pl-k">val</span> <span class="pl-en">ecs</span> <span class="pl-k">=</span> <span class="pl-en">ECS</span>(..,..,..)
 ecs.appendJson(<span class="pl-v">json</span>: <span class="pl-k">String</span>)
 

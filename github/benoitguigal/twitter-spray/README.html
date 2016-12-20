@@ -37,7 +37,7 @@ resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">consumer</span> <span class="pl-k">=</span> <span class="pl-en">Consumer</span>(<span class="pl-s"><span class="pl-pds">"</span>your-consumer-key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>your-consumer-secret<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">token</span> <span class="pl-k">=</span> <span class="pl-en">Token</span>(<span class="pl-s"><span class="pl-pds">"</span>your-token-key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>your-token-secret<span class="pl-pds">"</span></span>)
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>() <span class="pl-c">// or provide your own</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>() <span class="pl-c"><span class="pl-c">//</span> or provide your own</span>
 <span class="pl-k">val</span> <span class="pl-en">twitterApi</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">TwitterApi</span>(consumer, token)
 <span class="pl-k">val</span> <span class="pl-en">timeline</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Status</span>]] <span class="pl-k">=</span> twitterApi.homeTimeline()</pre>
   </div> 
@@ -52,18 +52,18 @@ resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl
     </svg></a>Pagination</h2> 
   <p>When working with timelines or large lists of items, you will need to paginate through the result set. The <code>Paging</code> trait uses Play Enumerator under the hood to iterate through result sets. It takes a pageable <code>Page =&gt; ResultSet[A]</code> as argument. Both pagination with maxId (<code>MaxIdPage =&gt; ResultSetWithMaxId[A]</code>) and pagination with cursors (<code>CursorPage =&gt; ResultSetWithCursor[A]</code>) are supported.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">/// pagination for timelines, working with sinceId and maxId</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span>/ pagination for timelines, working with sinceId and maxId</span>
 <span class="pl-k">val</span> <span class="pl-en">pageable</span><span class="pl-k">:</span> <span class="pl-en">MaxIdPage</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Future</span>[<span class="pl-en">ResultSetWithMaxId</span>[<span class="pl-en">Status</span>]] <span class="pl-k">=</span> twitterApi.userTimeline(screenName <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>BGuigal<span class="pl-pds">"</span></span>))(_)
 <span class="pl-k">val</span> <span class="pl-en">paging</span> <span class="pl-k">=</span> <span class="pl-en">IdPaging</span>(pageable, itemsPerPage <span class="pl-k">=</span> <span class="pl-c1">200</span>, sinceId <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>sinceId<span class="pl-pds">"</span></span>))
-<span class="pl-k">val</span> <span class="pl-en">tweets</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Status</span>]] <span class="pl-k">=</span> paging.items(<span class="pl-c1">500</span>) <span class="pl-c">// retrieves 500 most recent tweets 200 tweets at time</span>
-<span class="pl-k">val</span> <span class="pl-en">pages</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Status</span>]]] <span class="pl-k">=</span> paging.pages(<span class="pl-c1">3</span>) <span class="pl-c">// retrieves the first three pages of 200 tweets</span></pre>
+<span class="pl-k">val</span> <span class="pl-en">tweets</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Status</span>]] <span class="pl-k">=</span> paging.items(<span class="pl-c1">500</span>) <span class="pl-c"><span class="pl-c">//</span> retrieves 500 most recent tweets 200 tweets at time</span>
+<span class="pl-k">val</span> <span class="pl-en">pages</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Status</span>]]] <span class="pl-k">=</span> paging.pages(<span class="pl-c1">3</span>) <span class="pl-c"><span class="pl-c">//</span> retrieves the first three pages of 200 tweets</span></pre>
   </div> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">/// pagination for followers list, working with cursors</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span>/ pagination for followers list, working with cursors</span>
 <span class="pl-k">val</span> <span class="pl-en">pageable</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">CursorPage</span> <span class="pl-k">=&gt;</span> <span class="pl-en">ResultSetWithCursor</span>[<span class="pl-en">UserId</span>]] <span class="pl-k">=</span> twitterApi.followersIds(screenName <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>BGuigal<span class="pl-pds">"</span></span>))(_)
 <span class="pl-k">val</span> <span class="pl-en">paging</span> <span class="pl-k">=</span> <span class="pl-en">CursorPaging</span>(pageable, count <span class="pl-k">=</span> <span class="pl-c1">2000</span>)
-<span class="pl-k">val</span> <span class="pl-en">followersIds</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">UserId</span>]] <span class="pl-k">=</span> paging.items(<span class="pl-c1">3000</span>) <span class="pl-c">// retrieves the first 3000 followers 2000 followers at a time</span>
-<span class="pl-k">val</span> <span class="pl-en">pages</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Seq</span>[<span class="pl-en">UserId</span>]]] <span class="pl-k">=</span> paging.pages(<span class="pl-c1">2</span>, <span class="pl-c1">1500</span>) <span class="pl-c">// retrieves 2 pages of 2000 followers</span></pre>
+<span class="pl-k">val</span> <span class="pl-en">followersIds</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">UserId</span>]] <span class="pl-k">=</span> paging.items(<span class="pl-c1">3000</span>) <span class="pl-c"><span class="pl-c">//</span> retrieves the first 3000 followers 2000 followers at a time</span>
+<span class="pl-k">val</span> <span class="pl-en">pages</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">Seq</span>[<span class="pl-en">UserId</span>]]] <span class="pl-k">=</span> paging.pages(<span class="pl-c1">2</span>, <span class="pl-c1">1500</span>) <span class="pl-c"><span class="pl-c">//</span> retrieves 2 pages of 2000 followers</span></pre>
   </div> 
   <p>May the rate limit be hit in the process, the pagination will stop and return all the items that were successfully retrieved</p> 
   <h2><a id="user-content-providing-your-own-models" class="anchor" href="https://github.com/benoitguigal/twitter-spray#providing-your-own-models" aria-hidden="true" target="_blank">
@@ -91,15 +91,15 @@ resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl
 <span class="pl-k">val</span> <span class="pl-en">consumer</span> <span class="pl-k">=</span> <span class="pl-en">Consumer</span>(<span class="pl-s"><span class="pl-pds">"</span>your-consumer-key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>your-consumer-secret<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">auth</span> <span class="pl-k">=</span> <span class="pl-en">OAuthHandler</span>(consumer)
 
-<span class="pl-c">/// Get a request token</span>
+<span class="pl-c"><span class="pl-c">//</span>/ Get a request token</span>
 <span class="pl-k">val</span> <span class="pl-en">authorizationUrl</span> <span class="pl-k">=</span> auth.authorizationUrl(<span class="pl-s"><span class="pl-pds">"</span>your-oauth-callback<span class="pl-pds">"</span></span>)
 
-<span class="pl-c">/// Redirect the user to authorizationUrl for sign-in</span>
-<span class="pl-c">/// Once signed in the user is redirected to "your-oauth-callback"</span>
-<span class="pl-c">/// extract oauth_token and oauth_verifier from the query string and then request an access token</span>
+<span class="pl-c"><span class="pl-c">//</span>/ Redirect the user to authorizationUrl for sign-in</span>
+<span class="pl-c"><span class="pl-c">//</span>/ Once signed in the user is redirected to "your-oauth-callback"</span>
+<span class="pl-c"><span class="pl-c">//</span>/ extract oauth_token and oauth_verifier from the query string and then request an access token</span>
 
 <span class="pl-k">val</span> <span class="pl-en">accessToken</span> <span class="pl-k">=</span> auth.accessToken(<span class="pl-s"><span class="pl-pds">"</span>oauth_token<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>oauth_verifier<span class="pl-pds">"</span></span>)
-<span class="pl-c">/// Store token information and access protected resources</span></pre>
+<span class="pl-c"><span class="pl-c">//</span>/ Store token information and access protected resources</span></pre>
   </div> 
   <h3><a id="user-content-license" class="anchor" href="https://github.com/benoitguigal/twitter-spray#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

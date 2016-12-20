@@ -52,11 +52,11 @@
                           <span class="pl-k">with</span> <span class="pl-e">PgPostGISSupport</span>
                           <span class="pl-k">with</span> <span class="pl-e">PgNetSupport</span>
                           <span class="pl-k">with</span> <span class="pl-e">PgLTreeSupport</span> {
-  <span class="pl-k">def</span> <span class="pl-en">pgjson</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jsonb<span class="pl-pds">"</span></span> <span class="pl-c">// jsonb support is in postgres 9.4.0 onward; for 9.3.x use "json"</span>
+  <span class="pl-k">def</span> <span class="pl-en">pgjson</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jsonb<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> jsonb support is in postgres 9.4.0 onward; for 9.3.x use "json"</span>
 
-  <span class="pl-c">// Add back `capabilities.insertOrUpdate` to enable native `upsert` support; for postgres 9.5+</span>
+  <span class="pl-c"><span class="pl-c">//</span> Add back `capabilities.insertOrUpdate` to enable native `upsert` support; for postgres 9.5+</span>
   <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">def</span> <span class="pl-en">computeCapabilities</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">Capability</span>] <span class="pl-k">=</span> 
-    <span class="pl-v">super</span>.computeCapabilities <span class="pl-k">+</span> <span class="pl-en">JdbcProfile</span>.capabilities.insertOrUpdate
+    <span class="pl-c1">super</span>.computeCapabilities <span class="pl-k">+</span> <span class="pl-en">JdbcProfile</span>.capabilities.insertOrUpdate
 
   <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">api</span> <span class="pl-k">=</span> <span class="pl-en">MyAPI</span>
 
@@ -97,35 +97,35 @@
 }
 
 <span class="pl-k">object</span> <span class="pl-en">tests</span> <span class="pl-k">extends</span> <span class="pl-e">TableQuery</span>(<span class="pl-k">new</span> <span class="pl-en">TestTable</span>(_)) {
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select * from test where id = ?</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select * from test where id = ?</span>
   <span class="pl-k">def</span> <span class="pl-en">byId</span>(<span class="pl-v">ids</span>: <span class="pl-k">Long</span><span class="pl-k">*</span>) <span class="pl-k">=</span> tests
         .filter(_.id inSetBind ids)
         .map(t <span class="pl-k">=&gt;</span> t)
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select * from test where tags &amp;&amp; ?</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select * from test where tags &amp;&amp; ?</span>
   <span class="pl-k">def</span> <span class="pl-en">byTag</span>(<span class="pl-v">tags</span>: <span class="pl-k">String</span><span class="pl-k">*</span>) <span class="pl-k">=</span> tests
         .filter(_.tags <span class="pl-k">@</span>&amp; tags.toList.bind)
         .map(t <span class="pl-k">=&gt;</span> t)
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select * from test where during &amp;&amp; ?</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select * from test where during &amp;&amp; ?</span>
   <span class="pl-k">def</span> <span class="pl-en">byTsRange</span>(<span class="pl-v">tsRange</span>: <span class="pl-en">Range</span>[<span class="pl-en">Timestamp</span>]) <span class="pl-k">=</span> tests
         .filter(_.during <span class="pl-k">@</span>&amp; tsRange.bind)
         .map(t <span class="pl-k">=&gt;</span> t)
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select * from test where case(props -&gt; ? as [T]) == ?</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select * from test where case(props -&gt; ? as [T]) == ?</span>
   <span class="pl-k">def</span> <span class="pl-en">byProperty</span>[<span class="pl-en">T</span>](<span class="pl-v">key</span>: <span class="pl-k">String</span>, <span class="pl-v">value</span>: <span class="pl-en">T</span>) <span class="pl-k">=</span> tests
         .filter(_.props.<span class="pl-k">&gt;&gt;</span>[<span class="pl-en">T</span>](key.bind) <span class="pl-k">===</span> value.bind)
         .map(t <span class="pl-k">=&gt;</span> t)
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select * from test where ST_DWithin(location, ?, ?)</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select * from test where ST_DWithin(location, ?, ?)</span>
   <span class="pl-k">def</span> <span class="pl-en">byDistance</span>(<span class="pl-v">point</span>: <span class="pl-en">Point</span>, <span class="pl-v">distance</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> tests
         .filter(r <span class="pl-k">=&gt;</span> r.location.dWithin(point.bind, distance.bind))
         .map(t <span class="pl-k">=&gt;</span> t)
-  <span class="pl-c">// will generate sql like:</span>
-  <span class="pl-c">//   select id, text, ts_rank(to_tsvector(text), to_tsquery(?))</span>
-  <span class="pl-c">//   from test where to_tsvector(text) @@ to_tsquery(?)</span>
-  <span class="pl-c">//   order by ts_rank(to_tsvector(text), to_tsquery(?))</span>
+  <span class="pl-c"><span class="pl-c">//</span> will generate sql like:</span>
+  <span class="pl-c"><span class="pl-c">//</span>   select id, text, ts_rank(to_tsvector(text), to_tsquery(?))</span>
+  <span class="pl-c"><span class="pl-c">//</span>   from test where to_tsvector(text) @@ to_tsquery(?)</span>
+  <span class="pl-c"><span class="pl-c">//</span>   order by ts_rank(to_tsvector(text), to_tsquery(?))</span>
   <span class="pl-k">def</span> <span class="pl-en">search</span>(<span class="pl-v">queryStr</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> tests
         .filter( t <span class="pl-k">=&gt;</span> {tsVector(t.text) <span class="pl-k">@@</span> tsQuery(queryStr.bind)})
         .map(r <span class="pl-k">=&gt;</span> (r.id, r.text, tsRank(tsVector(r.text), tsQuery(queryStr.bind))))
@@ -315,7 +315,7 @@
     &lt;<span class="pl-ent">artifactId</span>&gt;slick-pg_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
     &lt;<span class="pl-ent">version</span>&gt;0.15.0-M3&lt;/<span class="pl-ent">version</span>&gt;
 &lt;/<span class="pl-ent">dependency</span>&gt;
-<span class="pl-c">&lt;!-- other addons if necessary --&gt;</span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> other addons if necessary <span class="pl-c">--&gt;</span></span>
 ...</pre>
   </div> 
   <p><strong>Note: the plugins' code were ever merged to the main project and published in an all-in-one jar from <code>slick-pg</code> v0.7.0, to easy usage, but I restored to publish them as independent jars from <code>slick-pg</code> v0.10.0, because of the issue pointed out by @timcharper in #183.</strong></p> 

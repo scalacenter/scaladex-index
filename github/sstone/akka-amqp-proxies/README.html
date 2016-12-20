@@ -125,35 +125,35 @@
 
 <span class="pl-k">class</span> <span class="pl-en">CalculatorRpcClient</span>(<span class="pl-c1">object</span>):
     <span class="pl-k">def</span> <span class="pl-c1">__init__</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>):
-        <span class="pl-v">self</span>.connection <span class="pl-k">=</span> pika.BlockingConnection(pika.ConnectionParameters(<span class="pl-v">host</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>localhost<span class="pl-pds">'</span></span>))
+        <span class="pl-c1">self</span>.connection <span class="pl-k">=</span> pika.BlockingConnection(pika.ConnectionParameters(<span class="pl-v">host</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>localhost<span class="pl-pds">'</span></span>))
 
-        <span class="pl-v">self</span>.channel <span class="pl-k">=</span> <span class="pl-v">self</span>.connection.channel()
+        <span class="pl-c1">self</span>.channel <span class="pl-k">=</span> <span class="pl-c1">self</span>.connection.channel()
 
-        result <span class="pl-k">=</span> <span class="pl-v">self</span>.channel.queue_declare(<span class="pl-v">exclusive</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
-        <span class="pl-v">self</span>.callback_queue <span class="pl-k">=</span> result.method.queue
+        result <span class="pl-k">=</span> <span class="pl-c1">self</span>.channel.queue_declare(<span class="pl-v">exclusive</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
+        <span class="pl-c1">self</span>.callback_queue <span class="pl-k">=</span> result.method.queue
 
-        <span class="pl-v">self</span>.channel.basic_consume(<span class="pl-v">self</span>.on_response, <span class="pl-v">no_ack</span><span class="pl-k">=</span><span class="pl-c1">True</span>, <span class="pl-v">queue</span><span class="pl-k">=</span><span class="pl-v">self</span>.callback_queue)
+        <span class="pl-c1">self</span>.channel.basic_consume(<span class="pl-c1">self</span>.on_response, <span class="pl-v">no_ack</span><span class="pl-k">=</span><span class="pl-c1">True</span>, <span class="pl-v">queue</span><span class="pl-k">=</span><span class="pl-c1">self</span>.callback_queue)
 
     <span class="pl-k">def</span> <span class="pl-en">on_response</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">ch</span>, <span class="pl-smi">method</span>, <span class="pl-smi">props</span>, <span class="pl-smi">body</span>):
-        <span class="pl-k">if</span> <span class="pl-v">self</span>.corr_id <span class="pl-k">==</span> props.correlation_id:
-            <span class="pl-v">self</span>.response <span class="pl-k">=</span> body
+        <span class="pl-k">if</span> <span class="pl-c1">self</span>.corr_id <span class="pl-k">==</span> props.correlation_id:
+            <span class="pl-c1">self</span>.response <span class="pl-k">=</span> body
 
     <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">x</span>, <span class="pl-smi">y</span>):
-        <span class="pl-v">self</span>.response <span class="pl-k">=</span> <span class="pl-c1">None</span>
-        <span class="pl-v">self</span>.corr_id <span class="pl-k">=</span> <span class="pl-c1">str</span>(uuid.uuid4())
+        <span class="pl-c1">self</span>.response <span class="pl-k">=</span> <span class="pl-c1">None</span>
+        <span class="pl-c1">self</span>.corr_id <span class="pl-k">=</span> <span class="pl-c1">str</span>(uuid.uuid4())
         msg <span class="pl-k">=</span> json.dumps({ <span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>:x, <span class="pl-s"><span class="pl-pds">"</span>y<span class="pl-pds">"</span></span>:y })
-        <span class="pl-v">self</span>.channel.basic_publish(<span class="pl-v">exchange</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+        <span class="pl-c1">self</span>.channel.basic_publish(<span class="pl-v">exchange</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
                                    <span class="pl-v">routing_key</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>calculator<span class="pl-pds">'</span></span>,
                                    <span class="pl-v">properties</span><span class="pl-k">=</span>pika.BasicProperties(
-                                         <span class="pl-v">reply_to</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.callback_queue,
-                                         <span class="pl-v">correlation_id</span> <span class="pl-k">=</span> <span class="pl-v">self</span>.corr_id,
+                                         <span class="pl-v">reply_to</span> <span class="pl-k">=</span> <span class="pl-c1">self</span>.callback_queue,
+                                         <span class="pl-v">correlation_id</span> <span class="pl-k">=</span> <span class="pl-c1">self</span>.corr_id,
                                          <span class="pl-v">content_type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>com.github.sstone.amqp.proxy.Demo$AddRequest<span class="pl-pds">'</span></span>,
                                          <span class="pl-v">content_encoding</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>json<span class="pl-pds">'</span></span>
                                          ),
                                    <span class="pl-v">body</span><span class="pl-k">=</span>msg)
-        <span class="pl-k">while</span> <span class="pl-v">self</span>.response <span class="pl-k">is</span> <span class="pl-c1">None</span>:
-            <span class="pl-v">self</span>.connection.process_data_events()
-        raw <span class="pl-k">=</span> <span class="pl-v">self</span>.response
+        <span class="pl-k">while</span> <span class="pl-c1">self</span>.response <span class="pl-k">is</span> <span class="pl-c1">None</span>:
+            <span class="pl-c1">self</span>.connection.process_data_events()
+        raw <span class="pl-k">=</span> <span class="pl-c1">self</span>.response
         decoded <span class="pl-k">=</span> json.loads(raw)
         <span class="pl-k">return</span> decoded[<span class="pl-s"><span class="pl-pds">'</span>sum<span class="pl-pds">'</span></span>]
 
@@ -184,11 +184,11 @@ y <span class="pl-k">=</span> <span class="pl-c1">2</span>
   channel <span class="pl-k">=</span> <span class="pl-c1">AMQP</span>::<span class="pl-c1">Channel</span>.<span class="pl-k">new</span>(connection)
   exchange <span class="pl-k">=</span> channel.default_exchange
 
-  <span class="pl-c"># create a JSON AddRequest message</span>
+  <span class="pl-c"><span class="pl-c">#</span> create a JSON AddRequest message</span>
   request <span class="pl-k">=</span> <span class="pl-c1">JSON</span>.generate({<span class="pl-c1">:x</span> =&gt; x, <span class="pl-c1">:y</span> =&gt; y})
 
-  <span class="pl-c"># "standard" RPC pattern: create an exclusive private queue with a unique, randomized, broker-generated name</span>
-  <span class="pl-c"># and publish message with the 'reply-to' property set to the name of this reply queue</span>
+  <span class="pl-c"><span class="pl-c">#</span> "standard" RPC pattern: create an exclusive private queue with a unique, randomized, broker-generated name</span>
+  <span class="pl-c"><span class="pl-c">#</span> and publish message with the 'reply-to' property set to the name of this reply queue</span>
   reply_queue <span class="pl-k">=</span> channel.queue(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-c1">:exclusive</span> =&gt; <span class="pl-c1">true</span>, <span class="pl-c1">:auto_delete</span> =&gt; <span class="pl-c1">true</span>) <span class="pl-k">do </span>|<span class="pl-smi">queue</span>|
     exchange.publish request, {
         <span class="pl-c1">:routing_key</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>calculator<span class="pl-pds">"</span></span>,
@@ -201,7 +201,7 @@ y <span class="pl-k">=</span> <span class="pl-c1">2</span>
   reply_queue.subscribe <span class="pl-k">do </span>|<span class="pl-smi">metadata</span>, <span class="pl-smi">payload</span>|
     puts <span class="pl-s"><span class="pl-pds">"</span>raw esponse for <span class="pl-pse">#{</span><span class="pl-s1">metadata.correlation_id</span><span class="pl-pse"><span class="pl-s1">}</span></span>: <span class="pl-pse">#{</span><span class="pl-s1">metadata.content_encoding</span><span class="pl-pse"><span class="pl-s1">}</span></span> <span class="pl-pse">#{</span><span class="pl-s1">metadata.content_type</span><span class="pl-pse"><span class="pl-s1">}</span></span> <span class="pl-pse">#{</span><span class="pl-s1">payload.inspect</span><span class="pl-pse"><span class="pl-s1">}</span></span><span class="pl-pds">"</span></span>
 
-    <span class="pl-c"># payload shoud look like { "x" : x, "y" : y, "sum" : sum }</span>
+    <span class="pl-c"><span class="pl-c">#</span> payload shoud look like { "x" : x, "y" : y, "sum" : sum }</span>
     response <span class="pl-k">=</span> <span class="pl-c1">JSON</span>.parse(payload)
     puts <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pse">#{</span><span class="pl-s1">x</span><span class="pl-pse"><span class="pl-s1">}</span></span> + <span class="pl-pse">#{</span><span class="pl-s1">y</span><span class="pl-pse"><span class="pl-s1">}</span></span> = <span class="pl-pse">#{</span><span class="pl-s1">response[<span class="pl-s"><span class="pl-pds">'</span>sum<span class="pl-pds">'</span></span>]</span><span class="pl-pse"><span class="pl-s1">}</span></span><span class="pl-pds">"</span></span>
 

@@ -25,70 +25,70 @@
 <span class="pl-k">import</span> <span class="pl-v">groupcache.Implicits.</span><span class="pl-v">_</span>
 
 <span class="pl-k">object</span> <span class="pl-en">BasicUsage</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-  <span class="pl-c">// URL of the peer running in the current process.</span>
+  <span class="pl-c"><span class="pl-c">//</span> URL of the peer running in the current process.</span>
   <span class="pl-k">val</span> <span class="pl-en">myUrl</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080<span class="pl-pds">"</span></span>
 
-  <span class="pl-c">// URLs of all peers that will participate in the cache.</span>
+  <span class="pl-c"><span class="pl-c">//</span> URLs of all peers that will participate in the cache.</span>
   <span class="pl-k">val</span> <span class="pl-en">allUrls</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>[<span class="pl-en">URL</span>](<span class="pl-s"><span class="pl-pds">"</span>http://localhost:8080<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// Determines which peer owns a particular key.  The set of available</span>
-  <span class="pl-c">// peers can be updated at any time to handle scenarios where the</span>
-  <span class="pl-c">// available peers will change dynamically.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Determines which peer owns a particular key.  The set of available</span>
+  <span class="pl-c"><span class="pl-c">//</span> peers can be updated at any time to handle scenarios where the</span>
+  <span class="pl-c"><span class="pl-c">//</span> available peers will change dynamically.</span>
   <span class="pl-k">val</span> <span class="pl-en">peerPicker</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpPeerPicker</span>(myUrl, allUrls)
 
-  <span class="pl-c">// Manages groups that are currently participating in a distributed cache.</span>
-  <span class="pl-c">// When creating the group cache, you can optionally pass in a callback</span>
-  <span class="pl-c">// to be notified when the server has "started" (i.e., when the first</span>
-  <span class="pl-c">// group has been added), as well as a callback to be notified each time</span>
-  <span class="pl-c">// any group is added.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Manages groups that are currently participating in a distributed cache.</span>
+  <span class="pl-c"><span class="pl-c">//</span> When creating the group cache, you can optionally pass in a callback</span>
+  <span class="pl-c"><span class="pl-c">//</span> to be notified when the server has "started" (i.e., when the first</span>
+  <span class="pl-c"><span class="pl-c">//</span> group has been added), as well as a callback to be notified each time</span>
+  <span class="pl-c"><span class="pl-c">//</span> any group is added.</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">groupCache</span> <span class="pl-k">=</span> <span class="pl-en">GroupCache</span>(peerPicker)
 
-  <span class="pl-c">// Getters fill the cache when a key is requested from the peer</span>
-  <span class="pl-c">// that owns that key and that key's value is not already cached</span>
-  <span class="pl-c">// in-memory by that peer.  An example of an operation that would</span>
-  <span class="pl-c">// be performed in a getter is the retrieval of a value from a</span>
-  <span class="pl-c">// database.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Getters fill the cache when a key is requested from the peer</span>
+  <span class="pl-c"><span class="pl-c">//</span> that owns that key and that key's value is not already cached</span>
+  <span class="pl-c"><span class="pl-c">//</span> in-memory by that peer.  An example of an operation that would</span>
+  <span class="pl-c"><span class="pl-c">//</span> be performed in a getter is the retrieval of a value from a</span>
+  <span class="pl-c"><span class="pl-c">//</span> database.</span>
   <span class="pl-k">val</span> <span class="pl-en">expensiveGetter</span> <span class="pl-k">=</span> (<span class="pl-v">key</span>: <span class="pl-k">String</span>, <span class="pl-v">context</span>: <span class="pl-en">Option</span>[<span class="pl-en">Any</span>]) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> future {
-      <span class="pl-c">// Potentially long-running operation that eventually returns</span>
-      <span class="pl-c">// a value to be stored in the cache.</span>
+      <span class="pl-c"><span class="pl-c">//</span> Potentially long-running operation that eventually returns</span>
+      <span class="pl-c"><span class="pl-c">//</span> a value to be stored in the cache.</span>
       <span class="pl-s"><span class="pl-pds">"</span>value<span class="pl-pds">"</span></span>
     }
 
-    <span class="pl-c">// Map the fetched value into a form usable by the cache.</span>
+    <span class="pl-c"><span class="pl-c">//</span> Map the fetched value into a form usable by the cache.</span>
     result.map(value <span class="pl-k">=&gt;</span> <span class="pl-en">ByteView</span>(value))
   }
 
-  <span class="pl-c">// Adds the first group that will participate in caching.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Adds the first group that will participate in caching.</span>
   <span class="pl-k">val</span> <span class="pl-en">group</span> <span class="pl-k">=</span> groupCache.addGroup(
     name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>group<span class="pl-pds">"</span></span>,
     maxCacheBytes <span class="pl-k">=</span> <span class="pl-c1">64</span><span class="pl-k">&lt;&lt;</span><span class="pl-c1">20</span>,
     getter <span class="pl-k">=</span> expensiveGetter)
 
-  <span class="pl-c">// An instance of the peer running in the current process.</span>
+  <span class="pl-c"><span class="pl-c">//</span> An instance of the peer running in the current process.</span>
   <span class="pl-k">val</span> <span class="pl-en">peer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpPeer</span>(myUrl)
 
-  <span class="pl-c">// Start listening for requests for cache values over HTTP.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Start listening for requests for cache values over HTTP.</span>
   peer.serveHttp
 
-  <span class="pl-c">// Ask the group for the cached value associated with the given key.</span>
-  <span class="pl-c">// If it is determined that the peer running in the current</span>
-  <span class="pl-c">// process is the owner of the key (or the value is in the current</span>
-  <span class="pl-c">// process' hot cache), the value will be fetched locally.  Otherwise,</span>
-  <span class="pl-c">// the value will be fetched from a (potentially remote) peer</span>
-  <span class="pl-c">// over HTTP.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Ask the group for the cached value associated with the given key.</span>
+  <span class="pl-c"><span class="pl-c">//</span> If it is determined that the peer running in the current</span>
+  <span class="pl-c"><span class="pl-c">//</span> process is the owner of the key (or the value is in the current</span>
+  <span class="pl-c"><span class="pl-c">//</span> process' hot cache), the value will be fetched locally.  Otherwise,</span>
+  <span class="pl-c"><span class="pl-c">//</span> the value will be fetched from a (potentially remote) peer</span>
+  <span class="pl-c"><span class="pl-c">//</span> over HTTP.</span>
   <span class="pl-k">val</span> <span class="pl-en">futureValue</span> <span class="pl-k">=</span> group.get(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// Register callbacks to determine when the value has been</span>
-  <span class="pl-c">// fetched from the cache.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Register callbacks to determine when the value has been</span>
+  <span class="pl-c"><span class="pl-c">//</span> fetched from the cache.</span>
   futureValue onComplete {
     <span class="pl-k">case</span> <span class="pl-en">Success</span>(value) <span class="pl-k">=&gt;</span> {
-      <span class="pl-c">// Do something useful with the requested value.</span>
+      <span class="pl-c"><span class="pl-c">//</span> Do something useful with the requested value.</span>
       println(s<span class="pl-s"><span class="pl-pds">"</span>Received value '$value'<span class="pl-pds">"</span></span>)
     }
     <span class="pl-k">case</span> <span class="pl-en">Failure</span>(t) <span class="pl-k">=&gt;</span> {
-      <span class="pl-c">// Failed to fetch the cached value.  Handle</span>
-      <span class="pl-c">// the exception appropriately here.</span>
+      <span class="pl-c"><span class="pl-c">//</span> Failed to fetch the cached value.  Handle</span>
+      <span class="pl-c"><span class="pl-c">//</span> the exception appropriately here.</span>
     }
   }
 }</pre>

@@ -71,18 +71,18 @@
 <span class="pl-k">import</span> <span class="pl-v">spray.http.</span><span class="pl-v">BasicHttpCredentials</span>
 
 <span class="pl-k">object</span> <span class="pl-en">Main</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-  <span class="pl-c">// set up database connection</span>
+  <span class="pl-c"><span class="pl-c">//</span> set up database connection</span>
   <span class="pl-k">val</span> <span class="pl-en">credentials</span> <span class="pl-k">=</span> <span class="pl-en">BasicHttpCredentials</span>(<span class="pl-s"><span class="pl-pds">"</span>neo4j<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>neo4j<span class="pl-pds">"</span></span>)
-  <span class="pl-c">// RestService contains an ActorSystem to handle HTTP communication via spray-client</span>
+  <span class="pl-c"><span class="pl-c">//</span> RestService contains an ActorSystem to handle HTTP communication via spray-client</span>
   <span class="pl-k">val</span> <span class="pl-en">restService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">RestService</span>(<span class="pl-s"><span class="pl-pds">"</span>http://localhost:7474<span class="pl-pds">"</span></span>, <span class="pl-en">Some</span>(credentials))
 
-  <span class="pl-c">// query interface for submitting single requests</span>
+  <span class="pl-c"><span class="pl-c">//</span> query interface for submitting single requests</span>
   <span class="pl-k">val</span> <span class="pl-en">db</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DbService</span>
-  <span class="pl-c">// dependency injection</span>
+  <span class="pl-c"><span class="pl-c">//</span> dependency injection</span>
   db.restService <span class="pl-k">=</span> restService
 
 
-  <span class="pl-c">// only proceed if database is available and empty</span>
+  <span class="pl-c"><span class="pl-c">//</span> only proceed if database is available and empty</span>
   <span class="pl-k">val</span> <span class="pl-en">wholeGraph</span> <span class="pl-k">=</span> db.queryWholeGraph
   <span class="pl-k">if</span>(wholeGraph.nonEmpty) {
     restService.actorSystem.shutdown()
@@ -90,88 +90,88 @@
   }
 
 
-  <span class="pl-c">// create example graph:  snake -eats-&gt; dog</span>
+  <span class="pl-c"><span class="pl-c">//</span> create example graph:  snake -eats-&gt; dog</span>
   db.query(<span class="pl-s"><span class="pl-pds">"</span>CREATE (:ANIMAL {name:'snake'})-[:EATS]-&gt;(:ANIMAL {name:'dog'})<span class="pl-pds">"</span></span>)
 
   <span class="pl-k">val</span> <span class="pl-en">tx</span> <span class="pl-k">=</span> db.newTransaction
 
-  <span class="pl-c">// query a subgraph from the database</span>
+  <span class="pl-c"><span class="pl-c">//</span> query a subgraph from the database</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">graph</span> <span class="pl-k">=</span> tx.queryGraph(<span class="pl-s"><span class="pl-pds">"</span>MATCH (n:ANIMAL)-[r]-&gt;() RETURN n,r<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// access the graph like scala collections</span>
+  <span class="pl-c"><span class="pl-c">//</span> access the graph like scala collections</span>
   <span class="pl-k">val</span> <span class="pl-en">snake</span> <span class="pl-k">=</span> graph.nodes.find(_.properties(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).
     <span class="pl-c1">asInstanceOf</span>[<span class="pl-en">StringPropertyValue</span>] <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>snake<span class="pl-pds">"</span></span>).get
 
-  <span class="pl-c">// useful methods to access the graph (requires implicit val graph in scope)</span>
-  <span class="pl-c">// e.g.: neighbours,  successors,  predecessors,  inDegree,  outDegree,  degree, ...</span>
+  <span class="pl-c"><span class="pl-c">//</span> useful methods to access the graph (requires implicit val graph in scope)</span>
+  <span class="pl-c"><span class="pl-c">//</span> e.g.: neighbours,  successors,  predecessors,  inDegree,  outDegree,  degree, ...</span>
   <span class="pl-k">val</span> <span class="pl-en">name</span> <span class="pl-k">=</span> snake.neighbours.head.properties(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).
     <span class="pl-c1">asInstanceOf</span>[<span class="pl-en">StringPropertyValue</span>].value
-  println(<span class="pl-s"><span class="pl-pds">"</span>Name of one snake neighbour: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> name) <span class="pl-c">// prints "dog"</span>
+  println(<span class="pl-s"><span class="pl-pds">"</span>Name of one snake neighbour: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> name) <span class="pl-c"><span class="pl-c">//</span> prints "dog"</span>
 
-  <span class="pl-c">// changes to the graph are tracked</span>
+  <span class="pl-c"><span class="pl-c">//</span> changes to the graph are tracked</span>
   snake.labels <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>REPTILE<span class="pl-pds">"</span></span>
   snake.properties(<span class="pl-s"><span class="pl-pds">"</span>hungry<span class="pl-pds">"</span></span>) <span class="pl-k">=</span> <span class="pl-c1">true</span>
 
-  <span class="pl-c">// creating a local Node (a Node the database does not know about yet)</span>
+  <span class="pl-c"><span class="pl-c">//</span> creating a local Node (a Node the database does not know about yet)</span>
   <span class="pl-k">val</span> <span class="pl-en">hippo</span> <span class="pl-k">=</span> <span class="pl-en">Node</span>.create
 
-  <span class="pl-c">// changes to locally created Nodes are also tracked</span>
+  <span class="pl-c"><span class="pl-c">//</span> changes to locally created Nodes are also tracked</span>
   hippo.labels <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>ANIMAL<span class="pl-pds">"</span></span>
   hippo.properties(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>) <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>hippo<span class="pl-pds">"</span></span>
 
-  <span class="pl-c">// add the created node to the Node Set</span>
+  <span class="pl-c"><span class="pl-c">//</span> add the created node to the Node Set</span>
   graph.nodes <span class="pl-k">+</span><span class="pl-k">=</span> hippo
 
-  <span class="pl-c">// create a new local relation from a locally created Node to an existing Node</span>
+  <span class="pl-c"><span class="pl-c">//</span> create a new local relation from a locally created Node to an existing Node</span>
   graph.relations <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Relation</span>.create(snake, <span class="pl-s"><span class="pl-pds">"</span>EATS<span class="pl-pds">"</span></span>, hippo)
 
-  <span class="pl-c">// persist all tracked changes to the database and commit the transaction</span>
+  <span class="pl-c"><span class="pl-c">//</span> persist all tracked changes to the database and commit the transaction</span>
   tx.commit.persistChanges(graph)
 
-  <span class="pl-c">// different transaction syntax</span>
+  <span class="pl-c"><span class="pl-c">//</span> different transaction syntax</span>
   db.transaction { tx <span class="pl-k">=&gt;</span>
     <span class="pl-k">val</span> <span class="pl-en">hippo</span> <span class="pl-k">=</span> tx.queryGraph(
       <span class="pl-en">Query</span>( <span class="pl-s"><span class="pl-pds">"""</span>MATCH (n:ANIMAL {name: {name}}) return n<span class="pl-pds">"""</span></span>,
-        <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>hippo<span class="pl-pds">"</span></span>)) <span class="pl-c">// Cypher query parameters</span>
+        <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>hippo<span class="pl-pds">"</span></span>)) <span class="pl-c"><span class="pl-c">//</span> Cypher query parameters</span>
     ).nodes.head
     hippo.properties(<span class="pl-s"><span class="pl-pds">"</span>nose<span class="pl-pds">"</span></span>) <span class="pl-k">=</span> <span class="pl-c1">true</span>
     tx.persistChanges(hippo)
   }
 
   db.transaction { tx <span class="pl-k">=&gt;</span>
-    <span class="pl-c">// delete hippo</span>
+    <span class="pl-c"><span class="pl-c">//</span> delete hippo</span>
     tx.query( <span class="pl-s"><span class="pl-pds">"""</span>MATCH (n:ANIMAL {name: "hippo"}) OPTIONAL MATCH (n)-[r]-() DELETE n,r<span class="pl-pds">"""</span></span>)
 
-    <span class="pl-c">// roll back deletion</span>
+    <span class="pl-c"><span class="pl-c">//</span> roll back deletion</span>
     tx.rollback()
   }
 
-  <span class="pl-c">// interpret query result as a table</span>
+  <span class="pl-c"><span class="pl-c">//</span> interpret query result as a table</span>
   <span class="pl-k">val</span> <span class="pl-en">animals</span> <span class="pl-k">=</span> db.queryTable(<span class="pl-s"><span class="pl-pds">"""</span>MATCH (n:ANIMAL) OPTIONAL MATCH (n)-[r:EATS]-&gt;()</span>
 <span class="pl-s">    RETURN n.name as name, COUNT(r) as eatcount<span class="pl-pds">"""</span></span>)
 
-  println(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span> animals.columns.mkString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span><span class="pl-pds">"</span></span>)) <span class="pl-c">// prints "name eatcount"</span>
+  println(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span> animals.columns.mkString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span><span class="pl-pds">"</span></span>)) <span class="pl-c"><span class="pl-c">//</span> prints "name eatcount"</span>
   <span class="pl-k">for</span>(row <span class="pl-k">&lt;</span><span class="pl-k">-</span> animals.rows) {
     print(row.cells(<span class="pl-c1">0</span>).<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">StringPropertyValue</span>].value)
     print(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span><span class="pl-pds">"</span></span>)
     println(row.cells(<span class="pl-c1">1</span>).<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">LongPropertyValue</span>].value)
   }
   println()
-  <span class="pl-c">// loop prints:</span>
-  <span class="pl-c">//  dog     0</span>
-  <span class="pl-c">//  snake 2</span>
-  <span class="pl-c">//  hippo 0</span>
+  <span class="pl-c"><span class="pl-c">//</span> loop prints:</span>
+  <span class="pl-c"><span class="pl-c">//</span>  dog     0</span>
+  <span class="pl-c"><span class="pl-c">//</span>  snake 2</span>
+  <span class="pl-c"><span class="pl-c">//</span>  hippo 0</span>
 
   <span class="pl-k">val</span> <span class="pl-en">hungriest</span> <span class="pl-k">=</span> animals.rows.maxBy(_.apply(<span class="pl-s"><span class="pl-pds">"</span>eatcount<span class="pl-pds">"</span></span>).
     <span class="pl-c1">asInstanceOf</span>[<span class="pl-en">LongPropertyValue</span>].value).
     apply(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).<span class="pl-c1">asInstanceOf</span>[<span class="pl-en">StringPropertyValue</span>].value
-  println(<span class="pl-s"><span class="pl-pds">"</span>hungriest: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> hungriest) <span class="pl-c">// prints "snake"</span>
+  println(<span class="pl-s"><span class="pl-pds">"</span>hungriest: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> hungriest) <span class="pl-c"><span class="pl-c">//</span> prints "snake"</span>
 
 
-  <span class="pl-c">// clear database</span>
+  <span class="pl-c"><span class="pl-c">//</span> clear database</span>
   db.query(<span class="pl-s"><span class="pl-pds">"</span>MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// shut down actor system</span>
+  <span class="pl-c"><span class="pl-c">//</span> shut down actor system</span>
   restService.actorSystem.shutdown()
 }</pre>
   </div> 

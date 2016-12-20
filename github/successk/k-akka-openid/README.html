@@ -24,13 +24,13 @@
   <p>In this example, we start from nothing. So we create the server.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">object</span> <span class="pl-en">OpenidBoot</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-  <span class="pl-c">// System implicit</span>
+  <span class="pl-c"><span class="pl-c">//</span> System implicit</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ec</span> <span class="pl-k">=</span> system.dispatcher
 
   <span class="pl-k">val</span> <span class="pl-en">route</span> <span class="pl-k">=</span> pathEndOrSingleSlash {
-    <span class="pl-c">// We provide a sample welcome page listing all available openid providers.</span>
+    <span class="pl-c"><span class="pl-c">//</span> We provide a sample welcome page listing all available openid providers.</span>
     complete(<span class="pl-en">HttpResponse</span>(entity <span class="pl-k">=</span> <span class="pl-en">HttpEntity</span>(<span class="pl-en">ContentTypes</span>.`text<span class="pl-k">/</span>html(<span class="pl-en">UTF</span><span class="pl-k">-</span><span class="pl-c1">8</span>)`, <span class="pl-en">ByteString</span>(&lt;<span class="pl-ent">html</span>&gt;
       &lt;<span class="pl-ent">head</span>&gt;
         &lt;<span class="pl-ent">title</span>&gt;<span class="pl-en">Manual</span> test&lt;/<span class="pl-ent">title</span>&gt;
@@ -47,13 +47,13 @@
     &lt;/<span class="pl-ent">html</span>&gt;.toString()))))
   }
 
-  <span class="pl-c">// Starts the server</span>
+  <span class="pl-c"><span class="pl-c">//</span> Starts the server</span>
   <span class="pl-k">val</span> <span class="pl-en">server</span> <span class="pl-k">=</span> <span class="pl-en">Http</span>().bindAndHandle(handler <span class="pl-k">=</span> route, interface <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>, port <span class="pl-k">=</span> <span class="pl-c1">9000</span>)
   println(s<span class="pl-s"><span class="pl-pds">"</span>Server online at http://localhost:9000<span class="pl-pds">"</span></span>)
   println(<span class="pl-s"><span class="pl-pds">"</span>Press RETURN to stop...<span class="pl-pds">"</span></span>)
   <span class="pl-en">StdIn</span>.readLine()
 
-  <span class="pl-c">// Stops the server</span>
+  <span class="pl-c"><span class="pl-c">//</span> Stops the server</span>
   println(<span class="pl-s"><span class="pl-pds">"</span>Stopping<span class="pl-pds">"</span></span>)
   server.flatMap(_.unbind()).onComplete(_ <span class="pl-k">⇒</span> system.awaitTermination())
 }</pre>
@@ -65,28 +65,28 @@
     </svg></a>Adds Openid providers</h3> 
   <p>Now, we can add openid providers </p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// ...</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> ...</span>
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ec</span> <span class="pl-k">=</span> system.dispatcher
-<span class="pl-c">// ===== Added code: start =====</span>
-<span class="pl-c">// The duration the token is kept in memory.</span>
-<span class="pl-c">// This token is generated when the user is redirected to openid provider page and requested on openid provider response.</span>
+<span class="pl-c"><span class="pl-c">//</span> ===== Added code: start =====</span>
+<span class="pl-c"><span class="pl-c">//</span> The duration the token is kept in memory.</span>
+<span class="pl-c"><span class="pl-c">//</span> This token is generated when the user is redirected to openid provider page and requested on openid provider response.</span>
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">sessionDuration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">FiniteDuration</span>(<span class="pl-c1">5</span>, <span class="pl-en">TimeUnit</span>.<span class="pl-en">MINUTES</span>)
 
-<span class="pl-c">// Configuration in terms of google credentials (see https://developers.google.com/identity/protocols/OpenIDConnect).</span>
+<span class="pl-c"><span class="pl-c">//</span> Configuration in terms of google credentials (see https://developers.google.com/identity/protocols/OpenIDConnect).</span>
 <span class="pl-k">val</span> <span class="pl-en">googleSettings</span> <span class="pl-k">=</span> <span class="pl-en">OpenidGoogleSettings</span>(
   client <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>client-id<span class="pl-pds">"</span></span>,
   secret <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>client-secret<span class="pl-pds">"</span></span>,
   redirect <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>http://my.site/session/google/processing<span class="pl-pds">"</span></span>,
-  external <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://accounts.google.com/o/oauth2/v2/auth<span class="pl-pds">"</span></span>, <span class="pl-c">// optional, this is already the default value</span>
-  path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>google<span class="pl-pds">"</span></span> <span class="pl-c">// optional, this is already the default value</span>
+  external <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://accounts.google.com/o/oauth2/v2/auth<span class="pl-pds">"</span></span>, <span class="pl-c"><span class="pl-c">//</span> optional, this is already the default value</span>
+  path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>google<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> optional, this is already the default value</span>
 )
-<span class="pl-c">// There is only google for now</span>
+<span class="pl-c"><span class="pl-c">//</span> There is only google for now</span>
 <span class="pl-k">val</span> <span class="pl-en">providers</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-en">OpenidGoogle</span>(googleSettings))
 
-<span class="pl-c">// Available url will be:</span>
-<span class="pl-c">// /session/google/redirection =&gt; redirect to google sso</span>
-<span class="pl-c">// /session/google/processing =&gt; google will redirect the user to this url</span>
+<span class="pl-c"><span class="pl-c">//</span> Available url will be:</span>
+<span class="pl-c"><span class="pl-c">//</span> /session/google/redirection =&gt; redirect to google sso</span>
+<span class="pl-c"><span class="pl-c">//</span> /session/google/processing =&gt; google will redirect the user to this url</span>
 <span class="pl-k">val</span> <span class="pl-en">routerSettings</span> <span class="pl-k">=</span> <span class="pl-en">OpenidRouterSettings</span>(
   prefix <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>session<span class="pl-pds">"</span></span>),
   afterProviderOnRedirection <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>redirection<span class="pl-pds">"</span></span>),
@@ -94,8 +94,8 @@
 )
 
 <span class="pl-k">val</span> <span class="pl-en">route</span> <span class="pl-k">=</span> <span class="pl-en">OpenidRouter</span>(providers, routerSettings) {
-  <span class="pl-c">// Each case represents a possible result the openid router provides</span>
-  <span class="pl-c">// You will need to add your own logic for each result.</span>
+  <span class="pl-c"><span class="pl-c">//</span> Each case represents a possible result the openid router provides</span>
+  <span class="pl-c"><span class="pl-c">//</span> You will need to add your own logic for each result.</span>
   <span class="pl-k">case</span> <span class="pl-en">OpenidResultSuccess</span>(ctx, provider, pid) <span class="pl-k">=&gt;</span>
     ctx.complete(s<span class="pl-s"><span class="pl-pds">"</span>(provider, pid) = ($provider, $pid)<span class="pl-pds">"</span></span>)
   <span class="pl-k">case</span> <span class="pl-en">OpenidResultUndefinedCode</span>(ctx) <span class="pl-k">=&gt;</span>
@@ -109,10 +109,10 @@
   <span class="pl-k">case</span> <span class="pl-en">OpenidResultErrorThrown</span>(ctx, error) <span class="pl-k">=&gt;</span>
     ctx.complete(<span class="pl-s"><span class="pl-pds">"</span>error: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> error.getMessage)
 } <span class="pl-k">~</span>
-<span class="pl-c">// ===== Added code: stop =====</span>
+<span class="pl-c"><span class="pl-c">//</span> ===== Added code: stop =====</span>
 pathEndOrSingleSlash {
-<span class="pl-c">// We provide a sample welcome page listing all available openid providers.</span>
-<span class="pl-c">// ...</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> We provide a sample welcome page listing all available openid providers.</span>
+<span class="pl-c"><span class="pl-c">//</span> ...</span></pre>
   </div> 
   <h3><a id="user-content-thats-all" class="anchor" href="https://github.com/successk/k-akka-openid#thats-all" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
