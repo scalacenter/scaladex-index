@@ -90,30 +90,37 @@
   <p>Status: some specific uses (Spark on YARN) well tested in particular contexts (especially the previous version, the current one less so for now), others (Mesos, standalone clusters) unknown with the current code base</p> 
   <p>Use like</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">$exclude.`org.</span><span class="pl-v">slf4j:slf4j-log4j12`, </span><span class="pl-v">$ivy.`org.slf4j:slf4j-nop:1.7.</span><span class="pl-v">21`, </span><span class="pl-v">$ivy.`org.slf4j:log4j-over-slf4j:1.7.</span><span class="pl-v">21` </span><span class="pl-c"><span class="pl-c">//</span> for cleaner logs</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">$exclude.`org.</span><span class="pl-v">slf4j:slf4j-log4j12` </span><span class="pl-c"><span class="pl-c">//</span> for cleaner logs</span>
 <span class="pl-k">import</span> <span class="pl-v">$ivy.`org.apache.spark::spark-sql:2.0.</span><span class="pl-v">2` </span><span class="pl-c"><span class="pl-c">//</span> adjust spark version - spark &gt;= 1.6 should be fine, possibly &gt;= 1.3 too</span>
-<span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::spark:0.4.</span><span class="pl-v">0-RC1` </span><span class="pl-c"><span class="pl-c">//</span> allows to create SparkContext-s aware of the jupyter-scala kernel</span>
+<span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::spark:0.4.</span><span class="pl-v">0-RC3` </span><span class="pl-c"><span class="pl-c">//</span> JupyterSparkContext-s (SparkContext aware of the jupyter-scala kernel)</span>
 
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">jupyter.spark.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">sqlContext.implicits.</span><span class="pl-v">_</span>
 
-sparkInit() <span class="pl-c"><span class="pl-c">//</span> allows org.jupyter-scala::spark to get a handle towards some kernel API classes </span>
-
-<span class="pl-c"><span class="pl-c">//</span> for Spark on YARN - argument is the path too the Yarn config (directory, should contain yarn-site.xml in particular)</span>
-<span class="pl-c"><span class="pl-c">//</span> sparkYarn("/etc/hadoop/conf")</span>
-<span class="pl-c"><span class="pl-c">//</span> if on AWS ElasticMapReduce - argument is the Hadoop version</span>
-<span class="pl-c"><span class="pl-c">//</span> sparkEmr("2.7.3")</span>
-
-<span class="pl-c"><span class="pl-c">//</span> the conf can be tweaked a bit before use - comes from the jupyter.spark namespace</span>
-sparkConf.
+<span class="pl-c"><span class="pl-c">//</span> The conf can be tweaked a bit before use.</span>
+<span class="pl-c"><span class="pl-c">//</span> Mark it transient to prevent serialization issues.</span>
+<span class="pl-k">@</span>transient <span class="pl-k">val</span> <span class="pl-en">sparkConf</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkConf</span>().
   setAppName(<span class="pl-s"><span class="pl-pds">"</span>SBTB<span class="pl-pds">"</span></span>).
   setMaster(<span class="pl-s"><span class="pl-pds">"</span>local<span class="pl-pds">"</span></span>) <span class="pl-c"><span class="pl-c">//</span> change to "yarn-client" on YARN</span>
   <span class="pl-c"><span class="pl-c">//</span> set("spark.executor.count", "4").</span>
   <span class="pl-c"><span class="pl-c">//</span> set("spark.executor.memory", "2g").</span>
   <span class="pl-c"><span class="pl-c">//</span> set("spark.driver.memory", "2g")</span>
 
-<span class="pl-c"><span class="pl-c">//</span> first call to sc - from the jupyter.spark namespace - initializes the SparkContext</span>
-sc</pre>
+<span class="pl-c"><span class="pl-c">//</span> For Spark on YARN - argument is the path too the Yarn config (directory, should contain yarn-site.xml in particular)</span>
+<span class="pl-c"><span class="pl-c">//</span> This loads the hadoop config in the classpath, and loads the spark-yarn module.</span>
+<span class="pl-c"><span class="pl-c">//</span> sparkYarn("/etc/hadoop/conf")</span>
+<span class="pl-c"><span class="pl-c">//</span> If on AWS ElasticMapReduce - argument is the Hadoop version</span>
+<span class="pl-c"><span class="pl-c">//</span> This adds extra hadoop / aws related dependencies in the spark jar list (via the spark.yarn.jar</span>
+<span class="pl-c"><span class="pl-c">//</span> or spark.yarn.jars Spark conf entry)</span>
+<span class="pl-c"><span class="pl-c">//</span> sparkEmr("2.7.3")</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Important - do NOT create a simple SparkContext, always use JupyterSparkContext,</span>
+<span class="pl-c"><span class="pl-c">//</span> which is aware of the jupyter-scala kernel.</span>
+<span class="pl-c"><span class="pl-c">//</span> Marked transient too to prevent serialization issues.</span>
+<span class="pl-k">@</span>transient <span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">JupyterSparkContext</span>(sparkConf)
+
+<span class="pl-k">val</span> <span class="pl-en">sqlContext</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SQLContext</span>(sc)</pre>
   </div> 
   <p>Important: <code>SparkContext</code>s should <em>not</em> be manually created. Only the ones from the <code>org.jupyter-scala::spark</code> library are aware of the kernel, and setup the <code>SparkContext</code> accordingly (passing it the loaded dependencies, the kernel build products, etc.).</p> 
   <p>Note that no Spark distribution is required to have the kernel work. In particular, on YARN, it generates itself the so-called spark assembly (or list of JARs with Spark 2), that is (are) shipped to the driver and executors. To use a custom assembly (or list of JARs), set <code>"spark.yarn.jar"</code> (or <code>"spark.yarn.jars"</code>) to a custom value prior to calling <code>sc</code>. </p> 
@@ -125,7 +132,7 @@ sc</pre>
   <p>Use like</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">$exclude.`org.</span><span class="pl-v">slf4j:slf4j-log4j12`, </span><span class="pl-v">$ivy.`org.slf4j:slf4j-nop:1.7.</span><span class="pl-v">21`, </span><span class="pl-v">$ivy.`org.slf4j:log4j-over-slf4j:1.7.</span><span class="pl-v">21` </span><span class="pl-c"><span class="pl-c">//</span> for cleaner logs</span>
-<span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::flink-yarn:0.4.</span><span class="pl-v">0-RC1`</span>
+<span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::flink-yarn:0.4.</span><span class="pl-v">0-RC3`</span>
 
 <span class="pl-k">import</span> <span class="pl-v">jupyter.flink.</span><span class="pl-v">_</span>
 
@@ -154,7 +161,7 @@ interp.load.cp(<span class="pl-s"><span class="pl-pds">"</span>/etc/hadoop/conf<
   <p>Status: POC</p> 
   <p>Use like</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::scio:0.4.</span><span class="pl-v">0-RC1`</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">$ivy.`org.jupyter-scala::scio:0.4.</span><span class="pl-v">0-RC3`</span>
 <span class="pl-k">import</span> <span class="pl-v">jupyter.scio.</span><span class="pl-v">_</span>
 
 <span class="pl-k">import</span> <span class="pl-v">com.spotify.scio.</span><span class="pl-v">_</span>

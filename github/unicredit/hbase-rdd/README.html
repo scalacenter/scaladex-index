@@ -26,13 +26,13 @@
     </svg></a>Installation</h2> 
   <p>This guide assumes you are using SBT. Usage of similar tools like Maven or Leiningen should work with minor differences as well.</p> 
   <p>HBase RDD can be added as a dependency in sbt with:</p> 
-  <pre><code>dependencies += "eu.unicredit" %% "hbase-rdd" % "0.7.1"
+  <pre><code>dependencies += "eu.unicredit" %% "hbase-rdd" % "0.8.0"
 </code></pre> 
   <p>Currently, the project depends on the following artifacts:</p> 
   <pre><code>"org.apache.spark" %% "spark-core" % "1.5.0" % "provided",
-"org.apache.hbase" % "hbase-common" % "1.0.0-cdh5.5.1" % "provided",
-"org.apache.hbase" % "hbase-client" % "1.0.0-cdh5.5.1" % "provided",
-"org.apache.hbase" % "hbase-server" % "1.0.0-cdh5.5.1" % "provided",
+"org.apache.hbase" % "hbase-common" % "1.0.0-cdh5.5.2" % "provided",
+"org.apache.hbase" % "hbase-client" % "1.0.0-cdh5.5.2" % "provided",
+"org.apache.hbase" % "hbase-server" % "1.0.0-cdh5.5.2" % "provided",
 "org.json4s" %% "json4s-jackson" % "3.2.11" % "provided"
 </code></pre> 
   <p>All dependencies appear with <code>provided</code> scope, so you will have to either have these dependencies in your project, or have the corresponding artifacts available locally in your cluster. Most of them are available in the Cloudera repositories, which you can add with the following line:</p> 
@@ -109,7 +109,7 @@ trait Writes[A] { def write(data: A): Array[Byte] }
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Reading from HBase</h3> 
   <p>Some methods are added to <code>SparkContext</code> in order to read from HBase.</p> 
-  <p>If you know which columns to read, then you can use <code>sc.read()</code>. Assuming the columns <code>cf1:col1</code>, <code>cf1:col2</code> and <code>cf2:col3</code> in table <code>t1</code> are to be read, and that the content is serialized as an UTF-8 string, then one can do</p> 
+  <p>If you know which columns to read, then you can use <code>sc.hbase()</code>. Assuming the columns <code>cf1:col1</code>, <code>cf1:col2</code> and <code>cf2:col3</code> in table <code>t1</code> are to be read, and that the content is serialized as an UTF-8 string, then one can do</p> 
   <pre><code>val table = "t1"
 val columns = Map(
   "cf1" -&gt; Set("col1", "col2"),
@@ -117,7 +117,7 @@ val columns = Map(
 )
 val rdd = sc.hbase[String](table, columns)
 </code></pre> 
-  <p>In general, <code>sc.hbase[A]</code> has a type parameter which represents the type of the content of the cells, and it returns a <code>RDD[(String, Map[String, Map[String, A]])]</code>. Each element of the resulting RDD is a key/value pair, where the key is the rowkey from HBase and the value is a nested map which associates column family and column to the value. Missing columns are omitted from the map, so for instance one can project the above on the <code>col2</code> column doing something like</p> 
+  <p>In general, <code>sc.hbase[K, Q, V]</code> has type parameters which represent the types of row key, qualifier and content of the cells, and it returns a <code>RDD[(K, Map[String, Map[Q, V]])]</code>. Each element of the resulting RDD is a key/value pair, where the key is the rowkey from HBase and the value is a nested map which associates column family and column to the value. Missing columns are omitted from the map, so for instance one can project the above on the <code>col2</code> column doing something like</p> 
   <pre><code>rdd.flatMap({ case (k, v) =&gt;
   v("cf1") get "col2" map { col =&gt;
     k -&gt; col
@@ -126,56 +126,57 @@ val rdd = sc.hbase[String](table, columns)
   // Try(k -&gt; v("cf1")("col2")).toOption
 })
 </code></pre> 
+  <p>You can also read with <code>sc.hbase[K, V](table, columns)</code> where only the type parameters for row key and value are explicit, while qualifier is a String, or <code>sc.hbase[V](table, columns)</code>, where types of row key and qualifier are String. These alternatives apply for all <code>sc.hbase()</code> and <code>sc.hbaseTS()</code> methods.</p> 
   <p>A second possibility is to get the whole column families. This can be useful if you do not know in advance which will be the column names. You can do this with the method <code>sc.hbase[A]</code>, like</p> 
   <pre><code>val table = "t1"
 val families = Set("cf1", "cf2")
 val rdd = sc.hbase[String](table, families)
 </code></pre> 
   <p>The output, like <code>sc.hbase[A]</code>, is a <code>RDD[(String, Map[String, Map[String, A]])]</code>.</p> 
-  <p>If you need to read also timestamps, you can use in both cases <code>sc.hbaseTS[A]</code> and obtain a <code>RDD[(String, Map[String, Map[String, (A, Long)]])]</code>. Each element of the resulting RDD is a key/value pair, where the key is the rowkey from HBase and the value is a nested map which associates column family and column to the tuple (value, timestamp).</p> 
+  <p>If you need to read also timestamps, you can use in both cases <code>sc.hbaseTS[K, Q, V]</code> and obtain a <code>RDD[(K, Map[String, Map[Q, (V, Long)]])]</code>. Each element of the resulting RDD is a key/value pair, where the key is the rowkey from HBase and the value is a nested map which associates column family and column to the tuple (value, timestamp).</p> 
   <p>Finally, there is a lower level access to the raw <code>org.apache.hadoop.hbase.client.Result</code> instances. For this, just do</p> 
   <pre><code>val table = "t1"
-val rdd = sc.hbase(table)
+val rdd = sc.hbase[K](table)
 </code></pre> 
+  <p>The return value of <code>sc.hbase</code> is a <code>RDD[(K, Result)]</code>. The first element is the rowkey, while the second one is an instance of <code>org.apache.hadoop.hbase.client.Result</code>, so you can use the raw HBase API to query it.</p> 
   <p>HBase side filters are also supported by providing a custom Filter or Scan object:</p> 
   <pre><code>val filter = new PrefixFilter(Bytes.toBytes("abc"))
 val table = "t1"
 val families = Set("cf1", "cf2")
 val rdd = sc.hbase[String](table, families, filter)
 </code></pre> 
-  <p>The return value of <code>sc.hbase</code> (note that in this case there is no type parameter) is a <code>RDD[(String, Result)]</code>. The first element is the rowkey, while the second one is an instance of <code>org.apache.hadoop.hbase.client.Result</code>, so you can use the raw HBase API to query it.</p> 
   <h3><a id="user-content-writing-to-hbase" class="anchor" href="https://github.com/unicredit/hbase-rdd#writing-to-hbase" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Writing to HBase</h3> 
   <p>In order to write to HBase, some methods are added on certain types of RDD.</p> 
-  <p>The first one is parallel to the way you read from HBase. Assume you have an <code>RDD[(String, Map[String, Map[String, A]])]</code> and there is a <code>Writes[A]</code> in scope. Then you can write to HBase with the method <code>toHBase</code>, like</p> 
+  <p>The first one is parallel to the way you read from HBase. Assume you have an <code>RDD[(K, Map[String, Map[Q, V]])]</code> and there is <code>Writes[K]</code>, <code>Writes[Q]</code>, and <code>Writes[V]</code> in scope. Then you can write to HBase with the method <code>toHBase</code>, like</p> 
   <pre><code>val table = "t1"
-val rdd: RDD[(String, Map[String, Map[String, A]])] = ...
+val rdd: RDD[(K, Map[String, Map[Q, V]])] = ...
 rdd.toHBase(table)
 </code></pre> 
-  <p>A simplified form is available in the case that one only needs to write on a single column family. Then a similar method is available on <code>RDD[(String, Map[String, A])]</code>, which can be used as follows</p> 
+  <p>A simplified form is available in the case that one only needs to write on a single column family. Then a similar method is available on <code>RDD[(K, Map[Q, V])]</code>, which can be used as follows</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val rdd: RDD[(String, Map[String, A])] = ...
+val rdd: RDD[(K, Map[Q, V])] = ...
 rdd.toHBase(table, cf)
 </code></pre> 
   <p>or, if you have a fixed set of columns, like</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val headers: Seq[String] = ...
-val rdd: RDD[(String, Seq[A])] = ...
+val headers: Seq[Q] = ...
+val rdd: RDD[(K, Seq[V])] = ...
 rdd.toHBase(table, cf, headers)
 </code></pre> 
-  <p>where <code>headers</code> are column names for <code>Seq[A]</code> values.</p> 
-  <p>If you need to write timestamps, you can use a tuple (A, Long) in your RDD, where the second element represents the timestamp, like</p> 
-  <pre><code>val rdd: RDD[(String, Map[String, Map[String, (A, Long)]])] = ...
+  <p>where <code>headers</code> are column names for <code>Seq[V]</code> values.</p> 
+  <p>If you need to write timestamps, you can use a tuple (V, Long) in your RDD, where the second element represents the timestamp, like</p> 
+  <pre><code>val rdd: RDD[(K, Map[String, Map[Q, (V, Long)]])] = ...
 </code></pre> 
   <p>or, for the simplified form, like</p> 
-  <pre><code>val rdd: RDD[(String, Map[String, (A, Long)])] = ...
+  <pre><code>val rdd: RDD[(K, Map[Q, (V, Long)])] = ...
 </code></pre> 
   <p>or, with a fixed set of columns</p> 
-  <pre><code>val rdd: RDD[(String, Seq[(A, Long)])] = ...
+  <pre><code>val rdd: RDD[(K, Seq[(V, Long)])] = ...
 </code></pre> 
   <p>You can have a look at <code>WriteTsvToHBase.scala</code> in <a href="https://github.com/unicredit/hbase-rdd-examples" target="_blank">hbase-rdd-examples project</a> on how to write a TSV file from <code>Hdfs</code> to <code>HBase</code></p> 
   <h3><a id="user-content-deleting-from-hbase" class="anchor" href="https://github.com/unicredit/hbase-rdd#deleting-from-hbase" aria-hidden="true" target="_blank">
@@ -183,22 +184,22 @@ rdd.toHBase(table, cf, headers)
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Deleting from HBase</h3> 
   <p>In order to delete from HBase, some methods are added on certain types of RDD.</p> 
-  <p>Assume you have an <code>RDD[(String, Map[String, Set[String])]</code> of row keys and a map of families / set of columns. Then you can delete from HBase with the method <code>deleteHBase</code>, like</p> 
+  <p>Assume you have an <code>RDD[(K, Map[String, Set[Q])]</code> of row keys and a map of families / set of columns. Then you can delete from HBase with the method <code>deleteHBase</code>, like</p> 
   <pre><code>val table = "t1"
-val rdd: RDD[(String, Map[String, Set[String])] = ...
+val rdd: RDD[(K, Map[String, Set[Q])] = ...
 rdd.deleteHBase(table)
 </code></pre> 
-  <p>A simplified form is available in the case that one only needs to delete from a single column family. Then a similar method is available on <code>RDD[(String, Set[String])]</code> of row keys and a set of columns, which can be used as follows</p> 
+  <p>A simplified form is available in the case that one only needs to delete from a single column family. Then a similar method is available on <code>RDD[(K, Set[Q])]</code> of row keys and a set of columns, which can be used as follows</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val rdd: RDD[(String, Set[String])] = ...
+val rdd: RDD[(K, Set[Q])] = ...
 rdd.deleteHBase(table, cf)
 </code></pre> 
-  <p>or, if you want to delete a fixed set of columns of one column family, or whole column families, or whole rows, some methods are available on <code>RDD[String]</code> of row keys, which can be used as follows</p> 
+  <p>or, if you want to delete a fixed set of columns of one column family, or whole column families, or whole rows, some methods are available on <code>RDD[K]</code> of row keys, which can be used as follows</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val headers: Set[String] = ...
-val rdd: RDD[String] = ...
+val headers: Set[Q] = ...
+val rdd: RDD[K] = ...
 rdd.deleteHBase(table, cf, headers)
 </code></pre> 
   <p>or</p> 
@@ -209,10 +210,10 @@ rdd.deleteHBase(table, cfs)
   <pre><code>rdd.deleteHBase(table)
 </code></pre> 
   <p>If you need to delete with timestamps, you can use a tuple (String, Long) in your RDD, where the first element is a column and the second element represents the timestamp, like</p> 
-  <pre><code>val rdd: RDD[(String, Map[String, Set[(String, Long)]])] = ...
+  <pre><code>val rdd: RDD[(K, Map[String, Set[(Q, Long)]])] = ...
 </code></pre> 
   <p>or, for the simplified form, like</p> 
-  <pre><code>val rdd: RDD[(String, Set[(String, Long)])] = ...
+  <pre><code>val rdd: RDD[(K, Set[(Q, Long)])] = ...
 </code></pre> 
   <h3><a id="user-content-bulk-load-to-hbase-using-hfiles" class="anchor" href="https://github.com/unicredit/hbase-rdd#bulk-load-to-hbase-using-hfiles" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -227,31 +228,31 @@ rdd.deleteHBase(table, cfs)
   </ol> 
   <p>Now you can perform steps 2 to 4 with a call to <code>toHBaseBulk</code>, like</p> 
   <pre><code>val table = "t1"
-val rdd: RDD[(String, Map[String, Map[String, A]])] = ...
+val rdd: RDD[(K, Map[String, Map[Q, V]])] = ...
 rdd.toHBaseBulk(table)
 </code></pre> 
   <p>A simplified form is available in the case that one only needs to write on a single column family</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val rdd: RDD[(String, Map[String, A])] = ...
+val rdd: RDD[(K, Map[Q, V])] = ...
 rdd.toHBaseBulk(table, cf)
 </code></pre> 
   <p>or, if you have a fixed set of columns, like</p> 
   <pre><code>val table = "t1"
 val cf = "cf1"
-val headers: Seq[String] = ...
-val rdd: RDD[(String, Seq[A])] = ...
+val headers: Seq[Q] = ...
+val rdd: RDD[(K, Seq[V])] = ...
 rdd.toHBaseBulk(table, cf, headers)
 </code></pre> 
   <p>where <code>headers</code> are column names for <code>Seq[A]</code> values.</p> 
   <p>If you need to write timestamps, you can use a tuple <code>(A, Long)</code> in your <code>RDD</code>, where the second element represents the timestamp, like</p> 
-  <pre><code>val rdd: RDD[(String, Map[String, Map[String, (A, Long)]])] = ...
+  <pre><code>val rdd: RDD[(K, Map[String, Map[Q, (V, Long)]])] = ...
 </code></pre> 
   <p>or, for the simplified form, like</p> 
-  <pre><code>val rdd: RDD[(String, Map[String, (A, Long)])] = ...
+  <pre><code>val rdd: RDD[(K, Map[Q, (V, Long)])] = ...
 </code></pre> 
   <p>or, in case of a fixed set of columns, like</p> 
-  <pre><code>val rdd: RDD[(String, Seq[(A, Long)])] = ...
+  <pre><code>val rdd: RDD[(K, Seq[(V, Long)])] = ...
 </code></pre> 
   <p>But what about step 1? For this, an <code>Admin</code> object with a few helper methods come to the rescue. You must open a connection to HBase (as required since version 1.0.0), by instancing it</p> 
   <pre><code>  val admin = Admin()
@@ -262,14 +263,14 @@ rdd.toHBaseBulk(table, cf, headers)
    <li><code>admin.tableExists(tableName: String, families: Set[String])</code>: checks if the table exists, and returns true or false accordingly. If the table <code>tableName</code> exists but at least one of <code>families</code> does not, an <code>IllegalArgumentException</code> is thrown</li> 
    <li><code>admin.snapshot(tableName: String)</code>: creates a snapshot of table <code>tableName</code>, named <code>&lt;tablename&gt;_yyyyMMddHHmmss</code> (suffix is the date and time of the snapshot operation)</li> 
    <li><code>admin.snapshot(tableName: String, snapshotName: String)</code>: creates a snapshot of table <code>tableName</code>, named `snapshotName</li> 
-   <li><code>admin.createTable(tableName: String, family: String, splitKeys: Seq[String])</code>: creates a table <code>tableName</code> with column family <code>family</code> and regions defined by a sorted sequence of split keys <code>splitKeys</code></li> 
-   <li><code>admin.createTable(tableName: String, families: Set[String], splitKeys: Seq[String])</code>: creates a table <code>tableName</code> with column families <code>families</code> and regions defined by a sorted sequence of split keys <code>splitKeys</code></li> 
+   <li><code>admin.createTable(tableName: String, family: String, splitKeys: Seq[K])</code>: creates a table <code>tableName</code> with column family <code>family</code> and regions defined by a sorted sequence of split keys <code>splitKeys</code></li> 
+   <li><code>admin.createTable(tableName: String, families: Set[String], splitKeys: Seq[K])</code>: creates a table <code>tableName</code> with column families <code>families</code> and regions defined by a sorted sequence of split keys <code>splitKeys</code></li> 
    <li><code>admin.createTable(tableName: String, families: Set[String])</code>: creates a table <code>tableName</code> with column families <code>families</code></li> 
    <li><code>admin.createTable(tableName: String, families: String*)</code>: creates a table <code>tableName</code> with column families <code>families</code></li> 
    <li><code>admin.disableTable(tableName: String)</code>: disables table <code>tableName</code> (a table must be disabled before deletion)</li> 
    <li><code>admin.deleteTable(tableName: String)</code>: deletes table <code>tableName</code></li> 
    <li><code>admin.truncateTable(tableName: String, preserveSplits: Boolean)</code>: truncates table <code>tableName</code>, optionally preserving region splits</li> 
-   <li><code>admin.computeSplits(rdd: RDD[String], regionsCount: Int)</code>: given an <code>RDD</code>of keys and desired number of regions (<code>regionsCount</code>), returns a sorted sequence of split keys, to be used with <code>createTable()</code></li> 
+   <li><code>admin.computeSplits(rdd: RDD[K], regionsCount: Int)</code>: given an <code>RDD</code>of keys and desired number of regions (<code>regionsCount</code>), returns a sorted sequence of split keys, to be used with <code>createTable()</code></li> 
   </ul> 
   <p>finally you must close the connection to HBase with</p> 
   <pre><code>admin.close

@@ -102,17 +102,17 @@
 <span class="pl-k">import</span> <span class="pl-v">scodec.stream.</span>{<span class="pl-v">encode</span>,<span class="pl-v">decode</span>,<span class="pl-v">StreamDecoder</span>,<span class="pl-v">StreamEncoder</span>}
 <span class="pl-k">import</span> <span class="pl-v">fs2.util.</span><span class="pl-v">Task</span>
 
-<span class="pl-c">// skip first 64 bits, then decode</span>
+<span class="pl-c"><span class="pl-c">//</span> skip first 64 bits, then decode</span>
 <span class="pl-k">val</span> <span class="pl-en">d</span><span class="pl-k">:</span> <span class="pl-en">StreamDecoder</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> decode.advance(<span class="pl-c1">64</span>) <span class="pl-k">++</span> decode.many(codecs.int32)
 <span class="pl-k">val</span> <span class="pl-en">e</span><span class="pl-k">:</span> <span class="pl-en">StreamEncoder</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> encode.many(codecs.int16)
 
 <span class="pl-k">val</span> <span class="pl-en">t</span><span class="pl-k">:</span> <span class="pl-en">Task</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span>
  e.encode { d.decodeMmap(<span class="pl-k">new</span> <span class="pl-en">FileInputStream</span>(<span class="pl-s"><span class="pl-pds">"</span>largefile.bin<span class="pl-pds">"</span></span>).getChannel) }
   .map(_.toByteVector)
-  .to(fs2.io.fileChunkW(<span class="pl-s"><span class="pl-pds">"</span>smallerfile.bin<span class="pl-pds">"</span></span>)) <span class="pl-c">// TODO Update this for fs2 when IO module is ready</span>
+  .to(fs2.io.fileChunkW(<span class="pl-s"><span class="pl-pds">"</span>smallerfile.bin<span class="pl-pds">"</span></span>)) <span class="pl-c"><span class="pl-c">//</span> TODO Update this for fs2 when IO module is ready</span>
   .run.run
 
-<span class="pl-c">// at the end of the universe</span>
+<span class="pl-c"><span class="pl-c">//</span> at the end of the universe</span>
 t.unsafeRun</pre>
   </div> 
   <p>Calling <code>t.unsafeRun</code> will do a streaming decode of the <code>"largefile.bin"</code> file, skipping the first 64 bits, then a stream of signed 32 bit ints, which it downsamples to 16 bits and streams to the output file <code>"smallerfile.bin"</code>, raising an <a href="https://github.com/scodec/scodec-stream/blob/master/src/main/scala/scodec/stream/encode/EncodingError.scala" target="_blank"><code>EncodingError</code></a> in the event of a format error or if an integer from the input fails to fit within 16 bits.</p> 
