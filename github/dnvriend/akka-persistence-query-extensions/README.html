@@ -78,22 +78,22 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 <span class="pl-k">import</span> <span class="pl-v">akka.stream.integration.io.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">akka.stream.integration.xml.</span>{ <span class="pl-v">Validation</span>, <span class="pl-v">ValidationResult</span> }
 
-<span class="pl-c">// for example, creating a never completing flow that resumes after restarting</span>
-<span class="pl-c">// in this case I used it to send messages to a shard region</span>
+<span class="pl-c"><span class="pl-c">//</span> for example, creating a never completing flow that resumes after restarting</span>
+<span class="pl-c"><span class="pl-c">//</span> in this case I used it to send messages to a shard region</span>
 <span class="pl-en">ResumableQuery</span>(<span class="pl-s"><span class="pl-pds">"</span>MessageReceivedEventQuery<span class="pl-pds">"</span></span>, offset <span class="pl-k">⇒</span> journal.eventsByTag(<span class="pl-c1">classOf</span>[<span class="pl-en">MessageReceivedEvent</span>].getSimpleName, offset <span class="pl-k">+</span> <span class="pl-c1">1</span>))
   .join(fromProtoAs[<span class="pl-en">MessageReceivedEvent</span>].mapAsync(<span class="pl-c1">1</span>) { msg <span class="pl-k">=&gt;</span>
     messageReceivedRegion <span class="pl-k">?</span> <span class="pl-en">MessageReceived</span>(msg.id, msg.foo, msg.bar)
   }).run()
 
-<span class="pl-c">// processing files and generating MD5 hashes and storing them in the journal using the</span>
-<span class="pl-c">// akka.persistence.query.extension.Journal component</span>
+<span class="pl-c"><span class="pl-c">//</span> processing files and generating MD5 hashes and storing them in the journal using the</span>
+<span class="pl-c"><span class="pl-c">//</span> akka.persistence.query.extension.Journal component</span>
 <span class="pl-en">ResumableQuery</span>(<span class="pl-s"><span class="pl-pds">"</span>GenerateMD5Query<span class="pl-pds">"</span></span>, offset <span class="pl-k">=&gt;</span> journal.eventsByTag(<span class="pl-c1">classOf</span>[<span class="pl-en">GenerateMD5Command</span>].getSimpleName, offset <span class="pl-k">+</span> <span class="pl-c1">1</span>))
   .join(fromProtoAs[<span class="pl-en">GenerateMD5Command</span>]
     .via(generateMD5Flow(baseDir))
     .via(<span class="pl-en">Journal</span>.flow())).run()
 
-<span class="pl-c">// generating MD5 is relatively easy using FileIO and the</span>
-<span class="pl-c">// akka.stream.integration.io.DigestCalculator</span>
+<span class="pl-c"><span class="pl-c">//</span> generating MD5 is relatively easy using FileIO and the</span>
+<span class="pl-c"><span class="pl-c">//</span> akka.stream.integration.io.DigestCalculator</span>
 <span class="pl-k">def</span> <span class="pl-en">generateMD5Flow</span>(<span class="pl-k">implicit</span> <span class="pl-v">log</span>: <span class="pl-en">LoggingAdapter</span>) <span class="pl-k">=</span> <span class="pl-en">Flow</span>[<span class="pl-en">GenerateMD5Command</span>].flatMapConcat {
  <span class="pl-k">case</span> <span class="pl-en">GenerateMD5Command</span>(fileName) <span class="pl-k">=&gt;</span>
   <span class="pl-en">FileIO</span>.fromFile(<span class="pl-k">new</span> <span class="pl-en">File</span>(fileName)).via(<span class="pl-en">DigestCalculator</span>.hexString(<span class="pl-en">Algorithm</span>.<span class="pl-en">MD5</span>))
@@ -104,12 +104,12 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
     }
 }
 
-<span class="pl-c">// non-completing flow that resumes to validate XSD</span>
+<span class="pl-c"><span class="pl-c">//</span> non-completing flow that resumes to validate XSD</span>
 <span class="pl-en">ResumableQuery</span>(<span class="pl-s"><span class="pl-pds">"</span>ValidateXSDQuery<span class="pl-pds">"</span></span>, offset <span class="pl-k">=&gt;</span> journal.eventsByTag(<span class="pl-c1">classOf</span>[<span class="pl-en">ValidateFile</span>].getSimpleName, offset <span class="pl-k">+</span> <span class="pl-c1">1</span>))
   .join(fromProtoAs[<span class="pl-en">ValidateFile</span>]
     .via(validateXSDFlow(baseDir)).via(<span class="pl-en">Journal</span>.flow())).run()
 
-<span class="pl-c">// processing files and validating XSD</span>
+<span class="pl-c"><span class="pl-c">//</span> processing files and validating XSD</span>
 <span class="pl-k">def</span> <span class="pl-en">validateXSDFlow</span>(<span class="pl-k">implicit</span> <span class="pl-v">log</span>: <span class="pl-en">LoggingAdapter</span>) <span class="pl-k">=</span> <span class="pl-en">Flow</span>[<span class="pl-en">ValidateFile</span>].flatMapConcat {
  <span class="pl-k">case</span> <span class="pl-en">ValidateFile</span>(fileName) <span class="pl-k">=&gt;</span>
   <span class="pl-en">Source</span>.single(fileName).flatMapConcat { fileName <span class="pl-k">=&gt;</span>
@@ -124,7 +124,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
   }
 }
 
-<span class="pl-c">// non-completing flow that moves files</span>
+<span class="pl-c"><span class="pl-c">//</span> non-completing flow that moves files</span>
 <span class="pl-en">ResumableQuery</span>(<span class="pl-s"><span class="pl-pds">"</span>MoveToDirQuery<span class="pl-pds">"</span></span>, offset <span class="pl-k">=&gt;</span> journal.eventsByTag(<span class="pl-c1">classOf</span>[<span class="pl-en">MoveToDirCmd</span>].getSimpleName, offset <span class="pl-k">+</span> <span class="pl-c1">1</span>))
   .join(fromProtoAs[<span class="pl-en">MoveToDirCmd</span>]
     .via(moveToDirFlow).via(<span class="pl-en">Journal</span>.flow())).run()
@@ -145,7 +145,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 <span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">Flow</span>
 <span class="pl-k">import</span> <span class="pl-v">com.google.protobuf.</span><span class="pl-v">Message</span>
 
-<span class="pl-c">// type classes to convert from/to protobuf</span>
+<span class="pl-c"><span class="pl-c">//</span> type classes to convert from/to protobuf</span>
 <span class="pl-k">import</span> <span class="pl-v">com.google.protobuf.</span><span class="pl-v">Message</span>
 
 <span class="pl-k">trait</span> <span class="pl-en">ProtobufFormat</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">ProtobufReader</span>[<span class="pl-en">A</span>] <span class="pl-k">with</span> <span class="pl-e">ProtobufWriter</span>[<span class="pl-en">A</span>]
@@ -158,7 +158,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
   <span class="pl-k">def</span> <span class="pl-en">write</span>(<span class="pl-v">msg</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Message</span>
 }
 
-<span class="pl-c">// converts from the data model to the domain model</span>
+<span class="pl-c"><span class="pl-c">//</span> converts from the data model to the domain model</span>
 <span class="pl-k">object</span> <span class="pl-en">ProtobufAdapterFlow</span> {
   <span class="pl-k">def</span> <span class="pl-en">fromProtoAs</span>[<span class="pl-en">A</span><span class="pl-k">:</span> <span class="pl-en">ProtobufReader</span>]<span class="pl-k">:</span> <span class="pl-en">Flow</span>[<span class="pl-en">EventEnvelope</span>, <span class="pl-en">A</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span>
     <span class="pl-en">Flow</span>[<span class="pl-en">EventEnvelope</span>]

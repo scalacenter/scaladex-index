@@ -54,8 +54,8 @@
   &lt;/<span class="pl-ent">dependency</span>&gt;
   &lt;<span class="pl-ent">dependency</span>&gt;
     &lt;<span class="pl-ent">groupId</span>&gt;com.typesafe.akka&lt;/<span class="pl-ent">groupId</span>&gt;
-    &lt;<span class="pl-ent">artifactId</span>&gt;akka-actor&lt;/<span class="pl-ent">artifactId</span>&gt; <span class="pl-c">&lt;!-- for Akka 2.0.X --&gt;</span>
-    &lt;<span class="pl-ent">artifactId</span>&gt;akka-actor_SCALA-VERSION&lt;/<span class="pl-ent">artifactId</span>&gt; <span class="pl-c">&lt;!-- from Akka 2.1.X on --&gt;</span>
+    &lt;<span class="pl-ent">artifactId</span>&gt;akka-actor&lt;/<span class="pl-ent">artifactId</span>&gt; <span class="pl-c"><span class="pl-c">&lt;!--</span> for Akka 2.0.X <span class="pl-c">--&gt;</span></span>
+    &lt;<span class="pl-ent">artifactId</span>&gt;akka-actor_SCALA-VERSION&lt;/<span class="pl-ent">artifactId</span>&gt; <span class="pl-c"><span class="pl-c">&lt;!--</span> from Akka 2.1.X on <span class="pl-c">--&gt;</span></span>
     &lt;<span class="pl-ent">version</span>&gt;AKKA-VERSION&lt;/<span class="pl-ent">version</span>&gt;
   &lt;/<span class="pl-ent">dependency</span>&gt;
 &lt;/<span class="pl-ent">dependencies</span>&gt;</pre>
@@ -141,7 +141,7 @@
   connFactory.setUri(<span class="pl-s"><span class="pl-pds">"</span>amqp://guest:guest@localhost/%2F<span class="pl-pds">"</span></span>)
   <span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionOwner</span>.props(connFactory, <span class="pl-c1">1</span> second))
 
-  <span class="pl-c">// create an actor that will receive AMQP deliveries</span>
+  <span class="pl-c"><span class="pl-c">//</span> create an actor that will receive AMQP deliveries</span>
   <span class="pl-k">val</span> <span class="pl-en">listener</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>(<span class="pl-k">new</span> <span class="pl-en">Actor</span> {
     <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
       <span class="pl-k">case</span> <span class="pl-en">Delivery</span>(consumerTag, envelope, properties, body) <span class="pl-k">=&gt;</span> {
@@ -151,23 +151,23 @@
     }
   }))
 
-  <span class="pl-c">// create a consumer that will route incoming AMQP messages to our listener</span>
-  <span class="pl-c">// it starts with an empty list of queues to consume from</span>
+  <span class="pl-c"><span class="pl-c">//</span> create a consumer that will route incoming AMQP messages to our listener</span>
+  <span class="pl-c"><span class="pl-c">//</span> it starts with an empty list of queues to consume from</span>
   <span class="pl-k">val</span> <span class="pl-en">consumer</span> <span class="pl-k">=</span> <span class="pl-en">ConnectionOwner</span>.createChildActor(conn, <span class="pl-en">Consumer</span>.props(listener, channelParams <span class="pl-k">=</span> <span class="pl-c1">None</span>, autoack <span class="pl-k">=</span> <span class="pl-c1">false</span>))
 
-  <span class="pl-c">// wait till everyone is actually connected to the broker</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait till everyone is actually connected to the broker</span>
   <span class="pl-en">Amqp</span>.waitForConnection(system, consumer).await()
 
-  <span class="pl-c">// create a queue, bind it to a routing key and consume from it</span>
-  <span class="pl-c">// here we don't wrap our requests inside a Record message, so they won't replayed when if the connection to</span>
-  <span class="pl-c">// the broker is lost: queue and binding will be gone</span>
+  <span class="pl-c"><span class="pl-c">//</span> create a queue, bind it to a routing key and consume from it</span>
+  <span class="pl-c"><span class="pl-c">//</span> here we don't wrap our requests inside a Record message, so they won't replayed when if the connection to</span>
+  <span class="pl-c"><span class="pl-c">//</span> the broker is lost: queue and binding will be gone</span>
 
-  <span class="pl-c">// create a queue</span>
+  <span class="pl-c"><span class="pl-c">//</span> create a queue</span>
   <span class="pl-k">val</span> <span class="pl-en">queueParams</span> <span class="pl-k">=</span> <span class="pl-en">QueueParameters</span>(<span class="pl-s"><span class="pl-pds">"</span>my_queue<span class="pl-pds">"</span></span>, passive <span class="pl-k">=</span> <span class="pl-c1">false</span>, durable <span class="pl-k">=</span> <span class="pl-c1">false</span>, exclusive <span class="pl-k">=</span> <span class="pl-c1">false</span>, autodelete <span class="pl-k">=</span> <span class="pl-c1">true</span>)
   consumer <span class="pl-k">!</span> <span class="pl-en">DeclareQueue</span>(queueParams)
-  <span class="pl-c">// bind it</span>
+  <span class="pl-c"><span class="pl-c">//</span> bind it</span>
   consumer <span class="pl-k">!</span> <span class="pl-en">QueueBind</span>(queue <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my_queue<span class="pl-pds">"</span></span>, exchange <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>amq.direct<span class="pl-pds">"</span></span>, routing_key <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my_key<span class="pl-pds">"</span></span>)
-  <span class="pl-c">// tell our consumer to consume from it</span>
+  <span class="pl-c"><span class="pl-c">//</span> tell our consumer to consume from it</span>
   consumer <span class="pl-k">!</span> <span class="pl-en">AddQueue</span>(<span class="pl-en">QueueParameters</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my_queue<span class="pl-pds">"</span></span>, passive <span class="pl-k">=</span> <span class="pl-c1">false</span>))
 </pre>
   </div> 
@@ -187,7 +187,7 @@
   <p>If you have a reason to add a heartbeat (for instance, to keep your load balancer from dropping the connection), you can easily do so:</p> 
   <div class="highlight highlight-source-scala">
    <pre>  <span class="pl-k">val</span> <span class="pl-en">connFactory</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConnectionFactory</span>()
-  connFactory.setRequestedHeartbeat(<span class="pl-c1">5</span>) <span class="pl-c">// seconds</span></pre>
+  connFactory.setRequestedHeartbeat(<span class="pl-c1">5</span>) <span class="pl-c"><span class="pl-c">//</span> seconds</span></pre>
   </div> 
   <h2><a id="user-content-rpc-patterns" class="anchor" href="https://github.com/sstone/amqp-client#rpc-patterns" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -205,35 +205,35 @@
     </svg></a>Distributed Worker Pattern</h3> 
   <p>This is one of the simplest but most useful pattern: using a shared queue to distributed work among consumers. The broker will load-balance messages between these consumers using round-robin distribution, which can be combined with 'prefetch' channel settings. Setting 'prefetch' to 1 is very useful if you need resource-based (CPU, ...) load-balancing. You will typically use explicit acknowledgments and ack messages once they have been processed and the response has been sent. This way, if your consumer fails to process the request or is disconnected, the broker will re-send the same request to another consumer.</p> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-c">// typical "work queue" pattern, where a job can be picked up by any running node</span>
+   <pre>  <span class="pl-c"><span class="pl-c">//</span> typical "work queue" pattern, where a job can be picked up by any running node</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>mySystem<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// create an AMQP connection</span>
+  <span class="pl-c"><span class="pl-c">//</span> create an AMQP connection</span>
   <span class="pl-k">val</span> <span class="pl-en">connFactory</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConnectionFactory</span>()
   connFactory.setUri(<span class="pl-s"><span class="pl-pds">"</span>amqp://guest:guest@localhost/%2F<span class="pl-pds">"</span></span>)
   <span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionOwner</span>.props(connFactory, <span class="pl-c1">1</span> second))
 
   <span class="pl-k">val</span> <span class="pl-en">queueParams</span> <span class="pl-k">=</span> <span class="pl-en">QueueParameters</span>(<span class="pl-s"><span class="pl-pds">"</span>my_queue<span class="pl-pds">"</span></span>, passive <span class="pl-k">=</span> <span class="pl-c1">false</span>, durable <span class="pl-k">=</span> <span class="pl-c1">false</span>, exclusive <span class="pl-k">=</span> <span class="pl-c1">false</span>, autodelete <span class="pl-k">=</span> <span class="pl-c1">true</span>)
 
-  <span class="pl-c">// create 2 equivalent servers</span>
+  <span class="pl-c"><span class="pl-c">//</span> create 2 equivalent servers</span>
   <span class="pl-k">val</span> <span class="pl-en">rpcServers</span> <span class="pl-k">=</span> <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">1</span> to <span class="pl-c1">2</span>) <span class="pl-k">yield</span> {
-    <span class="pl-c">// create a "processor"</span>
-    <span class="pl-c">// in real life you would use a serialization framework (json, protobuf, ....), define command messages, etc...</span>
-    <span class="pl-c">// check the Akka AMQP proxies project for examples</span>
+    <span class="pl-c"><span class="pl-c">//</span> create a "processor"</span>
+    <span class="pl-c"><span class="pl-c">//</span> in real life you would use a serialization framework (json, protobuf, ....), define command messages, etc...</span>
+    <span class="pl-c"><span class="pl-c">//</span> check the Akka AMQP proxies project for examples</span>
     <span class="pl-k">val</span> <span class="pl-en">processor</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IProcessor</span> {
       <span class="pl-k">def</span> <span class="pl-en">process</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>) <span class="pl-k">=</span> {
-        <span class="pl-c">// assume that the message body is a string</span>
+        <span class="pl-c"><span class="pl-c">//</span> assume that the message body is a string</span>
         <span class="pl-k">val</span> <span class="pl-en">response</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>response to <span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-k">new</span> <span class="pl-en">String</span>(delivery.body)
         <span class="pl-en">Future</span>(<span class="pl-en">ProcessResult</span>(<span class="pl-en">Some</span>(response.getBytes)))
       }
-      <span class="pl-k">def</span> <span class="pl-en">onFailure</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>, <span class="pl-v">e</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">=</span> <span class="pl-en">ProcessResult</span>(<span class="pl-c1">None</span>) <span class="pl-c">// we don't return anything</span>
+      <span class="pl-k">def</span> <span class="pl-en">onFailure</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>, <span class="pl-v">e</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">=</span> <span class="pl-en">ProcessResult</span>(<span class="pl-c1">None</span>) <span class="pl-c"><span class="pl-c">//</span> we don't return anything</span>
     }
     <span class="pl-en">ConnectionOwner</span>.createChildActor(conn, <span class="pl-en">RpcServer</span>.props(queueParams, <span class="pl-en">StandardExchanges</span>.amqDirect,  <span class="pl-s"><span class="pl-pds">"</span>my_key<span class="pl-pds">"</span></span>, processor, <span class="pl-en">ChannelParameters</span>(qos <span class="pl-k">=</span> <span class="pl-c1">1</span>)))
   }
 
   <span class="pl-k">val</span> <span class="pl-en">rpcClient</span> <span class="pl-k">=</span> <span class="pl-en">ConnectionOwner</span>.createChildActor(conn, <span class="pl-en">RpcClient</span>.props())
 
-  <span class="pl-c">// wait till everyone is actually connected to the broker</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait till everyone is actually connected to the broker</span>
   <span class="pl-en">Amqp</span>.waitForConnection(system, <span class="pl-v">rpcServers</span>: _<span class="pl-k">*</span>).await()
   <span class="pl-en">Amqp</span>.waitForConnection(system, rpcClient).await()
 
@@ -247,7 +247,7 @@
       <span class="pl-k">case</span> <span class="pl-en">Failure</span>(error) <span class="pl-k">=&gt;</span> println(error)
     }
   }
-  <span class="pl-c">// wait 10 seconds and shut down</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait 10 seconds and shut down</span>
   <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">10000</span>)
   system.shutdown()
 </pre>
@@ -259,39 +259,39 @@
   <p>If your process is "sharded" and one request should result in several responses (one per shard for example) you can use private exclusive queues which are all bound to the same key. In this case, each server will receive the same request and will send back a response.</p> 
   <p>This is very useful if you want to break a single operation into multiple, parallel steps.</p> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-c">// one request/several responses pattern</span>
+   <pre>  <span class="pl-c"><span class="pl-c">//</span> one request/several responses pattern</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>mySystem<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// create an AMQP connection</span>
+  <span class="pl-c"><span class="pl-c">//</span> create an AMQP connection</span>
   <span class="pl-k">val</span> <span class="pl-en">connFactory</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConnectionFactory</span>()
   connFactory.setUri(<span class="pl-s"><span class="pl-pds">"</span>amqp://guest:guest@localhost/%2F<span class="pl-pds">"</span></span>)
   <span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ConnectionOwner</span>.props(connFactory, <span class="pl-c1">1</span> second))
 
-  <span class="pl-c">// typical "reply queue"; the name if left empty: the broker will generate a new random name</span>
+  <span class="pl-c"><span class="pl-c">//</span> typical "reply queue"; the name if left empty: the broker will generate a new random name</span>
   <span class="pl-k">val</span> <span class="pl-en">privateReplyQueue</span> <span class="pl-k">=</span> <span class="pl-en">QueueParameters</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, passive <span class="pl-k">=</span> <span class="pl-c1">false</span>, durable <span class="pl-k">=</span> <span class="pl-c1">false</span>, exclusive <span class="pl-k">=</span> <span class="pl-c1">true</span>, autodelete <span class="pl-k">=</span> <span class="pl-c1">true</span>)
 
-  <span class="pl-c">// we have a problem that can be "sharded", we create one server per shard, and for each request we expect one</span>
-  <span class="pl-c">// response from each shard</span>
+  <span class="pl-c"><span class="pl-c">//</span> we have a problem that can be "sharded", we create one server per shard, and for each request we expect one</span>
+  <span class="pl-c"><span class="pl-c">//</span> response from each shard</span>
 
-  <span class="pl-c">// create one server per shard</span>
+  <span class="pl-c"><span class="pl-c">//</span> create one server per shard</span>
   <span class="pl-k">val</span> <span class="pl-en">rpcServers</span> <span class="pl-k">=</span> <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">0</span> to <span class="pl-c1">2</span>) <span class="pl-k">yield</span> {
-    <span class="pl-c">// create a "processor"</span>
-    <span class="pl-c">// in real life you would use a serialization framework (json, protobuf, ....), define command messages, etc...</span>
-    <span class="pl-c">// check the Akka AMQP proxies project for examples</span>
+    <span class="pl-c"><span class="pl-c">//</span> create a "processor"</span>
+    <span class="pl-c"><span class="pl-c">//</span> in real life you would use a serialization framework (json, protobuf, ....), define command messages, etc...</span>
+    <span class="pl-c"><span class="pl-c">//</span> check the Akka AMQP proxies project for examples</span>
     <span class="pl-k">val</span> <span class="pl-en">processor</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">IProcessor</span> {
       <span class="pl-k">def</span> <span class="pl-en">process</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>) <span class="pl-k">=</span> {
-        <span class="pl-c">// assume that the message body is a string</span>
+        <span class="pl-c"><span class="pl-c">//</span> assume that the message body is a string</span>
         <span class="pl-k">val</span> <span class="pl-en">response</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>response to <span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-k">new</span> <span class="pl-en">String</span>(delivery.body) <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span> from shard <span class="pl-pds">"</span></span> <span class="pl-k">+</span> i
         <span class="pl-en">Future</span>(<span class="pl-en">ProcessResult</span>(<span class="pl-en">Some</span>(response.getBytes)))
       }
-      <span class="pl-k">def</span> <span class="pl-en">onFailure</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>, <span class="pl-v">e</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">=</span> <span class="pl-en">ProcessResult</span>(<span class="pl-c1">None</span>) <span class="pl-c">// we don't return anything</span>
+      <span class="pl-k">def</span> <span class="pl-en">onFailure</span>(<span class="pl-v">delivery</span>: <span class="pl-en">Delivery</span>, <span class="pl-v">e</span>: <span class="pl-en">Throwable</span>) <span class="pl-k">=</span> <span class="pl-en">ProcessResult</span>(<span class="pl-c1">None</span>) <span class="pl-c"><span class="pl-c">//</span> we don't return anything</span>
     }
     <span class="pl-en">ConnectionOwner</span>.createChildActor(conn, <span class="pl-en">RpcServer</span>.props(privateReplyQueue, <span class="pl-en">StandardExchanges</span>.amqDirect,  <span class="pl-s"><span class="pl-pds">"</span>my_key<span class="pl-pds">"</span></span>, processor, <span class="pl-en">ChannelParameters</span>(qos <span class="pl-k">=</span> <span class="pl-c1">1</span>)))
   }
 
   <span class="pl-k">val</span> <span class="pl-en">rpcClient</span> <span class="pl-k">=</span> <span class="pl-en">ConnectionOwner</span>.createChildActor(conn, <span class="pl-en">RpcClient</span>.props())
 
-  <span class="pl-c">// wait till everyone is actually connected to the broker</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait till everyone is actually connected to the broker</span>
   <span class="pl-en">Amqp</span>.waitForConnection(system, <span class="pl-v">rpcServers</span>: _<span class="pl-k">*</span>).await()
   <span class="pl-en">Amqp</span>.waitForConnection(system, rpcClient).await()
 
@@ -307,7 +307,7 @@
       <span class="pl-k">case</span> <span class="pl-en">Failure</span>(error) <span class="pl-k">=&gt;</span> println(error)
     }
   }
-  <span class="pl-c">// wait 10 seconds and shut down</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait 10 seconds and shut down</span>
   <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">10000</span>)
   system.shutdown()
 </pre>

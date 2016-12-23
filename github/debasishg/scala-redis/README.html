@@ -136,7 +136,7 @@ res5: Option[Array[Byte]] = None
   <p>Using a combination of pooling and futures, scala-redis can be throttled for more parallelism. This is the typical recommended strategy if you are looking forward to scale up using this redis client. Here's a sample usage .. we are doing a parallel throttle of an lpush, rpush and set operations in redis, each repeated a number of times ..</p> 
   <p>If we have a pool initialized, then we can use the pool to repeat the following operations.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// lpush</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> lpush</span>
 <span class="pl-k">def</span> <span class="pl-en">lp</span>(<span class="pl-v">msgs</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>]) <span class="pl-k">=</span> {
   clients.withClient {
     client <span class="pl-k">=&gt;</span> {
@@ -146,7 +146,7 @@ res5: Option[Array[Byte]] = None
   }
 }
 
-<span class="pl-c">// rpush</span>
+<span class="pl-c"><span class="pl-c">//</span> rpush</span>
 <span class="pl-k">def</span> <span class="pl-en">rp</span>(<span class="pl-v">msgs</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>]) <span class="pl-k">=</span> {
   clients.withClient {
     client <span class="pl-k">=&gt;</span> {
@@ -156,7 +156,7 @@ res5: Option[Array[Byte]] = None
   }
 }
 
-<span class="pl-c">// set</span>
+<span class="pl-c"><span class="pl-c">//</span> set</span>
 <span class="pl-k">def</span> <span class="pl-en">set</span>(<span class="pl-v">msgs</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>]) <span class="pl-k">=</span> {
   clients.withClient {
     client <span class="pl-k">=&gt;</span> {
@@ -184,13 +184,13 @@ res5: Option[Array[Byte]] = None
   <p>scala-redis is a blocking client for Redis. But you can develop high performance asynchronous patterns of computation using scala-redis and Futures. RedisClientPool allows you to work with multiple RedisClient instances and Futures offer a non-blocking semantics on top of this. The combination can give you good numbers for implementing common usage patterns like scatter/gather. Here's an example that you will also find in the test suite. It uses the scatter/gather technique to do loads of push across many lists in parallel. The gather phase pops from all those lists in parallel and does some compuation over them.</p> 
   <p>Here's the main routine that implements the pattern:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// set up Executors</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> set up Executors</span>
 <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>ScatterGatherSystem<span class="pl-pds">"</span></span>)
 <span class="pl-k">import</span> <span class="pl-v">system.</span><span class="pl-v">dispatcher</span>
 
 <span class="pl-k">val</span> <span class="pl-en">timeout</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> minutes
 
-<span class="pl-k">private</span>[<span class="pl-v">this</span>] <span class="pl-k">def</span> <span class="pl-en">flow</span>[<span class="pl-en">A</span>](<span class="pl-v">noOfRecipients</span>: <span class="pl-k">Int</span>, <span class="pl-v">opsPerClient</span>: <span class="pl-k">Int</span>, <span class="pl-v">keyPrefix</span>: <span class="pl-k">String</span>,
+<span class="pl-k">private</span>[<span class="pl-c1">this</span>] <span class="pl-k">def</span> <span class="pl-en">flow</span>[<span class="pl-en">A</span>](<span class="pl-v">noOfRecipients</span>: <span class="pl-k">Int</span>, <span class="pl-v">opsPerClient</span>: <span class="pl-k">Int</span>, <span class="pl-v">keyPrefix</span>: <span class="pl-k">String</span>,
   <span class="pl-v">fn</span>: (<span class="pl-k">Int</span>, <span class="pl-k">String</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>) <span class="pl-k">=</span> {
   (<span class="pl-c1">1</span> to noOfRecipients) map {i <span class="pl-k">=&gt;</span>
     <span class="pl-en">Future</span> {
@@ -199,17 +199,17 @@ res5: Option[Array[Byte]] = None
   }
 }
 
-<span class="pl-c">// scatter across clients and gather them to do a sum</span>
+<span class="pl-c"><span class="pl-c">//</span> scatter across clients and gather them to do a sum</span>
 <span class="pl-k">def</span> <span class="pl-en">scatterGatherWithList</span>(<span class="pl-v">opsPerClient</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">clients</span>: <span class="pl-en">RedisClientPool</span>) <span class="pl-k">=</span> {
-  <span class="pl-c">// scatter</span>
+  <span class="pl-c"><span class="pl-c">//</span> scatter</span>
   <span class="pl-k">val</span> <span class="pl-en">futurePushes</span> <span class="pl-k">=</span> flow(<span class="pl-c1">100</span>, opsPerClient, <span class="pl-s"><span class="pl-pds">"</span>list_<span class="pl-pds">"</span></span>, listPush)
 
-  <span class="pl-c">// concurrent combinator: Future.sequence</span>
+  <span class="pl-c"><span class="pl-c">//</span> concurrent combinator: Future.sequence</span>
   <span class="pl-k">val</span> <span class="pl-en">allPushes</span> <span class="pl-k">=</span> <span class="pl-en">Future</span>.sequence(futurePushes)
 
-  <span class="pl-c">// sequential combinator: flatMap</span>
+  <span class="pl-c"><span class="pl-c">//</span> sequential combinator: flatMap</span>
   <span class="pl-k">val</span> <span class="pl-en">allSum</span> <span class="pl-k">=</span> allPushes flatMap {result <span class="pl-k">=&gt;</span>
-    <span class="pl-c">// gather</span>
+    <span class="pl-c"><span class="pl-c">//</span> gather</span>
     <span class="pl-k">val</span> <span class="pl-en">futurePops</span> <span class="pl-k">=</span> flow(<span class="pl-c1">100</span>, opsPerClient, <span class="pl-s"><span class="pl-pds">"</span>list_<span class="pl-pds">"</span></span>, listPop)
     <span class="pl-k">val</span> <span class="pl-en">allPops</span> <span class="pl-k">=</span> <span class="pl-en">Future</span>.sequence(futurePops)
     allPops map {members <span class="pl-k">=&gt;</span> members.sum}
@@ -217,15 +217,15 @@ res5: Option[Array[Byte]] = None
   <span class="pl-en">Await</span>.result(allSum, timeout).<span class="pl-c1">asInstanceOf</span>[<span class="pl-k">Long</span>]
 }
 
-<span class="pl-c">// scatter across clietns and gather the first future to complete</span>
+<span class="pl-c"><span class="pl-c">//</span> scatter across clietns and gather the first future to complete</span>
 <span class="pl-k">def</span> <span class="pl-en">scatterGatherFirstWithList</span>(<span class="pl-v">opsPerClient</span>: <span class="pl-k">Int</span>)(<span class="pl-k">implicit</span> <span class="pl-v">clients</span>: <span class="pl-en">RedisClientPool</span>) <span class="pl-k">=</span> {
-  <span class="pl-c">// scatter phase: push to 100 lists in parallel</span>
+  <span class="pl-c"><span class="pl-c">//</span> scatter phase: push to 100 lists in parallel</span>
   <span class="pl-k">val</span> <span class="pl-en">futurePushes</span> <span class="pl-k">=</span> flow(<span class="pl-c1">100</span>, opsPerClient, <span class="pl-s"><span class="pl-pds">"</span>seq_<span class="pl-pds">"</span></span>, listPush)
 
-  <span class="pl-c">// wait for the first future to complete</span>
+  <span class="pl-c"><span class="pl-c">//</span> wait for the first future to complete</span>
   <span class="pl-k">val</span> <span class="pl-en">firstPush</span> <span class="pl-k">=</span> <span class="pl-en">Future</span>.firstCompletedOf(futurePushes)
 
-  <span class="pl-c">// do a sum on the list whose key we got from firstPush</span>
+  <span class="pl-c"><span class="pl-c">//</span> do a sum on the list whose key we got from firstPush</span>
   <span class="pl-k">val</span> <span class="pl-en">firstSum</span> <span class="pl-k">=</span> firstPush map {key <span class="pl-k">=&gt;</span>
     listPop(opsPerClient, key)
   }

@@ -29,15 +29,15 @@ libraryDependencies += "bound" %% "bound-core" % "1.3.0"
 <span class="pl-k">import</span> <span class="pl-v">scalaz.std.string.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">bound.</span><span class="pl-v">_</span>
 
-<span class="pl-c">// An untyped lambda calculus</span>
+<span class="pl-c"><span class="pl-c">//</span> An untyped lambda calculus</span>
 <span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Exp</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] {
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">B</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">A</span>](<span class="pl-v">arg</span>: <span class="pl-en">Exp</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Exp</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> <span class="pl-en">App</span>(<span class="pl-v">this</span>, arg)
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">B</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">A</span>](<span class="pl-v">arg</span>: <span class="pl-en">Exp</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Exp</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> <span class="pl-en">App</span>(<span class="pl-c1">this</span>, arg)
 }
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">V</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-en">A</span>) <span class="pl-k">extends</span> <span class="pl-e">Exp</span>[<span class="pl-en">A</span>]
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">App</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">fn</span>: <span class="pl-en">Exp</span>[<span class="pl-en">A</span>], <span class="pl-v">arg</span>: <span class="pl-en">Exp</span>[<span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">Exp</span>[<span class="pl-en">A</span>]
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Lam</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">s</span>: <span class="pl-en">Scope</span>[<span class="pl-k">Unit</span>, <span class="pl-en">Exp</span>, <span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">Exp</span>[<span class="pl-en">A</span>]
 
-<span class="pl-c">// A monad for our calculus</span>
+<span class="pl-c"><span class="pl-c">//</span> A monad for our calculus</span>
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">expMonad</span><span class="pl-k">:</span> <span class="pl-en">Monad</span>[<span class="pl-en">Exp</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Monad</span>[<span class="pl-en">Exp</span>] {
   <span class="pl-k">def</span> <span class="pl-en">point</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>) <span class="pl-k">=</span> <span class="pl-en">V</span>(a)
   <span class="pl-k">def</span> <span class="pl-en">bind</span>[<span class="pl-en">A</span>,<span class="pl-en">B</span>](<span class="pl-v">m</span>: <span class="pl-en">Exp</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Exp</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Exp</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> m <span class="pl-k">match</span> {
@@ -47,11 +47,11 @@ libraryDependencies += "bound" %% "bound-core" % "1.3.0"
   }
 }
 
-<span class="pl-c">// Lambda abstraction smart constructor.</span>
+<span class="pl-c"><span class="pl-c">//</span> Lambda abstraction smart constructor.</span>
 <span class="pl-k">def</span> <span class="pl-en">lam</span>[<span class="pl-en">A</span><span class="pl-k">:</span><span class="pl-en">Equal</span>](<span class="pl-v">v</span>: <span class="pl-en">A</span>, <span class="pl-v">b</span>: <span class="pl-en">Exp</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Exp</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span>
   <span class="pl-en">Lam</span>(abstract1(v, b))
 
-<span class="pl-c">// Weak-head normal form evaluator.</span>
+<span class="pl-c"><span class="pl-c">//</span> Weak-head normal form evaluator.</span>
 <span class="pl-k">def</span> <span class="pl-en">whnf</span>[<span class="pl-en">A</span>](<span class="pl-v">e</span>: <span class="pl-en">Exp</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Exp</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> e <span class="pl-k">match</span> {
   <span class="pl-k">case</span> <span class="pl-en">App</span>(f,a) <span class="pl-k">=&gt;</span> whnf(f) <span class="pl-k">match</span> {
     <span class="pl-k">case</span> <span class="pl-en">Lam</span>(b) <span class="pl-k">=&gt;</span> whnf(instantiate1(a,b))

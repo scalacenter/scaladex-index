@@ -21,23 +21,33 @@
   <span class="pl-k">import</span> <span class="pl-v">io.rbricks.scalog.</span><span class="pl-v">LoggingBackend</span>
   <span class="pl-en">LoggingBackend</span>.consoleFromConfig(
     <span class="pl-en">ConfigFactory</span>.load().getConfig(<span class="pl-s"><span class="pl-pds">"</span>logging<span class="pl-pds">"</span></span>))
-  <span class="pl-c">// ...</span>
+  <span class="pl-c"><span class="pl-c">//</span> ...</span>
 }</pre>
-      </div></li> 
+      </div> <p>Then add the logging config to your <code>application.conf</code>:</p> <pre><code>logging {
+  some.example.namespace {
+    'level = info
+    ClassName1 = error
+    inner.namespace {
+      'level = info
+      "ClassName2" = debug
+    }
+  }
+}
+</code></pre></li> 
      <li><p>or, in the application entry point, programmatically:</p> 
       <div class="highlight highlight-source-scala">
-       <pre>      <span class="pl-k">object</span> <span class="pl-en">Main</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-        <span class="pl-k">import</span> <span class="pl-v">io.rbricks.scalog.</span><span class="pl-v">_</span>
-        <span class="pl-en">LoggingBackend</span>.console(
-          <span class="pl-s"><span class="pl-pds">"</span>io.finch<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Level</span>.<span class="pl-en">Info</span>,
-          <span class="pl-s"><span class="pl-pds">"</span>com.example.thisapp<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Level</span>.<span class="pl-en">Debug</span>)
-        <span class="pl-c">// ...</span>
-      }</pre>
+       <pre><span class="pl-k">object</span> <span class="pl-en">Main</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">import</span> <span class="pl-v">io.rbricks.scalog.</span><span class="pl-v">_</span>
+  <span class="pl-en">LoggingBackend</span>.console(
+    <span class="pl-s"><span class="pl-pds">"</span>io.finch<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Level</span>.<span class="pl-en">Info</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>com.example.thisapp<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Level</span>.<span class="pl-en">Debug</span>)
+  <span class="pl-c"><span class="pl-c">//</span> ...</span>
+}</pre>
       </div></li> 
     </ul> <p>You can set <code>-Dscalog.forceColored=yes</code> as a <em>java option</em> (<code>javaOptions += "-Dscalog.forceColored=yes"</code> in <code>build.sbt</code>) to enable colorized output even when stdout/stderr don't appear to be ttys.</p> <p>Other ways to instantiate the backend can be found in the <a href="http://rbricks.io/scalog/latest/api/io/rbricks/scalog/LoggingBackend$.html" target="_blank">scaladoc for <code>LoggingBackend</code></a></p></li> 
    <li><p>Easily extensible. See <a href="https://github.com/rbricks/scalog#architecture" target="_blank">architecture</a> for details.</p></li> 
-   <li>Support for slf4j's <a href="http://logback.qos.ch/manual/mdc.html" target="_blank">MDC (Mapped Diagnostic Context)</a> to keep track of context (i.e. http request being handled) between calls.</li> 
-   <li>Support for MDC context propagation through future combinators, to keep track of a request handled asynchronously. See <a href="https://github.com/rbricks/scalog#context-propagation" target="_blank">context propagation</a> for details.</li> 
+   <li>Support for slf4j's <strong><a href="http://logback.qos.ch/manual/mdc.html" target="_blank">MDC (Mapped Diagnostic Context)</a></strong> to keep track of context (i.e. http request being handled) between calls.</li> 
+   <li>Support for <strong>MDC context propagation</strong> through future combinators, to keep track of a request handled asynchronously. See <a href="https://github.com/rbricks/scalog/blob/master/contextpropagation/README.md" target="_blank">this</a> for details and installation instructions.</li> 
   </ol> 
   <p><strong>A note on performance.</strong> The basic precautions to limit useless overhead in the critical path are in place, but performance is not currently a main focus. The library is geared towards ease of use for projects in which raw processing perf is not a big concern either because they act as a hub to networked resources or because they haven't reached a stage in which single-server performance is critical.</p> 
   <p>Because the library is a slf4j backend, it can be easily swapped out for a more mainstream logging system tuned for performance, such as <a href="http://logback.qos.ch" target="_blank">logback</a>.</p> 
@@ -76,11 +86,6 @@
   <p>A <code>Transport</code> can be implemented by extending the trait directly or (more conveniently) by extending any of its descendants. Concrete transports provided are parametrized over <code>Format[T]</code> which represents the log message formatting. A <code>Format[Out]</code>is a function <code>(/* loggerName: */ String, LogMessage) =&gt; Out</code>that formats/serializes a certain log message to the specified type <code>Out</code> (e.g. to <code>String</code> for console output).</p> 
   <p>Included <strong>formats</strong> can be found in package <a href="http://rbricks.io/scalog/latest/api/io/rbricks/scalog/format/index.html" target="_blank"><code>format</code></a>.</p> 
   <p>Included <strong>transports</strong> can be found in package <a href="http://rbricks.io/scalog/latest/api/io/rbricks/scalog/transport/index.html" target="_blank"><code>transport</code></a>.</p> 
-  <h2><a id="user-content-context-propagation" class="anchor" href="https://github.com/rbricks/scalog#context-propagation" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Context propagation</h2> 
-  <p>This section is WIP.</p> 
   <p><a href="https://github.com/rbricks/scalog/blob/master/LICENSE.txt" target="_blank">MIT License</a></p> 
  </article>
 </div>

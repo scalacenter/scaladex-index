@@ -42,21 +42,21 @@ libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.23"
 <span class="pl-k">class</span> <span class="pl-en">DemoStep</span>(<span class="pl-v">demoService</span>: <span class="pl-en">ActorRef</span>)(<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">context</span><span class="pl-k">:</span> <span class="pl-en">ActorContext</span>)
     <span class="pl-k">extends</span> <span class="pl-e">ProcessStep</span>[<span class="pl-en">DemoState</span>] {
 
-  <span class="pl-c">// Code to execute when the step should perform it's task</span>
+  <span class="pl-c"><span class="pl-c">//</span> Code to execute when the step should perform it's task</span>
   <span class="pl-k">def</span> <span class="pl-en">execute</span>()(<span class="pl-k">implicit</span> <span class="pl-v">stepActor</span>: <span class="pl-en">ActorRef</span>)<span class="pl-k">:</span> <span class="pl-en">Execution</span> <span class="pl-k">=</span> state <span class="pl-k">=&gt;</span> {
     demoService <span class="pl-k">!</span> <span class="pl-en">Command</span>(state.demoed)
   }
 
-  <span class="pl-c">// This catches the responses from the async execute action.</span>
-  <span class="pl-c">// It emits Process.Event to the process.</span>
+  <span class="pl-c"><span class="pl-c">//</span> This catches the responses from the async execute action.</span>
+  <span class="pl-c"><span class="pl-c">//</span> It emits Process.Event to the process.</span>
   <span class="pl-k">def</span> <span class="pl-en">receiveCommand</span><span class="pl-k">:</span> <span class="pl-en">CommandToEvent</span> <span class="pl-k">=</span> {
     <span class="pl-k">case</span> <span class="pl-en">ReplyFromDemoService</span> <span class="pl-k">=&gt;</span>
       <span class="pl-en">Demoed</span>
   }
 
-  <span class="pl-c">// The updateState function handles events and changes the state. It</span>
-  <span class="pl-c">// should mark the step as done when the event is the last event for</span>
-  <span class="pl-c">// this step.</span>
+  <span class="pl-c"><span class="pl-c">//</span> The updateState function handles events and changes the state. It</span>
+  <span class="pl-c"><span class="pl-c">//</span> should mark the step as done when the event is the last event for</span>
+  <span class="pl-c"><span class="pl-c">//</span> this step.</span>
   <span class="pl-k">def</span> <span class="pl-en">updateState</span><span class="pl-k">:</span> <span class="pl-en">UpdateFunction</span> <span class="pl-k">=</span> {
     <span class="pl-k">case</span> <span class="pl-en">Demoed</span> <span class="pl-k">=&gt;</span> { state <span class="pl-k">=&gt;</span>
       markDone()
@@ -72,15 +72,15 @@ libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.23"
   <p>The main goal of the process is to create a flow of steps. It is possible to chain different steps, so that they are performed in sequence. It is also possible to parallelize steps.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">DemoProcess</span>(<span class="pl-v">demoService</span>: <span class="pl-en">ActorRef</span>) <span class="pl-k">extends</span> <span class="pl-e">Process</span>[<span class="pl-en">DemoState</span>] {
-  <span class="pl-c">// implicit ExecutionContext is needed</span>
+  <span class="pl-c"><span class="pl-c">//</span> implicit ExecutionContext is needed</span>
   <span class="pl-k">import</span> <span class="pl-v">context.</span><span class="pl-v">dispatcher</span>
   <span class="pl-k">var</span> <span class="pl-en">state</span> <span class="pl-k">=</span> <span class="pl-en">DemoState</span>(<span class="pl-c1">false</span>)
   <span class="pl-k">val</span> <span class="pl-en">step1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DemoStep</span>(demoService)
-  <span class="pl-c">// Subflows can be created</span>
+  <span class="pl-c"><span class="pl-c">//</span> Subflows can be created</span>
   <span class="pl-k">val</span> <span class="pl-en">subflow1</span> <span class="pl-k">=</span> subStep1 <span class="pl-k">~</span><span class="pl-k">&gt;</span> subStep2
   <span class="pl-k">val</span> <span class="pl-en">subflow2</span> <span class="pl-k">=</span> subStepX <span class="pl-k">~</span><span class="pl-k">&gt;</span> subStepY
 
-  <span class="pl-c">// process defines the complete process</span>
+  <span class="pl-c"><span class="pl-c">//</span> process defines the complete process</span>
   <span class="pl-k">val</span> <span class="pl-en">process</span> <span class="pl-k">=</span> step1 <span class="pl-k">~</span><span class="pl-k">&gt;</span> step2 <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Par</span>(subflow1, subflow2) <span class="pl-k">~</span><span class="pl-k">&gt;</span> step3
 
   <span class="pl-k">def</span> <span class="pl-en">receiveCommand</span> <span class="pl-k">=</span> {
@@ -97,15 +97,15 @@ libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.23"
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">DemoProcess</span>(<span class="pl-v">demoService</span>: <span class="pl-en">ActorRef</span>) <span class="pl-k">extends</span> <span class="pl-e">PersistentProcess</span>[<span class="pl-en">DemoState</span>] {
   <span class="pl-k">val</span> <span class="pl-en">persistenceId</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>demoProcess<span class="pl-pds">"</span></span>
-  <span class="pl-c">// implicit ExecutionContext is needed</span>
+  <span class="pl-c"><span class="pl-c">//</span> implicit ExecutionContext is needed</span>
   <span class="pl-k">import</span> <span class="pl-v">context.</span><span class="pl-v">dispatcher</span>
   <span class="pl-k">var</span> <span class="pl-en">state</span> <span class="pl-k">=</span> <span class="pl-en">DemoState</span>(<span class="pl-c1">false</span>)
   <span class="pl-k">val</span> <span class="pl-en">step1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DemoStep</span>(demoService)
-  <span class="pl-c">// Subflows can be created</span>
+  <span class="pl-c"><span class="pl-c">//</span> Subflows can be created</span>
   <span class="pl-k">val</span> <span class="pl-en">subflow1</span> <span class="pl-k">=</span> subStep1 <span class="pl-k">~</span><span class="pl-k">&gt;</span> subStep2
   <span class="pl-k">val</span> <span class="pl-en">subflow2</span> <span class="pl-k">=</span> subStepX <span class="pl-k">~</span><span class="pl-k">&gt;</span> subStepY
 
-  <span class="pl-c">// process defines the complete process</span>
+  <span class="pl-c"><span class="pl-c">//</span> process defines the complete process</span>
   <span class="pl-k">val</span> <span class="pl-en">process</span> <span class="pl-k">=</span> step1 <span class="pl-k">~</span><span class="pl-k">&gt;</span> step2 <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Par</span>(subflow1, subflow2) <span class="pl-k">~</span><span class="pl-k">&gt;</span> step3
 
   <span class="pl-k">def</span> <span class="pl-en">receiveCommand</span> <span class="pl-k">=</span> {

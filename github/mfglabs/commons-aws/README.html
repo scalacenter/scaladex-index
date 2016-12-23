@@ -42,7 +42,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.mfglabs.commons.aws.s3.</span><span class="pl-v">_</span>
 
-<span class="pl-k">val</span> <span class="pl-en">builder</span> <span class="pl-k">=</span> <span class="pl-en">S3StreamBuilder</span>(<span class="pl-k">new</span> <span class="pl-en">AmazonS3AsyncClient</span>()) <span class="pl-c">// contains un-materialized composable Source / Flow / Sink</span>
+<span class="pl-k">val</span> <span class="pl-en">builder</span> <span class="pl-k">=</span> <span class="pl-en">S3StreamBuilder</span>(<span class="pl-k">new</span> <span class="pl-en">AmazonS3AsyncClient</span>()) <span class="pl-c"><span class="pl-c">//</span> contains un-materialized composable Source / Flow / Sink</span>
 
 <span class="pl-k">val</span> <span class="pl-en">fileStream</span><span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">ByteString</span>, <span class="pl-k">Unit</span>] <span class="pl-k">=</span> builder.getFileAsStream(bucket, key)
 
@@ -61,11 +61,11 @@ someBinaryStream.via(
   )
 )
 
-<span class="pl-k">val</span> <span class="pl-en">ops</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">builder.MaterializedOps</span>(flowMaterializer) <span class="pl-c">// contains materialized methods on top of S3Stream</span>
+<span class="pl-k">val</span> <span class="pl-en">ops</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">builder.MaterializedOps</span>(flowMaterializer) <span class="pl-c"><span class="pl-c">//</span> contains materialized methods on top of S3Stream</span>
 
 <span class="pl-k">val</span> <span class="pl-en">file</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ByteString</span>] <span class="pl-k">=</span> ops.getFile(bucket, key)
 
-<span class="pl-c">// More methods, check the source code</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> More methods, check the source code</span></pre>
   </div> 
   <p>Please remark that you don't need any implicit <code>scala.concurrent.ExecutionContext</code> as it's directly provided and managed by [[AmazonS3Client]] itself.</p> 
   <p>There are also smart <code>AmazonS3Client</code> constructors that can be provided with custom. <code>java.util.concurrent.ExecutorService</code> if you want to manage your pools of threads.</p> 
@@ -100,12 +100,12 @@ someBinaryStream.via(
   <p>In your code:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.mfglabs.commons.aws.</span><span class="pl-v">cloudwatch</span>
-<span class="pl-k">import</span> <span class="pl-v">cloudwatch.</span><span class="pl-v">_ </span><span class="pl-c">// brings implicit extensions</span>
+<span class="pl-k">import</span> <span class="pl-v">cloudwatch.</span><span class="pl-v">_ </span><span class="pl-c"><span class="pl-c">//</span> brings implicit extensions</span>
 
-<span class="pl-c">// Create the client</span>
+<span class="pl-c"><span class="pl-c">//</span> Create the client</span>
 <span class="pl-k">val</span> <span class="pl-en">CW</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">cloudwatch.AmazonCloudwatchClient</span>()
 
-<span class="pl-c">// Use it</span>
+<span class="pl-c"><span class="pl-c">//</span> Use it</span>
 <span class="pl-k">for</span> {
   metrics  <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">CW</span>.listMetrics()
 } <span class="pl-k">yield</span> (metrics)</pre>
@@ -135,23 +135,23 @@ someBinaryStream.via(
    <pre><span class="pl-k">import</span> <span class="pl-v">com.mfglabs.commons.aws.</span><span class="pl-v">cloudwatch</span>
 <span class="pl-k">import</span> <span class="pl-v">com.mfglabs.commons.aws.extensions.cloudwatch.</span><span class="pl-v">CloudwatchAkkaHeartbeat</span>
 
-<span class="pl-k">import</span> <span class="pl-v">myExecutionCtx </span><span class="pl-c">// an implicit custom execution context</span>
+<span class="pl-k">import</span> <span class="pl-v">myExecutionCtx </span><span class="pl-c"><span class="pl-c">//</span> an implicit custom execution context</span>
 
 <span class="pl-k">val</span> <span class="pl-en">hb</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CloudwatchAkkaHeartbeat</span>(
-  namespace <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Test/Heartbeat<span class="pl-pds">"</span></span>,         <span class="pl-c">// the namespace of the cloudwatch metrics</span>
-  name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test1<span class="pl-pds">"</span></span>,                       <span class="pl-c">// the name of the cloudwatch</span>
-  beatPeriod <span class="pl-k">=</span> <span class="pl-c1">2.</span>second,                <span class="pl-c">// the heart beat period in Scala.concurrent.duration.Duration string format</span>
-  alarmPeriod <span class="pl-k">=</span> <span class="pl-c1">120.</span>seconds,            <span class="pl-c">// the period on which the metrics is analyzed to determine the heartbeat health</span>
-  alarmPeriodNb <span class="pl-k">=</span> <span class="pl-c1">1</span>,                    <span class="pl-c">// the number of "bad health" periods after which the alarm is triggered</span>
-  alarmThreshold <span class="pl-k">=</span> <span class="pl-c1">10</span>,                  <span class="pl-c">// the threshold counting the number of heartbeats on a period under which the "bad health" is detected</span>
-  system <span class="pl-k">=</span> system,                      <span class="pl-c">// the Akka system to create scheduler</span>
-  client <span class="pl-k">=</span> <span class="pl-en">CW</span>,                          <span class="pl-c">// the cloudwatch client</span>
-  actionEndpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>arn:aws:sns:eu-west-1:896733075612:Cloudwatch-HeartBeat-Test<span class="pl-pds">"</span></span> <span class="pl-c">// the actionEndpoint (SQS) to which Cloudwatch will send the alarm</span>
+  namespace <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Test/Heartbeat<span class="pl-pds">"</span></span>,         <span class="pl-c"><span class="pl-c">//</span> the namespace of the cloudwatch metrics</span>
+  name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test1<span class="pl-pds">"</span></span>,                       <span class="pl-c"><span class="pl-c">//</span> the name of the cloudwatch</span>
+  beatPeriod <span class="pl-k">=</span> <span class="pl-c1">2.</span>second,                <span class="pl-c"><span class="pl-c">//</span> the heart beat period in Scala.concurrent.duration.Duration string format</span>
+  alarmPeriod <span class="pl-k">=</span> <span class="pl-c1">120.</span>seconds,            <span class="pl-c"><span class="pl-c">//</span> the period on which the metrics is analyzed to determine the heartbeat health</span>
+  alarmPeriodNb <span class="pl-k">=</span> <span class="pl-c1">1</span>,                    <span class="pl-c"><span class="pl-c">//</span> the number of "bad health" periods after which the alarm is triggered</span>
+  alarmThreshold <span class="pl-k">=</span> <span class="pl-c1">10</span>,                  <span class="pl-c"><span class="pl-c">//</span> the threshold counting the number of heartbeats on a period under which the "bad health" is detected</span>
+  system <span class="pl-k">=</span> system,                      <span class="pl-c"><span class="pl-c">//</span> the Akka system to create scheduler</span>
+  client <span class="pl-k">=</span> <span class="pl-en">CW</span>,                          <span class="pl-c"><span class="pl-c">//</span> the cloudwatch client</span>
+  actionEndpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>arn:aws:sns:eu-west-1:896733075612:Cloudwatch-HeartBeat-Test<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> the actionEndpoint (SQS) to which Cloudwatch will send the alarm</span>
 )
 
-hb.start() <span class="pl-c">// to start the heartbeat</span>
+hb.start() <span class="pl-c"><span class="pl-c">//</span> to start the heartbeat</span>
 
-hb.stop() <span class="pl-c">// to stop the heartbeat</span></pre>
+hb.stop() <span class="pl-c"><span class="pl-c">//</span> to stop the heartbeat</span></pre>
   </div> 
   <blockquote> 
    <p>Please note that you need to provide an implicit <code>ExecutionContext</code> for <code>CloudwatchAkkaHeartbeat.start/stop</code></p> 
@@ -177,7 +177,7 @@ hb.stop() <span class="pl-c">// to stop the heartbeat</span></pre>
   <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">heartbeatEndpoint</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> ...
 
   ...
-  <span class="pl-c">// start the heartbeat</span>
+  <span class="pl-c"><span class="pl-c">//</span> start the heartbeat</span>
   heartbeat.start()(myExeCtx)
 }</pre>
   </div> 

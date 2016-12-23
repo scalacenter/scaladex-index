@@ -54,12 +54,12 @@
 db.start()
 rainers.start()
 
-<span class="pl-c">// Do what you will with these:</span>
+<span class="pl-c"><span class="pl-c">//</span> Do what you will with these:</span>
 <span class="pl-k">val</span> <span class="pl-en">myStorage</span><span class="pl-k">:</span> <span class="pl-en">CommitStorage</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.storage
 <span class="pl-k">val</span> <span class="pl-en">myKeeper</span><span class="pl-k">:</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.keeper
 <span class="pl-k">val</span> <span class="pl-en">myServlet</span><span class="pl-k">:</span> <span class="pl-en">RainerServlet</span>[<span class="pl-en">ValueType</span>] <span class="pl-k">=</span> rainers.servlet
 
-<span class="pl-c">// For example:</span>
+<span class="pl-c"><span class="pl-c">//</span> For example:</span>
 myStorage.save(<span class="pl-en">Commit</span>.fromValue(
   key <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>,
   version <span class="pl-k">=</span> <span class="pl-c1">1</span>,
@@ -87,7 +87,7 @@ myStorage.save(<span class="pl-en">Commit</span>.fromValue(
 db.start()
 storage.start()
 
-<span class="pl-c">// Revert "foo" to previous version</span>
+<span class="pl-c"><span class="pl-c">//</span> Revert "foo" to previous version</span>
 <span class="pl-k">val</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> storage.get(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">previousFoo</span> <span class="pl-k">=</span> foo flatMap (x <span class="pl-k">=&gt;</span> storage.get(x.key, x.version <span class="pl-k">-</span> <span class="pl-c1">1</span>))
 previousFoo foreach (x <span class="pl-k">=&gt;</span> storage.save(<span class="pl-en">Commit</span>.fromBytes(x.key, x.version <span class="pl-k">+</span> <span class="pl-c1">2</span>, x.payload, <span class="pl-s"><span class="pl-pds">"</span>me<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Reverting foo<span class="pl-pds">"</span></span>, <span class="pl-en">DateTime</span>.now))</pre>
@@ -102,18 +102,18 @@ previousFoo foreach (x <span class="pl-k">=&gt;</span> storage.save(<span class=
 
 <span class="pl-k">val</span> <span class="pl-en">keeper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>](curator, <span class="pl-s"><span class="pl-pds">"</span>/path/in/zk<span class="pl-pds">"</span></span>)
 
-<span class="pl-c">// On-demand access (synchronous ZK operations):</span>
+<span class="pl-c"><span class="pl-c">//</span> On-demand access (synchronous ZK operations):</span>
 <span class="pl-k">val</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> keeper.get(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">keys</span> <span class="pl-k">=</span> keeper.keys
 
-<span class="pl-c">// Create a mirror (async updates from ZK):</span>
+<span class="pl-c"><span class="pl-c">//</span> Create a mirror (async updates from ZK):</span>
 <span class="pl-k">val</span> <span class="pl-en">mirror</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]] <span class="pl-k">=</span> keeper.mirror()
 
-<span class="pl-c">// Which, for example, you can use to update an AtomicReference:</span>
+<span class="pl-c"><span class="pl-c">//</span> Which, for example, you can use to update an AtomicReference:</span>
 <span class="pl-k">val</span> <span class="pl-en">ref</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AtomicReference</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]]
 <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> mirror.changes.register(<span class="pl-en">Witness</span>(ref))
 
-<span class="pl-c">// When you're no longer interested in updates, close the mirror:</span>
+<span class="pl-c"><span class="pl-c">//</span> When you're no longer interested in updates, close the mirror:</span>
 <span class="pl-en">Await</span>.result(c.close())</pre>
   </div> 
   <h3><a id="user-content-using-commitkeeper-with-commitstorage" class="anchor" href="https://github.com/metamx/rainer#using-commitkeeper-with-commitstorage" aria-hidden="true" target="_blank">
@@ -123,26 +123,26 @@ previousFoo foreach (x <span class="pl-k">=&gt;</span> storage.save(<span class=
   <p>Combining a CommitStorage with a CommitKeeper is a common pattern used for managing configuration of a cluster of machines. Combined setups can provide full-history journaled updates in an RDBMS, coupled with low latency notifications through ZooKeeper. The idea is to do all of your saves through a keeperPublishing CommitStorage (which will update ZooKeeper any time you save something) and to do your reads through a mirror provided by a CommitKeeper. To prevent inopportune crashes or out of band ZooKeeper modifications from causing ZooKeeper to become out of sync, an autoPublisher can periodically detect and push any unpushed updates from your storage.</p> 
   <p>The "Rainers" builder sets all of this up for you, but you can also do it manually with something like:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// During setup, link your underlying storage and keeper together.</span>
-<span class="pl-c">// Afterwards, use "storage", not "underlyingStorage" for your own operations.</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> During setup, link your underlying storage and keeper together.</span>
+<span class="pl-c"><span class="pl-c">//</span> Afterwards, use "storage", not "underlyingStorage" for your own operations.</span>
 <span class="pl-k">val</span> <span class="pl-en">keeper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CommitKeeper</span>[<span class="pl-en">ValueType</span>](curator, <span class="pl-s"><span class="pl-pds">"</span>/path/in/zk<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">storage</span> <span class="pl-k">=</span> <span class="pl-en">CommitStorage</span>.keeperPublishing(underlyingStorage, keeper)
 <span class="pl-k">val</span> <span class="pl-en">autoPublisher</span> <span class="pl-k">=</span> keeper.autoPublisher(underlyingStorage, period, periodFuzz)
 autoPublisher.start()
 
-<span class="pl-c">// When your application exits, shut down your autoPublisher.</span>
+<span class="pl-c"><span class="pl-c">//</span> When your application exits, shut down your autoPublisher.</span>
 <span class="pl-en">Await</span>.result(autoPublisher.close())</pre>
   </div> 
   <p>When using a linked CommitStorage and CommitKeeper, make sure to send writes through the CommitStorage only. This is because the CommitStorage is treated as the system of record.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// You can get a mirror from your keeper, which will now reflect the most recent commits from your storage.</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> You can get a mirror from your keeper, which will now reflect the most recent commits from your storage.</span>
 <span class="pl-k">val</span> <span class="pl-en">mirror</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]] <span class="pl-k">=</span> keeper.mirror()
 
-<span class="pl-c">// Which, for example, you can use to update an AtomicReference:</span>
+<span class="pl-c"><span class="pl-c">//</span> Which, for example, you can use to update an AtomicReference:</span>
 <span class="pl-k">val</span> <span class="pl-en">ref</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AtomicReference</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Commit</span>[<span class="pl-en">ValueType</span>]]]
 <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> mirror.changes.register(<span class="pl-en">Witness</span>(ref))
 
-<span class="pl-c">// When you save to the storage, ZooKeeper and the mirror will be updated automatically. (Don't save using the keeper!)</span>
+<span class="pl-c"><span class="pl-c">//</span> When you save to the storage, ZooKeeper and the mirror will be updated automatically. (Don't save using the keeper!)</span>
 storage.save(someCommit)</pre>
   </div> 
   <h3><a id="user-content-using-commitstorage-without-commitkeeper" class="anchor" href="https://github.com/metamx/rainer#using-commitstorage-without-commitkeeper" aria-hidden="true" target="_blank">
@@ -199,7 +199,7 @@ $ curl -s http://localhost:8080/diary/foo/1/meta
   .build()
 <span class="pl-k">val</span> <span class="pl-en">storage</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HttpCommitStorage</span>[<span class="pl-en">ValueType</span>](client, uri)
 
-<span class="pl-c">// Use it like any other CommitStorage:</span>
+<span class="pl-c"><span class="pl-c">//</span> Use it like any other CommitStorage:</span>
 <span class="pl-k">val</span> <span class="pl-en">commit</span> <span class="pl-k">=</span> storage.get(<span class="pl-s"><span class="pl-pds">"</span>hey<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <h3><a id="user-content-python-http-client" class="anchor" href="https://github.com/metamx/rainer#python-http-client" aria-hidden="true" target="_blank">
@@ -239,7 +239,7 @@ $ python -m pyrainer.rainer --url http://localhost:8080/diary edit hey
 </code></pre> 
   <p>You can also create a wrapper for your service that makes invocation simpler. An executable script like this should do it:</p> 
   <div class="highlight highlight-source-shell">
-   <pre><span class="pl-c">#!/bin/sh -e</span>
+   <pre><span class="pl-c"><span class="pl-c">#!</span>/bin/sh -e</span>
 <span class="pl-c1">exec</span> python -m pyrainer.rainer --url <span class="pl-s"><span class="pl-pds">"</span>http://example.com/foo<span class="pl-pds">"</span></span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">$@</span><span class="pl-pds">"</span></span></pre>
   </div> 
  </article>

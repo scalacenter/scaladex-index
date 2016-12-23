@@ -22,23 +22,23 @@
   </div> 
   <p>I prefer the second option, because it saves another round-trip to the database. Anorm however, has no natural way of processing the result rows, because a <code>RowParser</code> parses rows to objects, but not multiple rows to a single object. Therefore, parsing a result set containing a one-to-many relation must be done like so:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">/** Parses a `Blog` without nested posts. */</span>
+   <pre><span class="pl-c"><span class="pl-c">/**</span> Parses a `Blog` without nested posts. <span class="pl-c">*/</span></span>
 <span class="pl-k">val</span> <span class="pl-en">simple</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
     get[<span class="pl-k">Long</span>](<span class="pl-s"><span class="pl-pds">"</span>blogs.id<span class="pl-pds">"</span></span>) <span class="pl-k">~</span> get[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>blogs.title<span class="pl-pds">"</span></span>) map {
         <span class="pl-k">case</span> id<span class="pl-k">~</span>title <span class="pl-k">=&gt;</span> <span class="pl-en">Blog</span>(id, title, <span class="pl-c1">Nil</span>)
     }
 }
 
-<span class="pl-c">/** Parses a `Blog` paired with an optional `Post` that can be later be collapsed into one object. */</span>
+<span class="pl-c"><span class="pl-c">/**</span> Parses a `Blog` paired with an optional `Post` that can be later be collapsed into one object. <span class="pl-c">*/</span></span>
 <span class="pl-k">val</span> <span class="pl-en">parser</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[(<span class="pl-en">Blog</span>, <span class="pl-en">Option</span>[<span class="pl-en">Post</span>])] <span class="pl-k">=</span> {
     simple <span class="pl-k">~</span> <span class="pl-en">Post</span>.parser.<span class="pl-k">?</span> map {
         <span class="pl-k">case</span> blog<span class="pl-k">~</span>post <span class="pl-k">=&gt;</span> (blog, post)
     }
 }
 
-<span class="pl-c">/** Selects a blog with related posts within one query, parses the rows as (blog, post) tuples,</span>
+<span class="pl-c"><span class="pl-c">/**</span> Selects a blog with related posts within one query, parses the rows as (blog, post) tuples,</span>
 <span class="pl-c">*   then groups the tuples by blog to eventually nest the posts within their parent blog.</span>
-<span class="pl-c">*/</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
 <span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">id</span>: <span class="pl-k">Long</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Blog</span>] <span class="pl-k">=</span> {
     <span class="pl-en">DB</span>.withConnection { <span class="pl-k">implicit</span> c <span class="pl-k">=&gt;</span>
         <span class="pl-en">SQL</span>(<span class="pl-s"><span class="pl-pds">"""</span></span>

@@ -368,18 +368,18 @@
 
   <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">ElasticClient</span>.transport(<span class="pl-en">ElasticsearchClientUri</span>(host, port))
 
-  <span class="pl-c">// await is a helper method to make this operation synchronous instead of async</span>
-  <span class="pl-c">// You would normally avoid doing this in a real program as it will block your thread</span>
+  <span class="pl-c"><span class="pl-c">//</span> await is a helper method to make this operation synchronous instead of async</span>
+  <span class="pl-c"><span class="pl-c">//</span> You would normally avoid doing this in a real program as it will block your thread</span>
   client.execute { index into <span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>artists<span class="pl-pds">"</span></span> fields <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span><span class="pl-k">-</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>coldplay<span class="pl-pds">"</span></span> }.await
 
-  <span class="pl-c">// we need to wait until the index operation has been flushed by the server.</span>
-  <span class="pl-c">// this is an important point - when the index future completes, that doesn't mean that the doc</span>
-  <span class="pl-c">// is necessarily searchable. It simply means the server has processed your request and the doc is</span>
-  <span class="pl-c">// queued to be flushed to the indexes. Elasticsearch is eventually consistent.</span>
-  <span class="pl-c">// For this demo, we'll simply wait for 2 seconds (default refresh interval is 1 second).</span>
+  <span class="pl-c"><span class="pl-c">//</span> we need to wait until the index operation has been flushed by the server.</span>
+  <span class="pl-c"><span class="pl-c">//</span> this is an important point - when the index future completes, that doesn't mean that the doc</span>
+  <span class="pl-c"><span class="pl-c">//</span> is necessarily searchable. It simply means the server has processed your request and the doc is</span>
+  <span class="pl-c"><span class="pl-c">//</span> queued to be flushed to the indexes. Elasticsearch is eventually consistent.</span>
+  <span class="pl-c"><span class="pl-c">//</span> For this demo, we'll simply wait for 2 seconds (default refresh interval is 1 second).</span>
   <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">2000</span>)
 
-  <span class="pl-c">// now we can search for the document we indexed earlier</span>
+  <span class="pl-c"><span class="pl-c">//</span> now we can search for the document we indexed earlier</span>
   <span class="pl-k">val</span> <span class="pl-en">resp</span> <span class="pl-k">=</span> client.execute { search in <span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>artists<span class="pl-pds">"</span></span> query <span class="pl-s"><span class="pl-pds">"</span>coldplay<span class="pl-pds">"</span></span> }.await
   println(resp)
 
@@ -591,7 +591,7 @@
   </div> 
   <p>If you already have a handle to a Node in the Java API then you can create a client from it easily:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">node</span> <span class="pl-k">=</span> ... <span class="pl-c">// node from the java API somewhere</span>
+   <pre><span class="pl-k">val</span> <span class="pl-en">node</span> <span class="pl-k">=</span> ... <span class="pl-c"><span class="pl-c">//</span> node from the java API somewhere</span>
 <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">ElasticClient</span>.fromNode(node)</pre>
   </div> 
   <h2><a id="user-content-x-pack-security" class="anchor" href="https://github.com/sksamuel/elastic4s#x-pack-security" aria-hidden="true" target="_blank">
@@ -681,15 +681,15 @@ client.execute {
     </svg></a>Indexing Typeclass</h2> 
   <p>Sometimes it is useful to index directly from your domain model, and not have to create maps of fields inline. For this elastic4s provides the <code>Indexable</code> typeclass. Simply provide an implicit instance of <code>Indexable[T]</code> in scope for any class T that you wish to index, and then you can use <code>doc(t)</code> on the index request. For example:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// a simple example of a domain model</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> a simple example of a domain model</span>
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Character</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">location</span>: <span class="pl-k">String</span>)
 
-<span class="pl-c">// how you turn the type into json is up to you</span>
+<span class="pl-c"><span class="pl-c">//</span> how you turn the type into json is up to you</span>
 <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">CharacterIndexable</span> <span class="pl-k">extends</span> <span class="pl-e">Indexable</span>[<span class="pl-en">Character</span>] {
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">json</span>(<span class="pl-v">t</span>: <span class="pl-en">Character</span>)<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"""</span> { "name" : "${t.name}", "location" : "${t.location}" } <span class="pl-pds">"""</span></span>
 }
 
-<span class="pl-c">// now the index request reads much cleaner</span>
+<span class="pl-c"><span class="pl-c">//</span> now the index request reads much cleaner</span>
 <span class="pl-k">val</span> <span class="pl-en">jonsnow</span> <span class="pl-k">=</span> <span class="pl-en">Character</span>(<span class="pl-s"><span class="pl-pds">"</span>jon snow<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>the wall<span class="pl-pds">"</span></span>)
 client.execute {
   indexInto(<span class="pl-s"><span class="pl-pds">"</span>gameofthrones<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>characters<span class="pl-pds">"</span></span>).doc(jonsnow)
@@ -778,10 +778,10 @@ client.execute {
 
 <span class="pl-k">val</span> <span class="pl-en">resp</span> <span class="pl-k">=</span> client.execute {
   search(<span class="pl-s"><span class="pl-pds">"</span>gameofthrones<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>characters<span class="pl-pds">"</span></span>).query(<span class="pl-s"><span class="pl-pds">"</span>kings landing<span class="pl-pds">"</span></span>)
-}.await <span class="pl-c">// don't block in real code</span>
+}.await <span class="pl-c"><span class="pl-c">//</span> don't block in real code</span>
 
-<span class="pl-c">// .as[Character] will look for an implicit HitAs[Character] in scope</span>
-<span class="pl-c">// and then convert all the hits into Characters for us.</span>
+<span class="pl-c"><span class="pl-c">//</span> .as[Character] will look for an implicit HitAs[Character] in scope</span>
+<span class="pl-c"><span class="pl-c">//</span> and then convert all the hits into Characters for us.</span>
 <span class="pl-k">val</span> <span class="pl-en">characters</span> <span class="pl-k">:</span><span class="pl-en">Seq</span>[<span class="pl-en">Character</span>] <span class="pl-k">=</span> resp.as[<span class="pl-en">Character</span>]
 </pre>
   </div> 
@@ -890,8 +890,8 @@ client.execute {
   <p>Elastic4s makes it easy to get this json where possible. Simply call <code>.show</code> on a request to get back a json string. Eg:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">req</span> <span class="pl-k">=</span> search in <span class="pl-s"><span class="pl-pds">"</span>music<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span> query <span class="pl-s"><span class="pl-pds">"</span>coldplay<span class="pl-pds">"</span></span> ...
-println(req.show) <span class="pl-c">// would output json</span>
-client.execute { req } <span class="pl-c">// now executes that request</span></pre>
+println(req.show) <span class="pl-c"><span class="pl-c">//</span> would output json</span>
+client.execute { req } <span class="pl-c"><span class="pl-c">//</span> now executes that request</span></pre>
   </div> 
   <p>Not all requests have a json body. For example <em>get-by-id</em> is modelled purely by http query parameters, there is no json body to output. And some requests don't convert to json in the Java client so aren't yet supported by the <code>show</code> typeclass. Also, for clarity, it should be pointed out that the client doesn't send JSON to the server, it uses a binary protocol. So the provided json format should be treated as a debugging tool only.</p> 
   <p>The requests that support <code>.show</code> are <code>search</code>, <code>multi</code>, <code>createIndex</code>, <code>index into</code>, <code>validate</code>, <code>percolate</code>, <code>count</code>.</p> 
@@ -967,7 +967,7 @@ client.execute { req } <span class="pl-c">// now executes that request</span></p
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">builder</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">RequestBuilder</span>[<span class="pl-en">SomeType</span>] {
   <span class="pl-k">import</span> <span class="pl-v">ElasticDsl.</span><span class="pl-v">_</span>
-  <span class="pl-c">// the request returned doesn't have to be an index - it can be anything supported by the bulk api</span>
+  <span class="pl-c"><span class="pl-c">//</span> the request returned doesn't have to be an index - it can be anything supported by the bulk api</span>
   <span class="pl-k">def</span> <span class="pl-en">request</span>(<span class="pl-v">t</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">BulkCompatibleDefinition</span> <span class="pl-k">=</span>  index into <span class="pl-s"><span class="pl-pds">"</span>index<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> fields ....
 }</pre>
   </div> 
@@ -1023,6 +1023,7 @@ publisher.subscribe(subscriber)</pre>
    <li>Goldman Sachs</li> 
    <li>HMRC</li> 
    <li>Canal+</li> 
+   <li>AOE</li> 
   </ul> 
   <p><em>Raise a PR to add your company here</em></p> 
   <p><a href="https://camo.githubusercontent.com/97fa03cac759a772255b93c64ab1c9f76a103681/68747470733a2f2f7777772e796f75726b69742e636f6d2f696d616765732f796b6c6f676f2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/97fa03cac759a772255b93c64ab1c9f76a103681/68747470733a2f2f7777772e796f75726b69742e636f6d2f696d616765732f796b6c6f676f2e706e67" alt="youkit logo" data-canonical-src="https://www.yourkit.com/images/yklogo.png" style="max-width:100%;"></a> YourKit supports open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/index.jsp" target="_blank">YourKit Java Profiler</a> and <a href="https://www.yourkit.com/.net/profiler/index.jsp" target="_blank">YourKit .NET Profiler</a>, innovative and intelligent tools for profiling Java and .NET applications.</p> 

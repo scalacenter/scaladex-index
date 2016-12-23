@@ -36,8 +36,8 @@
 
 <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Foos</span> <span class="pl-k">extends</span> <span class="pl-e">CassandraTable</span>[<span class="pl-en">Foos</span>, <span class="pl-en">Foo</span>] <span class="pl-k">with</span> <span class="pl-e">Connector</span> {
 
-  <span class="pl-k">object</span> <span class="pl-en">id</span> <span class="pl-k">extends</span> <span class="pl-e">UUIDColumn</span>(<span class="pl-v">this</span>) <span class="pl-k">with</span> <span class="pl-e">PartitionKey</span>[<span class="pl-en">UUID</span>]
-  <span class="pl-k">object</span> <span class="pl-en">value</span> <span class="pl-k">extends</span> <span class="pl-e">StringColumn</span>(<span class="pl-v">this</span>)
+  <span class="pl-k">object</span> <span class="pl-en">id</span> <span class="pl-k">extends</span> <span class="pl-e">UUIDColumn</span>(<span class="pl-c1">this</span>) <span class="pl-k">with</span> <span class="pl-e">PartitionKey</span>[<span class="pl-en">UUID</span>]
+  <span class="pl-k">object</span> <span class="pl-en">value</span> <span class="pl-k">extends</span> <span class="pl-e">StringColumn</span>(<span class="pl-c1">this</span>)
 
   <span class="pl-k">def</span> <span class="pl-en">fromRow</span>(<span class="pl-v">row</span>: <span class="pl-en">Row</span>)<span class="pl-k">:</span> <span class="pl-en">Foo</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(id(row), value(row))
 
@@ -96,12 +96,12 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
     </svg></a>Configuring the Driver</h2> 
   <p>The previous examples only showed how to define the initial contact points for the driver. The API offers additional hooks for configuring a keySpace:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// Not using the default port:</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> Not using the default port:</span>
 <span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">port</span> <span class="pl-k">=</span> <span class="pl-c1">9099</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts, port).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
 
-<span class="pl-c">// Embedded Cassandra for testing</span>
+<span class="pl-c"><span class="pl-c">//</span> Embedded Cassandra for testing</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoint</span>.embedded.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp-test<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <p>Additionally the API exposes the original <code>Cluster.Builder</code> API from the Java driver for further configuration:</p> 
@@ -145,7 +145,7 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
   <p>It is debatable how much value the lookup of contact points via Zookeeper adds. First, the contact points you pass to the Cassandra driver are just the initial set of hosts to try to connect to. Only a single contact point is required, but it is usually a good idea to provide more in case one node is temporarily down. But once the driver has connected to one node, it retrieves the addresses of all other nodes. Therefore you can easily add and remove nodes to your cluster without updating the phantom configuration unless one of the specified contact points gets removed. Secondly, the new connector module makes it quite easy to externalize this configuration, minimizing the value the zookeeper module adds to the connector.</p> 
   <p>But in case you want to continue using Zookeeper for lookup, the API is very similar to that of the connector module:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c">// Using localhost:2181</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> Using localhost:2181</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ZkContactPointLookup</span>.local.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
 
 <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>

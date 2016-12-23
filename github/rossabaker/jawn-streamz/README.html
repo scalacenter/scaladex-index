@@ -14,15 +14,15 @@
    <pre><span class="pl-k">import</span> <span class="pl-v">jawnfs2.</span><span class="pl-v">_</span>
 
 <span class="pl-k">object</span> <span class="pl-en">Example</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-  <span class="pl-c">// Pick your favorite supported AST (e.g., json4s, argonaut, etc.)</span>
+  <span class="pl-c"><span class="pl-c">//</span> Pick your favorite supported AST (e.g., json4s, argonaut, etc.)</span>
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">facade</span> <span class="pl-k">=</span> jawn.ast.<span class="pl-en">JawnFacade</span>
-  <span class="pl-c">// From JSON on disk</span>
+  <span class="pl-c"><span class="pl-c">//</span> From JSON on disk</span>
   <span class="pl-k">val</span> <span class="pl-en">jsonStream</span> <span class="pl-k">=</span> io.file.readAll[<span class="pl-en">Task</span>](<span class="pl-en">Paths</span>.get(<span class="pl-s"><span class="pl-pds">"</span>testdata/random.json<span class="pl-pds">"</span></span>), <span class="pl-c1">64</span>)
-  <span class="pl-c">// Introduce up to a second of lag between chunks</span>
+  <span class="pl-c"><span class="pl-c">//</span> Introduce up to a second of lag between chunks</span>
   <span class="pl-k">val</span> <span class="pl-en">laggedStream</span> <span class="pl-k">=</span> jsonStream.chunks.zipWith(time.awakeEvery[<span class="pl-en">Task</span>](nextInt(<span class="pl-c1">1000</span>).millis))((chunk, _) <span class="pl-k">=&gt;</span> chunk)
-  <span class="pl-c">// Print each element of the JSON array as we read it</span>
+  <span class="pl-c"><span class="pl-c">//</span> Print each element of the JSON array as we read it</span>
   <span class="pl-k">val</span> <span class="pl-en">json</span> <span class="pl-k">=</span> laggedStream.unwrapJsonArray.map(_.toString).intersperse(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>).through(text.utf8Encode)
-  <span class="pl-c">// run converts the stream into a Task, unsafeRun executes the task for its effects</span>
+  <span class="pl-c"><span class="pl-c">//</span> run converts the stream into a Task, unsafeRun executes the task for its effects</span>
   json.to(io.stdout).run.unsafeRun
 }</pre>
   </div> 

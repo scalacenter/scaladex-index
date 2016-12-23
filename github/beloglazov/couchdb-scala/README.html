@@ -252,40 +252,40 @@ db.design.getById(<span class="pl-s"><span class="pl-pds">"</span>_design/test-d
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">object</span> <span class="pl-en">Basic</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
 
-  <span class="pl-c">// Define a simple case class to represent our data model</span>
+  <span class="pl-c"><span class="pl-c">//</span> Define a simple case class to represent our data model</span>
   <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
 
-  <span class="pl-c">// Define a type mapping used to transform class names into the doc kind</span>
+  <span class="pl-c"><span class="pl-c">//</span> Define a type mapping used to transform class names into the doc kind</span>
   <span class="pl-k">val</span> <span class="pl-en">typeMapping</span> <span class="pl-k">=</span> <span class="pl-en">TypeMapping</span>(<span class="pl-c1">classOf</span>[<span class="pl-en">Person</span>] <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Person<span class="pl-pds">"</span></span>)
 
-  <span class="pl-c">// Define some sample data</span>
+  <span class="pl-c"><span class="pl-c">//</span> Define some sample data</span>
   <span class="pl-k">val</span> <span class="pl-en">alice</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>, <span class="pl-c1">25</span>)
   <span class="pl-k">val</span> <span class="pl-en">bob</span>   <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Bob<span class="pl-pds">"</span></span>, <span class="pl-c1">30</span>)
   <span class="pl-k">val</span> <span class="pl-en">carl</span>  <span class="pl-k">=</span> <span class="pl-en">Person</span>(<span class="pl-s"><span class="pl-pds">"</span>Carl<span class="pl-pds">"</span></span>, <span class="pl-c1">20</span>)
 
-  <span class="pl-c">// Create a CouchDB client instance</span>
+  <span class="pl-c"><span class="pl-c">//</span> Create a CouchDB client instance</span>
   <span class="pl-k">val</span> <span class="pl-en">couch</span>  <span class="pl-k">=</span> <span class="pl-en">CouchDb</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-c1">5984</span>)
-  <span class="pl-c">// Define a database name</span>
+  <span class="pl-c"><span class="pl-c">//</span> Define a database name</span>
   <span class="pl-k">val</span> <span class="pl-en">dbName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>couchdb-scala-basic-example<span class="pl-pds">"</span></span>
-  <span class="pl-c">// Get an instance of the DB API by name and type mapping</span>
+  <span class="pl-c"><span class="pl-c">//</span> Get an instance of the DB API by name and type mapping</span>
   <span class="pl-k">val</span> <span class="pl-en">db</span>     <span class="pl-k">=</span> couch.db(dbName, typeMapping)
 
   <span class="pl-k">val</span> <span class="pl-en">actions</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
-  <span class="pl-c">// Delete the database or ignore the error if it doesn't exist</span>
+  <span class="pl-c"><span class="pl-c">//</span> Delete the database or ignore the error if it doesn't exist</span>
     _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> couch.dbs.delete(dbName).ignoreError
-    <span class="pl-c">// Create a new database</span>
+    <span class="pl-c"><span class="pl-c">//</span> Create a new database</span>
     _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> couch.dbs.create(dbName)
-    <span class="pl-c">// Insert documents into the database</span>
+    <span class="pl-c"><span class="pl-c">//</span> Insert documents into the database</span>
     _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> db.docs.createMany(<span class="pl-en">Seq</span>(alice, bob, carl))
-    <span class="pl-c">// Retrieve all documents from the database and unserialize to Person</span>
+    <span class="pl-c"><span class="pl-c">//</span> Retrieve all documents from the database and unserialize to Person</span>
     docs <span class="pl-k">&lt;</span><span class="pl-k">-</span> db.docs.getMany.includeDocs[<span class="pl-en">Person</span>].build.query
   } <span class="pl-k">yield</span> docs.getDocsData
 
-  <span class="pl-c">// Execute the actions and process the result</span>
+  <span class="pl-c"><span class="pl-c">//</span> Execute the actions and process the result</span>
   actions.attemptRun <span class="pl-k">match</span> {
-    <span class="pl-c">// In case of an error (left side of Either), print it</span>
+    <span class="pl-c"><span class="pl-c">//</span> In case of an error (left side of Either), print it</span>
     <span class="pl-k">case</span> <span class="pl-k">-</span>\<span class="pl-k">/</span>(e) <span class="pl-k">=&gt;</span> println(e)
-    <span class="pl-c">// In case of a success (right side of Either), print each object</span>
+    <span class="pl-c"><span class="pl-c">//</span> In case of a success (right side of Either), print each object</span>
     <span class="pl-k">case</span> \<span class="pl-k">/-</span>(a) <span class="pl-k">=&gt;</span> a.map(println(_))
   }
 
