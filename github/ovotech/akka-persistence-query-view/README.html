@@ -1,0 +1,77 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-persistence-query-view" class="anchor" href="https://github.com/ovotech/akka-persistence-query-view#persistence-query-view" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Persistence query view</h1> 
+  <p><a href="https://www.codacy.com/app/me_62/akka-persistence-query-view?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ovotech/akka-persistence-query-view&amp;utm_campaign=badger" target="_blank"><img src="https://camo.githubusercontent.com/5177ff545039f66a0fd43356553bddf5ed675e6c/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f3564383932323739396664633434643438373634653866363437626132386463" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/5d8922799fdc44d48764e8f647ba28dc" style="max-width:100%;"></a></p> 
+  <p>The <code>QueryView</code> is a replacement of the deprecated <code>PersistentView</code> in Akka Persistence module.</p> 
+  <h2><a id="user-content-anatomy-of-a-persistence-queryview" class="anchor" href="https://github.com/ovotech/akka-persistence-query-view#anatomy-of-a-persistence-queryview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Anatomy of a Persistence QueryView</h2> 
+  <p>The Persistence query view has three possible state: <code>WaitingForSnapshot</code>, <code>Recovering</code> and <code>Live</code>. </p> 
+  <p>It always start in <code>WaitingForSnapshot</code> state where it is waiting to receive a previously saved snapshot. When the snapshot has been loaded or failed to load, the view switch to the <code>Recovering</code> state. During the <code>Recovering</code> state it will receive all the past events from the journal. When all the existing event from the journal have been consumed, the view will switch to the <code>Live</code> state which will keep until the actor stop. During the <code>Live</code> events the view will consume live events from the journal and external messages.</p> 
+  <p>When the view is in <code>WaitingForSnapshot</code> or <code>Recovering</code> it will not reply to any messages, but will stash them waiting to switch to the <code>Live</code> state where these message will be processed.</p> 
+  <h2><a id="user-content-adding-the-dependency" class="anchor" href="https://github.com/ovotech/akka-persistence-query-view#adding-the-dependency" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Adding the dependency</h2> 
+  <p>Add a dependency to your <code>build.sbt</code>:</p> 
+  <pre><code>resolvers += Resolver.bintrayRepo("ovotech", "maven")
+libraryDependencies += "com.ovoenergy" %% "akka-persistence-query-view" % "&lt;version&gt;"
+</code></pre> 
+  <h2><a id="user-content-how-to-implement" class="anchor" href="https://github.com/ovotech/akka-persistence-query-view#how-to-implement" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to implement</h2> 
+  <p>The first step is to define a <code>Querysupport</code> trait for your <code>ReadJournal</code> plugin. The LevelDb one is included:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">LevelDbQuerySupport</span> <span class="pl-k">extends</span> <span class="pl-e">QuerySupport</span> { <span class="pl-c1">this</span><span class="pl-k">:</span> <span class="pl-en">QueryView</span> <span class="pl-k">=&gt;</span>
+
+  <span class="pl-k">override</span> <span class="pl-k">type</span> <span class="pl-en">Queries</span> <span class="pl-k">=</span> <span class="pl-en">LeveldbReadJournal</span>
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">firstOffset</span><span class="pl-k">:</span> <span class="pl-en">Offset</span> <span class="pl-k">=</span> <span class="pl-en">Offset</span>.sequence(<span class="pl-c1">1L</span>)
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">queries</span><span class="pl-k">:</span> <span class="pl-en">LeveldbReadJournal</span> <span class="pl-k">=</span>
+    <span class="pl-en">PersistenceQuery</span>(context.system).readJournalFor[<span class="pl-en">LeveldbReadJournal</span>](<span class="pl-en">LeveldbReadJournal</span>.<span class="pl-en">Identifier</span>)
+}</pre>
+  </div> 
+  <p>It is up to the implementor defining the queries used during the <code>Recovering</code> and <code>Live</code> states. Generally they will be the same query, with the difference that the recovery one is a finite stream while the live one is infinite. Your <code>Queryview</code> implemention has to mix in one <code>QuerySupport</code> trait as well:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">PersonsQueryView</span> <span class="pl-k">extends</span> <span class="pl-e">QueryView</span> <span class="pl-k">with</span> <span class="pl-e">LevelDbQuerySupport</span> {
+
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">snapshotterId</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>people<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">private</span> <span class="pl-k">var</span> <span class="pl-en">people</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> <span class="pl-en">Set</span>.empty
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">recoveringStream</span>()<span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">AnyRef</span>, _] <span class="pl-k">=</span>
+    queries.currentEventsByTag(<span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>, lastOffset)
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">liveStream</span>()<span class="pl-k">:</span> <span class="pl-en">Source</span>[<span class="pl-en">AnyRef</span>, _] <span class="pl-k">=</span>
+    queries.eventsByTag(<span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>, lastOffset)
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">receive</span><span class="pl-k">:</span> <span class="pl-en">Receive</span> <span class="pl-k">=</span> {
+
+    <span class="pl-k">case</span> <span class="pl-en">PersonAdded</span>(person) <span class="pl-k">=&gt;</span>
+      people <span class="pl-k">=</span> people <span class="pl-k">+</span> person
+
+    <span class="pl-k">case</span> <span class="pl-en">PersonRemoved</span>(person) <span class="pl-k">=&gt;</span>
+      people <span class="pl-k">=</span> people <span class="pl-k">-</span> person
+
+  }
+}</pre>
+  </div> 
+  <p>The <code>WaitingForSnapshot</code> and <code>Recovering</code> states are protected by a timeout, if the view will not be able to rebuild its status within this timeout, it will switch to the <code>Live</code> state or crash. This behavior is controlled by the <code>recovery-timeout-strategy</code> (TODO) option.</p> 
+  <p>The <code>QueryView</code> has an out-of-the-box support for snapshot. It is the same as the deprecated <code>PersistentView</code>, in the previous exaple to save a snapshot of the current people:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>saveSnapshot(people)</pre>
+  </div> 
+  <p>Under the hood it will store also the last consumed offset and the last sequence number for each persistence id already consumed.</p> 
+  <h2><a id="user-content-future-developments" class="anchor" href="https://github.com/ovotech/akka-persistence-query-view#future-developments" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Future developments</h2> 
+  <ul> 
+   <li>Add the <code>recovery-timeout-strategy</code> option to control what to do when the view does ot recover within a certain amount of time.</li> 
+  </ul> 
+ </article>
+</div>

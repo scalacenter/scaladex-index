@@ -28,7 +28,6 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Limitations</h3> 
   <ul> 
-   <li>At least one indexed column should be provided, package does not store just schema</li> 
    <li>Indexed columns must be top level primitive columns with types above</li> 
    <li>Indexed columns cannot be the same as partitioning columns (which kind of makes sense)</li> 
    <li>Append mode is not supported for Parquet table when creating index</li> 
@@ -92,6 +91,7 @@
      <th align="center">Since</th> 
      <th align="center">Example</th> 
      <th>Description</th> 
+     <th>Default</th> 
     </tr> 
    </thead>
    <tbody> 
@@ -99,13 +99,22 @@
      <td><code>spark.sql.index.metastore</code></td> 
      <td align="center"><code>0.1.0</code></td> 
      <td align="center"><em>file:/folder, hdfs://host:port/folder</em></td> 
-     <td>Index metastore location, by default uses current working directory; created if does not exist</td> 
+     <td>Index metastore location, created if does not exist</td> 
+     <td><em>working directory</em></td> 
     </tr> 
     <tr> 
      <td><code>spark.sql.index.parquet.bloom.enabled</code></td> 
      <td align="center"><code>0.1.0</code></td> 
      <td align="center"><em>true, false</em></td> 
-     <td>When set to true, writes bloom filters for indexed columns when creating table index; by default is <code>false</code></td> 
+     <td>When set to true, writes bloom filters for indexed columns when creating table index</td> 
+     <td><em>false</em></td> 
+    </tr> 
+    <tr> 
+     <td><code>spark.sql.index.createIfNotExists</code></td> 
+     <td align="center"><code>0.2.0</code></td> 
+     <td align="center"><em>true, false</em></td> 
+     <td>When set to true, creates index if one does not exist in metastore for the table (will use all available columns for indexing)</td> 
+     <td><em>false</em></td> 
     </tr> 
    </tbody>
   </table> 
@@ -117,6 +126,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Scala API</h3> 
+  <p>Most of the API is defined in <a href="https://github.com/lightcopy/parquet-index/blob/master/src/main/scala/org/apache/spark/sql/DataFrameIndexManager.scala" target="_blank">DataFrameIndexManager</a>. Usage is similar to Spark's <code>DataFrameReader</code>, but for <code>spark.index</code>.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c"><span class="pl-c">//</span> Create dummy table "codes.parquet", use repartition to create more or less generic</span>
 <span class="pl-c"><span class="pl-c">//</span> situation with value distribution</span>
@@ -130,6 +140,7 @@ spark.range(<span class="pl-c1">0</span>, <span class="pl-c1">10000</span>).
 <span class="pl-k">import</span> <span class="pl-v">com.github.lightcopy.implicits.</span><span class="pl-v">_</span>
 
 <span class="pl-c"><span class="pl-c">//</span> All Spark SQL modes are available (append, overwrite, ignore, error)</span>
+<span class="pl-c"><span class="pl-c">//</span> You can also use `.indexByAll` to index by all inferred columns</span>
 spark.index.create.
   mode(<span class="pl-s"><span class="pl-pds">"</span>overwrite<span class="pl-pds">"</span></span>).indexBy($<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, $<span class="pl-s"><span class="pl-pds">"</span>code<span class="pl-pds">"</span></span>).parquet(<span class="pl-s"><span class="pl-pds">"</span>temp/codes.parquet<span class="pl-pds">"</span></span>)
 
