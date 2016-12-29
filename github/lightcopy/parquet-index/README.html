@@ -11,8 +11,17 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Overview</h2> 
   <p>Package provides means to create index for Parquet tables to reduce query latency when used for <em>almost interactive</em> analysis or point queries. It is designed for use case when table does not change frequently, but is used for queries often, e.g. using Thrift JDBC/ODBC server. When indexed, schema and list of files (including partitioning) will be automatically resolved from index metastore instead of inferring schema every time datasource is created.</p> 
+  <h3><a id="user-content-metastore" class="anchor" href="https://github.com/lightcopy/parquet-index#metastore" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Metastore</h3> 
   <p>Metastore keeps information about all indexed tables and can be created on local file system or HDFS (see available options below). Each created index includes different statistics (min/max/null) and, optionally, bloom filters on indexed columns.</p> 
-  <p>Index is enabled for scan when provided predicate contains one or several filters with indexed columns. Filter resolution happens after partition pruning (if available) and currently applies on column metadata level only (per file). Note that performance also depends on values distribution and predicate selectivity. Spark Parquet reader is used to read data.</p> 
+  <h3><a id="user-content-filters" class="anchor" href="https://github.com/lightcopy/parquet-index#filters" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Filters</h3> 
+  <p>Index is enabled for scan when provided predicate contains one or several filters with indexed columns (if none, then normal scan is used, but with benefits of already resolved partitions and schema). Filter resolution happens after partition pruning (if available) and currently applies on column metadata level only (per file). Note that performance also depends on values distribution and predicate selectivity. Spark Parquet reader is used to read data.</p> 
+  <p>Most of the Spark SQL predicates are supported to use statistics and/or column filter (<code>EqualTo</code>, <code>In</code>, <code>GreaterThan</code>, <code>LessThan</code>, and others). Note that predicates work best for equality or <code>isin</code> conditions and logical operators (<code>And</code>, <code>Or</code>, <code>Not</code>), e.g. <code>$"a" === 1 &amp;&amp; $"b" === "abc"</code> or <code>$"a".isin("a", "b", "c")</code>.</p> 
   <h3><a id="user-content-supported-spark-sql-types" class="anchor" href="https://github.com/lightcopy/parquet-index#supported-spark-sql-types" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -32,7 +41,6 @@
    <li>Indexed columns cannot be the same as partitioning columns (which kind of makes sense)</li> 
    <li>Append mode is not supported for Parquet table when creating index</li> 
    <li>Bucketing is not supported, meaning that package does not take advantage of bucketing, so bucketed table would be processed and indexed like standard partitioned table</li> 
-   <li>Only equality and logical (<code>And</code>, <code>Or</code>) predicates are supported, e.g. <code>col("a") === 1 &amp;&amp; col("b") === "str"</code></li> 
    <li>Certain Spark versions are supported (see table below)</li> 
   </ul> 
   <p>Project is <strong>experimental and is in active development at the moment</strong>. We are working to remove limitations and add support for different versions. Any feedback, issues or PRs are welcome.</p> 

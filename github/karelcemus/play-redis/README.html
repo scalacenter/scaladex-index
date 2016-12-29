@@ -132,6 +132,60 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
   cache.decrement( <span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span>, <span class="pl-c1">5</span> ) <span class="pl-c"><span class="pl-c">//</span> returns -7</span>
 }</pre>
   </div> 
+  <p><strong>Example of Lists:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Future</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+
+<span class="pl-k">import</span> <span class="pl-v">play.api.cache.redis.</span><span class="pl-v">CacheApi</span>
+
+<span class="pl-k">class</span> <span class="pl-en">MyController</span> <span class="pl-k">@</span><span class="pl-en">Inject</span>() ( <span class="pl-v">cache</span>: <span class="pl-en">CacheApi</span> ) {
+
+  <span class="pl-c"><span class="pl-c">//</span> enables List operations</span>
+  <span class="pl-c"><span class="pl-c">//</span> Scala wrapper over the list at this key</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> )
+
+  <span class="pl-c"><span class="pl-c">//</span> get the whole list</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).toList
+
+  <span class="pl-c"><span class="pl-c">//</span> prepend values, beware, values are prepended in the reversed order!</span>
+  <span class="pl-c"><span class="pl-c">//</span> result List( "EFG", "ABC" )</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).prepend( <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span> ).prepend( <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span> )
+  <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span> <span class="pl-k">+</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span> <span class="pl-k">+</span><span class="pl-k">:</span> cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> )
+  <span class="pl-en">List</span>( <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span> ) <span class="pl-k">++</span><span class="pl-k">:</span> cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> )
+
+  <span class="pl-c"><span class="pl-c">//</span> append values to the list</span>
+  <span class="pl-c"><span class="pl-c">//</span> result List( "ABC", "EFG" )</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).append( <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span> ).append( <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span> )
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ) <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span> <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ) <span class="pl-k">:</span><span class="pl-k">++</span> <span class="pl-en">List</span>( <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>EFG<span class="pl-pds">"</span></span> )
+
+  <span class="pl-c"><span class="pl-c">//</span> getting a value</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).apply( index <span class="pl-k">=</span> <span class="pl-c1">1</span> ) <span class="pl-c"><span class="pl-c">//</span> get or an exception</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).get( index <span class="pl-k">=</span> <span class="pl-c1">1</span> ) <span class="pl-c"><span class="pl-c">//</span> Some or None</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).head <span class="pl-c"><span class="pl-c">//</span> get or an exception</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).headOption <span class="pl-c"><span class="pl-c">//</span> Some or None</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).headPop <span class="pl-c"><span class="pl-c">//</span> Some or None and REMOVE the head</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).last <span class="pl-c"><span class="pl-c">//</span> get or an exception</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).lastOption <span class="pl-c"><span class="pl-c">//</span> Some or None</span>
+
+  <span class="pl-c"><span class="pl-c">//</span> size of the list</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).size
+
+  <span class="pl-c"><span class="pl-c">//</span> overwrite the value at index</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).set( position <span class="pl-k">=</span> <span class="pl-c1">1</span>, element <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>HIJ<span class="pl-pds">"</span></span> )
+
+  <span class="pl-c"><span class="pl-c">//</span> remove the value</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).remove( <span class="pl-s"><span class="pl-pds">"</span>ABC<span class="pl-pds">"</span></span>, count <span class="pl-k">=</span> <span class="pl-c1">2</span> ) <span class="pl-c"><span class="pl-c">//</span> remove by value</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).removeAt( position <span class="pl-k">=</span> <span class="pl-c1">1</span> ) <span class="pl-c"><span class="pl-c">//</span> remove by index</span>
+
+  <span class="pl-c"><span class="pl-c">//</span> returns an API to reading but not modifying the list</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).view
+
+  <span class="pl-c"><span class="pl-c">//</span> returns an API to modify the underlying list</span>
+  cache.list[ <span class="pl-k">String</span> ]( <span class="pl-s"><span class="pl-pds">"</span>my-list<span class="pl-pds">"</span></span> ).modify
+}</pre>
+  </div> 
   <h2><a id="user-content-checking-operation-result" class="anchor" href="https://github.com/karelcemus/play-redis#checking-operation-result" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -227,7 +281,7 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
    <li>add library into application dependencies</li> 
    <li>enable <code>RedisCacheModule</code></li> 
    <li>disable <code>EhCacheModule</code></li> 
-   <li>set either <code>play.cache.redis.configuration: "heroku"</code> or <code>play.cache.redis.configuration: "heroku-cloud"</code> depending whether your Heroku addon provides <code>REDIS_URL</code> or <code>REDISCLOUD_URL</code> environment variable.<br></li> 
+   <li>set either <code>play.cache.redis.configuration: "heroku"</code> or <code>play.cache.redis.configuration: "heroku-cloud"</code> depending whether your Heroku addon provides <code>REDIS_URL</code> or <code>REDISCLOUD_URL</code> environment variable.</li> 
    <li>done, we can run it and use any of 3 provided interfaces</li> 
   </ol> 
   <h3><a id="user-content-custom-configuration-source" class="anchor" href="https://github.com/karelcemus/play-redis#custom-configuration-source" aria-hidden="true" target="_blank">
@@ -291,6 +345,7 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
      🔗
     </g-emoji> 1.3.0</a> (Possibly breaking)</h3> 
   <p>Major internal code refactoring, library has been modularized into several packages. However, <strong>public API remained unchanged</strong>, although its implementation significantly changed.</p> 
+  <p>Implemented <a href="https://github.com/karelcemus/play-redis/blob/master/src/main/scala/play/api/cache/redis/RedisList.scala" target="_blank">Scala wrapper</a> over List API to use <a href="https://redis.io/topics/data-types#lists" target="_blank">Redis Lists</a>.</p> 
   <p>Added <code>heroku</code> and <code>heroku-cloud</code> configuration profiles simplifying <a href="https://github.com/karelcemus/play-redis#running-on-heroku" target="_blank">running on Heroku</a>.</p> 
   <p>Introduced <a href="https://github.com/karelcemus/play-redis#recovery-policy" target="_blank"><code>RecoveryPolicy</code></a> defining behavior when execution fails. Default policy is <code>log-and-default</code>. To re-enable previous <em>fail-on-error</em> behavior, set <code>log-and-fail</code>. See the <a href="https://github.com/karelcemus/play-redis#recovery-policy" target="_blank"><code>RecoveryPolicy</code></a> for more details.</p> 
   <p><strong><a href="https://github.com/chrisdinn/brando" target="_blank">Brando</a> connector replaced by <a href="https://github.com/scredis/scredis" target="_blank">scredis</a> implementation</strong> due to Brando repository inactivity and major issues (<a href="https://github.com/KarelCemus/play-redis/issues/44" target="_blank">#44</a>). Scredis seems to be efficient, build over Akka and should not contain any major issues as they are not reported.</p> 
