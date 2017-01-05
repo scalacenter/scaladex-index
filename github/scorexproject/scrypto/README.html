@@ -7,6 +7,7 @@
   <p>Scrypto is an open source cryptographic toolkit designed to make it easier and safer for developers to use cryptography in their applications.</p> 
   <p>It was extracted from <a href="https://github.com/ScorexProject/Scorex-Lagonaki" target="_blank">Scorex</a>, open-source modular blockchain &amp; cryptocurrency framework.</p> 
   <p>Public Domain.</p> 
+  <p><strong>If you want to check benchmarks for authenticated AVL+ trees, please visit <a href="https://github.com/input-output-hk/scrypto-benchmarks" target="_blank">dedicated repository</a>. Use the repository as code examples for the trees also, though one code example is provided in "Authenticated Data Structures" section below.</strong></p> 
   <h2><a id="user-content-get-scrypto" class="anchor" href="https://github.com/scorexproject/scrypto#get-scrypto" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -102,17 +103,51 @@
   assert(curveImpl.verify(sig, message, keyPair._2))</pre>
   </div> 
   <p><strong>Note on security:</strong> Scrypto provides Scala wrapper for <a href="https://github.com/WhisperSystems/curve25519-java" target="_blank">Curve25519-Java</a> by Whisper Systems, so has the same security properties. JDK's SecureRandom used to obtain seed bytes.</p> 
-  <h3><a id="user-content-authenticated-data-structure" class="anchor" href="https://github.com/scorexproject/scrypto#authenticated-data-structure" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-authenticated-data-structures" class="anchor" href="https://github.com/scorexproject/scrypto#authenticated-data-structures" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Authenticated data structure</h3> 
+    </svg></a>Authenticated data structures</h3> 
   <p>Scrypto supports following authenticated data structures:</p> 
   <ul> 
-   <li>Skip list</li> 
    <li>Treap</li> 
-   <li>AVL tree</li> 
+   <li>AVL+ tree</li> 
   </ul> 
-  <p>According our tests for dynamic data AVL tree outperform other structures <a href="http://eprint.iacr.org/2016/994" target="_blank">http://eprint.iacr.org/2016/994</a>.</p> 
+  <p>According our tests for dynamic data AVL+ trees performs better, see <a href="http://eprint.iacr.org/2016/994" target="_blank">http://eprint.iacr.org/2016/994</a>. The implementation of AVL+ trees with batching compression can be found in the <code>scorex.crypto.authds.avltree.batch</code> package. Here are code snippets on how to generate proofs and check them. In the example prover inserts two values in the tree in a first batch, then update first value and deletes another one in a second batch. </p> 
+  <ul> 
+   <li><p>First, we create a prover and getting an initial root hash from it(for simplicity's sake in a real-world application this value is whether to be a public constant or to be declared by a trusted dealer):</p> <pre><code>val prover = new BatchAVLProver(keyLength = 1, valueLength = 8)
+val initRoot = prover.rootHash
+</code></pre></li> 
+   <li><p>Second, we create first batch tree modifications </p> <pre><code>val m1 = Insert(Array(1:Byte), Array.fill(8)(0:Byte))
+val m2 = Insert(Array(2:Byte), Array.fill(8)(0:Byte))
+</code></pre></li> 
+   <li><p>We apply modification to an empty tree and obtain the first batch proof</p> <pre><code>prover.performOneModification(m1)
+prover.performOneModification(m2)
+val proof1 = prover.generateProof
+</code></pre></li> 
+   <li><p>A proof is just an array of bytes, so you can immediately send it over wire or save to a disk. Prover is obtaining a second proof and declaring a root hash after it:</p> <pre><code>val m3 = Update(Array(1:Byte), Array.fill(8)(1:Byte))
+val m4 = Remove(Array(2:Byte))
+prover.performOneModification(m3)
+prover.performOneModification(m4)
+val proof2 = prover.generateProof
+val rootDeclared = prover.rootHash
+</code></pre></li> 
+   <li><p>We now check proofs with creating a verifier for each of them and getting an digest after each batch:</p> <pre><code>val verifier1 = new BatchAVLVerifier(initRoot, proof1, keyLength = 1, valueLength = 8)
+verifier1.performOneModification(m1)           
+verifier1.performOneModification(m2)
+verifier1.digest match {
+  case Some(root1) =&gt;
+    val verifier2 = new BatchAVLVerifier(root1, proof2, keyLength = 1, valueLength = 8)
+    verifier2.performOneModification(m3)
+    verifier2.performOneModification(m4)
+    verifier2.digest match {
+      case Some(root2) if root2.sameElements(rootDeclared) =&gt; println("declared root value and proofs are valid")
+      case _ =&gt; println("second proof or declared root value  NOT valid")
+    }
+  case None =&gt;
+    println("first proof is invalid")
+}
+</code></pre></li> 
+  </ul> 
   <h1><a id="user-content-tests" class="anchor" href="https://github.com/scorexproject/scrypto#tests" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
