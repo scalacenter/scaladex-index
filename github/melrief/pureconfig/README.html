@@ -18,8 +18,9 @@
    <li><a href="https://github.com/melrief/pureconfig#use-pureconfig" target="_blank">Use PureConfig</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#supported-types" target="_blank">Supported types</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#customizing-naming-conventions" target="_blank">Customizing naming conventions</a></li> 
-   <li><a href="https://github.com/melrief/pureconfig#extend-the-library-to-support-new-types" target="_blank">Extends the library to support new types</a></li> 
+   <li><a href="https://github.com/melrief/pureconfig#extend-the-library-to-support-new-types" target="_blank">Extend the library to support new types</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#override-behaviour-for-types" target="_blank">Override behaviour for types</a></li> 
+   <li><a href="https://github.com/melrief/pureconfig#handling-missing-keys" target="_blank">Handling missing keys</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#example" target="_blank">Example</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#whence-the-config-files" target="_blank">Whence the config files</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#contribute" target="_blank">Contribute</a></li> 
@@ -159,6 +160,29 @@ util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span clas
    <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">overridestrcc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.fromString(s <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>(s.toLowerCase))
 <span class="pl-k">&gt;</span> <span class="pl-en">ConfigConvert</span>[<span class="pl-k">String</span>].from(<span class="pl-en">ConfigValueFactory</span>.fromAnyRef(<span class="pl-s"><span class="pl-pds">"</span>FooBar<span class="pl-pds">"</span></span>))
 util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(foobar)</pre>
+  </div> 
+  <h2><a id="user-content-handling-missing-keys" class="anchor" href="https://github.com/melrief/pureconfig#handling-missing-keys" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Handling missing keys</h2> 
+  <p>The default behavior of <code>ConfigConvert</code>s that are derived in PureConfig is to raise a <code>KeyNotFoundException</code> when a required key is missing. The only exception is the <code>Option[_]</code> type, which is read as <code>None</code> when a key is missing:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">pureconfig.syntax.</span><span class="pl-v">_</span>
+<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.typesafe.config.</span><span class="pl-v">_</span>
+<span class="pl-k">&gt;</span> <span class="pl-en">ConfigFactory</span>.empty.to[<span class="pl-en">Foo</span>]
+scala.util.<span class="pl-en">Try</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> <span class="pl-en">Failure</span>(pureconfig.error.<span class="pl-en">KeyNotFoundException</span><span class="pl-k">:</span> <span class="pl-en">Could</span> not find the key a)
+<span class="pl-k">&gt;</span> <span class="pl-en">ConfigFactory</span>.empty.to[<span class="pl-en">FooOpt</span>]
+scala.util.<span class="pl-en">Try</span>[<span class="pl-en">FooOpt</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-en">FooOpt</span>(<span class="pl-c1">None</span>))</pre>
+  </div> 
+  <p>However, if you want to allow your custom <code>ConfigConvert</code>s to handle missing keys, you can extend the <code>AllowMissingKey</code> trait. For <code>ConfigConvert</code>s extending <code>AllowMissingKey</code>, a missing key will issue a call to the <code>from</code> method of the available <code>ConfigConvert</code> for that type with a <code>null</code> value:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">cc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConfigConvert</span>[<span class="pl-k">Int</span>] <span class="pl-k">with</span> <span class="pl-e">AllowMissingKey</span> {
+<span class="pl-k">|</span>   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">from</span>(<span class="pl-v">config</span>: <span class="pl-en">ConfigValue</span>)<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span>
+<span class="pl-k">|</span>     <span class="pl-k">if</span> (config <span class="pl-k">==</span> <span class="pl-c1">null</span>) <span class="pl-en">Success</span>(<span class="pl-c1">42</span>) <span class="pl-k">else</span> <span class="pl-en">Try</span>(config.render(<span class="pl-en">ConfigRenderOptions</span>.concise).toInt)
+<span class="pl-k">|</span>   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">to</span>(<span class="pl-v">t</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">ConfigValue</span> <span class="pl-k">=</span> <span class="pl-en">ConfigValueFactory</span>.fromAnyRef(t)
+<span class="pl-k">|</span> }
+<span class="pl-k">&gt;</span> <span class="pl-en">ConfigFactory</span>.empty.to[<span class="pl-en">Foo</span>]
+scala.util.<span class="pl-en">Try</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-en">Foo</span>(<span class="pl-c1">42</span>))</pre>
   </div> 
   <h2><a id="user-content-example" class="anchor" href="https://github.com/melrief/pureconfig#example" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
