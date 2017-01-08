@@ -1,0 +1,126 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-kamon-logstash-backend-module" class="anchor" href="https://github.com/darienmt/kamon-logstash#kamon-logstash-backend-module" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Kamon-logstash backend module</h1> 
+  <p><a href="http://kamon.io/" target="_blank">Kamon</a> is a very useful monitoring tool for JVM. It provides a few backend options. The module on this repository represents a way to use <a href="https://www.elastic.co/webinars/introduction-elk-stack" target="_blank">ELK</a>(Elasticsearch-Logstash-Kibana) as the backend and visualization for the data collected by Kamon.</p> 
+  <h1><a id="user-content-overview" class="anchor" href="https://github.com/darienmt/kamon-logstash#overview" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Overview</h1> 
+  <p>This repository contains:</p> 
+  <ul> 
+   <li>Kamon-logstash module: (./modules/kamon-logstash) Contains the code needed to communicate with Kamon and push the collected statistics to Logstash.</li> 
+   <li>Sample Akka-based app: (./modules/actors-to-monitor) This module is an example of a Akka-based application we want to monitor. It is a copy of the code provided by the Akka team as a <a href="http://doc.akka.io/docs/akka/current/scala/fault-tolerance-sample.html#full-source-code-of-the-fault-tolerance-sample" target="_blank">Fault Tolerance Sample.</a></li> 
+   <li>Docker samples: (./Docker) Provides sample configuration of the ELK stack using Docker to test the Kamon-logstash module and to provide the necessary Elasticsearch index mapping.</li> 
+  </ul> 
+  <h1><a id="user-content-installation" class="anchor" href="https://github.com/darienmt/kamon-logstash#installation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h1> 
+  <p>To install this module, the first step is to add the following dependency to your <code>build.sbt</code>:</p> 
+  <pre><code>libraryDependencies += "com.codekeepersinc" %% "kamonlogstash" % "0.0.1"
+</code></pre> 
+  <p>The second step is to add the module's Akka extension on your configuration:</p> 
+  <pre><code>akka {
+  ...
+
+  extensions = ["com.codekeepersinc.kamonlogstash.KamonLogstash"]
+}
+</code></pre> 
+  <p>The reference configuration of the module can be seen on <a href="https://github.com/darienmt/kamon-logstash/blob/master/modules/kamon-logstash/src/main/resources/reference.conf" target="_blank">reference.conf.</a> Here it is as well with comments to clarify the parameters:</p> 
+  <pre><code>kamon {
+  logstash {
+
+    address = localhost                     # Logstash host
+    port = 4570                             # Logstash port
+
+    appname = application                   # Application name
+    appname = ${?APPLICATION_NAME}          # It could be overwriten with the APPLICATION_NAME enviroment variable.
+
+    hostname = localhost                    # Hostname to use on the data.
+    hostname = ${?HOSTNAME}                 # It could be overwritten with the HOSTNAME environment variable
+
+    retry {                                 # Failures are unavoidable and Logstash could not be there when we call. This section controls the retry policy.
+      minBackoff = 1 second                 # Minimum time to wait before retrying to connect.
+      maxBackoff = 10 seconds               # Maximum time to wait before retrying to connect.
+      randomFactor = 0.2                    # Random factor added to make it less predictable and give Logstash time it is overwhelmed.
+      retryAutoReset = 3 seconds            # Time to consider the system "healthy" and reset the internal retry counter.
+    }
+
+    # Subscription patterns used to select which metrics will be pushed to Logstash. Note that first, metrics
+    # collection for your desired entities must be activated under the kamon.metrics.filters settings.
+    subscriptions {
+      histogram = ["**"]
+      min-max-counter = ["**"]
+      gauge = ["**"]
+      counter = ["**"]
+      trace = ["**"]
+      trace-segment = ["**"]
+      akka-actor = ["**"]
+      akka-dispatcher = ["**"]
+      akka-router = ["**"]
+      system-metric = ["**"]
+      http-server = ["**"]
+    }
+  }
+}
+</code></pre> 
+  <h2><a id="user-content-retry-policy" class="anchor" href="https://github.com/darienmt/kamon-logstash#retry-policy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Retry policy</h2> 
+  <p>As failures are unavoidable, the module provides a simple retry policy based on the <a href="http://doc.akka.io/docs/akka/current/general/supervision.html" target="_blank">Supervision and Monitoring</a> Akka documentation. <a href="http://doc.akka.io/docs/akka/current/scala/io-tcp.html" target="_blank">Akka Tcp</a> provides a way to deal with errors without making actors fail due to exceptions, and that is why another implementation is in place here. In the case of a communication error, the module will retry after a period (configurable with kamon.logstash.retry.minBackoff), then it will retry in an exponential increment until it reaches the maximum (configurable with kamon.logstash.retry.maxBackoff). It will continue retrying with the maximum 30 times after(it is the "magic" number found Akka's BackoffSupervisor code).</p> 
+  <h1><a id="user-content-setting-up-elk-stack" class="anchor" href="https://github.com/darienmt/kamon-logstash#setting-up-elk-stack" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setting up ELK stack</h1> 
+  <p>When the sample Akka-based app (./modules/actors-to-monitor) starts, it will be sending Kamon data to the Logstash instance at "localhost:4570", and there is a few configuration needed on the ELK side to start visualizing that data. To see the configuration and to have an ELK environment up using Docker(I am assuming Docker, and Docker Compose is installed on your system, if they are not, please <a href="https://docs.docker.com/engine/installation/" target="_blank">follow Docker installation instructions</a>), we need to run the following command on the ./Docker directory:</p> 
+  <pre><code>docker-compose -f dev-containers.yml -p kamon up -d --build
+</code></pre> 
+  <p>It will create four containers and three images on your local Docker:</p> 
+  <ul> 
+   <li>kamon_elasticsearch-seed_1 and kamon_elasticsearch-node_1: Conform an Elasticsearch two nodes cluster named kamon-cluster (image elasticsearch-kamon created from ./Docker/Elasticsearch).</li> 
+   <li>kamon_logstash-log_1: Logstash instance configured to accept logs (image logstash-log created from ./Docker/Logstash-Log).</li> 
+   <li>kamon_kibana_1: Kibana instance created from the library's kibana image. Configured to connect to the above Elasticsearch cluster, and exposing the standard port 5601 on the host.</li> 
+   <li>kamon_logstash-metric_1: Logstash instance configured to accept the Kamon data the module will be sending (image logstash-metric created from ./Docker/Logstash-Metric).</li> 
+  </ul> 
+  <p>The last container is the one we will be using most on this module, but the others are needed as part of the ELK stack. (Ok, the logstash-logs is not needed, but it is good to have it anyways.) The <a href="https://github.com/darienmt/kamon-logstash/blob/master/Docker/Logstash-Metric/logstash.yml" target="_blank">logstash.yml</a> for that container is:</p> 
+  <pre><code>input {
+    tcp {
+        port =&gt; 4560
+        codec =&gt; json_lines
+    }
+}
+
+output {
+    elasticsearch {
+        hosts =&gt; [ "http://elasticsearch-seed:9200" ]
+        document_type =&gt; "metric"
+        retry_on_conflict =&gt; "3"
+        index =&gt; "metrics-%{+YYYY.MM.dd}"
+        template =&gt; "/usr/share/logstash/metric-template.json"
+        template_name =&gt; "kamon-metric"
+    }
+}
+</code></pre> 
+  <p>It configures the pipeline to accept json lines at port 4560 (on the container) as input, and output to the Elasticsearch cluster. The <a href="https://github.com/darienmt/kamon-logstash/blob/master/Docker/Logstash-Metric/metric-template.json" target="_blank">index template mapping</a> is really important. It could be improved for further use. The one used here is a basic configuration:</p> 
+  <p>When everything is up you can go to <a href="http://localhost:5601/status" target="_blank">Kibana's status</a> to see everything is green(it takes a while sometimes, depending on your system):</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/KibanaGreen.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/KibanaGreen.png" alt="Kibana Green" title="Kibana Green" style="max-width:100%;"></a></p> 
+  <p>Run the sample app to get some data in with the following command on the repo root:</p> 
+  <pre><code>sbt actorsToMonitor/run
+</code></pre> 
+  <p>There is no API to configure Kibana's index pattern I could find. We need to click on the "Management" link on the side menu, and then click on "Index Patterns" to get to this page:</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/KibanaGreen.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/KibanaGreen.png" alt="Kibana Index Patterns" title="Kibana Index Patterns" style="max-width:100%;"></a></p> 
+  <p>Change the pattern from "logstash-<em>" to "metrics-</em>", and select the Time-field name "to" from the dropbox.</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/KibanaMetricsIndexPattern.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/KibanaMetricsIndexPattern.png" alt="Kibana Metrics Index Patterns" title="Kibana Metrics Index Patterns" style="max-width:100%;"></a></p> 
+  <p>Click the "Create" button, and leave the default fields.</p> 
+  <p>Now, we are ready for some visualizations. Click on the "Saved Objects" tab, click on the "Import" button and select the file ./Docker/sample-dashboard.json. This will give you some visualizations and dashboards to start with:</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/SampleVisualizationAndDashboard.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/SampleVisualizationAndDashboard.png" alt="Sample Visualizations and Dashboards" title="Sample Visualizations and Dashboards" style="max-width:100%;"></a></p> 
+  <p>Click on "Dashboard" on the left menu, and then "Open" from the top menu. Select "Akka Dashboard":</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/AkkaDashboardSample.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/AkkaDashboardSample.png" alt="Sample Akka Dashboards" title="Sample Akka Dashboards" style="max-width:100%;"></a></p> 
+  <p>And then, click again on "Open" to see the "Kamon Metric" dashboard. This one will show information about the data stored by the module. It could be good starting point to understand that data better and create new dashboards for your needs.</p> 
+  <p><a href="https://github.com/darienmt/kamon-logstash/blob/master/docs/images/KamonSampleDashboard.png" target="_blank"><img src="https://github.com/darienmt/kamon-logstash/raw/master/docs/images/KamonSampleDashboard.png" alt="Sample Kamon Dashboards" title="Sample Kamon Dashboards" style="max-width:100%;"></a></p> 
+ </article>
+</div>
