@@ -1,0 +1,89 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-mongodb-dao" class="anchor" href="https://github.com/durre/mongodb-dao#mongodb-dao" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>mongodb-dao</h1> 
+  <p>Contains some common functionality when working with MongoDb together with <a href="http://reactivemongo.org/" target="_blank">Reactivemongo</a></p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/durre/mongodb-dao#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h3><a id="user-content-the-dao" class="anchor" href="https://github.com/durre/mongodb-dao#the-dao" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The dao</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">se.durre.mongodb.formats.CommonDbFormats.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(
+  <span class="pl-v">id</span>: <span class="pl-en">UUID</span>,
+  <span class="pl-v">name</span>: <span class="pl-k">String</span>
+)
+
+<span class="pl-k">class</span> <span class="pl-en">PersonDao</span>(<span class="pl-v">db</span>: <span class="pl-en">DefaultDB</span>) <span class="pl-k">extends</span> <span class="pl-e">MongoDao</span>[<span class="pl-en">Person</span>, <span class="pl-en">UUID</span>](db, collectionName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>persons<span class="pl-pds">"</span></span>) {
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">reader</span><span class="pl-k">:</span> <span class="pl-en">BSONDocumentReader</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BSONDocumentReader</span>[<span class="pl-en">Person</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">read</span>(<span class="pl-v">bson</span>: <span class="pl-en">BSONDocument</span>)<span class="pl-k">:</span> <span class="pl-en">Person</span> <span class="pl-k">=</span> {
+      (<span class="pl-k">for</span> {
+        id <span class="pl-k">&lt;</span><span class="pl-k">-</span> bson.getAs[<span class="pl-en">UUID</span>](<span class="pl-s"><span class="pl-pds">"</span>_id<span class="pl-pds">"</span></span>)
+        name <span class="pl-k">&lt;</span><span class="pl-k">-</span> bson.getAs[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>)
+      } <span class="pl-k">yield</span> <span class="pl-en">Person</span>(id, name)).get
+    }
+  }
+
+  <span class="pl-k">override</span> <span class="pl-k">protected</span> <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">writer</span><span class="pl-k">:</span> <span class="pl-en">BSONDocumentWriter</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BSONDocumentWriter</span>[<span class="pl-en">Person</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">write</span>(<span class="pl-v">t</span>: <span class="pl-en">Person</span>)<span class="pl-k">:</span> <span class="pl-en">BSONDocument</span> <span class="pl-k">=</span> <span class="pl-en">BSONDocument</span>(
+      <span class="pl-s"><span class="pl-pds">"</span>_id<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> t.id,
+      <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> t.name
+    )
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-configuration" class="anchor" href="https://github.com/durre/mongodb-dao#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h3> 
+  <p>In your application.conf</p> 
+  <pre><code>mongodb {
+  uri = "mongodb://localhost:27017/testdb"
+}
+</code></pre> 
+  <h3><a id="user-content-create-a-connection" class="anchor" href="https://github.com/durre/mongodb-dao#create-a-connection" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Create a connection</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">ConfigFactory</span>.load() 
+<span class="pl-en">MongoContext</span>.connect(config.getConfig(<span class="pl-s"><span class="pl-pds">"</span>mongodb<span class="pl-pds">"</span></span>)).map { db <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">dao</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PersonDao</span>(db)
+}</pre>
+  </div> 
+  <h3><a id="user-content-writing-tests" class="anchor" href="https://github.com/durre/mongodb-dao#writing-tests" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing tests</h3> 
+  <p>You can use the supplied helper class, <strong>MongoDbTest</strong>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">PersonDaoSuite</span> <span class="pl-k">extends</span> <span class="pl-e">MongoDbTest</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">dao</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PersonDao</span>(db)
+
+  <span class="pl-c"><span class="pl-c">//</span> These collections will be dropped before &amp; after each test</span>
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">touchedCollections</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Set</span>(dao.collectionName)
+
+  test(<span class="pl-s"><span class="pl-pds">"</span>insert a document<span class="pl-pds">"</span></span>) {
+
+    <span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> <span class="pl-en">Person</span>(
+      id <span class="pl-k">=</span> <span class="pl-en">UUID</span>.randomUUID(),
+      name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Bob<span class="pl-pds">"</span></span>
+    )
+
+    dao.insert(person).futureValue    
+    <span class="pl-k">val</span> <span class="pl-en">found</span> <span class="pl-k">=</span> dao.findById(person.id).futureValue
+    found shouldBe <span class="pl-en">Some</span>(person)
+  }
+}</pre>
+  </div> 
+ </article>
+</div>

@@ -159,6 +159,23 @@
   <p><code>http://localhost:8080/callback</code> is the url of the callback endpoint, which is only necessary for indirect clients. The <code>PlayCacheStore</code> is defined as the implementation for the session store: profiles will be saved in the Play Cache.</p> 
   <p>Notice that you can also configure a specific <code>HttpActionAdapter</code> to handle specific HTTP actions (like redirections, forbidden / unauthorized pages) via the <code>setHttpActionAdapter</code> method of the <code>Config</code> object. The default available implementation is the <code>DefaultHttpActionAdapter</code>, but you can subclass it to define your own HTTP 401 / 403 error pages for example.</p> 
   <p>You can also define a specific <code>SecurityLogic</code> via the <code>setSecurityLogic</code> method.</p> 
+  <p>In addition to the <code>PlayCacheStore</code>, the <code>play-pac4j</code> project allows you the option to store your session into the native Play Session Cookie with the <code>PlayCookieStore</code>. Since this method uses encryption to secure the session inside the cookie, it is likely less efficient for some solutions. However, in cases where you want to preserve Play's statelessness, you can opt to use it instead of the <code>PlayCacheStore</code>.</p> 
+  <p>If you choose to use the <code>PlayCookieStore</code> instead of the <code>PlayCacheStore</code>, you'll need to replace this line:</p> 
+  <p><em>Java:</em></p> 
+  <p><code>bind(PlaySessionStore.class).to(PlayCacheStore.class);</code></p> 
+  <p><em>Scala:</em></p> 
+  <p><code>bind(classOf[PlaySessionStore]).to(classOf[PlayCacheStore])</code></p> 
+  <p>with an instance of <code>PlayCookieStore</code> with an <code>EncryptionConfiguration</code>, like this:</p> 
+  <p><em>Java:</em></p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-smi">PlayCookieStore</span> playCookieStore <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">PlayCookieStore</span>(<span class="pl-k">new</span> <span class="pl-smi">SecretEncryptionConfiguration</span>(<span class="pl-s"><span class="pl-pds">"</span>YourSecretHere<span class="pl-pds">"</span></span>));
+bind(<span class="pl-smi">PlaySessionStore</span><span class="pl-k">.</span>class)<span class="pl-k">.</span>toInstance(playCookieStore);</pre>
+  </div> 
+  <p><em>Scala:</em></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">playCookieStore</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">PlayCookieStore</span>(<span class="pl-k">new</span> <span class="pl-en">SecretEncryptionConfiguration</span>(<span class="pl-s"><span class="pl-pds">"</span>YourSecretHere<span class="pl-pds">"</span></span>))
+bind(<span class="pl-c1">classOf</span>[<span class="pl-en">PlaySessionStore</span>]).toInstance(playCookieStore)</pre>
+  </div> 
   <hr> 
   <h3><a id="user-content-3a-protect-urls-per-action-secure" class="anchor" href="https://github.com/pac4j/play-pac4j#3a-protect-urls-per-action-secure" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

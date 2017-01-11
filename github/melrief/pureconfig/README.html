@@ -20,6 +20,7 @@
    <li><a href="https://github.com/melrief/pureconfig#customizing-naming-conventions" target="_blank">Customizing naming conventions</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#extend-the-library-to-support-new-types" target="_blank">Extend the library to support new types</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#override-behaviour-for-types" target="_blank">Override behaviour for types</a></li> 
+   <li><a href="https://github.com/melrief/pureconfig#override-behaviour-for-sealed-families" target="_blank">Override behaviour for sealed families</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#handling-missing-keys" target="_blank">Handling missing keys</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#example" target="_blank">Example</a></li> 
    <li><a href="https://github.com/melrief/pureconfig#whence-the-config-files" target="_blank">Whence the config files</a></li> 
@@ -160,6 +161,72 @@ util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span clas
    <pre><span class="pl-k">&gt;</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">overridestrcc</span> <span class="pl-k">=</span> <span class="pl-en">ConfigConvert</span>.fromString(s <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>(s.toLowerCase))
 <span class="pl-k">&gt;</span> <span class="pl-en">ConfigConvert</span>[<span class="pl-k">String</span>].from(<span class="pl-en">ConfigValueFactory</span>.fromAnyRef(<span class="pl-s"><span class="pl-pds">"</span>FooBar<span class="pl-pds">"</span></span>))
 util.<span class="pl-en">Try</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Success</span>(foobar)</pre>
+  </div> 
+  <h2><a id="user-content-override-behaviour-for-sealed-families" class="anchor" href="https://github.com/melrief/pureconfig#override-behaviour-for-sealed-families" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Override behaviour for sealed families</h2> 
+  <p>In order for <code>pureconfig</code> to disambiguate between different options of a sealed family of case classes, it must read and write additional information in configurations. By default it uses the additional field <code>type</code>, encoding the concrete class represented in the configuration:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">AnimalConf</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">DogConf</span>(<span class="pl-v">age</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">AnimalConf</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">BirdConf</span>(<span class="pl-v">canFly</span>: <span class="pl-k">Boolean</span>) <span class="pl-k">extends</span> <span class="pl-e">AnimalConf</span>
+
+loadConfig[<span class="pl-en">AnimalConf</span>](parseString(<span class="pl-s"><span class="pl-pds">"""</span>{ type: "dogconf", age: 4 }<span class="pl-pds">"""</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> returns Success(DogConf(4))</span></pre>
+  </div> 
+  <p>For sealed families, <code>pureconfig</code> provides a way to customize the conversion without replacing the default <code>ConfigConvert</code>. By putting in scope an instance of <code>CoproductHint</code> for that sealed family, we can customize how the disambiguation is made. For example, if <code>type</code> clashes with one of the fields of a case class option, we can use another field:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">animalConfHint</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">FieldCoproductHint</span>[<span class="pl-en">AnimalConf</span>](<span class="pl-s"><span class="pl-pds">"</span>kind<span class="pl-pds">"</span></span>)
+loadConfig[<span class="pl-en">AnimalConf</span>](parseString(<span class="pl-s"><span class="pl-pds">"""</span>{ kind: "dogconf", age: 4 }<span class="pl-pds">"""</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> returns Success(DogConf(4))</span></pre>
+  </div> 
+  <p><code>FieldCoproductHint</code> can also be adapted to write class names in a different way:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">animalConfHint</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">FieldCoproductHint</span>[<span class="pl-en">AnimalConf</span>](<span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">fieldValue</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> name.dropRight(<span class="pl-s"><span class="pl-pds">"</span>Conf<span class="pl-pds">"</span></span>.length)
+}
+loadConfig[<span class="pl-en">AnimalConf</span>](parseString(<span class="pl-s"><span class="pl-pds">"""</span>{ type: "Bird", canFly: true }<span class="pl-pds">"""</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> returns Success(BirdConf(true))</span></pre>
+  </div> 
+  <p>With a <code>CoproductHint</code> you can even opt not to use any extra field at all. For example, if you encode enumerations using sealed traits, you can just write the name of the class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.typesafe.config.</span>{<span class="pl-v">ConfigFactory</span>,<span class="pl-v">ConfigValue</span>}
+<span class="pl-k">import</span> <span class="pl-v">pureconfig.syntax.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.util.</span><span class="pl-v">Success</span>
+
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Season</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Spring</span> <span class="pl-k">extends</span> <span class="pl-e">Season</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Summer</span> <span class="pl-k">extends</span> <span class="pl-e">Season</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Autumn</span> <span class="pl-k">extends</span> <span class="pl-e">Season</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Winter</span> <span class="pl-k">extends</span> <span class="pl-e">Season</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">seasonHint</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CoproductHint</span>[<span class="pl-en">Season</span>] {
+
+  <span class="pl-c"><span class="pl-c">//</span> Reads a config for Season (`cv`).</span>
+  <span class="pl-c"><span class="pl-c">//</span> - If `name` is the name of the concrete season `cv` refers to, returns</span>
+  <span class="pl-c"><span class="pl-c">//</span>   `Success(Some(conf))`, where `conf` is the config for the concrete class</span>
+  <span class="pl-c"><span class="pl-c">//</span>   (in this case, an empty object).</span>
+  <span class="pl-c"><span class="pl-c">//</span> - If `name` is not the name of the class for `cv`, returns</span>
+  <span class="pl-c"><span class="pl-c">//</span>   `Success(None)`.</span>
+  <span class="pl-c"><span class="pl-c">//</span> - If `cv` is an invalid config for Season (in this case, if it isn't a</span>
+  <span class="pl-c"><span class="pl-c">//</span>   string), returns a `Failure`.</span>
+  <span class="pl-k">def</span> <span class="pl-en">from</span>(<span class="pl-v">cv</span>: <span class="pl-en">ConfigValue</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> cv.to[<span class="pl-k">String</span>].map { strConf <span class="pl-k">=&gt;</span>
+    <span class="pl-k">if</span>(strConf <span class="pl-k">==</span> name) <span class="pl-en">Some</span>(<span class="pl-en">ConfigFactory</span>.empty.root) <span class="pl-k">else</span> <span class="pl-c1">None</span>
+  }
+
+  <span class="pl-c"><span class="pl-c">//</span> Writes a config for a Season. `cv` is a config for the concrete season</span>
+  <span class="pl-c"><span class="pl-c">//</span> `name` (in this case, `cv` is always an empty object).</span>
+  <span class="pl-k">def</span> <span class="pl-en">to</span>(<span class="pl-v">cv</span>: <span class="pl-en">ConfigValue</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-en">Success</span>(name.toConfig)
+
+  <span class="pl-c"><span class="pl-c">//</span> If `from` returns a `Failure` for a concrete class, should we try other</span>
+  <span class="pl-c"><span class="pl-c">//</span> concrete classes?</span>
+  <span class="pl-k">def</span> <span class="pl-en">tryNextOnFail</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-c1">false</span>
+}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyConf</span>(<span class="pl-v">list</span>: <span class="pl-en">List</span>[<span class="pl-en">Season</span>])
+loadConfig[<span class="pl-en">MyConf</span>](parseString(<span class="pl-s"><span class="pl-pds">"""</span>list = [Spring, Summer, Autumn, Winter]<span class="pl-pds">"""</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> returns Success(MyConf(List(Spring, Summer, Autumn, Winter)))</span></pre>
   </div> 
   <h2><a id="user-content-handling-missing-keys" class="anchor" href="https://github.com/melrief/pureconfig#handling-missing-keys" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
