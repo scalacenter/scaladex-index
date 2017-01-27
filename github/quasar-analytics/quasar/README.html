@@ -178,8 +178,10 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>MarkLogic</h5> 
-  <p>To connect to MarkLogic, specify an <a href="https://docs.marklogic.com/guide/xcc/concepts#id_55196" target="_blank">XCC URL</a> as the <code>connectionUri</code>:</p> 
-  <p><code>xcc://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;</code></p> 
+  <p>To connect to MarkLogic, specify an <a href="https://docs.marklogic.com/guide/xcc/concepts#id_55196" target="_blank">XCC URL</a> with a <code>format</code> query parameter and an optional root directory as the <code>connectionUri</code>:</p> 
+  <p><code>xcc://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;[/root/dir/path]?format=[json|xml]</code></p> 
+  <p>the mount will query either JSON or XML documents based on the value of the <code>format</code> parameter. For backwards-compatibility, if the <code>format</code> parameter is omitted then XML is assumed.</p> 
+  <p>If a root directory path is specified, all operations and queries within the mount will be local to the MarkLogic directory at the specified path.</p> 
   <p>Prerequisites</p> 
   <ul> 
    <li>MarkLogic 8.0+</li> 
@@ -189,12 +191,10 @@
   </ul> 
   <p><a href="https://github.com/quasar-analytics/quasar/issues?utf8=%E2%9C%93&amp;q=is%3Aissue%20is%3Aopen%20label%3AMarkLogic" target="_blank">Known Limitations</a></p> 
   <ul> 
-   <li>Only XML documents are currently supported (JSON support is coming soon, see <a href="https://github.com/quasar-analytics/quasar/issues/1704" target="_blank">#1704</a>).</li> 
-   <li>It is not yet possible to reference XML attributes in queries (<a href="https://github.com/quasar-analytics/quasar/issues/1701" target="_blank">#1701</a>).</li> 
-   <li>Most joins do not yet work (<a href="https://github.com/quasar-analytics/quasar/issues/1581" target="_blank">#1581</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1560" target="_blank">#1560</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1539" target="_blank">#1539</a>, <a href="https://github.com/quasar-analytics/quasar/issues/1505" target="_blank">#1505</a>).</li> 
-   <li>Field aliases must currently be valid <a href="https://www.w3.org/TR/xml-names/#NT-QName" target="_blank">XML QNames</a> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
-   <li>"Default" numeric field names are prefixed with an underscore ("_") in order to make them valid QNames. For example, <code>select count((1, 2, 3, 4))</code> will result in <code>{"_1": 4}</code> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
-   <li>Index usage is currently poor, so performance may degrade on large directories and/or complex queries. This should improve as optimizations are applied both to the MarkLogic connector and the <code>QScript</code> compiler.</li> 
+   <li>Field aliases when working with XML must currently be valid <a href="https://www.w3.org/TR/xml-names/#NT-QName" target="_blank">XML QNames</a> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
+   <li>"Default" numeric field names are prefixed with an underscore ("_") when working with XML in order to make them valid QNames. For example, <code>select count((1, 2, 3, 4))</code> will result in <code>{"_1": 4}</code> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
+   <li>It is not possible to query both JSON and XML documents from a single mount, a separate mount with the appropriate <code>format</code> value must be created for each type of document.</li> 
+   <li>Index usage is currently poor, so performance may degrade on large directories and/or complex queries and joins. This should improve as optimizations are applied both to the MarkLogic connector and the <code>QScript</code> compiler.</li> 
   </ul> 
   <p>Quasar's data model is JSON-ish and thus there is a bit of translation required when applying it to XML. The current mapping aims to be intuitive while still taking advantage of the XDM as much as possible. Take note of the following:</p> 
   <ul> 
@@ -231,13 +231,9 @@
     </svg></a>Build Quasar for Apache Spark</h4> 
   <p>Because of dependencies conflicts between Mongo &amp; Spark connectors, currently process of building Quasar for Spark requires few additional steps:</p> 
   <ol> 
-   <li>Assemble Quasar for Spark</li> 
-  </ol> 
-  <p><code>sbt web/assembly -Dquasar4Spark=yes</code></p> 
-  <ol> 
    <li>Build sparkcore.jar</li> 
   </ol> 
-  <p><code>sbt sparkcore/assembly -DbuildSparkCore=yes</code></p> 
+  <p><code>./sbt 'set every sparkDependencyProvided := true' sparkcore/assembly</code></p> 
   <ol> 
    <li>Set environment variable QUASAR_HOME</li> 
   </ol> 
@@ -682,12 +678,6 @@ Retrieves metadata about the files, directories, and mounts which are children o
      <td><code>"abc"</code></td> 
      <td><code>{ "$oid": "abc" }</code></td> 
      <td></td> 
-    </tr> 
-    <tr> 
-     <td>error</td> 
-     <td><code>null</code></td> 
-     <td><code>{ "$na": null }</code></td> 
-     <td>A runtime error occurred producing or representing this value.</td> 
     </tr> 
    </tbody>
   </table> 

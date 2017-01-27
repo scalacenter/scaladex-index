@@ -16,13 +16,68 @@
    <li>Querying, streaming or reading into memory (relatively) small datasets directly from your process without reaching out to YARN or similar.</li> 
    <li>Moving or altering partitions in hive</li> 
    <li>Retrieving statistics on existing tables or datasets</li> 
-   <li>Reading schemas for existing datasets</li> 
+   <li>Reading or generating schemas for existing datasets</li> 
   </ul> 
-  <h2><a id="user-content-frames" class="anchor" href="https://github.com/eel-sdk/eel#frames" aria-hidden="true" target="_blank">
+  <h2><a id="user-content-comparisions" class="anchor" href="https://github.com/eel-sdk/eel#comparisions" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Frames</h2> 
-  <p>The core data structure in Eel is the Frame. A frame consists of a schema, and rows which contain values for each field. A frame is conceptually similar to a table in a relational database, or a dataframe in Spark, or a dataset in Flink. Frames are constructed from sources such as hive tables, jdbc databases, delimited files, kafka queues, or even programatically from Scala or Java collections.</p> 
+    </svg></a>Comparisions</h2> 
+  <p>Here are some of our notes comparing eel to other tools that offer functionality similar to eel.</p> 
+  <h2><a id="user-content-comparison-with-sqoop" class="anchor" href="https://github.com/eel-sdk/eel#comparison-with-sqoop" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Comparison with Sqoop</h2> 
+  <p><em>Sqoop</em> is a popular Hadoop ETL tool and API used for loading foreign data (e.g. JDBC) into Hive/Hadoop </p> 
+  <p>Sqoop executes N configurable Hadoop mappers jobs which are executed in parallel. Each mapper job makes a separate JDBC connection and adapts their queries to retrieve parts of the data. </p> 
+  <p>To support the parallelism of mapper jobs you must specify a <strong>split by</strong> column key and Hive partitioning key columns if applicable.</p> 
+  <ul> 
+   <li>With this approach you can end up with several small part files (one for each mapper task) in HDFS which is not the most optimal way of storing data in Hadoop.</li> 
+   <li>To reduce the number of part files you must reduce the number of mappers hence reducing the parallelism </li> 
+   <li>At the time of this writing Oracle <strong>Number</strong> and <strong>Timestamp</strong> types aren't properly supported from Oracle to Hive with a Parquet dialect</li> 
+   <li><strong>Sqoop</strong> depends on <strong>YARN</strong> to allocate resources for each mapper task</li> 
+   <li>Both the <strong>Sqoop</strong> CLI and API has a steep learning curve </li> 
+  </ul> 
+  <h2><a id="user-content-comparison-with-flume" class="anchor" href="https://github.com/eel-sdk/eel#comparison-with-flume" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Comparison with Flume</h2> 
+  <p><em>Flume</em> supports streaming data from a plethora of out-of-the-box Sources and Sinks. </p> 
+  <p>Flume supports the notion of a channel which is like a persistent queue and glues together sources and sinks. </p> 
+  <p>The channel is an attractive feature as it can buffer up transactions/events under heavy load conditions – channel types can be File, Kafka or JDBC.</p> 
+  <ul> 
+   <li>The Flume Hive sink is <em>limited</em> to streaming events containing delimited text or JSON data directly into a Hive table or partition - it’s possible to write a Custom EEL source and sink and therefore supporting all source/sink types such as Parquet, Orc, Hive, etc...</li> 
+   <li>Flume requires an additional maintenance of a Flume Agent topology - separate processes.</li> 
+  </ul> 
+  <h2><a id="user-content-comparison-with-kite" class="anchor" href="https://github.com/eel-sdk/eel#comparison-with-kite" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Comparison with Kite</h2> 
+  <p>The Kite API and CLI are very similar in functionality to EEL but there are some subtle differences:</p> 
+  <ul> 
+   <li>Datasets in <em>Kite</em> require AVRO schemas</li> 
+   <li>A dataset is essentially a Hive table - the upcoming <em>EEL 1.2</em> release you will be able to create Hive tables from the CLI - at the moment it’s possible generate the Hive DDL with EEL API using <em>io.eels.component.hive.HiveDDL$#showDDL</em>.</li> 
+   <li>For writing directly to <strong>AVRO</strong> or <strong>Parquet</strong> storage formats you must provide an <strong>AVRO</strong> schema – EEL dynamically infers a schema from the underlying source, for example a JDBC Query or CSV headers.</li> 
+   <li>Support for ingesting from storage formats (other than <strong>AVRO</strong> and <strong>Parquet</strong>) is be achieved by <em>transforming</em> each record/row with another module named <strong>Kite Morphlines</strong> - it uses another intermediate record format and is another <strong>API</strong> to learn.</li> 
+   <li>EEL supports transformations using regular Scala functions by invoking the <em>map</em> method on the Source’s underlying <em>Frame</em>, e.g. <em>source.toFrame.map(f: (Row) =&gt; Row)</em> – the <em>map</em> function returns a new row object.</li> 
+   <li>Kite has direct support for <em>HBase</em> but EEL doesn’t – will do with the upcoming <em>EEL 1.2</em> release</li> 
+   <li>Kite currently <strong>doesn’t</strong> support Kudo – EEL does.</li> 
+   <li>Kite stores additional metadata on disk (<strong>HDFS</strong>) to be deemed a valid Kite dataset – if you externally change the Schema outside of Kite, i.e. through <em>DDL</em> then it can cause a dataset to be <em>out-of-synch</em> and potentially <em>malfunction</em> - EEL functions normally in this scenario as there is no additional metadata required.</li> 
+   <li>Kite handles Hive partitioning by specifying a partition strategies – there are a few <em>out-of-the-box</em> strategies derived from the current payload – with <strong>EEL</strong> this works auto-magically by virture of providing the same column on the source row, alternatively you can add a partition key column with <strong>addField</strong> on the fly on the source’s frame or use <strong>map</strong> transformation function.</li> 
+  </ul> 
+  <h2><a id="user-content-introduction-to-the-api" class="anchor" href="https://github.com/eel-sdk/eel#introduction-to-the-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introduction to the API</h2> 
+  <p>The core data structure in Eel is the <code>Frame</code>. A frame consists of a <code>Schema</code>, and zero or more <code>Row</code>s which contain values for each field in the schema. A frame is conceptually similar to a table in a relational database, or a dataframe in Spark, or a dataset in Flink. </p> 
+  <p>Frames can be read from a <code>Source</code> such as hive tables, jdbc databases, or even programatically from Scala or Java collections. Frames can be written out to a <code>Sink</code> such as a hive table or parquet file.</p> 
+  <p>The current set of sources and sinks include: <em>Apache Avro</em>, <em>Apache Parquet</em>, <em>Apache Orc</em>, <em>CSV</em>, <em>Kafka</em> (sink only), <em>HDFS</em>, <em>Kudu</em>, <em>JDBC</em>, <em>Hive</em>, <em>Json Files</em>.</p> 
+  <p>Once you have a reference to a frame, the frame can be manipulated in a similar way to regular Scala collections - many of the methods share the same name, such as <code>map</code>, <code>filter</code>, <code>take</code>, <code>drop</code>, etc. All operations on a frame are lazy - they will only be executed once an <em>action</em> takes place such as <code>collect</code>, <code>count</code>, or <code>save</code>.</p> 
+  <p>For example, you could load data from a CSV file, drop rows that don't match a predicate, and then save the data back out to a Parquet file all in a couple of lines of code.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">CsvSource</span>(<span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>input.csv<span class="pl-pds">"</span></span>))
+<span class="pl-k">val</span> <span class="pl-en">sink</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSink</span>(<span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>output.pq<span class="pl-pds">"</span></span>))
+source.toFrame().filter(_.get(<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>) <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>London<span class="pl-pds">"</span></span>).save(sink)</pre>
+  </div> 
   <h3><a id="user-content-types-supported" class="anchor" href="https://github.com/eel-sdk/eel#types-supported" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -36,68 +91,849 @@
    </thead>
    <tbody> 
     <tr> 
-     <td>Short</td> 
-     <td>Short</td> 
-    </tr> 
-    <tr> 
-     <td>Int</td> 
-     <td>Int</td> 
-    </tr> 
-    <tr> 
-     <td>Double</td> 
-     <td>Double</td> 
-    </tr> 
-    <tr> 
-     <td>Float</td> 
-     <td>Float</td> 
-    </tr> 
-    <tr> 
-     <td>Decimal</td> 
-     <td>BigDecimal</td> 
-    </tr> 
-    <tr> 
-     <td>String</td> 
-     <td>String</td> 
+     <td>BigInteger</td> 
+     <td>BigInt</td> 
     </tr> 
     <tr> 
      <td>Binary</td> 
      <td>Array of Bytes</td> 
     </tr> 
     <tr> 
+     <td>Byte</td> 
+     <td>Byte</td> 
+    </tr> 
+    <tr> 
      <td>DateTime</td> 
      <td>java.sql.Date</td> 
     </tr> 
     <tr> 
-     <td>Timestamp</td> 
+     <td>Decimal(precision,scale)</td> 
+     <td>BigDecimal</td> 
+    </tr> 
+    <tr> 
+     <td>Double</td> 
+     <td>Double</td> 
+    </tr> 
+    <tr> 
+     <td>Float</td> 
+     <td>Float</td> 
+    </tr> 
+    <tr> 
+     <td>Int</td> 
+     <td>Int</td> 
+    </tr> 
+    <tr> 
+     <td>Long</td> 
+     <td>Long</td> 
+    </tr> 
+    <tr> 
+     <td>Short</td> 
+     <td>Short</td> 
+    </tr> 
+    <tr> 
+     <td>String</td> 
+     <td>String</td> 
+    </tr> 
+    <tr> 
+     <td>TimestampMillis</td> 
      <td>java.sql.Timestamp</td> 
+    </tr> 
+    <tr> 
+     <td>Array</td> 
+     <td>Array, Java collection or Scala Seq</td> 
+    </tr> 
+    <tr> 
+     <td>Map</td> 
+     <td>Java or Scala Map</td> 
     </tr> 
    </tbody>
   </table> 
-  <h3><a id="user-content-examples" class="anchor" href="https://github.com/eel-sdk/eel#examples" aria-hidden="true" target="_blank">
+  <h1><a id="user-content-sources-and-sinks-usage-patterns" class="anchor" href="https://github.com/eel-sdk/eel#sources-and-sinks-usage-patterns" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Examples</h3> 
+    </svg></a>Sources and Sinks Usage Patterns</h1> 
+  <p>The following examples describe going from a <strong>JDBCSource</strong> to a specific <strong>Sink</strong> and therefore we first need to set up some test <strong>JDBC</strong> data using a <strong>H2</strong> in-memory database with the following code snippet:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c"><span class="pl-c">//</span> copying from avro files to jdbc</span>
-<span class="pl-en">AvroSource</span>(<span class="pl-s"><span class="pl-pds">"</span>test.avro<span class="pl-pds">"</span></span>).to(<span class="pl-en">JdbcSink</span>(<span class="pl-s"><span class="pl-pds">"</span>jdbc:....<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>totable<span class="pl-pds">"</span></span>, <span class="pl-en">JdbcSinkProps</span>(createTable <span class="pl-k">=</span> <span class="pl-c1">true</span>)))</pre>
+   <pre>  <span class="pl-k">def</span> <span class="pl-en">executeBatchSql</span>(<span class="pl-v">dataSource</span>: <span class="pl-en">DataSource</span>, <span class="pl-v">sqlCmds</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">connection</span> <span class="pl-k">=</span> dataSource.getConnection()
+    connection.clearWarnings()
+    sqlCmds.foreach { ddl <span class="pl-k">=&gt;</span>
+      <span class="pl-k">val</span> <span class="pl-en">statement</span> <span class="pl-k">=</span> connection.createStatement()
+      statement.execute(ddl)
+      statement.close()
+    }
+    connection.close()
+  }
+  <span class="pl-c"><span class="pl-c">//</span> Setup JDBC data in H2 in memory database</span>
+  <span class="pl-k">val</span> <span class="pl-en">dataSource</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BasicDataSource</span>()
+  dataSource.setDriverClassName(<span class="pl-s"><span class="pl-pds">"</span>org.h2.Driver<span class="pl-pds">"</span></span>)
+  dataSource.setUrl(<span class="pl-s"><span class="pl-pds">"</span>jdbc:h2:mem:eel_test_data<span class="pl-pds">"</span></span>)
+  dataSource.setPoolPreparedStatements(<span class="pl-c1">false</span>)
+  dataSource.setInitialSize(<span class="pl-c1">5</span>)
+  <span class="pl-k">val</span> <span class="pl-en">sql</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+    <span class="pl-s"><span class="pl-pds">"</span>CREATE TABLE IF NOT EXISTS PERSON(NAME VARCHAR(30), AGE INT, SALARY NUMBER(38,5), CREATION_TIME TIMESTAMP)<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>INSERT INTO PERSON VALUES ('Fred', 50, 50000.99, CURRENT_TIMESTAMP())<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>INSERT INTO PERSON VALUES ('Gary', 50, 20000.34, CURRENT_TIMESTAMP())<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>INSERT INTO PERSON VALUES ('Alice', 50, 99999.98, CURRENT_TIMESTAMP())<span class="pl-pds">"</span></span>
+  )
+  executeBatchSql(dataSource, sql)</pre>
   </div> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-c"><span class="pl-c">//</span> copying from one jdbc source to another</span>
-<span class="pl-en">JdbcSource</span>(<span class="pl-s"><span class="pl-pds">"</span>jdbc:....<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>fromtable<span class="pl-pds">"</span></span>).to(<span class="pl-en">JdbcSink</span>(<span class="pl-s"><span class="pl-pds">"</span>jdbc:....<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>totable<span class="pl-pds">"</span></span>, <span class="pl-en">JdbcSinkProps</span>(createTable <span class="pl-k">=</span> <span class="pl-c1">true</span>)))</pre>
-  </div> 
-  <h2><a id="user-content-sources" class="anchor" href="https://github.com/eel-sdk/eel#sources" aria-hidden="true" target="_blank">
+  <h2><a id="user-content-jdbcsource-to-hivesink-with-parquet-dialect" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-hivesink-with-parquet-dialect" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Sources</h2> 
+    </svg></a>JdbcSource To HiveSink with Parquet Dialect</h2> 
+  <p>First let's create a Hive table named <strong>person</strong> in the database <strong>eel_test</strong> which is partitioned by <em>Title</em></p> 
+  <p><em>Note the following Hive DDL creates the table for <em>Parquet</em> format</em></p> 
+  <div class="highlight highlight-source-sql">
+   <pre>CREATE EXTERNAL TABLE IF NOT EXISTS <span class="pl-s"><span class="pl-pds">`</span>eel_test.person<span class="pl-pds">`</span></span> (
+   <span class="pl-s"><span class="pl-pds">`</span>NAME<span class="pl-pds">`</span></span> string,
+   <span class="pl-s"><span class="pl-pds">`</span>AGE<span class="pl-pds">`</span></span> <span class="pl-k">int</span>,
+   <span class="pl-s"><span class="pl-pds">`</span>SALARY<span class="pl-pds">`</span></span> <span class="pl-k">decimal</span>(<span class="pl-c1">38</span>,<span class="pl-c1">5</span>),
+   <span class="pl-s"><span class="pl-pds">`</span>CREATION_TIME<span class="pl-pds">`</span></span> <span class="pl-k">timestamp</span>)
+PARTITIONED BY (<span class="pl-s"><span class="pl-pds">`</span>title<span class="pl-pds">`</span></span> string)
+ROW FORMAT SERDE
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe<span class="pl-pds">'</span></span>
+STORED <span class="pl-k">AS</span> INPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat<span class="pl-pds">'</span></span>
+OUTPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat<span class="pl-pds">'</span></span>
+LOCATION <span class="pl-s"><span class="pl-pds">'</span>/client/eel_test/persons<span class="pl-pds">'</span></span>;</pre>
+  </div> 
+  <p><strong>Example Create Table</strong></p> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> CREATE EXTERNAL TABLE IF NOT EXISTS <span class="pl-s"><span class="pl-pds">`</span>eel_test.person<span class="pl-pds">`</span></span> (
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">`</span>NAME<span class="pl-pds">`</span></span> string,
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">`</span>AGE<span class="pl-pds">`</span></span> <span class="pl-k">int</span>,
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">`</span>SALARY<span class="pl-pds">`</span></span> <span class="pl-k">decimal</span>(<span class="pl-c1">38</span>,<span class="pl-c1">5</span>),
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">`</span>CREATION_TIME<span class="pl-pds">`</span></span> <span class="pl-k">timestamp</span>)
+    <span class="pl-k">&gt;</span> PARTITIONED BY (<span class="pl-s"><span class="pl-pds">`</span>title<span class="pl-pds">`</span></span> string)
+    <span class="pl-k">&gt;</span> ROW FORMAT SERDE
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe<span class="pl-pds">'</span></span>
+    <span class="pl-k">&gt;</span> STORED <span class="pl-k">AS</span> INPUTFORMAT
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat<span class="pl-pds">'</span></span>
+    <span class="pl-k">&gt;</span> OUTPUTFORMAT
+    <span class="pl-k">&gt;</span>    <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat<span class="pl-pds">'</span></span>
+    <span class="pl-k">&gt;</span> LOCATION <span class="pl-s"><span class="pl-pds">'</span>/client/eel_test/persons<span class="pl-pds">'</span></span>;
+OK
+<span class="pl-k">Time</span> taken: <span class="pl-c1">1</span>.<span class="pl-c1">474</span> seconds</pre>
+  </div> 
+  <h3><a id="user-content-using-the-hivesink" class="anchor" href="https://github.com/eel-sdk/eel#using-the-hivesink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using the HiveSink</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-c"><span class="pl-c">//</span> Write to a HiveSink from a JDBCSource</span>
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT NAME, AGE, SALARY, CREATION_TIME FROM PERSON<span class="pl-pds">"</span></span>
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>())
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
+    <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query)
+      .withFetchSize(<span class="pl-c1">10</span>)
+      .toFrame
+      .withLowerCaseSchema
+      <span class="pl-c"><span class="pl-c">//</span> Transformation - add title to row</span>
+      .map { row <span class="pl-k">=&gt;</span> 
+         <span class="pl-k">if</span> (row.get(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>).toString <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>) row.add(<span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mrs<span class="pl-pds">"</span></span>) <span class="pl-k">else</span> row.add(<span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mr<span class="pl-pds">"</span></span>) 
+      }
+      .to(<span class="pl-en">HiveSink</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>).withIOThreads(<span class="pl-c1">1</span>).withInheritPermission(<span class="pl-c1">true</span>))</pre>
+  </div> 
+  <ol> 
+   <li>The JDBCSource takes a connection function and a SQL query - it will execute the SQL and derive the EEL schema from it - also notice the withFetchSize which caches the number of rows per fetch reducing the number RPC calls to the database server.</li> 
+   <li><em>hadoopFileSystem</em> is a <em>Hadoop File System</em> object scala implicit required by the HiveSink</li> 
+   <li><em>hiveMetaStoreClient</em> is a <em>Hive metastore client</em> object scala implicit required by the HiveSink </li> 
+   <li><em>withLowerCaseSchema</em> lowercases all the field names over the <em>JdbcSource</em> schema - internally Hive lowercases table objects and columns and therefore the source schema should also match</li> 
+   <li>The <em>map</em> function performs some <em>transformation</em> - it simply adds a new column called <strong>title</strong> which figures out whether the value should be <strong>Mr</strong> or <strong>Mrs</strong> - <em>title</em> is defined as a partition column key on the Hive table.</li> 
+   <li><em>HiveSink</em> on the <em>to</em> method specifies the target Hive <em>database</em> and <em>table</em> respectively.</li> 
+   <li><em>withIOThreads</em> on the <em>HiveSink</em> specifies the number of worker threads where each thread writes to its own file - the default is 4. This is set to 1 because we don't want to end up with too many files given that the source only has 3 rows.</li> 
+   <li><p><em>withInheritPermission</em> on the <em>HiveSink</em> means that when the sink creates new files it should inherit the HDFS permissions from the parent folder - typically this is negated by the default <strong>UMASK</strong> policy set in the hadoop site files.</p></li> 
+  </ol> 
   <ul> 
-   <li>Apache Avro</li> 
-   <li>Apache Parquet</li> 
-   <li>Apache Orc</li> 
-   <li>CSV</li> 
-   <li>Hadoop Sequence files</li> 
-   <li>HDFS </li> 
-   <li>Json</li> 
-   <li>JDBC</li> 
+   <li>Note the <strong>HiveSink</strong> takes care of automatically updating the <em>HiveMetaStore</em> when new partitions are added.</li> 
+  </ul> 
+  <h3><a id="user-content-results-shown-in-hive" class="anchor" href="https://github.com/eel-sdk/eel#results-shown-in-hive" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Results shown in Hive</h3> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-k">*</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">person</span>;
+OK
+Fred    <span class="pl-c1">50</span>      <span class="pl-c1">50000</span>.<span class="pl-c1">99000</span>     <span class="pl-c1">2017</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">24</span> <span class="pl-c1">14</span>:<span class="pl-c1">40</span>:<span class="pl-c1">50</span>.<span class="pl-c1">664</span> Mr
+Gary    <span class="pl-c1">50</span>      <span class="pl-c1">20000</span>.<span class="pl-c1">34000</span>     <span class="pl-c1">2017</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">24</span> <span class="pl-c1">14</span>:<span class="pl-c1">40</span>:<span class="pl-c1">50</span>.<span class="pl-c1">664</span> Mr
+Alice   <span class="pl-c1">50</span>      <span class="pl-c1">99999</span>.<span class="pl-c1">98000</span>     <span class="pl-c1">2017</span><span class="pl-k">-</span><span class="pl-c1">01</span><span class="pl-k">-</span><span class="pl-c1">24</span> <span class="pl-c1">14</span>:<span class="pl-c1">40</span>:<span class="pl-c1">50</span>.<span class="pl-c1">664</span> Mrs
+<span class="pl-k">Time</span> taken: <span class="pl-c1">2</span>.<span class="pl-c1">59</span> seconds, Fetched: <span class="pl-c1">3</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <h3><a id="user-content-partition-layout-on-hdfs" class="anchor" href="https://github.com/eel-sdk/eel#partition-layout-on-hdfs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Partition layout on HDFS</h3> 
+  <p>There should be 2 files created by the <em>HiveSink</em> one in the partiton for title called <strong>Mr</strong> and one in <strong>Mrs</strong>.</p> 
+  <p>Here are the partitions using the <strong>hadoop fs -ls</strong> shell command:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ hadoop fs -ls /client/eel_test/persons
+Found 2 items
+drwxrwxrwx   - eeluser supergroup          0 2017-01-24 14:40 /client/eel_test/persons/title=Mr
+drwxrwxrwx   - eeluser supergroup          0 2017-01-24 14:40 /client/eel_test/persons/title=Mrs</pre>
+  </div> 
+  <p>Now let's see if a file was created for the <strong>Mr</strong> partition:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ hadoop fs -ls /client/eel_test/persons/title=Mr
+Found 1 items
+-rw-r--r--   3 eeluser supergroup        752 2017-01-24 14:40 /client/eel_test/persons/title=Mr/eel_2985827854647169_0</pre>
+  </div> 
+  <p>Now let's see if a file was created for the <strong>Mrs</strong> partition:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ hadoop fs -ls /client/eel_test/persons/title=Mrs
+Found 1 items
+-rw-r--r--   3 eeluser supergroup        723 2017-01-24 14:40 /client/eel_test/persons/title=Mrs/eel_2985828912259519_0</pre>
+  </div> 
+  <h3><a id="user-content-hivesource-optmizations" class="anchor" href="https://github.com/eel-sdk/eel#hivesource-optmizations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HiveSource Optmizations</h3> 
+  <p>The 1.2 release for the <strong>HiveSource</strong> using <strong>Parquet</strong> and <strong>Orc</strong> storage <strong>formats</strong> exploits the following optimizations supported by these formats:</p> 
+  <ol> 
+   <li><strong>column pruning</strong> or <strong>schema projection</strong> which means providing a read schema - the reader is interested only in certain fields but not all fields written by the writer. The <em>Parquet</em> and <em>Orc</em> columnar formats does this efficiently without reading the entire row, i.e. only reading the bytes required for those fields. </li> 
+   <li><strong>predicate push-down</strong> means that filter expressions can applied to the read without reading the entire row - only reading the bytes required for the filter expressions<br></li> 
+   <li>In addition partition pruning is supported - if a table is organised by partitions then full table scans can be avoided by providing the partition key values </li> 
+  </ol> 
+  <h4><a id="user-content-reading-back-the-data-via-hivesource-and-printing-to-the-console" class="anchor" href="https://github.com/eel-sdk/eel#reading-back-the-data-via-hivesource-and-printing-to-the-console" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reading back the data via HiveSource and printing to the console</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>())
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
+    <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <ol> 
+   <li><em>hadoopFileSystem</em> is a <em>Hadoop File System</em> object scala implicit required by the HiveSource</li> 
+   <li><em>hiveMetaStoreClient</em> is a <em>Hive metastore client</em> object scala implicit required by the HiveSource</li> 
+   <li><em>HiveSource</em> specifies arguments for the Hive <em>database</em> and <em>table</em> respectively.</li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+  </ol> 
+  <p>Here are the results of the read:</p> 
+  <pre><code>[name = Fred,age = 50,salary = 50000.99000,creation_time = 2017-01-24 13:40:50.664,title = Mr]
+[name = Gary,age = 50,salary = 20000.34000,creation_time = 2017-01-24 13:40:50.664,title = Mr]
+[name = Alice,age = 50,salary = 99999.98000,creation_time = 2017-01-24 13:40:50.664,title = Mrs]
+</code></pre> 
+  <h3><a id="user-content-using-a-predicate-with-the-hivesource" class="anchor" href="https://github.com/eel-sdk/eel#using-a-predicate-with-the-hivesource" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using a predicate with the HiveSource</h3> 
+  <p>You can query data via the <strong>HiveSource</strong> using simple <strong>and</strong>/<strong>or</strong> predicates with relational operators such as <strong>equals</strong>, <strong>gt</strong>, <strong>ge</strong>, <strong>lt</strong>, <strong>le</strong>, etc...</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>())
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
+    <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
+      .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The above <strong>HiveSource</strong> predicate is equivalent to the SQL:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">select</span> <span class="pl-k">*</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">person</span> 
+<span class="pl-k">where</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span> <span class="pl-k">or</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span></pre>
+  </div> 
+  <p>The result is as follows:</p> 
+  <pre><code>[name = Gary,age = 50,salary = 20000.34000,creation_time = 2017-01-24 13:40:50.664,title = Mr]
+[name = Alice,age = 50,salary = 99999.98000,creation_time = 2017-01-24 13:40:50.664,title = Mrs]
+</code></pre> 
+  <h4><a id="user-content-using-a-partition-key-and-predicate-with-the-hivesource" class="anchor" href="https://github.com/eel-sdk/eel#using-a-partition-key-and-predicate-with-the-hivesource" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using a partition key and predicate with the HiveSource</h4> 
+  <p>Specifying a partition key on the <strong>HiveSource</strong> using the method <strong>withPartitionConstraint</strong> restricts the <em>predicate</em> being performed on a specific <em>partition</em>. This significantly speeds up the query, i.e. avoids an expensive table scan.</p> 
+  <p>If you have simple filtering requirements on relatively small datasets then this approach may be considerably faster than using <em>Hive</em>, <em>Spark</em>, <em>Impala</em> query engines. Here's an example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>())
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
+    <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
+      .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
+      .withPartitionConstraint(<span class="pl-en">PartitionConstraint</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mr<span class="pl-pds">"</span></span>))
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The <strong>withPartitionConstraint</strong> method homes in on the <strong>title</strong> partition whose value is <strong>Mr</strong> and peforms filtering on it using the <strong>withPredicate</strong>. </p> 
+  <p>The equivalent SQL would be:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">select</span> <span class="pl-k">*</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">person</span> 
+<span class="pl-k">where</span> title <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Mr<span class="pl-pds">'</span></span>
+<span class="pl-k">and</span> (name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span> <span class="pl-k">or</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span>)</pre>
+  </div> 
+  <p>The result is as follows:</p> 
+  <pre><code>[name = Gary,age = 50,salary = 20000.34000,creation_time = 2017-01-24 13:40:50.664,title = Mr]
+</code></pre> 
+  <h2><a id="user-content-jdbcsource-to-parquetsink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-parquetsink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JdbcSource To ParquetSink</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT NAME, AGE, SALARY, CREATION_TIME FROM PERSON<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.parquet<span class="pl-pds">"</span></span>)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>()) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+  <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
+    .toFrame.to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
+  </div> 
+  <ol> 
+   <li>The <strong>JDBCSource</strong> takes a connection function and a SQL query - it will execute the SQL and derive the EEL schema from it - also notice the <strong>withFetchSize</strong> which caches the number of rows per fetch reducing the number RPC calls to the database server.</li> 
+   <li><strong>parquetFilePath</strong> is the <strong>ParquetSink</strong> file path pointing to a <strong>HDFS</strong> path - alternatively this could be a local file path if you qualify it with the <em>file:</em> scheme </li> 
+   <li><strong>hadoopFileSystem</strong> is a scala implicit required by the <strong>ParquetSink</strong></li> 
+   <li>If you have the <strong>parquet-tools</strong> installed on your system you can look at its native schema like so:</li> 
+  </ol> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ parquet-tools schema person.parquet
+message row {
+  optional binary NAME (UTF8)<span class="pl-k">;</span>
+  optional int32 AGE<span class="pl-k">;</span>
+  optional fixed_len_byte_array(16) SALARY (DECIMAL(38,5))<span class="pl-k">;</span>
+  optional int96 CREATION_TIME<span class="pl-k">;</span>
+}</pre>
+  </div> 
+  <ul> 
+   <li>For <strong>Decimal</strong> Parquet encodes it as a <em>fixed byte array</em> and for <em>Timestamp</em> it's an <em>int96</em></li> 
+   <li>Reading back the data via <strong>ParquetSource</strong> and printing to the console:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>   <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.parquet<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <ol> 
+   <li><strong>parquetFilePath</strong> is the <strong>ParquetSource</strong> file path pointing to a <strong>HDFS</strong> path - alternatively this could be a local file path if you qualify it with the <em>file:</em> scheme </li> 
+   <li><strong>hadoopConfiguration</strong> and <strong>hadoopFileSystem</strong> are scala implicits required by the <strong>ParquetSource</strong></li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+   <li>Here are the results of the read:</li> 
+  </ol> 
+  <pre><code>[NAME = Fred,AGE = 50,SALARY = 50000.99000,CREATION_TIME = 2017-01-23 14:53:51.862]
+[NAME = Gary,AGE = 50,SALARY = 20000.34000,CREATION_TIME = 2017-01-23 14:53:51.876]
+[NAME = Alice,AGE = 50,SALARY = 99999.98000,CREATION_TIME = 2017-01-23 14:53:51.876]
+</code></pre> 
+  <h3><a id="user-content-predicate-push-down" class="anchor" href="https://github.com/eel-sdk/eel#predicate-push-down" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>predicate push-down</h3> 
+  <p>You can query data via the <strong>ParquetSource</strong> using simple and/or predicates with relational operators such as <strong>equals</strong>, <strong>gt</strong>, <strong>ge</strong>, <strong>lt</strong>, <strong>le</strong>, etc...</p> 
+  <p><em>predicate push-down</em> means that filter expressions can applied to the read without reading the entire row (features of <strong>Parquet</strong> and <strong>Orc</strong> columnar formats), i.e. it only reads the bytes required for the filter expressions, e.g.:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.parquet<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The above <strong>ParquetSource</strong> predicate (<strong>withPredicate</strong>) is equivalent to the SQL predicate:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">where</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span> <span class="pl-k">or</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span></pre>
+  </div> 
+  <p>The result is as follows:</p> 
+  <pre><code>[NAME = Gary,AGE = 50,SALARY = 20000.34000,CREATION_TIME = 2017-01-23 14:53:51.876]
+[NAME = Alice,AGE = 50,SALARY = 99999.98000,CREATION_TIME = 2017-01-23 14:53:51.876]
+</code></pre> 
+  <h3><a id="user-content-schema-projection" class="anchor" href="https://github.com/eel-sdk/eel#schema-projection" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>schema projection</h3> 
+  <p><em>column pruning</em> or <em>schema projection</em> which means providing a read schema - the reader is interested only in certain fields but not all fields written by the writer. The <em>Parquet</em> and <em>Orc</em> columnar formats does this efficiently without reading the entire row, i.e. only reading the bytes required for those fields, e.g.:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.parquet<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .withProjection(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>)
+      .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The above <strong>ParquetSource</strong> projection (<strong>withProjection</strong>) is equivalent to the SQL select:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">select</span> NAME, SALARY</pre>
+  </div> 
+  <p>The result is as follows:</p> 
+  <pre><code>[NAME = Gary,SALARY = 20000.34000]
+[NAME = Alice,SALARY = 99999.98000]
+</code></pre> 
+  <h2><a id="user-content-jdbcsource-to-orcsink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-orcsink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JdbcSource To OrcSink</h2> 
+  <ol> 
+   <li>The OrcSink is almost identical to the way the parquet sink works (see above)</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-c"><span class="pl-c">//</span> Write to a OrcSink from a JDBCSource</span>
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT NAME, AGE, SALARY, CREATION_TIME FROM PERSON<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">orcFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.orc<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
+      .toFrame
+      .to(<span class="pl-en">OrcSink</span>(orcFilePath))</pre>
+  </div> 
+  <ol> 
+   <li>Reading back the data via <strong>OrcSource</strong> and printing to the console:</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">orcFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.orc<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-en">OrcSource</span>(orcFilePath)
+      .toFrame().collect().foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <h2><a id="user-content-jdbcsource-to-kudosink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-kudosink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JdbcSource To KudoSink</h2> 
+  <p><strong>TBD</strong> </p> 
+  <h2><a id="user-content-jdbcsource-to-avrosink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-avrosink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JdbcSource To AvroSink</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-c"><span class="pl-c">//</span> Write to a AvroSink from a JDBCSource</span>
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT NAME, AGE, SALARY, CREATION_TIME FROM PERSON<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">avroFilePath</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span>.get(s<span class="pl-s"><span class="pl-pds">"</span>${sys.props(<span class="pl-pds">"</span></span>user.home<span class="pl-s"><span class="pl-pds">"</span>)}/person.avro<span class="pl-pds">"</span></span>)
+    <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query)
+      .withFetchSize(<span class="pl-c1">10</span>)
+      .toFrame
+      .replaceFieldType(<span class="pl-en">DecimalType</span>.<span class="pl-en">Wildcard</span>, <span class="pl-en">DoubleType</span>)
+      .replaceFieldType(<span class="pl-en">TimestampMillisType</span>, <span class="pl-en">StringType</span>)
+      .to(<span class="pl-en">AvroSink</span>(avroFilePath))</pre>
+  </div> 
+  <ol> 
+   <li>The <strong>JDBCSource</strong> takes a connection function and a SQL query - it will execute the SQL and derive the EEL schema from it - also notice the <strong>withFetchSize</strong> which caches the number of rows per fetch reducing the number RPC calls to the database server.</li> 
+   <li><strong>avroFilePath</strong> is the <strong>AvroSource</strong> file path pointing to a path on the local file system </li> 
+   <li>The 2 <strong>replaceFieldType</strong> method calls map <strong>DecimalType</strong> to <strong>DoubleType</strong> and <strong>TimestampMillisType</strong> to <strong>StringType</strong> as <strong>Decimals</strong> and <strong>Timestamps</strong> are not supported in <em>Avro Schema</em></li> 
+   <li>If you have the <strong>avro-tools</strong> installed on your system you can look at its native schema like so - alternatively use the <strong>AvroSource</strong> to read it back in - see below.</li> 
+  </ol> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ avro-tools getschema person.avro
+{
+  <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>record<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>namespace<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>namespace<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>fields<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> [ {
+    <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> [ <span class="pl-s"><span class="pl-pds">"</span>null<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> ],
+    <span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> null
+  }, {
+    <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> [ <span class="pl-s"><span class="pl-pds">"</span>null<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>int<span class="pl-pds">"</span></span> ],
+    <span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> null
+  }, {
+    <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> [ <span class="pl-s"><span class="pl-pds">"</span>null<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>double<span class="pl-pds">"</span></span> ],
+    <span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> null
+  }, {
+    <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> <span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> [ <span class="pl-s"><span class="pl-pds">"</span>null<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> ],
+    <span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-c1">:</span> null
+  } ]
+}</pre>
+  </div> 
+  <ol> 
+   <li>Reading back the data via <strong>AvroSource</strong> and printing to the console:</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">avroFilePath</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span>.get(s<span class="pl-s"><span class="pl-pds">"</span>${sys.props(<span class="pl-pds">"</span></span>user.home<span class="pl-s"><span class="pl-pds">"</span>)}/person.avro<span class="pl-pds">"</span></span>)
+    <span class="pl-en">AvroSource</span>(avroFilePath)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <ol> 
+   <li><strong>avroFilePath</strong> is the <strong>AvroSource</strong> file path pointing to a path on the local file system </li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+   <li>Here are the results of the read:</li> 
+  </ol> 
+  <pre><code>[NAME = Fred,AGE = 50,SALARY = 50000.99,CREATION_TIME = 2017-01-24 16:13:07.524]
+[NAME = Gary,AGE = 50,SALARY = 20000.34,CREATION_TIME = 2017-01-24 16:13:07.532]
+[NAME = Alice,AGE = 50,SALARY = 99999.98,CREATION_TIME = 2017-01-24 16:13:07.532]
+</code></pre> 
+  <h2><a id="user-content-jdbcsource-to-csvsink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-csvsink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JdbcSource To CsvSink</h2> 
+  <ol> 
+   <li>The CsvSink is almost identical to the way the parquet sink works (see above)</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-c"><span class="pl-c">//</span> Write to a CsvSink from a JDBCSource</span>
+    <span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT NAME, AGE, SALARY, CREATION_TIME FROM PERSON<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">csvFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.csv<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>()) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
+      .toFrame
+      .to(<span class="pl-en">CsvSink</span>(csvFilePath))</pre>
+  </div> 
+  <ol> 
+   <li>Reading back the data via <strong>CsvSource</strong> and printing to the console:</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">csvFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.csv<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-en">CsvSource</span>(csvFilePath).toFrame().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))
+    <span class="pl-en">CsvSource</span>(csvFilePath)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>Note by default the <strong>CsvSource</strong> converts all types to a string - the following code prints out the fields in the schema:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-en">CsvSource</span>(csvFilePath).toFrame().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))</pre>
+  </div> 
+  <p>You can enforce the types on the <strong>CSVSource</strong> by supplying <em>SchemaInferrer</em>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">csvFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.csv<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
+    <span class="pl-k">val</span> <span class="pl-en">schemaInferrer</span> <span class="pl-k">=</span> <span class="pl-en">SchemaInferrer</span>(<span class="pl-en">StringType</span>,
+      <span class="pl-en">DataTypeRule</span>(<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>, <span class="pl-en">IntType</span>.<span class="pl-en">Signed</span>),
+      <span class="pl-en">DataTypeRule</span>(<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>, <span class="pl-en">DecimalType</span>.<span class="pl-en">Wildcard</span>),
+      <span class="pl-en">DataTypeRule</span>(<span class="pl-s"><span class="pl-pds">"</span>.*<span class="pl-cce">\\</span>_TIME<span class="pl-pds">"</span></span>, <span class="pl-en">TimeMillisType</span>))
+    <span class="pl-en">CsvSource</span>(csvFilePath).withSchemaInferrer(schemaInferrer)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The above <strong>schemaInferrer</strong> object sets up some rules for mapping field name <strong>AGE</strong> to an <strong>int</strong>, <strong>Salary</strong> to a <strong>Decimal</strong> and a field name ending in <strong>TIME</strong> using <strong>REGEX</strong> to a <strong>Timestamp</strong>. </p> 
+  <p>Note the first parameter on <strong>SchemaInferrer</strong> is <em>StringType</em> which means that this is the default type for all fields.</p> 
+  <h2><a id="user-content-working-with-nested-type-in-sources-and-sinks" class="anchor" href="https://github.com/eel-sdk/eel#working-with-nested-type-in-sources-and-sinks" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Working with Nested Type in Sources and Sinks</h2> 
+  <p>Storage formats <em>Parquet</em> and <em>Orc</em> support nested types such as <em>struct</em>, <em>map</em> and <em>list</em>.</p> 
+  <h3><a id="user-content-structs-in-parquet" class="anchor" href="https://github.com/eel-sdk/eel#structs-in-parquet" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Structs in Parquet</h3> 
+  <p>The following example describes how to write rows containing a single struct column named <em>PERSON_DETAILS</em>:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre>struct PERSON_DETAILS {
+    NAME String,
+    AGE <span class="pl-k">Int</span>,
+    SALARY <span class="pl-k">DECIMAL</span>(<span class="pl-c1">38</span>,<span class="pl-c1">5</span>),
+    CREATION_TIME <span class="pl-k">TIMESTAMP</span>
+}</pre>
+  </div> 
+  <h4><a id="user-content-step-1--set-up-the-hdfs-path-and-scala-implicit-objects" class="anchor" href="https://github.com/eel-sdk/eel#step-1--set-up-the-hdfs-path-and-scala-implicit-objects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 1: Set up the hdfs path and scala implicit objects</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel_struct/person.parquet<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) </pre>
+  </div> 
+  <h4><a id="user-content-step-2--create-the-schema-containing-a-single-column-named-person_details-which-is-a-struct-type" class="anchor" href="https://github.com/eel-sdk/eel#step-2--create-the-schema-containing-a-single-column-named-person_details-which-is-a-struct-type" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 2: Create the schema containing a single column named <em>PERSON_DETAILS</em> which is a <em>struct</em> type:</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">personDetailsStruct</span> <span class="pl-k">=</span> <span class="pl-en">Field</span>.createStructField(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>, <span class="pl-en">IntType</span>.<span class="pl-en">Signed</span>),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>, <span class="pl-en">DecimalType</span>(<span class="pl-en">Precision</span>(<span class="pl-c1">38</span>), <span class="pl-en">Scale</span>(<span class="pl-c1">5</span>))),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>, <span class="pl-en">TimestampMillisType</span>)
+      )
+    )
+    <span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> <span class="pl-en">StructType</span>(personDetailsStruct)</pre>
+  </div> 
+  <ul> 
+   <li>A <em>struct</em> is encoded as a list of <em>Fields</em> with their corresponding <em>type</em> definitions.</li> 
+  </ul> 
+  <h4><a id="user-content-step-3--create-3-rows-of-structs" class="anchor" href="https://github.com/eel-sdk/eel#step-3--create-3-rows-of-structs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 3: Create 3 rows of <em>structs</em></h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">rows</span> <span class="pl-k">=</span> <span class="pl-en">Vector</span>(
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Fred<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>50000.99000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis()))),
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>20000.34000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis()))),
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>99999.98000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis())))
+    )</pre>
+  </div> 
+  <ul> 
+   <li>The first <em>Vector</em>, e.g. <strong>val rows = Vector(...)</strong> is a list of rows - 3 in this case.</li> 
+   <li>Each inner <em>Vector</em>, e.g. <strong>Vector(...)</strong> is a single row of column values</li> 
+   <li>The column values in this case is another <strong>Vector</strong> representing the the <strong>struct</strong>, e.g. <strong>Vector("Alice", 50, BigDecimal("99999.98000"), new Timestamp(System.currentTimeMillis()))</strong></li> 
+  </ul> 
+  <h4><a id="user-content-step-4--write-the-rows-using-the-parquetsink" class="anchor" href="https://github.com/eel-sdk/eel#step-4--write-the-rows-using-the-parquetsink" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Step 4: Write the rows using the ParquetSink</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-en">Frame</span>.fromValues(schema, rows)
+      .to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
+  </div> 
+  <p>If you have the <strong>parquet-tools</strong> installed on your system you can look at its native schema like so:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ parquet-tools schema person.parquet
+message row {
+  optional group PERSON_DETAILS {
+    optional binary NAME (UTF8)<span class="pl-k">;</span>
+    optional int32 AGE<span class="pl-k">;</span>
+    optional fixed_len_byte_array(16) SALARY (DECIMAL(38,5))<span class="pl-k">;</span>
+    optional int96 CREATION_TIME<span class="pl-k">;</span>
+  }
+}</pre>
+  </div> 
+  <ul> 
+   <li>Notice that parquet encodes the <em>struct</em> as <em>group</em> of columns. #### Step 5: Read back the rows using the ParquetSource</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <h4><a id="user-content-the-results-of-step-5" class="anchor" href="https://github.com/eel-sdk/eel#the-results-of-step-5" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The results of Step 5</h4> 
+  <pre><code>[PERSON_DETAILS = WrappedArray(Fred, 50, 50000.99000, 2017-01-25 15:56:06.212)]
+[PERSON_DETAILS = WrappedArray(Gary, 50, 20000.34000, 2017-01-25 15:56:06.212)]
+[PERSON_DETAILS = WrappedArray(Alice, 50, 99999.98000, 2017-01-25 15:56:06.212)]
+</code></pre> 
+  <h4><a id="user-content-applying-a-predicate-filter-on-the-read---give-me-person-details-for-names-alice-and-gary" class="anchor" href="https://github.com/eel-sdk/eel#applying-a-predicate-filter-on-the-read---give-me-person-details-for-names-alice-and-gary" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Applying a predicate (filter) on the read - give me person details for names Alice and Gary</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS.NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS.NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <p>The above is equivalent to the following in SQL:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">select</span> PERSON_DETAILS
+<span class="pl-k">where</span> <span class="pl-c1">PERSON_DETAILS</span>.<span class="pl-c1">NAME</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span> <span class="pl-k">or</span> <span class="pl-c1">PERSON_DETAILS</span>.<span class="pl-c1">NAME</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span></pre>
+  </div> 
+  <h4><a id="user-content-the-results-with-the-predicate-filter" class="anchor" href="https://github.com/eel-sdk/eel#the-results-with-the-predicate-filter" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The results with the predicate filter</h4> 
+  <pre><code>[PERSON_DETAILS = WrappedArray(Gary, 50, 20000.34000, 2017-01-25 16:03:37.678)]
+[PERSON_DETAILS = WrappedArray(Alice, 50, 99999.98000, 2017-01-25 16:03:37.678)]
+</code></pre> 
+  <h3><a id="user-content-looking-at-the-parquet-file-through-hive" class="anchor" href="https://github.com/eel-sdk/eel#looking-at-the-parquet-file-through-hive" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Looking at the <strong>Parquet</strong> file through <strong>Hive</strong></h3> 
+  <p>On the <em>Parquet</em> file just written we can create a <strong>Hive External</strong> table pointing at the <em>HDFS</em> location of the file.</p> 
+  <div class="highlight highlight-source-sql">
+   <pre>CREATE EXTERNAL TABLE IF NOT EXISTS <span class="pl-s"><span class="pl-pds">`</span>eel_test.struct_person<span class="pl-pds">`</span></span>(
+   PERSON_DETAILS STRUCT<span class="pl-k">&lt;</span>NAME:String, AGE:<span class="pl-k">Int</span>, SALARY:<span class="pl-k">decimal</span>(<span class="pl-c1">38</span>,<span class="pl-c1">5</span>), CREATION_TIME:<span class="pl-k">TIMESTAMP</span><span class="pl-k">&gt;</span>
+)
+ROW FORMAT SERDE
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe<span class="pl-pds">'</span></span>
+STORED <span class="pl-k">AS</span> INPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat<span class="pl-pds">'</span></span>
+OUTPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat<span class="pl-pds">'</span></span>
+LOCATION <span class="pl-s"><span class="pl-pds">'</span>/client/eel_struct<span class="pl-pds">'</span></span>;</pre>
+  </div> 
+  <ul> 
+   <li>The location <strong>/client/eel_struct</strong> is the root directory of where all the files live - in this case its the root of folder of the <em>Parquet</em> write in <em>step 4</em>.</li> 
+  </ul> 
+  <h4><a id="user-content-heres-a-hive-session-show-the-select" class="anchor" href="https://github.com/eel-sdk/eel#heres-a-hive-session-show-the-select" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Here's a Hive session show the select:</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-k">*</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person</span>;
+OK
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Fred<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">50000</span>.<span class="pl-c1">99</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-25 17:03:37.678<span class="pl-pds">"</span></span>}
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">20000</span>.<span class="pl-c1">34</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-25 17:03:37.678<span class="pl-pds">"</span></span>}
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">99999</span>.<span class="pl-c1">98</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-25 17:03:37.678<span class="pl-pds">"</span></span>}
+<span class="pl-k">Time</span> taken: <span class="pl-c1">1</span>.<span class="pl-c1">092</span> seconds, Fetched: <span class="pl-c1">3</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <h4><a id="user-content-heres-another-hive-query-asking-for-alice-and-garys-age" class="anchor" href="https://github.com/eel-sdk/eel#heres-another-hive-query-asking-for-alice-and-garys-age" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Here's another Hive query asking for Alice and Gary's age:</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span>, <span class="pl-c1">person_details</span>.<span class="pl-c1">age</span>
+    <span class="pl-k">&gt;</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person</span>
+    <span class="pl-k">&gt;</span> <span class="pl-k">where</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span> <span class="pl-k">in</span> (<span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span> );
+OK
+Gary    <span class="pl-c1">50</span>
+Alice   <span class="pl-c1">50</span>
+<span class="pl-k">Time</span> taken: <span class="pl-c1">0</span>.<span class="pl-c1">067</span> seconds, Fetched: <span class="pl-c1">2</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <ul> 
+   <li> <em>HiveQL</em> has some nice features for cracking nested types - the query returns scalar values for <em>name</em> and <em>age</em> in the <em>person_details</em> structure.</li> 
+   <li> The same query is supported in <em>Spark</em> via <em>HiveContext</em> or <em>SparkSession</em> in version <em>&gt;= 2.x</em></li> 
+  </ul> 
+  <h3><a id="user-content-arrays-in-parquet" class="anchor" href="https://github.com/eel-sdk/eel#arrays-in-parquet" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Arrays in Parquet</h3> 
+  <p>EEL supports <em>Parquet</em> <strong>ARRAYS</strong> of any <em>primitive</em> type including <em>structs</em>. The following example extends the previous example by adding another column called <strong>PHONE_NUMBERS</strong> defined as an <strong>ARRAY</strong> of <strong>Strings</strong>. </p> 
+  <h4><a id="user-content-writing-with-an-array-of-strings---phone_numbers" class="anchor" href="https://github.com/eel-sdk/eel#writing-with-an-array-of-strings---phone_numbers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Writing with an ARRAY of strings - PHONE_NUMBERS</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel_array/person.parquet<span class="pl-pds">"</span></span>)
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
+    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) 
+   <span class="pl-c"><span class="pl-c">//</span> Create the schema with a STRUCT and an ARRAY</span>
+    <span class="pl-k">val</span> <span class="pl-en">personDetailsStruct</span> <span class="pl-k">=</span> <span class="pl-en">Field</span>.createStructField(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>, <span class="pl-en">IntType</span>.<span class="pl-en">Signed</span>),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>, <span class="pl-en">DecimalType</span>(<span class="pl-en">Precision</span>(<span class="pl-c1">38</span>), <span class="pl-en">Scale</span>(<span class="pl-c1">5</span>))),
+        <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>, <span class="pl-en">TimestampMillisType</span>)
+      )
+    )
+    <span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> <span class="pl-en">StructType</span>(personDetailsStruct, <span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>PHONE_NUMBERS<span class="pl-pds">"</span></span>, <span class="pl-en">ArrayType</span>.<span class="pl-en">Strings</span>))
+
+    <span class="pl-c"><span class="pl-c">//</span> Create 3 rows</span>
+    <span class="pl-k">val</span> <span class="pl-en">rows</span> <span class="pl-k">=</span> <span class="pl-en">Vector</span>(
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Fred<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>50000.99000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis())), <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>322<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>987<span class="pl-pds">"</span></span>)),
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>20000.34000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis())), <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>145<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>082<span class="pl-pds">"</span></span>)),
+      <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>99999.98000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis())), <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>534<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>129<span class="pl-pds">"</span></span>))
+    )
+   <span class="pl-c"><span class="pl-c">//</span> Write the rows</span>
+    <span class="pl-en">Frame</span>.fromValues(schema, rows)
+      .to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
+  </div> 
+  <p>If you have the <strong>parquet-tools</strong> installed on your system you can look at its native schema like so:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ parquet-tools schema person.parquet
+message row {
+  optional group PERSON_DETAILS {
+    optional binary NAME (UTF8)<span class="pl-k">;</span>
+    optional int32 AGE<span class="pl-k">;</span>
+    optional fixed_len_byte_array(16) SALARY (DECIMAL(38,5))<span class="pl-k">;</span>
+    optional int96 CREATION_TIME<span class="pl-k">;</span>
+  }
+  repeated binary PHONE_NUMBERS (UTF8)<span class="pl-k">;</span>
+}</pre>
+  </div> 
+  <ul> 
+   <li>Notice <strong>PHONE_NUMBERS</strong> is represented as a repeated UTF8 (String) in Parquet, i.e. an unbounded array. #### Read back the rows via ParquetSource</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
+      .toFrame()
+      .collect()
+      .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+  </div> 
+  <ul> 
+   <li>The results</li> 
+  </ul> 
+  <pre><code>[PERSON_DETAILS = WrappedArray(Fred, 50, 50000.99000, 2017-01-25 20:33:48.302),PHONE_NUMBERS = Vector(322, 987)]
+[PERSON_DETAILS = WrappedArray(Gary, 50, 20000.34000, 2017-01-25 20:33:48.302),PHONE_NUMBERS = Vector(145, 082)]
+[PERSON_DETAILS = WrappedArray(Alice, 50, 99999.98000, 2017-01-25 20:33:48.302),PHONE_NUMBERS = Vector(534, 129)]
+</code></pre> 
+  <h3><a id="user-content-looking-at-the-parquet-file-through-hive-1" class="anchor" href="https://github.com/eel-sdk/eel#looking-at-the-parquet-file-through-hive-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Looking at the <strong>Parquet</strong> file through <strong>Hive</strong></h3> 
+  <p>On the <em>Parquet</em> file just written we can create a <strong>Hive External</strong> table pointing at the <em>HDFS</em> location of the file.</p> 
+  <div class="highlight highlight-source-sql">
+   <pre>CREATE EXTERNAL TABLE IF NOT EXISTS <span class="pl-s"><span class="pl-pds">`</span>eel_test.struct_person_phone<span class="pl-pds">`</span></span>(
+   PERSON_DETAILS STRUCT<span class="pl-k">&lt;</span>NAME:String, AGE:<span class="pl-k">Int</span>, SALARY:<span class="pl-k">decimal</span>(<span class="pl-c1">38</span>,<span class="pl-c1">5</span>), CREATION_TIME:<span class="pl-k">TIMESTAMP</span><span class="pl-k">&gt;</span>,
+   PHONE_NUMBERS Array<span class="pl-k">&lt;</span>String<span class="pl-k">&gt;</span>
+)
+ROW FORMAT SERDE
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe<span class="pl-pds">'</span></span>
+STORED <span class="pl-k">AS</span> INPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat<span class="pl-pds">'</span></span>
+OUTPUTFORMAT
+   <span class="pl-s"><span class="pl-pds">'</span>org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat<span class="pl-pds">'</span></span>
+LOCATION <span class="pl-s"><span class="pl-pds">'</span>/client/eel_array<span class="pl-pds">'</span></span>;</pre>
+  </div> 
+  <ul> 
+   <li>The location <strong>/client/eel_array</strong> is the root directory of where all the files live - in this case its the root of folder of the <em>Parquet</em> write </li> 
+  </ul> 
+  <h4><a id="user-content-heres-a-hive-session-show-the-select-1" class="anchor" href="https://github.com/eel-sdk/eel#heres-a-hive-session-show-the-select-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Here's a Hive session show the select:</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-k">*</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person_phone</span>;
+OK
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Fred<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">50000</span>.<span class="pl-c1">99</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-26 10:50:57.192<span class="pl-pds">"</span></span>}    [<span class="pl-s"><span class="pl-pds">"</span>322<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>987<span class="pl-pds">"</span></span>]
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">20000</span>.<span class="pl-c1">34</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-26 10:50:57.192<span class="pl-pds">"</span></span>}    [<span class="pl-s"><span class="pl-pds">"</span>145<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>082<span class="pl-pds">"</span></span>]
+{<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>AGE<span class="pl-pds">"</span></span>:<span class="pl-c1">50</span>,<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>:<span class="pl-c1">99999</span>.<span class="pl-c1">98</span>,<span class="pl-s"><span class="pl-pds">"</span>CREATION_TIME<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>2017-01-26 10:50:57.192<span class="pl-pds">"</span></span>}   [<span class="pl-s"><span class="pl-pds">"</span>534<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>129<span class="pl-pds">"</span></span>]
+<span class="pl-k">Time</span> taken: <span class="pl-c1">1</span>.<span class="pl-c1">248</span> seconds, Fetched: <span class="pl-c1">3</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <h4><a id="user-content-heres-another-hive-query-asking-for-alice-and-garys-age-and-phone-numbers" class="anchor" href="https://github.com/eel-sdk/eel#heres-another-hive-query-asking-for-alice-and-garys-age-and-phone-numbers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Here's another Hive query asking for Alice and Gary's age and phone numbers:</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span>, <span class="pl-c1">person_details</span>.<span class="pl-c1">age</span>, phone_numbers
+    <span class="pl-k">&gt;</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person_phone</span>
+    <span class="pl-k">&gt;</span> <span class="pl-k">where</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span> <span class="pl-k">in</span> (<span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Gary<span class="pl-pds">'</span></span> );
+OK
+Gary    <span class="pl-c1">50</span>      [<span class="pl-s"><span class="pl-pds">"</span>145<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>082<span class="pl-pds">"</span></span>]
+Alice   <span class="pl-c1">50</span>      [<span class="pl-s"><span class="pl-pds">"</span>534<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>129<span class="pl-pds">"</span></span>]
+<span class="pl-k">Time</span> taken: <span class="pl-c1">0</span>.<span class="pl-c1">181</span> seconds, Fetched: <span class="pl-c1">2</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <ul> 
+   <li> <em>HiveQL</em> has some nice features for cracking nested types - the query returns scalar values for <em>name</em> and <em>age</em> in the <em>person_details</em> structure and phone numbers from the phone_numbers array.</li> 
+   <li> The same query is supported in <em>Spark</em> via <em>HiveContext</em> or <em>SparkSession</em> in version <em>&gt;= 2.x</em></li> 
+  </ul> 
+  <h4><a id="user-content-what-if-i-want-to-look-at-the-first-phone-number" class="anchor" href="https://github.com/eel-sdk/eel#what-if-i-want-to-look-at-the-first-phone-number" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What if I want to look at the first phone number:</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span>, <span class="pl-c1">person_details</span>.<span class="pl-c1">age</span>, phone_numbers[<span class="pl-c1">0</span>]
+    <span class="pl-k">&gt;</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person_phone</span>;
+OK
+Fred    <span class="pl-c1">50</span>      <span class="pl-c1">322</span>
+Gary    <span class="pl-c1">50</span>      <span class="pl-c1">145</span>
+Alice   <span class="pl-c1">50</span>      <span class="pl-c1">534</span>
+<span class="pl-k">Time</span> taken: <span class="pl-c1">0</span>.<span class="pl-c1">08</span> seconds, Fetched: <span class="pl-c1">3</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <ul> 
+   <li>To retrieve a specific array element, <strong>HiveQL</strong> requires the column index which is zero based, e.g. <strong>phone_numbers[0]</strong></li> 
+  </ul> 
+  <h4><a id="user-content-query-to-show-name-age-and-phone_number-with-repeated-rows-for-each-phone-number-from-the-phone_numbers-array" class="anchor" href="https://github.com/eel-sdk/eel#query-to-show-name-age-and-phone_number-with-repeated-rows-for-each-phone-number-from-the-phone_numbers-array" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Query to show <em>name</em>, <em>age</em> and <em>phone_number</em> with repeated rows for each phone number from the phone_numbers array</h4> 
+  <div class="highlight highlight-source-sql">
+   <pre>hive<span class="pl-k">&gt;</span> <span class="pl-k">select</span> <span class="pl-c1">person_details</span>.<span class="pl-c1">name</span>, <span class="pl-c1">person_details</span>.<span class="pl-c1">age</span>, phone_number
+    <span class="pl-k">&gt;</span> <span class="pl-k">from</span> <span class="pl-c1">eel_test</span>.<span class="pl-c1">struct_person_phone</span>
+    <span class="pl-k">&gt;</span> lateral view explode(phone_numbers) pns <span class="pl-k">as</span> phone_number;
+OK
+Fred    <span class="pl-c1">50</span>      <span class="pl-c1">322</span>
+Fred    <span class="pl-c1">50</span>      <span class="pl-c1">987</span>
+Gary    <span class="pl-c1">50</span>      <span class="pl-c1">145</span>
+Gary    <span class="pl-c1">50</span>      <span class="pl-c1">082</span>
+Alice   <span class="pl-c1">50</span>      <span class="pl-c1">534</span>
+Alice   <span class="pl-c1">50</span>      <span class="pl-c1">129</span>
+<span class="pl-k">Time</span> taken: <span class="pl-c1">0</span>.<span class="pl-c1">062</span> seconds, Fetched: <span class="pl-c1">6</span> row(s)
+hive<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <ul> 
+   <li>The above <strong>lateral view</strong> statement is used in conjunction with the <strong>explode UDTF(user-defined-table-function)</strong> to generate a row per array element </li> 
   </ul> 
   <h2><a id="user-content-parquet-source" class="anchor" href="https://github.com/eel-sdk/eel#parquet-source" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

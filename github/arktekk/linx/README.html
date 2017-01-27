@@ -1,0 +1,182 @@
+<div class="announce instapaper_body markdown" data-path="README.markdown" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-linx---a-simple-and-typesafe-link-representation" class="anchor" href="https://github.com/arktekk/linx#linx---a-simple-and-typesafe-link-representation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Linx - a simple and typesafe link representation</h1> 
+  <p>Linx is a tiny and simple library for building and matching links/paths in a typesafe way. Links are built from the root up, consisting of literal and variable parts. A link can be used both as a function and as an extractor for pattern matching.</p> 
+  <p>Linx has no dependencies and is cross compiled for 2.10, 2.11 and 2.12</p> 
+  <p>Latest version is 0.3 and is available from Maven Central as <code>"com.jteigen" %% "linx" % "0.3"</code></p> 
+  <pre><code>import linx._
+
+val People = Root / "people"
+val Person = Root / "people" / 'person
+val Pets   = Root / "people" / 'person / "pets"
+val Pet    = Root / "people" / 'person / "pets" / 'pet
+</code></pre> 
+  <p>Everything is immutable, so if you prefer a more terse style you can safely build on previous links to create new ones. This does exactly the same as the previous example. (This style can be very useful when providing alternatives for the same resources)</p> 
+  <pre><code>val People = Root / "people"
+val Person = People / 'person
+val Pets   = Person / "pets"
+val Pet    = Pets / 'pet
+</code></pre> 
+  <h2><a id="user-content-links-are-functions" class="anchor" href="https://github.com/arktekk/linx#links-are-functions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>links are functions</h2> 
+  <pre><code>Root()                 == "/"
+People()               == "/people"
+Person("personA")      == "/people/personA"
+Pets("personA")        == "/people/personA/pets"
+Pet("personA", "petB") == "/people/personA/pets/petB"
+</code></pre> 
+  <h2><a id="user-content-links-are-extractors-pattern-matching" class="anchor" href="https://github.com/arktekk/linx#links-are-extractors-pattern-matching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>links are extractors (pattern matching)</h2> 
+  <pre><code>"/" match {
+  case Root() =&gt;
+}
+
+"/people" match {
+  case People() =&gt;
+}
+
+"/people/personA" match {
+  case Person("personA") =&gt; // matches
+}
+
+"/people/personA/pets" match {
+  case Pets("personA") =&gt; // matches
+}
+
+"/people/personA/pets/petB" match {
+  case Pet("personA", "petB") =&gt; // matches
+}
+</code></pre> 
+  <p>The wrong number of arguments will fail at compile time</p> 
+  <pre><code>Pet("personA", "petB", "unknown")
+
+error: too many arguments for method apply: (a: (String, String))String in trait Linx
+</code></pre> 
+  <p>Pattern matching with the wrong number of arguments will fail at compile time</p> 
+  <pre><code>"/people/personA/pets/petB" match {
+  case Pet(person, pet, unknown) =&gt;
+}
+
+error: wrong number of arguments for value Pet of type Pet.type
+</code></pre> 
+  <p>Since Linx works directly on strings it can easily be used with libraries and frameworks that expose paths/links as strings</p> 
+  <p>Here is an example showing how to do use Linx for both matching and creating links in an Unfiltered application</p> 
+  <pre><code>import linx._
+import unfiltered.filter.Plan
+import unfiltered.request._
+import unfiltered.response.Html5
+
+object Example extends Plan with App {
+
+  val People = Root / "people"
+  val Person = People / 'person
+  val Pets   = Person / "pets"
+  val Pet    = Pets / 'pet
+
+  case class Owner(name:String, pets:Map[String, String])
+
+  val people = Map(
+    "1" -&gt; Owner("Paris", Map("1" -&gt; "Tinkerbell", "2" -&gt; "Bambi")),
+    "2" -&gt; Owner("Snoop Dog", Map("1" -&gt; "Frank Sinatra", "2" -&gt; "Miles Davis")))
+
+  def intent = {
+    case Path(Root()) =&gt;
+      Html5(&lt;a href={People()}&gt;People&lt;/a&gt;)
+
+    case Path(People()) =&gt;
+      Html5(people.toSeq.map{
+        case (id, person) =&gt; &lt;p&gt;&lt;a href={Person(id)}&gt;{person.name}&lt;/a&gt;&lt;/p&gt;
+      })
+
+    case Path(Person(person)) =&gt;
+      val p = people(person)
+      Html5(&lt;a href={Pets(person)}&gt;{p.name} Pets&lt;/a&gt;)
+
+    case Path(Pets(person)) =&gt;
+      val p = people(person)
+      Html5(&lt;h1&gt;{p.name}&lt;/h1&gt; ++ p.pets.toSeq.map{
+        case (id, name) =&gt; &lt;p&gt;&lt;a href={Pet(person, id)}&gt;{name}&lt;/a&gt;&lt;/p&gt;
+      })
+
+    case Path(Pet(person, pet)) =&gt;
+      val name = people(person).pets(pet)
+      Html5(&lt;h1&gt;{name}&lt;/h1&gt;)
+  }
+
+  unfiltered.jetty.Http(8080).plan(this).run()
+}
+</code></pre> 
+  <h2><a id="user-content-alternatives--evolving-your-api" class="anchor" href="https://github.com/arktekk/linx#alternatives--evolving-your-api" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Alternatives / Evolving your api</h2> 
+  <p>Lets say your application provides this api</p> 
+  <pre><code>val Persons = Root / "persons"
+val Person  = Persons / 'person
+val Pets    = Person / "pets"
+val Pet     = Pets / 'pet
+</code></pre> 
+  <p><code>"persons"</code> is poor english and you would like to change it to <code>"people"</code> Simply changing <code>"persons"</code> to "people" would break all clients that are hardcoded to your url structure, so how can we support these old resources without having to rewrite our entire application ?</p> 
+  <p>To solve this, Linx can compose link alternatives as long as the links composed have the same number of variables.</p> 
+  <pre><code>val People = Root / "people" | Root / "persons"
+val Person = People / 'person
+val Pets   = Person / "pets"
+val Pet    = Pets / 'pet
+</code></pre> 
+  <p>And you can leave the rest of your code completely unchanged. The People link will now match both <code>"/people"</code> and <code>"/persons"</code>, and the Person, Pets and Pets links will all match correctly on links starting with both <code>"/people"</code> and <code>"/persons"</code></p> 
+  <pre><code>"/people/personA/pets/petA" match {
+    case Pet(person, pet) =&gt; // matches
+}
+
+"/persons/personA/pets/petA" match {
+    case Pet(person, pet) =&gt; // matches
+}
+</code></pre> 
+  <p>When using link alternatives as functions, they will always return the leftmost alternative, which in this example will be <code>"/people"</code> etc.</p> 
+  <p>If you need to retrieve all the available links you can call the <code>links</code> method</p> 
+  <pre><code>Pet.links("personA", "petB") == Stream("/people/personA/pets/petA", "/persons/personA/pets/petA")
+</code></pre> 
+  <h2><a id="user-content-templates" class="anchor" href="https://github.com/arktekk/linx#templates" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Templates</h2> 
+  <p>Pretty much every api out there have documented link structures for developers to code against (e.g twitter) A common way of doing this is by showing all the links together with some documentation in a URL-template like way.</p> 
+  <p>Twitter uses :variable to represent a variable in its url templates</p> 
+  <pre><code>GET statuses/retweets/:id
+</code></pre> 
+  <p>In Linx this will look like this</p> 
+  <pre><code>val Retweets = Root / "statuses" / "retweets" / 'id
+</code></pre> 
+  <p>To get a template for a link we need to provide a functions handling how a variable shoule be rendered</p> 
+  <pre><code>def twitter(v:String) = ":" + v
+Retweets.template(twitter) == "/statuses/retweets/:id"
+</code></pre> 
+  <p>If we want to render our variables in a different way we simply provide a different function to render the variables</p> 
+  <pre><code>def rfc6570(v:String) = "{" + v + "}"
+Retweets.template(rfc6570) == "/statuses/retweets/{id}"
+</code></pre> 
+  <p>Linx supports rendering multiple templates for links that have alternatives. Templates are rendered from left to right</p> 
+  <pre><code>val People = Root / "people" | Root / "persons"
+val Person = People / 'person
+val Pets   = Person / "pets"
+val Pet    = Pets / 'pet
+
+def twitter(v:String) = ":" + v
+Pet.templates(twitter) == Stream("/people/:person/pets/:pet", "/persons/:person/pets/:pet")
+</code></pre> 
+  <h2><a id="user-content-tostring" class="anchor" href="https://github.com/arktekk/linx#tostring" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ToString</h2> 
+  <p>the toString method on Linx is overridden to provide a URI-template (rfc6570) compatible template</p> 
+  <pre><code>override def toString = template("{" + _ + "}")
+</code></pre> 
+ </article>
+</div>

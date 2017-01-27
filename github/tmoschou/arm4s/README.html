@@ -1,0 +1,214 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-arm4s---automatic-resource-management-for-scala" class="anchor" href="https://github.com/tmoschou/arm4s#arm4s---automatic-resource-management-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ARM4S - Automatic Resource Management for Scala</h1> 
+  <p>This library provides a way of succinctly dealing with resources in an exception safe manner. The behaviour is identical to Java's exception handling in <code>try</code>-with-resources statement and a substitute for scala which does not have an equivalent construct natively.</p> 
+  <p>Unlike Java's try-with-resource constructs, managed resources are not limited to <code>java.lang.AutoClosable</code>s. Further types such as <code>java.util.concurrent.ExecutorService</code> can be supported with implicit converters in user code. See Comprehensive Examples below. Also unlike try-with-resource constructs, ARM4S's managed block (the body) can actually yield results, ensuring that resources are closed properly before returning.</p> 
+  <p>For example: Parse multiple resources implicitly and yield a result</p> 
+  <pre><code>import io.tmos.arm.implicits._
+import java.io._
+import java.net.{Socket, InetAddress, ServerSocket}
+
+val line = for {
+  socket &lt;- new Socket(InetAddress.getLoopbackAddress, port)
+  out &lt;- new PrintWriter(socket.getOutputStream, true)
+  in &lt;- new BufferedReader(new InputStreamReader(socket.getInputStream))
+} yield {
+  val line = in.readLine()
+  out.println(line.toUpperCase)
+  return line
+}
+</code></pre> 
+  <p>For more examples see, the Examples section below.</p> 
+  <h2><a id="user-content-exception-behaviour" class="anchor" href="https://github.com/tmoschou/arm4s#exception-behaviour" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Exception Behaviour</h2> 
+  <p>This library differs from other Scala ARM libraries in that it has been designed with consideration for different exception scenarios and with the following goals regarding exception safe behaviour:</p> 
+  <ol> 
+   <li><p>The <code>withFinally</code> method (see <code>CanManage</code>) of a managed resource (e.g. delegates to <code>close</code> of <code>AutoCloseable</code>s) must be called even if the body throws <em>any</em> <code>Throwable</code> exception including fatal ones. Example of fatal exceptions include anything not matched by <code>scala.util.control.NonFatal</code> such as <code>InterruptedException</code>, <code>ControlThrowable</code> and <code>VirtualMachineError</code>. Any exception must be immediately rethrown after withFinally, in fact this is a requirement of fatal exceptions.</p></li> 
+   <li><p>The <code>withFinally</code> method in a finally clause may also throw any <code>Throwable</code> too. Unfortunately this is a possibility and permitted by <code>AutoCloseable</code> which can throw any <code>Throwable</code> (Any <code>Exception</code> plus <code>Error</code> which are unchecked).</p></li> 
+   <li><p>Importantly, any <code>Throwable</code> thrown by <code>withFinally</code> must not mask (suppress) any exception thrown firstly by the body, if any. Instead it should catch and recorded as a suppressed exception against the original (currently throwing) exception, and certainly not vice-versa. This is what Java's try with resource construct effectively does; for more details, see Oracle's tech article on (Try-with-resources)[<a href="http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html" target="_blank">http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html</a>].</p></li> 
+  </ol> 
+  <h2><a id="user-content-including-arm4s-in-your-project" class="anchor" href="https://github.com/tmoschou/arm4s#including-arm4s-in-your-project" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Including ARM4S in your project</h2> 
+  <p>In SBT:</p> 
+  <pre><code>libraryDependencies += "io.tmos" %% "arm4s" % VERSION
+</code></pre> 
+  <p>In Maven:</p> 
+  <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;io.tmos&lt;/groupId&gt;
+    &lt;artifactId&gt;arm4s_${scala.binary.version}&lt;/artifactId&gt;
+    &lt;version&gt;VERSION&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Replace <code>VERSION</code> with the latest version.</p> 
+  <h2><a id="user-content-using-arm4s" class="anchor" href="https://github.com/tmoschou/arm4s#using-arm4s" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using ARM4S</h2> 
+  <p>There are two ways you can import arm4s.</p> 
+  <p>For explicit resource management</p> 
+  <pre><code>import io.tmos.arm._
+for (r &lt;- manage(resource))
+  ...
+</code></pre> 
+  <p>Or implicitly</p> 
+  <pre><code>import io.tmos.arm.implicits._
+for (r &lt;- resource)
+   ...
+</code></pre> 
+  <p>Any resource of type <code>T</code> for which an implicit <code>CanManage[T]</code> object is provided in scope can be managed.</p> 
+  <p>By default the following <code>CanManage[T]</code> that are automatically provided in scope on import</p> 
+  <ul> 
+   <li><code>type T = java.lang.AutoClosable</code></li> 
+   <li><code>type T = { def close() }</code> - via scala reflection</li> 
+  </ul> 
+  <p>Managed resources may be composed together/chained in a monadic manner that allows for optionally yielding results or imperatively using <code>for</code>-comprehensions.</p> 
+  <p>The managed resources are automatically closed, and in reverse declaration order.</p> 
+  <p>The resources are closed in a <code>finally</code> clause regardless of any exception thrown in the body of the <code>for</code>-comprehension, or any prior <code>withFinally</code> called on other resources.</p> 
+  <h2><a id="user-content-examples" class="anchor" href="https://github.com/tmoschou/arm4s#examples" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Examples</h2> 
+  <p>Imperatively</p> 
+  <pre><code>import io.tmos.arm._
+val lines: Seq[String] = for (inputStream &lt;- managed(new FileInputStream("data.json")) yield {
+  Json.parse(inputStream).as[Seq[String]]
+}
+</code></pre> 
+  <p>which translates the the following monadic style</p> 
+  <pre><code>import io.tmos.arm._
+val lines = managed(new FileInputStream("data.json")) map { inputStream =&gt;
+   Json.parse(inputStream).as[Seq[String]]
+}
+</code></pre> 
+  <p>or if composing multiple resources this can be done easily too</p> 
+  <pre><code>import io.tmos.arm._
+val result = for {
+  a &lt;- managed(new A)
+  b &lt;- managed(new B(a))
+  c &lt;- managed(new C)
+} yield {
+  ...
+}
+</code></pre> 
+  <p>Note that this is NOT the same as</p> 
+  <pre><code>val a : A = new A
+val b : B = new B(a)
+val c : C = new C
+
+val result try {
+  ...
+} finally {
+  c.close
+  b.close
+  a.close
+}
+</code></pre> 
+  <p>For example if <code>new B(a)</code> threw an exception then <code>a</code> would not be closed. Likewise if <code>c.close</code> threw an exception, then <code>a</code> and <code>b</code> would not be closed. The equivalent code using multiple <code>try</code> statements gets messy very quickly. See Oracle's tech article on (Try-with-resources)[<a href="http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html" target="_blank">http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html</a>] for an example.</p> 
+  <h2><a id="user-content-comprehensive-example" class="anchor" href="https://github.com/tmoschou/arm4s#comprehensive-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Comprehensive Example</h2> 
+  <p>Here is a comprehensive example of managing multiple resources implcitly including an <code>ExectorService</code> which we provide the custom <code>withFinally</code> logic for, that runs a tcp service in a separate thread which echos back text in uppercase.</p> 
+  <pre><code>import io.tmos.arm.implicits._
+import scala.collection.JavaConverters._
+
+implicit val canManageExectorService = new CanManage[ExecutorService] {
+  override def withFinally(pool: ExecutorService): Unit = {
+    pool.shutdown() // Disable new tasks from being submitted
+    try {
+      if (!pool.awaitTermination(10, TimeUnit.SECONDS)) { // wait for normal termination
+        pool.shutdownNow() // force terminate
+        if (!pool.awaitTermination(10, TimeUnit.SECONDS)) // wait for forced termination
+          throw new RuntimeException("ExecutorService did not terminate")
+      }
+    } catch {
+      case e: InterruptedException =&gt;
+        pool.shutdownNow()  // (Re-)Cancel if current thread also interrupted
+        Thread.currentThread().interrupt()  // Preserve interrupt status
+    }
+  }
+}
+
+val port = new CompletableFuture[Int]
+
+val callable = new Callable[Unit] {
+  override def call(): Unit = {
+    for (ss &lt;- new ServerSocket(0, 0, InetAddress.getLoopbackAddress)) {
+      port.complete(ss.getLocalPort)
+      for {
+        connection &lt;- ss.accept
+        out &lt;- new PrintWriter(connection.getOutputStream, true)
+        in &lt;- new BufferedReader(new InputStreamReader(connection.getInputStream))
+        line &lt;- in.lines().iterator().asScala // note not a resource, but now a traversable
+      } out.println(line.toUpperCase)
+    }
+  }
+}
+
+// manage an executor service using the user defined canManageExectorService.
+// This will shutdown and wait termination
+val completedFuture = for (executorService &lt;- Executors.newSingleThreadExecutor()) yield {
+  val future = executorService.submit(callable)
+  val upperPhrase = for {
+    s &lt;- new Socket(InetAddress.getLoopbackAddress, port.get)
+    out &lt;- new PrintWriter(s.getOutputStream, true)
+    in &lt;- new BufferedReader(new InputStreamReader(s.getInputStream))
+  } yield {
+    out.println("hello")
+    out.println("world")
+    in.readLine() + ' ' + in.readLine()
+  }
+  assert(upperPhrase === "HELLO WORLD")
+  future
+}
+
+assert(completedFuture.isCancelled || completedFuture.isDone)
+completedFuture.get() // should not block
+</code></pre> 
+  <h2><a id="user-content-caveats" class="anchor" href="https://github.com/tmoschou/arm4s#caveats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caveats</h2> 
+  <p>If a resource implements any of</p> 
+  <ul> 
+   <li><code>def map[B](f: A =&gt; B): B</code></li> 
+   <li><code>def flatMap[B](f: A =&gt; B): B</code></li> 
+   <li><code>def foreach(f: A =&gt; Unit): Unit</code></li> 
+  </ul> 
+  <p>then it is <em>not</em> recommended to use to use the implicit management of the resource, as it may not be obvious to a reader if the resource has become managed. For example</p> 
+  <pre><code>import io.tmos.arm.implicits._
+
+class MappableResource extends AutoCloseable {
+  def isClosed = closed
+  protected var closed = false
+  override def close(): Unit = closed = true
+  def map[B](f: Int =&gt; B): Seq[B] = (0 to 3).map(f)
+}
+
+val resource1 = new MappableResource
+val result1 = for (i &lt;- resource1) yield { // resource NOT managed
+  i * 2     // Note i is of type Int, not MappableResource
+}
+println(result1)                // Vector(0, 2, 4, 6)
+println(resource1.isClosed)     // false
+
+val resource2 = new MappableResource
+val result2 = for {
+  r &lt;- resource2     // resource managed
+  i &lt;- r
+} yield {
+  i * 2
+}
+println(result2)                // Vector(0, 2, 4, 6)
+println(resource2.isClosed)     // true
+</code></pre> 
+  <p>Please use the explicit <code>manage()</code> method.</p> 
+ </article>
+</div>

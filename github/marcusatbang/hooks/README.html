@@ -1,0 +1,101 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><strong>Hooks</strong> provides a way for Scala programs to support plugins and optional features.</p> 
+  <p><a href="https://camo.githubusercontent.com/d6a0cef2e772edb98e6fd5c7af52cc2179041afc/687474703a2f2f7777772e6d696e6f746175722e63632f7761726e696e672e706e67" target="_blank"><img src="https://camo.githubusercontent.com/d6a0cef2e772edb98e6fd5c7af52cc2179041afc/687474703a2f2f7777772e6d696e6f746175722e63632f7761726e696e672e706e67" alt="Warning" data-canonical-src="http://www.minotaur.cc/warning.png" style="max-width:100%;"></a></p> 
+  <p><strong>Under development</strong> The Hooks library is still being developed. Details will change before it's ready for release.</p> 
+  <h2><a id="user-content-extend-your-code" class="anchor" href="https://github.com/marcusatbang/hooks#extend-your-code" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Extend your code</h2> 
+  <p>Annotate your code with special hooks:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">nameFilter</span> <span class="pl-k">=</span> <span class="pl-en">FilterHook</span>[<span class="pl-k">String</span>]()
+<span class="pl-k">val</span> <span class="pl-en">userSavedAction</span> <span class="pl-k">=</span> <span class="pl-en">ActionHook</span>[<span class="pl-en">User</span>]()</pre>
+  </div> 
+  <p>Call into that hook in your program code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">displayName</span> <span class="pl-k">=</span> nameFilter(user.name)
+userSavedAction(user)</pre>
+  </div> 
+  <p>Plugins can attach behaviours to that hook to modify it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>nameFilter.hook { name <span class="pl-k">=&gt;</span> name.toUpperCase }
+userSavedAction.hook { user <span class="pl-k">=&gt;</span> sendNotificationEmail(user) }</pre>
+  </div> 
+  <h2><a id="user-content-optional-features" class="anchor" href="https://github.com/marcusatbang/hooks#optional-features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Optional features</h2> 
+  <p>Features group these modifications:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Uppercase</span> <span class="pl-k">extends</span> <span class="pl-e">Feature</span>(<span class="pl-s"><span class="pl-pds">"</span>Uppercase<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">def</span> <span class="pl-en">init</span>() {
+    nameFilter.hook { name <span class="pl-k">=&gt;</span> name.toUpperCase }
+  }
+}</pre>
+  </div> 
+  <p>Select which features you want to use when running code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">features</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">Uppercase</span>, <span class="pl-en">AnotherFeature</span>)
+<span class="pl-k">val</span> <span class="pl-en">displayName</span> <span class="pl-k">=</span> <span class="pl-en">FeatureRepository</span>.using(features) {
+  nameFilter(user.name)
+}</pre>
+  </div> 
+  <p>Features can depend on each other and they'll be kept together:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Uppercase</span> <span class="pl-k">extends</span> <span class="pl-e">Feature</span>(<span class="pl-s"><span class="pl-pds">"</span>Uppercase<span class="pl-pds">"</span></span>,
+                                 depend <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">AnotherFeature</span>)) {</pre>
+  </div> 
+  <p>You can control the order you want features to be initialised:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Uppercase</span> <span class="pl-k">extends</span> <span class="pl-e">Feature</span>(<span class="pl-s"><span class="pl-pds">"</span>Uppercase<span class="pl-pds">"</span></span>,
+                                 depend <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">AnotherFeature</span>)
+                                 before <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">AnotherFeature</span>)) {</pre>
+  </div> 
+  <h2><a id="user-content-plugins" class="anchor" href="https://github.com/marcusatbang/hooks#plugins" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Plugins</h2> 
+  <p>Load plugins from a directory:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">folder</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>homedir/plugins<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">classpath</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>myapplication.jar<span class="pl-pds">"</span></span>))
+<span class="pl-k">new</span> <span class="pl-en">PluginLoader</span>(folder, classpath, <span class="pl-s"><span class="pl-pds">"</span>.jar<span class="pl-pds">"</span></span>).hookAll()</pre>
+  </div> 
+  <h2><a id="user-content-using-hooks-with-sbt" class="anchor" href="https://github.com/marcusatbang/hooks#using-hooks-with-sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using Hooks with SBT</h2> 
+  <p>You can add the Hooks library to your SBT project by putting this into your build file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>cc.minotaur<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>hooks<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Note that at present Hooks is compatible with Scala versions 2.9.0 and 2.9.1.</p> 
+  <h2><a id="user-content-read-more" class="anchor" href="https://github.com/marcusatbang/hooks#read-more" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Read more</h2> 
+  <ul> 
+   <li><p><strong>Start here: <a href="https://github.com/marcusatbang/Hooks/wiki/Quick%20Start" target="_blank">Quick Start</a> →</strong></p></li> 
+   <li><p><a href="https://github.com/marcusatbang/Hooks/wiki/Introduction" target="_blank">Introduction</a></p></li> 
+   <li><p><a href="https://github.com/marcusatbang/Hooks/wiki/Getting%20Started" target="_blank">Getting Started</a></p> 
+    <ul> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/ActionHook" target="_blank"><code>ActionHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/FilterHook" target="_blank"><code>FilterHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/GuardHook" target="_blank"><code>GuardHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/ComponentHook" target="_blank"><code>ComponentHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/SelectableHook" target="_blank"><code>SelectableHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/BufferHook" target="_blank"><code>BufferHook</code></a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/ResourceTrackerHook" target="_blank"><code>ResourceTrackerHook</code></a></li> 
+    </ul></li> 
+   <li><p><a href="https://github.com/marcusatbang/Hooks/wiki/Advanced%20Topics" target="_blank">Advanced Topics</a></p></li> 
+   <li><p><a href="https://github.com/marcusatbang/Hooks/wiki/Security" target="_blank">Security</a></p></li> 
+   <li><p><a href="https://github.com/marcusatbang/Hooks/wiki/Examples" target="_blank">Examples</a></p> 
+    <ul> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/Basic%20application" target="_blank">Basic application</a></li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/Play!%20framework" target="_blank">Website using the Play! framework</a> (not yet implemented)</li> 
+     <li><a href="https://github.com/marcusatbang/Hooks/wiki/Feature%20loader" target="_blank">Loading plugins from a directory</a></li> 
+    </ul></li> 
+  </ul> 
+ </article>
+</div>

@@ -16,6 +16,8 @@
      <li><strong>@JsonSchemaFormat</strong></li> 
      <li><strong>@JsonSchemaTitle</strong></li> 
      <li><strong>@JsonSchemaDefault</strong></li> 
+     <li><strong>@JsonSchemaOptions</strong></li> 
+     <li><strong>@JsonSchemaInject</strong></li> 
     </ul></li> 
    <li>Supports many Javax-validation @Annotations</li> 
    <li>Works well with Generated GUI's using <a href="https://github.com/jdorn/json-editor" target="_blank">https://github.com/jdorn/json-editor</a> 
@@ -24,6 +26,7 @@
      <li>Special handling of Option-/Optional-properties using oneOf.</li> 
     </ul></li> 
    <li>Supports custom Class-to-format-Mapping</li> 
+   <li>Supports injecting custom json-schema-fragments using the <strong>@JsonSchemaInject</strong>-annotation.</li> 
   </ul> 
   <p><strong>Benefits</strong></p> 
   <ul> 
@@ -31,6 +34,55 @@
    <li>Implemented in Scala (<em>Built for 2.10, 2.11 and 2.12</em>)</li> 
    <li>Easy to fix and add functionality</li> 
   </ul> 
+  <h2><a id="user-content-flexible" class="anchor" href="https://github.com/mbknor/mbknor-jackson-jsonschema#flexible" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Flexible</h2> 
+  <p>If this generator does not generate exactly the schema you want, you can inject it by using the <strong>@JsonSchemaInject</strong>-annotation.</p> 
+  <p>If you need to use <em>patternProperties</em> (which is not currently 'natively' supported by <em>mbknor-jackson-jsonSchema</em>), you can make it work by injecting the following json-schema-fragment:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>patternProperties<span class="pl-pds">"</span></span> : {
+    <span class="pl-s"><span class="pl-pds">"</span>^[a-zA-Z0-9]+<span class="pl-pds">"</span></span> : {
+      <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span> : <span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>
+    }
+  }
+}</pre>
+  </div> 
+  <p>.. like this in Scala:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">JsonSerialize</span>(using <span class="pl-k">=</span> <span class="pl-en">MySpecialSerializer</span>.class)
+<span class="pl-en">JsonSchemaInject</span>(
+  json <span class="pl-k">=</span>
+    <span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">      {</span>
+<span class="pl-s">        "patternProperties" : {</span>
+<span class="pl-s">          "^[a-zA-Z0-9]+" : {</span>
+<span class="pl-s">            "type" : "string"</span>
+<span class="pl-s">          }</span>
+<span class="pl-s">        }</span>
+<span class="pl-s">      }</span>
+<span class="pl-s">    <span class="pl-pds">"""</span></span>
+)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyPojo</span>(...)</pre>
+  </div> 
+  <p>.. or like this in Java</p> 
+  <div class="highlight highlight-source-java">
+   <pre><span class="pl-k">@JsonSerialize</span>(<span class="pl-c1">using</span> <span class="pl-k">=</span> <span class="pl-smi">MySpecialSerializer</span><span class="pl-k">.</span>class)
+<span class="pl-k">@JsonSchemaInject</span>( <span class="pl-c1">json</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>  <span class="pl-cce">\"</span>patternProperties<span class="pl-cce">\"</span> : {<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>    <span class="pl-cce">\"</span>^[a-zA-Z0-9]+<span class="pl-cce">\"</span> : {<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>      <span class="pl-cce">\"</span>type<span class="pl-cce">\"</span> : <span class="pl-cce">\"</span>string<span class="pl-cce">\"\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>    }<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>  }<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span>
+        <span class="pl-s"><span class="pl-pds">"</span>}<span class="pl-pds">"</span></span> )
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">MyPojo</span> {
+    <span class="pl-c1">...</span>
+    <span class="pl-c1">...</span>
+    <span class="pl-c1">...</span>
+}</pre>
+  </div> 
+  <p>@JsonSchemaInject can also be used on properties.</p> 
   <h2><a id="user-content-project-status" class="anchor" href="https://github.com/mbknor/mbknor-jackson-jsonschema#project-status" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
