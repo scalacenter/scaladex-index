@@ -11,12 +11,242 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation</h2> 
   <p>Include this dependency in your <code>sbt</code> configuration:</p> 
-  <pre><code>"org.jrj-d" %% "cardano" % "0.2"
+  <pre><code>"org.jrj-d" %% "cardano" % "0.2.3"
 </code></pre> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/jrj-d/cardano#usage" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage</h2> 
-  <p>The scaladoc is available <a href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/jrj-d/cardano_2.12/0.2/cardano_2.12-0.2-javadoc.jar/!/index.html" target="_blank">here</a>.</p> 
+  <p>The scaladoc is available <a href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/jrj-d/cardano_2.12/0.2.3/cardano_2.12-0.2.3-javadoc.jar/!/index.html" target="_blank">here</a>.</p> 
+  <h3><a id="user-content-random-variables-as-monads" class="anchor" href="https://github.com/jrj-d/cardano#random-variables-as-monads" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Random variables as monads</h3> 
+  <p><code>cardano</code> models random variable as <a href="https://medium.com/@sinisalouc/demystifying-the-monad-in-scala-cc716bb6f534" target="_blank">monads</a>. This should feel familiar to most Scala programmers since the <code>collection</code> library is built this way.</p> 
+  <p>The base trait is <code>Stochastic[A]</code> which defines a random variable of concrete type <code>A</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">def</span> <span class="pl-en">die</span><span class="pl-k">:</span> <span class="pl-en">Stochastic</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">6</span>).map(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>)
+die<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> ...</pre>
+  </div> 
+  <p>The above line creates a uniform discrete random variable from 0 to 5 (<code>Stochastic.discreteUniform(6)</code>). Applying <code>map(_ + 1)</code> on it effectively creates a fair die with values from 1 to 6.</p> 
+  <p>Let's test our die by computing its expectation and the probability of yielding a 1.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> die.expectation
+res0<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">3.554</span>
+
+scala<span class="pl-k">&gt;</span> die.map(_ <span class="pl-k">==</span> <span class="pl-c1">1</span>).expectation
+res1<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.156</span>
+
+scala<span class="pl-k">&gt;</span> die.map(_ <span class="pl-k">==</span> <span class="pl-c1">1</span>).expectation(<span class="pl-c1">10000</span>)
+res2<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.1667</span></pre>
+  </div> 
+  <p>The number of samples defaults to 1000 when no argument is given.</p> 
+  <p>The <code>filter</code> operation allows us to compute conditional probabilities. The expectation of a die given that the value is less than 3:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> die.filter(_ <span class="pl-k">&lt;</span> <span class="pl-c1">3</span>).expectation
+res16<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">1.504</span></pre>
+  </div> 
+  <p>To model the sum of two dice, we will combine two dice using <code>flatMap</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">sumDice</span> <span class="pl-k">=</span> die.flatMap(v <span class="pl-k">=&gt;</span> die.map(_ <span class="pl-k">+</span> v))
+sumDice<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> sumDice.expectation
+res21<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">7.062</span>
+
+scala<span class="pl-k">&gt;</span> sumDice.std
+res23<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">2.40265041152474</span></pre>
+  </div> 
+  <p>That's it! Along with <code>Stochastic.constant(...)</code> that allows us to build constant random variables, all the standard monadic Scala operations are here.</p> 
+  <p>Let's combine all of this in a solution to the <a href="https://en.wikipedia.org/wiki/Monty_Hall_problem" target="_blank">Monty Hall problem</a>. Thanks to Scala syntactic sugar, we can define random variables in for loops:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">:</span>paste
+<span class="pl-c"><span class="pl-c">//</span> Entering paste mode (ctrl-D to finish)</span>
+
+<span class="pl-k">val</span> <span class="pl-en">keepStrategy</span> <span class="pl-k">=</span> <span class="pl-k">for</span>(
+    winningDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>);
+    firstChosenDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>);
+    revealedDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>)
+      <span class="pl-k">if</span> revealedDoor <span class="pl-k">!=</span> firstChosenDoor <span class="pl-k">&amp;&amp;</span> revealedDoor <span class="pl-k">!=</span> winningDoor
+) <span class="pl-k">yield</span> winningDoor <span class="pl-k">==</span> firstChosenDoor
+
+<span class="pl-k">val</span> <span class="pl-en">changeStrategy</span> <span class="pl-k">=</span> <span class="pl-k">for</span>(
+    winningDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>);
+    firstChosenDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>);
+    revealedDoor <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">Stochastic</span>.discreteUniform(<span class="pl-c1">3</span>)
+      <span class="pl-k">if</span> revealedDoor <span class="pl-k">!=</span> firstChosenDoor <span class="pl-k">&amp;&amp;</span> revealedDoor <span class="pl-k">!=</span> winningDoor
+) <span class="pl-k">yield</span> (winningDoor <span class="pl-k">!=</span> firstChosenDoor <span class="pl-k">&amp;&amp;</span> winningDoor <span class="pl-k">!=</span> revealedDoor)
+
+<span class="pl-c"><span class="pl-c">//</span> Exiting paste mode, now interpreting.</span>
+
+keepStrategy<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span> ...
+changeStrategy<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> keepStrategy.expectation
+res65<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.311</span>
+
+scala<span class="pl-k">&gt;</span> changeStrategy.expectation
+res66<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.652</span></pre>
+  </div> 
+  <p>Indeed, if the player changes door after the host reveals a loosing door, they have a probability of winning of 2/3, 1/3 otherwise.</p> 
+  <h3><a id="user-content-duplicating-random-variables" class="anchor" href="https://github.com/jrj-d/cardano#duplicating-random-variables" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Duplicating random variables</h3> 
+  <p>What if we want to study the rolls of 5 dice? Chaining <code>flatMap</code> would be tedious.</p> 
+  <p>Method <code>repeat</code> of <code>Stochastic[A]</code> allows us to duplicate a random variable. The duplicates are identically distributed and independent.</p> 
+  <p><code>repeat</code> takes as input a function of signature <code>(=&gt; A) =&gt; F[A]</code> for some higher-kinded type <code>F</code>. Let's create a random variable of a sequence of 5 dice:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">fiveDice</span> <span class="pl-k">=</span> die.repeat(<span class="pl-en">Seq</span>.fill[<span class="pl-k">Int</span>](<span class="pl-c1">5</span>))
+fiveDice<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-en">Seq</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> fiveDice.sample
+res24<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">6</span>, <span class="pl-c1">2</span>, <span class="pl-c1">6</span>, <span class="pl-c1">4</span>, <span class="pl-c1">5</span>)
+
+scala<span class="pl-k">&gt;</span> fiveDice.sample
+res25<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">6</span>, <span class="pl-c1">5</span>)
+
+scala<span class="pl-k">&gt;</span> fiveDice.map(s <span class="pl-k">=&gt;</span> s.distinct.size <span class="pl-k">==</span> s.size).expectation
+res40<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.0933</span></pre>
+  </div> 
+  <p>The last line gives an estimate of the probability that all dice have a different value.</p> 
+  <p><code>repeat</code> allows us more exotic constructs like an infinite sequence of die rolls:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">dice</span> <span class="pl-k">=</span> die.repeat(<span class="pl-en">Stream</span>.continually[<span class="pl-k">Int</span>])
+dice<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[scala.collection.immutable.<span class="pl-en">Stream</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> dice.sample.take(<span class="pl-c1">10</span>).toList
+res46<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">5</span>, <span class="pl-c1">2</span>, <span class="pl-c1">5</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">5</span>, <span class="pl-c1">2</span>, <span class="pl-c1">6</span>, <span class="pl-c1">3</span>, <span class="pl-c1">3</span>)
+
+scala<span class="pl-k">&gt;</span> dice.sample.take(<span class="pl-c1">10</span>).toList
+res47<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">2</span>, <span class="pl-c1">4</span>, <span class="pl-c1">2</span>, <span class="pl-c1">6</span>, <span class="pl-c1">4</span>, <span class="pl-c1">5</span>, <span class="pl-c1">4</span>, <span class="pl-c1">5</span>)</pre>
+  </div> 
+  <p>This allows us to estimate the number of dice required to reach a given sum, say 30:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">runningSum</span> <span class="pl-k">=</span> dice.map(_.scan(<span class="pl-c1">0</span>)(_ <span class="pl-k">+</span> _))
+runningSum<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[scala.collection.immutable.<span class="pl-en">Stream</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> runningSum.sample.take(<span class="pl-c1">10</span>).toList
+res48<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">10</span>, <span class="pl-c1">16</span>, <span class="pl-c1">21</span>, <span class="pl-c1">22</span>, <span class="pl-c1">27</span>, <span class="pl-c1">32</span>, <span class="pl-c1">37</span>, <span class="pl-c1">42</span>)
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">nbDice</span> <span class="pl-k">=</span> runningSum.map(_.takeWhile(_ <span class="pl-k">&lt;</span> <span class="pl-c1">30</span>).length)
+nbDice<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> nbDice.expectation
+res49<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">9.014</span>
+
+scala<span class="pl-k">&gt;</span> nbDice.std
+res51<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">1.4758045263516417</span></pre>
+  </div> 
+  <h3><a id="user-content-markov-chain" class="anchor" href="https://github.com/jrj-d/cardano#markov-chain" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Markov chain</h3> 
+  <p>Method <code>markov</code> of <code>Stochastic</code> creates a Markov chain of the first order. It takes as input a function indicating the relationship between two consecutive terms.</p> 
+  <p>Here is a model of the Californian weather (90% chance of a sunny day after a sunny day, 50% after a rainy day):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">:</span>paste
+<span class="pl-c"><span class="pl-c">//</span> Entering paste mode (ctrl-D to finish)</span>
+
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Weather</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Sunny</span> <span class="pl-k">extends</span> <span class="pl-e">Weather</span>
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Rainy</span> <span class="pl-k">extends</span> <span class="pl-e">Weather</span>
+
+<span class="pl-k">def</span> <span class="pl-en">boolToWeather</span>(<span class="pl-v">b</span>: <span class="pl-k">Boolean</span>)<span class="pl-k">:</span> <span class="pl-en">Weather</span> <span class="pl-k">=</span> <span class="pl-k">if</span>(b) <span class="pl-en">Sunny</span> <span class="pl-k">else</span> <span class="pl-en">Rainy</span>
+
+<span class="pl-k">def</span> <span class="pl-en">transition</span>(<span class="pl-v">weather</span>: <span class="pl-en">Weather</span>)<span class="pl-k">:</span> <span class="pl-en">Stochastic</span>[<span class="pl-en">Weather</span>] <span class="pl-k">=</span> weather <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-en">Sunny</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Stochastic</span>.coin(<span class="pl-c1">0.9</span>).map(boolToWeather)
+  <span class="pl-k">case</span> <span class="pl-en">Rainy</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Stochastic</span>.coin(<span class="pl-c1">0.5</span>).map(boolToWeather)
+}
+
+<span class="pl-k">val</span> <span class="pl-en">weatherChain</span><span class="pl-k">:</span> <span class="pl-en">Stochastic</span>[<span class="pl-en">Stream</span>[<span class="pl-en">Weather</span>]] <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.constant[<span class="pl-en">Weather</span>](<span class="pl-en">Sunny</span>).markov(transition)
+
+<span class="pl-c"><span class="pl-c">//</span> Exiting paste mode, now interpreting.</span>
+
+defined <span class="pl-k">trait</span> <span class="pl-en">Weather</span>
+defined <span class="pl-k">object</span> <span class="pl-en">Sunny</span>
+defined <span class="pl-k">object</span> <span class="pl-en">Rainy</span>
+boolToWeather<span class="pl-k">:</span> (<span class="pl-v">b</span>: <span class="pl-k">Boolean</span>)<span class="pl-en">Weather</span>
+transition<span class="pl-k">:</span> (<span class="pl-v">weather</span>: <span class="pl-en">Weather</span>)cardano.<span class="pl-en">Stochastic</span>[<span class="pl-en">Weather</span>]
+weatherChain<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-en">Stream</span>[<span class="pl-en">Weather</span>]] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> weatherChain.sample.take(<span class="pl-c1">10</span>).toList
+res54<span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Weather</span>] <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Rainy</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Sunny</span>, <span class="pl-en">Rainy</span>)</pre>
+  </div> 
+  <h3><a id="user-content-bayesian-inference" class="anchor" href="https://github.com/jrj-d/cardano#bayesian-inference" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Bayesian inference</h3> 
+  <p>Sampling is often used to compute posteriors in intractable cases. For the sake of brevity, we will work here with a toy example that is in fact tractable.</p> 
+  <p>We want to determine the bias of a coin by repeatedly flipping it. The prior is a Beta distribution with a rather flat belief in dealing with a fair coin (2, 2).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">:</span>paste
+<span class="pl-c"><span class="pl-c">//</span> Entering paste mode (ctrl-D to finish)</span>
+
+<span class="pl-k">val</span> <span class="pl-en">unknownCoin</span> <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.coin(<span class="pl-c1">0.6</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">prior</span> <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.beta(<span class="pl-c1">2</span>, <span class="pl-c1">2</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">observations</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>.fill(<span class="pl-c1">100</span>)(unknownCoin.sample)
+
+<span class="pl-k">val</span> <span class="pl-en">posterior</span> <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.posterior(prior, observations) { (bias, observation) <span class="pl-k">=&gt;</span>
+    <span class="pl-k">if</span>(observation) bias <span class="pl-k">else</span> <span class="pl-c1">1</span> <span class="pl-k">-</span> bias
+}
+
+<span class="pl-c"><span class="pl-c">//</span> Exiting paste mode, now interpreting.</span>
+
+unknownCoin<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span> ...
+prior<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Double</span>] <span class="pl-k">=</span> ...
+observations<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> posterior.expectation
+res55<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.6051810933353833</span>
+
+scala<span class="pl-k">&gt;</span> posterior.std
+res56<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.0464702905875049</span></pre>
+  </div> 
+  <p>See also <code>posteriorByLog</code> where the log-likelihood is provided by the user.</p> 
+  <h3><a id="user-content-mcmc-sampling" class="anchor" href="https://github.com/jrj-d/cardano#mcmc-sampling" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MCMC sampling</h3> 
+  <p><code>cardano</code> includes the Metropolis-Hastings and Metropolis sampling procedures, along with a facility to build maximum entropy distributions. This can be especially useful when you only have access to the unnormalized density of the distribution.</p> 
+  <p>Suppose we don't have <code>Stochastic.beta</code> but we want to create a Beta random variable. Metropolis-Hastings is a sampling procedure that builds a Markov chain whose equilibrium distribution is the target distribution. It takes as input as a transition function and an unnormalized target density.</p> 
+  <p>The transition function consists in adding a small uniform noise to the current value and capping it to [0,1]. The unnormalized target distribution can be found on <a href="https://en.wikipedia.org/wiki/Beta_distribution" target="_blank">Wikipedia</a>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">:</span>paste
+<span class="pl-c"><span class="pl-c">//</span> Entering paste mode (ctrl-D to finish)</span>
+
+<span class="pl-k">def</span> <span class="pl-en">logDensity</span>(<span class="pl-v">a</span>: <span class="pl-k">Double</span>, <span class="pl-v">b</span>: <span class="pl-k">Double</span>, <span class="pl-v">value</span>: <span class="pl-k">Double</span>) <span class="pl-k">=</span> (a <span class="pl-k">-</span> <span class="pl-c1">1</span>) <span class="pl-k">*</span> math.log(value) <span class="pl-k">+</span> (b <span class="pl-k">-</span> <span class="pl-c1">1</span>) <span class="pl-k">*</span> math.log(<span class="pl-c1">1</span> <span class="pl-k">-</span> value)
+
+<span class="pl-k">def</span> <span class="pl-en">cap</span>(<span class="pl-v">value</span>: <span class="pl-k">Double</span>) <span class="pl-k">=</span> math.min(<span class="pl-c1">1.0</span>, math.max(<span class="pl-c1">0.0</span>, value))
+
+<span class="pl-k">val</span> <span class="pl-en">metropolisBeta</span> <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.metropolis(<span class="pl-en">Stochastic</span>.constant(<span class="pl-c1">0.5</span>))(logDensity(<span class="pl-c1">20</span>, <span class="pl-c1">10</span>, _)) { lastValue <span class="pl-k">=&gt;</span>
+    <span class="pl-en">Stochastic</span>.continuousUniform.map(noise <span class="pl-k">=&gt;</span> cap(lastValue <span class="pl-k">+</span> <span class="pl-c1">0.1</span> <span class="pl-k">*</span> noise <span class="pl-k">-</span> <span class="pl-c1">0.05</span>))
+}
+
+<span class="pl-k">val</span> <span class="pl-en">exactBeta</span> <span class="pl-k">=</span> <span class="pl-en">Stochastic</span>.beta(<span class="pl-c1">20</span>, <span class="pl-c1">10</span>)
+
+<span class="pl-c"><span class="pl-c">//</span> Exiting paste mode, now interpreting.</span>
+
+logDensity<span class="pl-k">:</span> (<span class="pl-v">a</span>: <span class="pl-k">Double</span>, <span class="pl-v">b</span>: <span class="pl-k">Double</span>, <span class="pl-v">value</span>: <span class="pl-k">Double</span>)<span class="pl-k">Double</span>
+cap<span class="pl-k">:</span> (<span class="pl-v">value</span>: <span class="pl-k">Double</span>)<span class="pl-k">Double</span>
+metropolisBeta<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Double</span>] <span class="pl-k">=</span> ...
+exactBeta<span class="pl-k">:</span> cardano.<span class="pl-en">Stochastic</span>[<span class="pl-k">Double</span>] <span class="pl-k">=</span> ...
+
+scala<span class="pl-k">&gt;</span> metropolisBeta.expectation
+res61<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.6743298870740473</span>
+
+scala<span class="pl-k">&gt;</span> exactBeta.expectation
+res62<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.6646562222468744</span>
+
+scala<span class="pl-k">&gt;</span> metropolisBeta.std
+res63<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.08492853676864531</span>
+
+scala<span class="pl-k">&gt;</span> exactBeta.std
+res64<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span> <span class="pl-c1">0.0850264034989098</span></pre>
+  </div> 
+  <p>Refer to the scaladoc to set the burn-in period and the interval between two consecutive samples.</p> 
+  <p>Note that the Bayesian inference capabilities of <code>cardano</code> exposed through methods <code>posterior</code> and <code>posteriorByLog</code> builds upon those MCMC sampling techniques.</p> 
  </article>
 </div>

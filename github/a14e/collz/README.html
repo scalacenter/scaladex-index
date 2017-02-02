@@ -18,10 +18,10 @@
 3) IntMap  
 4) IntSet  
 5) PrefixMap  
-6) PrefixSet  
+6) PrefixSet
 </code></pre> 
   <ol> 
-   <li><p>Иммутабельные: </p> <p>1) BoundedQueue </p></li> 
+   <li><p>Иммутабельные: </p> <p>1) BoundedQueue<br> 2) BoundedBucketQueue<br> 3) Router </p></li> 
   </ol> 
   <h1><a id="user-content-Использование" class="anchor" href="https://github.com/a14e/collz#Использование" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -29,7 +29,7 @@
     </svg></a>Использование</h1> 
   <p>Библиотека собрана для версий 2.11.8 и 2.12.1 Для подключения библиотки добавьте себе в .sbt файл строку</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.a14e<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>collz<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.a14e<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>collz<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.1<span class="pl-pds">"</span></span></pre>
   </div> 
   <h2><a id="user-content-Описание-реализаций" class="anchor" href="https://github.com/a14e/collz#Описание-реализаций" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -87,7 +87,7 @@ queue.foreach(sum <span class="pl-k">+</span><span class="pl-k">=</span> _) <spa
 <span class="pl-k">val</span> <span class="pl-en">queue3</span> <span class="pl-k">=</span>  queue1 <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-c1">3</span> <span class="pl-c"><span class="pl-c">//</span> queue3 == BoundedQueue(2, 3)</span>
 
 <span class="pl-k">val</span> (queue4, x1) <span class="pl-k">=</span> queue3.pull() <span class="pl-c"><span class="pl-c">//</span> x1 == 2, queue4 == BoundedQueue(3)</span>
-<span class="pl-k">val</span> (queue5, x2) <span class="pl-k">=</span> queue4.pull() <span class="pl-c"><span class="pl-c">//</span> x2 == 3, queue == BoundedQueue()</span>
+<span class="pl-k">val</span> (queue5, x2) <span class="pl-k">=</span> queue4.pull() <span class="pl-c"><span class="pl-c">//</span> x2 == 3, queue5 == BoundedQueue()</span>
 
 <span class="pl-k">val</span> <span class="pl-en">queue6</span> <span class="pl-k">=</span> queue5 <span class="pl-k">:</span><span class="pl-k">++</span> <span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>) <span class="pl-c"><span class="pl-c">//</span> BoundedQueue(2, 3)</span>
 <span class="pl-k">val</span> <span class="pl-en">x3</span> <span class="pl-k">=</span> queue6(<span class="pl-c1">0</span>) <span class="pl-c"><span class="pl-c">//</span> x3 == 2</span>
@@ -203,6 +203,50 @@ set <span class="pl-k">-</span><span class="pl-k">=</span> <span class="pl-s"><s
 set <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>string3<span class="pl-pds">"</span></span>
 <span class="pl-c"><span class="pl-c">//</span> set == PrefixSet("stringWithSuffix", "string2", "anotherString", "string3")</span></pre>
   </div> 
+  <h3><a id="user-content-boundedbucketqueue" class="anchor" href="https://github.com/a14e/collz#boundedbucketqueue" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>BoundedBucketQueue</h3> 
+  <p>В целом очень похож на BoundedQueue, но не удаляет прошлые значения, а сохраняет их в корзине (bucket), которая заполняется по принцыпу стека</p> 
+  <p>так как коллекция состояит из 2 подколлекций, то не имеет смысла ей наследовать разного рода Iterable[_] и тд. Поэтому для доступа к итерациям нужно сначала вызвать методы queue или bucket</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">a14e.collz.immut.</span><span class="pl-v">BoundedBucketQueue</span>
+
+<span class="pl-k">val</span> <span class="pl-en">queue0</span> <span class="pl-k">=</span> <span class="pl-en">BoundedBucketQueue</span>[<span class="pl-k">Int</span>](<span class="pl-c1">2</span>)
+<span class="pl-k">val</span> <span class="pl-en">queue1</span> <span class="pl-k">=</span>  queue0 <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-c1">1</span> <span class="pl-c"><span class="pl-c">//</span> queue1.queue == BoundedQueue(1) и queue1.bucket == Nil</span>
+<span class="pl-k">val</span> <span class="pl-en">queue2</span> <span class="pl-k">=</span>  queue1 <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-c1">2</span> <span class="pl-c"><span class="pl-c">//</span> queue2.queue == BoundedQueue(1, 2) и queue1.bucket == Nil</span>
+<span class="pl-k">val</span> <span class="pl-en">queue3</span> <span class="pl-k">=</span>  queue1 <span class="pl-k">:</span><span class="pl-k">+</span> <span class="pl-c1">3</span> <span class="pl-c"><span class="pl-c">//</span> queue3.queue == BoundedQueue(2, 3) и queue1.bucket == List(1)</span>
+
+<span class="pl-k">val</span> (queue4, x1) <span class="pl-k">=</span> queue3.pull() <span class="pl-c"><span class="pl-c">//</span> x1 == 2, queue4 == BoundedQueue(3) и queue1.bucket == List(1)</span>
+<span class="pl-k">val</span> (queue5, x2) <span class="pl-k">=</span> queue4.pull() <span class="pl-c"><span class="pl-c">//</span> x2 == 3, queue5 == BoundedQueue() и queue1.bucket == List(1)</span>
+
+<span class="pl-k">val</span> <span class="pl-en">queue6</span> <span class="pl-k">=</span> queue5 <span class="pl-k">:</span><span class="pl-k">++</span> <span class="pl-en">List</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>) <span class="pl-c"><span class="pl-c">//</span> queue == BoundedQueue(2, 3) и queue1.bucket == List(1, 1)</span>
+<span class="pl-k">val</span> <span class="pl-en">x3</span> <span class="pl-k">=</span> queue6(<span class="pl-c1">0</span>) <span class="pl-c"><span class="pl-c">//</span> x3 == 2</span>
+<span class="pl-k">val</span> <span class="pl-en">x4</span> <span class="pl-k">=</span> queue6(<span class="pl-c1">1</span>) <span class="pl-c"><span class="pl-c">//</span> x4 == 3</span>
+</pre>
+  </div> 
+  <h3><a id="user-content-router" class="anchor" href="https://github.com/a14e/collz#router" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Router</h3> 
+  <p>Простой класс для роутинга. Нужен для случайного выбора из входящих элементов по некоторому ключу. Ключем может быть любой наследник Any. Элементы будут выбиратся примерно случайно, но однозначно для каждого ключа. Независимо от порядка добавления роутинг будет однозначным. Но при изменении даже на 1 элемент распределение по ключам может сильно изменится.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">a14e.collz.immut.</span><span class="pl-v">Router</span>
+
+
+<span class="pl-k">val</span> <span class="pl-en">router</span> <span class="pl-k">=</span> <span class="pl-en">Router</span>(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1:2222<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1:2223<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1:2224<span class="pl-pds">"</span></span>)
+
+
+<span class="pl-k">val</span> <span class="pl-en">id1</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>
+<span class="pl-k">val</span> <span class="pl-en">id2</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>
+<span class="pl-k">val</span> <span class="pl-en">id3</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>
+
+router.route(id1) <span class="pl-c"><span class="pl-c">//</span> 127.0.0.1:2223</span>
+router.route(id2) <span class="pl-c"><span class="pl-c">//</span> 127.0.0.1:2224</span>
+router.route(id3) <span class="pl-c"><span class="pl-c">//</span> 127.0.0.1:2222</span>
+
+</pre>
+  </div> 
   <h2><a id="user-content-Сборка-из-исходных-кодов" class="anchor" href="https://github.com/a14e/collz#Сборка-из-исходных-кодов" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -215,7 +259,7 @@ set <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><s
     </svg></a>Roadmap</h2> 
   <ol> 
    <li>Сделать нормальную документацию на англ языке (English docs)</li> 
-   <li>Добавить новые коллекции 1) иммутабельные:<br> a. PrefixSet<br> b. PrefixMap<br> c. NonDeleteBoundedQueue 2) мутабельные: c. NonDeleteBoundedQueue<br> d. IntervalMap</li> 
+   <li>Добавить новые коллекции 1) иммутабельные:<br> a. IntervalMap<br></li> 
    <li>Добавить бенчмарки в репозиторий</li> 
   </ol> 
  </article>

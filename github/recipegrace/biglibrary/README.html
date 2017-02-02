@@ -13,16 +13,22 @@
   <p>Biglibrary realize a bigdata program as a pair: 1) Actual job and 2) Test job. The actual job can be executed in a cluster using the <a href="https://github.com/recipegrace/ScriptDB" target="_blank">ScriptDB</a>. Few examples implemented using the BigLibrary are given below.</p> 
   <p><b>WordCount</b></p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">InputAndOutput</span>(input<span class="pl-k">:</span><span class="pl-k">String</span>, output<span class="pl-k">:</span><span class="pl-k">String</span>)
-<span class="pl-k">object</span> <span class="pl-en">WordCount</span> <span class="pl-k">extends</span> <span class="pl-e">SequenceFileJob</span>[<span class="pl-en">InputAndOutput</span>] {
-  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">execute</span>(argument<span class="pl-k">:</span><span class="pl-en">InputAndOutput</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ec</span>: <span class="pl-en">ElectricContext</span>) <span class="pl-k">=</span> {
-    <span class="pl-k">val</span> <span class="pl-en">file</span> <span class="pl-k">=</span> readFile(argument.input, <span class="pl-c1">false</span>)
+   <pre><span class="pl-k">object</span> <span class="pl-en">WordCount</span> <span class="pl-k">extends</span> <span class="pl-e">SequenceFileJob</span>[<span class="pl-en">InputAndOutput</span>] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">execute</span>(<span class="pl-v">argument</span>: <span class="pl-en">InputAndOutput</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ec</span>: <span class="pl-en">ElectricSession</span>) <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">session</span> <span class="pl-k">=</span> ec.getSparkSession
+
+    <span class="pl-k">import</span> <span class="pl-v">session.implicits.</span><span class="pl-v">_</span>
+    <span class="pl-k">val</span> <span class="pl-en">file</span> <span class="pl-k">=</span> ec.text(argument.input)
     <span class="pl-k">val</span> <span class="pl-en">words</span> <span class="pl-k">=</span> file.flatMap(_.toLowerCase.replaceAll(<span class="pl-s"><span class="pl-pds">"</span>[^a-zA-Z0-9<span class="pl-cce">\\</span>s]<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>).split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>s+<span class="pl-pds">"</span></span>))
-    <span class="pl-k">val</span> <span class="pl-en">wordCounts</span> <span class="pl-k">=</span> words
-      .map(x <span class="pl-k">=&gt;</span> (x, <span class="pl-c1">1</span>)).reduceByKey(_ <span class="pl-k">+</span> _)
-      .map(f <span class="pl-k">=&gt;</span> f._1 <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span> f._2)
-    writeFile(wordCounts, argument.output)
+    words
+      .groupByKey(f <span class="pl-k">=&gt;</span> f)
+      .count()
+      .write
+      .option(<span class="pl-s"><span class="pl-pds">"</span>delimiter<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\t</span><span class="pl-pds">"</span></span>)
+      .csv(argument.output)
+
   }
+
 }</pre>
   </div> 
   <p>WordCountTest </p> 

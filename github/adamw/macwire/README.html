@@ -18,6 +18,7 @@
    <li><a href="https://github.com/adamw/macwire#qualifiers" target="_blank">Qualifiers</a><br></li> 
    <li><a href="https://github.com/adamw/macwire#multi-wiring-wireset" target="_blank">Multi Wiring (wireSet)</a></li> 
    <li><a href="https://github.com/adamw/macwire#limitations" target="_blank">Limitations</a></li> 
+   <li><a href="https://github.com/adamw/macwire#akka-integration" target="_blank">Akka integration</a></li> 
    <li><a href="https://github.com/adamw/macwire#installation-using-with-sbt" target="_blank">Installation, using with SBT</a></li> 
    <li><a href="https://github.com/adamw/macwire#debugging" target="_blank">Debugging</a></li> 
    <li><a href="https://github.com/adamw/macwire#scalajs" target="_blank">Scala.js</a></li> 
@@ -366,17 +367,53 @@ wired.wireClassInstanceByName(<span class="pl-s"><span class="pl-pds">"</span>co
   <p>This is an inconvenience, but hopefully will get resolved once post-typer macros are introduced to the language.</p> 
   <p>Also, wiring will probably not work properly for traits and classes defined inside the containing trait/class, or in super traits/classes.</p> 
   <p>Note that the type ascription may be a subtype of the wired type. This can be useful if you want to expose e.g. a trait that the wired class extends, instead of the full implementation.</p> 
+  <h2><a id="user-content-akka-integration" class="anchor" href="https://github.com/adamw/macwire#akka-integration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka integration</h2> 
+  <p>Macwire provides wiring for Akka actors through the <code>macrosAkka</code> module. <a href="https://github.com/adamw/macwire/blob/master/macrosAkkaTests/src/test/scala/com/softwaremill/macwire/akkasupport/demo/Demo.scala" target="_blank">Here</a> you can find example code. The module adds three macros <code>wireAnonymousActor</code>, <code>wireActor</code> and <code>wireProps</code>. These macros require an <code>ActorSystem</code> to be in scope as a dependency. This actor system is used to create the actors.</p> 
+  <p>Here's how the macros are expanded during compilation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">A</span>
+<span class="pl-k">class</span> <span class="pl-en">MyActor</span>(<span class="pl-v">a</span>: <span class="pl-en">A</span>) <span class="pl-k">extends</span> <span class="pl-e">Actor</span> { <span class="pl-c"><span class="pl-c">/*</span> ... <span class="pl-c">*/</span></span> }
+
+<span class="pl-k">object</span> <span class="pl-en">Example1</span> {
+  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> wire[<span class="pl-en">A</span>] <span class="pl-c"><span class="pl-c">//</span> compiles to: val a = new A</span>
+  <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">myActor1</span><span class="pl-k">:</span> <span class="pl-en">ActorRef</span> <span class="pl-k">=</span> wireAnonymousActor[<span class="pl-en">MyActor</span>]
+  <span class="pl-c"><span class="pl-c">//</span> this compiles to:</span>
+  <span class="pl-c"><span class="pl-c">//</span> val myActor1: ActorRef = system.actorOf(Props(new MyActor(a))) </span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Example2</span> {
+  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> wire[<span class="pl-en">A</span>]
+  <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">myActor1</span><span class="pl-k">:</span> <span class="pl-en">ActorRef</span> <span class="pl-k">=</span> wireActor[<span class="pl-en">MyActor</span>](<span class="pl-s"><span class="pl-pds">"</span>myActorsName<span class="pl-pds">"</span></span>)
+  <span class="pl-c"><span class="pl-c">//</span> this compiles to:</span>
+  <span class="pl-c"><span class="pl-c">//</span> val myActor1: ActorRef = system.actorOf(Props(new MyActor(a)), "myActorsName") </span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Example3</span> {
+  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> wire[<span class="pl-en">A</span>]
+  <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+  <span class="pl-k">val</span> <span class="pl-en">myActor1</span><span class="pl-k">:</span> <span class="pl-en">ActorRef</span> <span class="pl-k">=</span> system.actorOf(wireProps[<span class="pl-en">MyActor</span>])  
+  <span class="pl-c"><span class="pl-c">//</span> this compiles to:</span>
+  <span class="pl-c"><span class="pl-c">//</span> val myActor1: ActorRef = system.actorOf(Props(new MyActor(a))) </span>
+}</pre>
+  </div> 
   <h2><a id="user-content-installation-using-with-sbt" class="anchor" href="https://github.com/adamw/macwire#installation-using-with-sbt" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation, using with SBT</h2> 
   <p>The jars are deployed to <a href="https://oss.sonatype.org/content/repositories/snapshots/com/softwaremill/macwire/" target="_blank">Sonatype's OSS repository</a>. To use MacWire in your project, add a dependency:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>macros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.5<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>macros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>util<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.5<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>macrosAkka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>proxy<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.5<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>util<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>proxy<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>The <code>macros</code> subproject contains only code which is used at compile-time, hence the <code>provided</code> scope. </p> 
   <p>The <code>util</code> subproject contains tagging, <code>Wired</code> and the <code>@Module</code> annotation; if you don't use these features, you don't need to include this dependency.</p> 
@@ -385,9 +422,9 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
   <div class="highlight highlight-source-scala">
    <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Sonatype OSS Snapshots<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/repositories/snapshots<span class="pl-pds">"</span></span>
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>macros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.5-SNAPSHOT<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>macros<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0-SNAPSHOT<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>util<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.5-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.softwaremill.macwire<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>util<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.3.0-SNAPSHOT<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Currently 2.x supports Scala 2.11 and 2.12.</p> 
   <p>Older 1.x release for Scala 2.10 and 2.11:</p> 
