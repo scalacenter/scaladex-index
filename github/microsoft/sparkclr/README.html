@@ -8,58 +8,58 @@
   <p><a href="https://github.com/Microsoft/Mobius" target="_blank">Mobius</a> provides C# language binding to <a href="https://spark.apache.org/" target="_blank">Apache Spark</a> enabling the implementation of Spark driver program and data processing operations in the languages supported in the .NET framework like C# or F#.</p> 
   <p>For example, the word count sample in Apache Spark can be implemented in C# as follows :</p> 
   <div class="highlight highlight-source-cs">
-   <pre><span class="pl-k">var</span> lines = sparkContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/input.txt"</span></span>);  
-<span class="pl-k">var</span> words = lines.FlatMap(s =&gt; s.Split(<span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span>));
-<span class="pl-k">var</span> wordCounts = words.Map(w =&gt; <span class="pl-k">new</span> KeyValuePair&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(w.Trim(), <span class="pl-c1">1</span>))  
+   <pre><span class="pl-k">var</span> <span class="pl-en">lines </span>= <span class="pl-en">sparkContext.TextFile</span>(@"hdfs:<span class="pl-c">//path/to/input.txt");  </span>
+var words = lines.<span class="pl-en">FlatMap</span>(s =&gt; s.Split(<span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span>));
+<span class="pl-k">var</span> <span class="pl-en">wordCounts </span>= <span class="pl-en">words.Map</span>(w =&gt; <span class="pl-k">new</span> <span class="pl-en">Tuple</span>&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(w.Trim(), <span class="pl-c1">1</span>))  
                       .ReduceByKey((x, y) =&gt; x + y);  
-<span class="pl-k">var</span> wordCountCollection = wordCounts.Collect();  
-wordCounts.SaveAsTextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/wordcount.txt"</span></span>);  </pre>
+<span class="pl-k">var</span> <span class="pl-en">wordCountCollection </span>= <span class="pl-en">wordCounts.Collect</span>();  
+<span class="pl-en">wordCounts.SaveAsTextFile</span>(@"hdfs:<span class="pl-c">//path/to/wordcount.txt");  </span></pre>
   </div> 
   <p>A simple DataFrame application using TempTable may look like the following:</p> 
   <div class="highlight highlight-source-cs">
-   <pre><span class="pl-k">var</span> reqDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/requests.csv"</span></span>);
-<span class="pl-k">var</span> metricDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/metrics.csv"</span></span>);
-reqDataFrame.RegisterTempTable(<span class="pl-s"><span class="pl-pds">"</span>requests<span class="pl-pds">"</span></span>);
-metricDataFrame.RegisterTempTable(<span class="pl-s"><span class="pl-pds">"</span>metrics<span class="pl-pds">"</span></span>);
+   <pre><span class="pl-k">var</span> <span class="pl-en">reqDataFrame </span>= <span class="pl-en">sqlContext.TextFile</span>(@"hdfs:<span class="pl-c">//path/to/requests.csv");</span>
+var metricDataFrame = sqlContext.<span class="pl-en">TextFile</span>(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/metrics.csv"</span></span>);
+<span class="pl-en">reqDataFrame.RegisterTempTable</span>("requests");
+<span class="pl-en">metricDataFrame.RegisterTempTable</span>("metrics");
 <span class="pl-c">// C0 - guid in requests DataFrame, C3 - guid in metrics DataFrame  </span>
-<span class="pl-k">var</span> joinDataFrame = GetSqlContext().Sql(  
-    <span class="pl-s"><span class="pl-pds">"</span>SELECT joinedtable.datacenter<span class="pl-pds">"</span></span> +
-         <span class="pl-s"><span class="pl-pds">"</span>, MAX(joinedtable.latency) maxlatency<span class="pl-pds">"</span></span> +
-         <span class="pl-s"><span class="pl-pds">"</span>, AVG(joinedtable.latency) avglatency <span class="pl-pds">"</span></span> +
-    <span class="pl-s"><span class="pl-pds">"</span>FROM (<span class="pl-pds">"</span></span> +
-       <span class="pl-s"><span class="pl-pds">"</span>SELECT a.C1 as datacenter, b.C6 as latency <span class="pl-pds">"</span></span> +  
-       <span class="pl-s"><span class="pl-pds">"</span>FROM requests a JOIN metrics b ON a.C0  = b.C3) joinedtable <span class="pl-pds">"</span></span> +   
-    <span class="pl-s"><span class="pl-pds">"</span>GROUP BY datacenter<span class="pl-pds">"</span></span>);
-joinDataFrame.ShowSchema();
-joinDataFrame.Show();</pre>
+<span class="pl-k">var</span> <span class="pl-en">joinDataFrame </span>= GetSqlContext().<span class="pl-en">Sql</span>(  
+    "SELECT joinedtable.datacenter" +
+         ", <span class="pl-en">MAX</span>(joinedtable.latency) maxlatency" +
+         ", <span class="pl-en">AVG</span>(joinedtable.latency) avglatency " +
+    "<span class="pl-en">FROM</span> (<span class="pl-s"><span class="pl-pds">"</span> +</span>
+<span class="pl-s">       <span class="pl-pds">"</span></span><span class="pl-en">SELECT</span> <span class="pl-smi">a</span>.C1 as datacenter, b.<span class="pl-en">C6</span> <span class="pl-smi">as</span> latency <span class="pl-s"><span class="pl-pds">"</span> +  </span>
+<span class="pl-s">       <span class="pl-pds">"</span></span>FROM requests a JOIN metrics b ON a.C0  = b.C3) joinedtable " +   
+    "GROUP BY datacenter");
+<span class="pl-en">joinDataFrame.ShowSchema</span>();
+<span class="pl-en">joinDataFrame.Show</span>();</pre>
   </div> 
   <p>A simple DataFrame application using DataFrame DSL may look like the following:</p> 
   <div class="highlight highlight-source-cs">
    <pre><span class="pl-c">// C0 - guid, C1 - datacenter</span>
-<span class="pl-k">var</span> reqDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/requests.csv"</span></span>)  
-                             .Select(<span class="pl-s"><span class="pl-pds">"</span>C0<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);    
+<span class="pl-k">var</span> <span class="pl-en">reqDataFrame </span>= <span class="pl-en">sqlContext.TextFile</span>(@"hdfs:<span class="pl-c">//path/to/requests.csv")  </span>
+                             .<span class="pl-en">Select</span>(<span class="pl-s"><span class="pl-pds">"</span>C0<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);    
 <span class="pl-c">// C3 - guid, C6 - latency   </span>
-<span class="pl-k">var</span> metricDataFrame = sqlContext.TextFile(<span class="pl-s"><span class="pl-pds">@"hdfs://path/to/metrics.csv"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>, <span class="pl-c1">false</span>, <span class="pl-c1">true</span>)
-                                .Select(<span class="pl-s"><span class="pl-pds">"</span>C3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>); <span class="pl-c">//override delimiter, hasHeader &amp; inferSchema</span>
-<span class="pl-k">var</span> joinDataFrame = reqDataFrame.Join(metricDataFrame, reqDataFrame[<span class="pl-s"><span class="pl-pds">"</span>C0<span class="pl-pds">"</span></span>] == metricDataFrame[<span class="pl-s"><span class="pl-pds">"</span>C3<span class="pl-pds">"</span></span>])
-                                .GroupBy(<span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);
-<span class="pl-k">var</span> maxLatencyByDcDataFrame = joinDataFrame.Agg(<span class="pl-k">new</span> Dictionary&lt;<span class="pl-k">string</span>, <span class="pl-k">string</span>&gt; { { <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>max<span class="pl-pds">"</span></span> } });
-maxLatencyByDcDataFrame.ShowSchema();
-maxLatencyByDcDataFrame.Show();</pre>
+<span class="pl-k">var</span> <span class="pl-en">metricDataFrame </span>= <span class="pl-en">sqlContext.TextFile</span>(@"hdfs:<span class="pl-c">//path/to/metrics.csv", ",", false, true)</span>
+                                .<span class="pl-en">Select</span>(<span class="pl-s"><span class="pl-pds">"</span>C3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>); <span class="pl-c">//override delimiter, hasHeader &amp; inferSchema</span>
+<span class="pl-k">var</span> <span class="pl-en">joinDataFrame </span>= <span class="pl-en">reqDataFrame.Join</span>(metricDataFrame, reqDataFrame["C0"] == metricDataFrame["C3"])
+                                .<span class="pl-en">GroupBy</span>(<span class="pl-s"><span class="pl-pds">"</span>C1<span class="pl-pds">"</span></span>);
+<span class="pl-k">var</span> <span class="pl-en">maxLatencyByDcDataFrame </span>= <span class="pl-en">joinDataFrame.Agg</span>(new Dictionary&lt;string, string&gt; { { <span class="pl-s"><span class="pl-pds">"</span>C6<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>max<span class="pl-pds">"</span></span> } });
+<span class="pl-en">maxLatencyByDcDataFrame.ShowSchema</span>();
+<span class="pl-en">maxLatencyByDcDataFrame.Show</span>();</pre>
   </div> 
   <p>A simple Spark Streaming application that processes messages from Kafka using C# may be implemented using the following code:</p> 
   <div class="highlight highlight-source-cs">
-   <pre>StreamingContext sparkStreamingContext = StreamingContext.GetOrCreate(checkpointPath, () =&gt;
+   <pre><span class="pl-en">StreamingContext</span> <span class="pl-en">sparkStreamingContext</span> = <span class="pl-en">StreamingContext.GetOrCreate</span>(checkpointPath, () =&gt;
     {
-      <span class="pl-k">var</span> ssc = <span class="pl-k">new</span> StreamingContext(sparkContext, slideDurationInMillis);
+      <span class="pl-k">var</span> <span class="pl-en">ssc </span>= <span class="pl-k">new</span> <span class="pl-en">StreamingContext</span>(sparkContext, slideDurationInMillis);
       ssc.Checkpoint(checkpointPath);
-      <span class="pl-k">var</span> stream = KafkaUtils.CreateDirectStream(ssc, topicList, kafkaParams, perTopicPartitionKafkaOffsets);
+      <span class="pl-k">var</span> <span class="pl-en">stream </span>= KafkaUtils.CreateDirectStream(ssc, topicList, kafkaParams, perTopicPartitionKafkaOffsets);
       <span class="pl-c">//message format: [timestamp],[loglevel],[logmessage]</span>
-      <span class="pl-k">var</span> countByLogLevelAndTime = stream
+      <span class="pl-k">var</span> <span class="pl-en">countByLogLevelAndTime </span>= stream
                                     .Map(kvp =&gt; Encoding.UTF8.GetString(kvp.Value))
                                     .Filter(line =&gt; line.Contains(<span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>))
                                     .Map(line =&gt; line.Split(<span class="pl-s"><span class="pl-pds">'</span>,<span class="pl-pds">'</span></span>))
-                                    .Map(columns =&gt; <span class="pl-k">new</span> KeyValuePair&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(
+                                    .Map(columns =&gt; <span class="pl-k">new</span> <span class="pl-en">Tuple</span>&lt;<span class="pl-k">string</span>, <span class="pl-k">int</span>&gt;(
                                                           <span class="pl-k">string</span>.Format(<span class="pl-s"><span class="pl-pds">"</span>{0},{1}<span class="pl-pds">"</span></span>, columns[<span class="pl-c1">0</span>], columns[<span class="pl-c1">1</span>]), <span class="pl-c1">1</span>))
                                     .ReduceByKeyAndWindow((x, y) =&gt; x + y, (x, y) =&gt; x - y,
                                                           windowDurationInSecs, slideDurationInSecs, <span class="pl-c1">3</span>)
@@ -67,13 +67,13 @@ maxLatencyByDcDataFrame.Show();</pre>
                                                           logLevelCountPair.Key, logLevelCountPair.Value));
       countByLogLevelAndTime.ForeachRDD(countByLogLevel =&gt;
       {
-          <span class="pl-k">foreach</span> (<span class="pl-k">var</span> logCount <span class="pl-k">in</span> countByLogLevel.Collect())
+          <span class="pl-k">foreach</span> (var logCount <span class="pl-k">in</span> countByLogLevel.Collect())
               Console.WriteLine(logCount);
       });
       <span class="pl-k">return</span> ssc;
     });
-sparkStreamingContext.Start();
-sparkStreamingContext.AwaitTermination();</pre>
+<span class="pl-en">sparkStreamingContext.Start</span>();
+<span class="pl-en">sparkStreamingContext.AwaitTermination</span>();</pre>
   </div> 
   <p>For more code samples, refer to <a href="https://github.com/microsoft/sparkclr/blob/master/examples" target="_blank">Mobius\examples</a> directory or <a href="https://github.com/microsoft/sparkclr/blob/master/csharp/Samples" target="_blank">Mobius\csharp\Samples</a> directory.</p> 
   <h2><a id="user-content-api-documentation" class="anchor" href="https://github.com/microsoft/sparkclr#api-documentation" aria-hidden="true" target="_blank">
