@@ -438,14 +438,31 @@ Retrieves metadata about the files, directories, and mounts which are children o
   <p>Replace data at the specified path. Uploaded data may be in any of the <a href="https://github.com/quasar-analytics/quasar#data-formats" target="_blank">supported formats</a> and the request must include the appropriate <code>Content-Type</code> header indicating the format used.</p> 
   <p>A successful upload will replace any previous contents atomically, leaving them unchanged if an error occurs.</p> 
   <p>If an error occurs when reading data from the request body, the response will contain a summary in the common <code>error</code> field and a separate array of error messages about specific values under <code>details</code>.</p> 
-  <p>Fails if the path identifies a view.</p> 
+  <p>Fails if the path identifies an existing view.</p> 
+  <h4><a id="user-content-uploading-multpile-files" class="anchor" href="https://github.com/quasar-analytics/quasar#uploading-multpile-files" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Uploading multpile files</h4> 
+  <p>If the supplied path represents a directory (ends with a slash), the request body must contain a <code>zip</code> archive containing the contents of the named directory, database, etc., and a special file, <code>/.quasar-metadata.json</code>, which specifies the format for each file, as it would be provided in a <code>Content-Type</code> header if the file was individually uploaded:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>/foo<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>Content-Type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>application/ldjson<span class="pl-pds">"</span></span>
+  },
+  <span class="pl-s"><span class="pl-pds">"</span>/foo/bar<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>Content-Type<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>application/json; mode=precise<span class="pl-pds">"</span></span>
+  }
+}</pre>
+  </div> 
+  <p>Note: if the zip archive was created by downloading a directory from Quasar, then it will already have this hidden file.</p> 
+  <p>Each file in the archive is written as if it was uploaded separately. The write is <em>not</em> atomic; if an error occurs after some files are written, the file system is not restored to its previous state.</p> 
   <h3><a id="user-content-post-datafspath" class="anchor" href="https://github.com/quasar-analytics/quasar#post-datafspath" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>POST /data/fs/[path]</h3> 
   <p>Append data to the specified path. Uploaded data may be in any of the <a href="https://github.com/quasar-analytics/quasar#data-formats" target="_blank">supported formats</a> and the request must include the appropriate <code>Content-Type</code> header indicating the format used. This operation is <em>not</em> atomic and some data may have been written even if an error occurs. The body of an error response will describe what was done.</p> 
   <p>If an error occurs when reading data from the request body, the response contains a summary in the common <code>error</code> field, and a separate array of error messages about specific values under <code>details</code>.</p> 
-  <p>Fails if the path identifies a view.</p> 
+  <p>Fails if the path identifies an existing view.</p> 
   <h3><a id="user-content-delete-datafspath" class="anchor" href="https://github.com/quasar-analytics/quasar#delete-datafspath" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -688,7 +705,14 @@ Retrieves metadata about the files, directories, and mounts which are children o
 1,2
 </code></pre> 
   <p>Data is formatted the same way as the "Readable" JSON format, except that all values including <code>null</code>, <code>true</code>, <code>false</code>, and numbers are indistinguishable from their string representations.</p> 
-  <p>It is possible to use the <code>columnDelimiter</code>, <code>rowDelimiter</code> <code>quoteChar</code> and <code>escapeChar</code> media-type extensions keys in order to customize the layout of the csv.</p> 
+  <p>It is possible to use the <code>columnDelimiter</code>, <code>rowDelimiter</code> <code>quoteChar</code> and <code>escapeChar</code> media-type extensions keys in order to customize the layout of the csv. If some or all of these extensions are not specified, they will default to the following values:</p> 
+  <ul> 
+   <li>columnDelimiter: <code>,</code></li> 
+   <li>rowDelimiter: <code>\r\n</code></li> 
+   <li>quoteChar: <code>"</code></li> 
+   <li>escapeChar: <code>"</code></li> 
+  </ul> 
+  <p>Note: Due to <a href="https://github.com/tototoshi/scala-csv/issues/97" target="_blank">the following issue</a> in one of our dependencies. The <code>rowDelimiter</code> extension will be ignored for any CSV being uploaded. The <code>rowDelimiter</code> extension will, however, be observed for downloaded data. Also due to <a href="https://github.com/tototoshi/scala-csv/issues/98" target="_blank">this issue</a> best to avoid non "standard" csv formats. See the <code>MessageFormatGen.scala</code> file for examples of which csv formats we test against.</p> 
   <p>When data is uploaded in CSV format, the headers are interpreted as field names in the same way. As with the Readable JSON format, any string that can be interpreted as another kind of value will be, so for example there's no way to specify the string <code>"null"</code>.</p> 
   <h2><a id="user-content-troubleshooting" class="anchor" href="https://github.com/quasar-analytics/quasar#troubleshooting" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
