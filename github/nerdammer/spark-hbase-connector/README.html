@@ -71,6 +71,10 @@ sparkConf.set(<span class="pl-s"><span class="pl-pds">"</span>spark.hbase.host<s
 ...
 <span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkContext</span>(sparkConf)</pre>
   </div> 
+  <p>or you can directly configure with SparkContext:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>sparkContext.hadoopConfiguration.set(<span class="pl-s"><span class="pl-pds">"</span>spark.hbase.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>thehost<span class="pl-pds">"</span></span>)</pre>
+  </div> 
   <h2><a id="user-content-writing-to-hbase-basic" class="anchor" href="https://github.com/nerdammer/spark-hbase-connector#writing-to-hbase-basic" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -114,6 +118,12 @@ sparkConf.set(<span class="pl-s"><span class="pl-pds">"</span>spark.hbase.host<s
     .inColumnFamily(<span class="pl-s"><span class="pl-pds">"</span>mycf<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <p>This way, only the columns that you have chosen will be selected.</p> 
+  <p>you don't have to provide column family name as a prefix to column name for the provided column family at inColumnFamily(COLUMN_FAMILY_NAME) but for other columns you need to provide prefix with :(colon).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hBaseRDD</span> <span class="pl-k">=</span> sc.hbaseTable[(<span class="pl-k">Int</span>, <span class="pl-k">String</span>, <span class="pl-k">String</span>)](<span class="pl-s"><span class="pl-pds">"</span>mytable<span class="pl-pds">"</span></span>)
+    .select(<span class="pl-s"><span class="pl-pds">"</span>column1<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>columnfamily2:column2<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>columnfamily3:column3<span class="pl-pds">"</span></span>)
+    .inColumnFamily(<span class="pl-s"><span class="pl-pds">"</span>columnfamily1<span class="pl-pds">"</span></span>)</pre>
+  </div> 
   <h2><a id="user-content-other-topics" class="anchor" href="https://github.com/nerdammer/spark-hbase-connector#other-topics" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -180,6 +190,50 @@ stream.foreachRDD(rdd <span class="pl-k">=&gt;</span>
       .save()
     )</pre>
   </div> 
+  <h3><a id="user-content-hbaserdd-as-spark-dataframe" class="anchor" href="https://github.com/nerdammer/spark-hbase-connector#hbaserdd-as-spark-dataframe" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HBaseRDD as Spark Dataframe</h3> 
+  <p>You can convert hBaseRDD to Spark Dataframe for further Spark Transformations and moving to any other NoSQL Databases such as (MongoDB, Hive etc).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">hBaseRDD</span> <span class="pl-k">=</span> sparkContext.hbaseTable[(<span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-en">Option</span>[<span class="pl-k">String</span>], <span class="pl-en">Option</span>[<span class="pl-k">String</span>])](<span class="pl-en">HBASE_TABLE_NAME</span>).select(<span class="pl-s"><span class="pl-pds">"</span>column1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>column2<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>column3<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>column4<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>column5<span class="pl-pds">"</span></span>).inColumnFamily(<span class="pl-en">HBASE_COLUMN_FAMILY</span>)</pre>
+  </div> 
+  <p>Iterating hBaseRDD to create <code>scala org.apache.spark.rdd.RDD [org.apache.spark.sql.Row]</code> (i.e RDD[Row]) in our example.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">rowRDD</span> <span class="pl-k">=</span> hBaseRDD.map(i <span class="pl-k">=&gt;</span> <span class="pl-en">Row</span>(i._1.get,i._2.get,i._3.get,i._4.get,i._5.get))</pre>
+  </div> 
+  <p>Creating schema structure for above SparkRDD[Row]</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">myschema</span> {
+      <span class="pl-k">val</span> <span class="pl-en">column1</span> <span class="pl-k">=</span> <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>column1<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>)
+      <span class="pl-k">val</span> <span class="pl-en">column2</span> <span class="pl-k">=</span> <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>column2<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>)
+      <span class="pl-k">val</span> <span class="pl-en">column3</span> <span class="pl-k">=</span> <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>column2<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>)
+      <span class="pl-k">val</span> <span class="pl-en">column4</span> <span class="pl-k">=</span> <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>column2<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>)
+      <span class="pl-k">val</span> <span class="pl-en">column5</span> <span class="pl-k">=</span> <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>column2<span class="pl-pds">"</span></span>, <span class="pl-en">StringType</span>)
+      <span class="pl-k">val</span> <span class="pl-en">struct</span> <span class="pl-k">=</span> <span class="pl-en">StructType</span>(<span class="pl-en">Array</span>(column1,column2,column3,column4,column5))
+    }</pre>
+  </div> 
+  <p>Create Spark Dataframe with RDD[Row] and Schema Structure</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">myDf</span> <span class="pl-k">=</span> sqlContext.createDataFrame(rowRDD,myschema.struct)</pre>
+  </div> 
+  <p>Now you can apply any spark transformations and actions, for example.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>myDF.show()</pre>
+  </div> 
+  <p>It will show you Dataframe's Data in tabular structure.</p> 
+  <h3><a id="user-content-sparksql-on-hbase" class="anchor" href="https://github.com/nerdammer/spark-hbase-connector#sparksql-on-hbase" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SparkSQL on HBase</h3> 
+  <p>Hence, with previous example. you have converted hBaseRDD to appropriate Spark Dataframe you can apply SparkSQL on Dataframe.</p> 
+  <p>Creating temporary table in spark.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>myDF.registerTempTable(<span class="pl-s"><span class="pl-pds">"</span>mytable<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Applying SparkSQL on created temporary table.</p> 
+  <pre><code>sqlContext.sql("SELECT * FROM mytable").show()
+</code></pre> 
   <h2><a id="user-content-advanced" class="anchor" href="https://github.com/nerdammer/spark-hbase-connector#advanced" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

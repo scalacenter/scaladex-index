@@ -132,7 +132,7 @@ res15<span class="pl-k">:</span> <span class="pl-en">Vector</span>[(<span class=
   <p>One solution to this would be to simply not write helper functions: everyone who wants to read from a file must instantiate the <code>scala.io.Source</code> themselves, and manually cleanup themselves. This is a possible solution, but is tedious and annoying. Another possible solution is to have the <code>Iterator</code> close the <code>io.Source</code> itself when exhausted, but this still leaves open the possibility that the caller will use <code>.head</code> or <code>.take</code> on the iterator: a perfectly reasonable thing to do if you don't need all the output, but one that would leave a "self-closing" iterator open and still leaking file handles.</p> 
   <p>Using <code>geny.Generator</code>s, the helper function can instead return a <code>Generator.selfClosing</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">def</span> <span class="pl-en">getFileLines</span>(<span class="pl-v">path</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> geny.<span class="pl-en">Generator</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> {
+   <pre><span class="pl-k">def</span> <span class="pl-en">getFileLines</span>(<span class="pl-v">path</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> geny.<span class="pl-en">Generator</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Generator</span>.selfClosing{
   <span class="pl-k">val</span> <span class="pl-en">s</span> <span class="pl-k">=</span> scala.io.<span class="pl-en">Source</span>.fromFile(path)(charSet)
   (s.getLines(), () <span class="pl-k">=&gt;</span> s.close())
 }</pre>

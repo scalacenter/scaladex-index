@@ -16,7 +16,7 @@
     </svg></a>Documentation</h2> 
   <ul> 
    <li><a href="http://www.scala-lang.org/files/archive/api/current/scala-parser-combinators/scala/util/parsing/combinator" target="_blank">Current API</a></li> 
-   <li>A (perhaps somewhat outdated) <a href="https://wiki.scala-lang.org/display/SW/Parser+Combinators--Getting+Started" target="_blank">Getting Started</a></li> 
+   <li>The <a href="https://github.com/scala/scala-parser-combinators/blob/master/docs/Getting_Started.md" target="_blank">Getting Started</a> guide</li> 
    <li>A more complicated example, <a href="https://enear.github.io/2016/03/31/parser-combinators/" target="_blank">Building a lexer and parser with Scala's Parser Combinators</a></li> 
    <li>"Combinator Parsing", chapter 33 of <a href="http://www.artima.com/shop/programming_in_scala" target="_blank"><em>Programming in Scala, Third Edition</em></a>, shows how to use this library to parse arithmetic expressions and JSON. The second half of the chapter examines how the library is implemented.</li> 
   </ul> 
@@ -29,6 +29,34 @@
 </code></pre> 
   <p>(Assuming you're using a <code>scalaVersion</code> for which a scala-parser-combinators is published. The first 2.11 milestone for which this is true is 2.11.0-M4.)</p> 
   <p>To support multiple Scala versions, see the example in <a href="https://github.com/scala/scala-module-dependency-sample" target="_blank">https://github.com/scala/scala-module-dependency-sample</a>.</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/scala/scala-parser-combinators#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <pre><code>import scala.util.parsing.combinator._
+
+case class WordFreq(word: String, count: Int) {
+    override def toString = "Word &lt;" + word + "&gt; " +
+                            "occurs with frequency " + count
+}
+
+class SimpleParser extends RegexParsers {
+    def word: Parser[String]   = """[a-z]+""".r       ^^ { _.toString }
+    def number: Parser[Int]    = """(0|[1-9]\d*)""".r ^^ { _.toInt }
+    def freq: Parser[WordFreq] = word ~ number        ^^ { case wd ~ fr =&gt; WordFreq(wd,fr) }
+}
+
+object TestSimpleParser extends SimpleParser {
+    def main(args: Array[String]) = {
+        parse(freq, "johnny 121") match {
+            case Success(matched,_) =&gt; println(matched)
+            case Failure(msg,_) =&gt; println("FAILURE: " + msg)
+            case Error(msg,_) =&gt; println("ERROR: " + msg)
+        }
+    }
+}
+</code></pre> 
+  <p>For a detailed unpacking of this example see <a href="https://github.com/scala/scala-parser-combinators/blob/master/docs/Getting_Started.md" target="_blank">Getting Started</a>.</p> 
   <h2><a id="user-content-scalajs-support" class="anchor" href="https://github.com/scala/scala-parser-combinators#scalajs-support" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
