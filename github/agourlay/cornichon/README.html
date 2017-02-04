@@ -1021,53 +1021,48 @@ afterEachScenario ( <span class="pl-c"><span class="pl-c">//</span> feed Step* )
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Packaging features</h2> 
   <p>When integrating cornichon features in a build pipeline, it can be interesting to package those features in a runnable forms to avoid the cost of recompilation.</p> 
-  <p>You can find below an example of Docker packaging done using <code>sbt-assembly</code>, <code>sbt-native-packager</code> and a built-in Teamcity reporter.</p> 
+  <p>You can find below an example of Docker packaging done using <code>sbt-native-packager</code> and a built-in Teamcity reporter. You can place these settings in a <code>docker.sbt</code> in the root of your project.</p> 
   <p>This should hopefully inspire you to setup your own solution or contribute to improve this one.</p> 
   <div class="highlight highlight-source-scala">
-   <pre> enablePlugins(<span class="pl-en">DockerPlugin</span>)
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.typesafe.sbt.packager.docker.</span><span class="pl-v">Cmd</span>
+<span class="pl-k">import</span> <span class="pl-v">com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.</span>{<span class="pl-v">Docker</span> <span class="pl-k">=&gt;</span> <span class="pl-v">NPDocker</span>}
+<span class="pl-k">import</span> <span class="pl-v">NativePackagerHelper.</span><span class="pl-v">_</span>
 
- <span class="pl-c"><span class="pl-c">//</span> Enable assembly for Test</span>
- <span class="pl-en">Project</span>.inConfig(<span class="pl-en">Test</span>)(baseAssemblySettings)
+enablePlugins(<span class="pl-en">JavaAppPackaging</span>, <span class="pl-en">DockerPlugin</span>)
 
- <span class="pl-c"><span class="pl-c">//</span> Disable tests on assembly</span>
- test in (<span class="pl-en">Test</span>, assembly) <span class="pl-k">:</span><span class="pl-k">=</span> {}
+dockerBaseImage <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>develar/java<span class="pl-pds">"</span></span>
+dockerUpdateLatest <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">true</span>
+version in <span class="pl-en">NPDocker</span> <span class="pl-k">:</span><span class="pl-k">=</span> (<span class="pl-s"><span class="pl-pds">"</span>git rev-parse HEAD<span class="pl-pds">"</span></span> <span class="pl-k">!!</span>).trim
+mainClass in <span class="pl-en">Compile</span> <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>org.scalatest.tools.Runner<span class="pl-pds">"</span></span>)
 
- <span class="pl-c"><span class="pl-c">//</span> Permanent name for dependency jar</span>
- assemblyJarName in (<span class="pl-en">Test</span>, assemblyPackageDependency) <span class="pl-k">:</span><span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"</span>${name.value}-test-dep.jar<span class="pl-pds">"</span></span>
+dockerCmd <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>-C<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>com.github.agourlay.cornichon.scalatest.TeamcityReporter<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>-R<span class="pl-pds">"</span></span>,
+  s<span class="pl-s"><span class="pl-pds">"</span>lib/${(artifactPath in (Test, packageBin)).value.getName}<span class="pl-pds">"</span></span>)
 
- <span class="pl-c"><span class="pl-c">//</span> Permanent name for test jar</span>
- assemblyJarName in (<span class="pl-en">Test</span>, assembly) <span class="pl-k">:</span><span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"</span>${name.value}-test.jar<span class="pl-pds">"</span></span>
- <span class="pl-c"><span class="pl-c">//</span> Remove dependency and scala lib from test jar</span>
- assemblyOption in (<span class="pl-en">Test</span>, assembly) <span class="pl-k">:</span><span class="pl-k">=</span> (assemblyOption in (<span class="pl-en">Test</span>, assembly)).value.copy(includeScala <span class="pl-k">=</span> <span class="pl-c1">false</span>, includeDependency <span class="pl-k">=</span> <span class="pl-c1">false</span>)
+<span class="pl-c"><span class="pl-c">//</span> Install `bash` to be able to start the application</span>
 
- <span class="pl-c"><span class="pl-c">//</span> Remove reference.conf from assemblyPackageDependency</span>
- assemblyMergeStrategy in (<span class="pl-en">Test</span>, assembly) <span class="pl-k">:</span><span class="pl-k">=</span> {
-   <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>reference.conf<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.discard
-   <span class="pl-k">case</span> x <span class="pl-k">=&gt;</span> <span class="pl-k">val</span> <span class="pl-en">oldStrategy</span> <span class="pl-k">=</span> (assemblyMergeStrategy in (<span class="pl-en">Test</span>, assembly)).value
-               oldStrategy(x)
- }
+dockerCommands <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  dockerCommands.value.head,
+  <span class="pl-en">Cmd</span>(<span class="pl-s"><span class="pl-pds">"</span>RUN apk add --update bash &amp;&amp; rm -rf /var/cache/apk/*<span class="pl-pds">"</span></span>)
+) <span class="pl-k">++</span> dockerCommands.value.tail
 
- <span class="pl-c"><span class="pl-c">//</span> Docker settings</span>
- dockerBaseImage <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>develar/java<span class="pl-pds">"</span></span>
- dockerEntrypoint <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>/bin/sh<span class="pl-pds">"</span></span>)
- dockerCmd <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>-c<span class="pl-pds">"</span></span>, s<span class="pl-s"><span class="pl-pds">"</span>/jre/bin/java -cp lib/${name.value}-test-dep.jar org.scalatest.tools.Runner -C com.github.agourlay.cornichon.scalatest.TeamcityReporter -R bin/${name.value}-test.jar<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span> Include `Test` classpath</span>
 
- <span class="pl-c"><span class="pl-c">//</span> removes all jar mappings in universal and appends artifacts</span>
- mappings in <span class="pl-en">Universal</span> <span class="pl-k">:</span><span class="pl-k">=</span> {
-     <span class="pl-c"><span class="pl-c">//</span> universalMappings: Seq[(File,String)]</span>
-     <span class="pl-k">val</span> <span class="pl-en">universalMappings</span> <span class="pl-k">=</span> (mappings in <span class="pl-en">Universal</span>).value
+scriptClasspath <span class="pl-k">++</span><span class="pl-k">=</span>
+  fromClasspath((managedClasspath in <span class="pl-en">Test</span>).value, <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>, _ <span class="pl-k">⇒</span> <span class="pl-c1">true</span>).map(_._2) <span class="pl-k">:</span><span class="pl-k">+</span>
+    (sbt.<span class="pl-en">Keys</span>.`package` in <span class="pl-en">Test</span>).value.getName
 
-     <span class="pl-k">val</span> <span class="pl-en">fatJar</span> <span class="pl-k">=</span> (assemblyPackageDependency in <span class="pl-en">Test</span> ).value
-     <span class="pl-k">val</span> <span class="pl-en">testJar</span> <span class="pl-k">=</span> (assembly in <span class="pl-en">Test</span> ).value
-     <span class="pl-c"><span class="pl-c">//</span> removing means filtering</span>
-     <span class="pl-k">val</span> <span class="pl-en">filtered</span> <span class="pl-k">=</span> universalMappings filter {
-         <span class="pl-k">case</span> (file, name) <span class="pl-k">=&gt;</span>  <span class="pl-k">!</span> name.endsWith(<span class="pl-s"><span class="pl-pds">"</span>.jar<span class="pl-pds">"</span></span>)
-     }
-     <span class="pl-c"><span class="pl-c">//</span> add the fat and test jar to mappings</span>
-     filtered <span class="pl-k">:</span><span class="pl-k">+</span> (testJar <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>bin/<span class="pl-pds">"</span></span> <span class="pl-k">+</span> testJar.getName)) <span class="pl-k">:</span><span class="pl-k">+</span> (fatJar <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>lib/<span class="pl-pds">"</span></span> <span class="pl-k">+</span> fatJar.getName))
- }</pre>
+mappings in <span class="pl-en">Universal</span> <span class="pl-k">++</span><span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">testJar</span> <span class="pl-k">=</span> (sbt.<span class="pl-en">Keys</span>.`package` in <span class="pl-en">Test</span>).value
+
+  fromClasspath((managedClasspath in <span class="pl-en">Test</span>).value, <span class="pl-s"><span class="pl-pds">"</span>lib<span class="pl-pds">"</span></span>, _ <span class="pl-k">⇒</span> <span class="pl-c1">true</span>) <span class="pl-k">:</span><span class="pl-k">+</span>
+    (testJar <span class="pl-k">→</span> s<span class="pl-s"><span class="pl-pds">"</span>lib/${testJar.getName}<span class="pl-pds">"</span></span>)
+}</pre>
   </div> 
-  <p>Kudos to <a href="https://github.com/iMelnik" target="_blank">iMelnik</a> for the work on this configuration.</p> 
+  <p>After you created the <code>docker.sbt</code>, just run <code>sbt docker:publishLocal</code> in order to create a docker image locally.</p> 
+  <p>Kudos to <a href="https://github.com/iMelnik" target="_blank">iMelnik</a> &amp; <a href="https://github.com/OlegIlyenko" target="_blank">OlegIlyenko</a> for the work on this configuration.</p> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/agourlay/cornichon#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

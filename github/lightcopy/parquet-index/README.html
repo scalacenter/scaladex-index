@@ -11,6 +11,10 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Overview</h2> 
   <p>Package allows to create index for Parquet tables to reduce query latency when used for <em>almost interactive</em> analysis or point queries in Spark SQL. It is designed for use case when table does not change frequently, but is used for queries often, e.g. using Thrift JDBC/ODBC server. When indexed, schema and list of files (including partitioning) will be automatically resolved from index metastore instead of inferring schema every time datasource is created.</p> 
+  <blockquote> 
+   <p>Project is <strong>experimental and is in active development</strong>. Any feedback, issues or PRs are welcome.</p> 
+   <p>Documentation reflects changes in <code>master</code> branch, for a documentation for specific version, please select version tag or branch.</p> 
+  </blockquote> 
   <h3><a id="user-content-metastore" class="anchor" href="https://github.com/lightcopy/parquet-index#metastore" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -38,14 +42,10 @@
     </svg></a>Limitations</h3> 
   <ul> 
    <li>Indexed columns must be top level primitive columns with types above</li> 
-   <li>Indexed columns cannot be the same as partitioning columns (which kind of makes sense)</li> 
-   <li>Append mode is not supported for Parquet table when creating index</li> 
+   <li>Indexed columns cannot be the same as partitioning columns</li> 
+   <li>Append mode is not yet supported for Parquet table when creating index</li> 
    <li>Certain Spark versions are supported (see table below)</li> 
   </ul> 
-  <blockquote> 
-   <p>Project is <strong>experimental and is in active development at the moment</strong>. We are working to remove limitations and add support for different versions. Any feedback, issues or PRs are welcome.</p> 
-   <p>Documentation reflects changes in <code>master</code> branch, for specific version documentation, please select version tag or branch.</p> 
-  </blockquote> 
   <h2><a id="user-content-requirements" class="anchor" href="https://github.com/lightcopy/parquet-index#requirements" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -114,12 +114,12 @@
     </tr> 
     <tr> 
      <td><code>spark.sql.index.parquet.filter.enabled</code></td> 
-     <td>When set to <code>true</code>, write filter statistics for indexed columns when creating table index, otherwise only min/max statistics are used. Filter statistics are used during filtering stage, if can be applied and available (<code>true</code>, <code>false</code>)</td> 
-     <td><code>false</code></td> 
+     <td>When set to <code>true</code>, write filter statistics for indexed columns when creating table index, otherwise only min/max statistics are used. Filter statistics are used during filtering stage, if applicable (<code>true</code>, <code>false</code>)</td> 
+     <td><code>true</code></td> 
     </tr> 
     <tr> 
      <td><code>spark.sql.index.parquet.filter.type</code></td> 
-     <td>When filter statistics enabled, select type of statistics to use when creating index (<code>bloom</code>)</td> 
+     <td>When filter statistics enabled, select type of statistics to use when creating index (<code>bloom</code>, <code>dict</code>)</td> 
      <td><code>bloom</code></td> 
     </tr> 
     <tr> 
