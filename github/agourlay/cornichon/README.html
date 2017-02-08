@@ -25,6 +25,7 @@
     </ol></li> 
    <li><a href="https://github.com/agourlay/cornichon#dsl-composition" target="_blank">DSL composition</a></li> 
    <li><a href="https://github.com/agourlay/cornichon#placeholders" target="_blank">Placeholders</a></li> 
+   <li><a href="https://github.com/agourlay/cornichon#json-matchers" target="_blank">JSON matchers</a></li> 
    <li><a href="https://github.com/agourlay/cornichon#custom-steps" target="_blank">Custom steps</a> 
     <ol> 
      <li><a href="https://github.com/agourlay/cornichon#effectstep" target="_blank">EffectStep</a></li> 
@@ -52,7 +53,7 @@
     </svg></a>Quick start</h2> 
   <p>Add the library dependency</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.agourlay<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>cornichon<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.5<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">Test</span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.agourlay<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>cornichon<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.11<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-en">Test</span></pre>
   </div> 
   <p>Cornichon is currently integrated with <a href="http://www.scalatest.org/" target="_blank">ScalaTest</a>, place your <code>Feature</code> files inside <code>src/test/scala</code> and run them using <code>sbt test</code>.</p> 
   <p>A <code>Feature</code> is a class extending <code>CornichonFeature</code> and implementing the required <code>feature</code> function.</p> 
@@ -712,7 +713,8 @@ body.asArray.contains(
    <li><code>&lt;random-string&gt;</code> for a random String of length 5</li> 
    <li><code>&lt;random-alphanum-string&gt;</code> for a random alphanumeric String of length 5</li> 
    <li><code>&lt;random-boolean&gt;</code> for a random Boolean string</li> 
-   <li><code>&lt;timestamp&gt;</code> for the current timestamp</li> 
+   <li><code>&lt;random-timestamp&gt;</code> for a random timestamp</li> 
+   <li><code>&lt;current-timestamp&gt;</code> for the current timestamp</li> 
   </ul> 
   <div class="highlight highlight-source-scala">
    <pre>post(<span class="pl-s"><span class="pl-pds">"</span>http://url.io/somethingWithAnId<span class="pl-pds">"</span></span>).withBody(
@@ -728,6 +730,49 @@ body.asArray.contains(
    <li><code>&lt;name&gt;</code> always uses the latest value taken by the key.</li> 
    <li><code>&lt;name[0]&gt;</code> uses the first value taken by the key</li> 
    <li><code>&lt;name[1]&gt;</code> uses the second element taken by the key</li> 
+  </ul> 
+  <h2><a id="user-content-json-matchers" class="anchor" href="https://github.com/agourlay/cornichon#json-matchers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>JSON matchers</h2> 
+  <p>If the exact value of a field is unknown, you can use JSON matchers to make sure it has a certain property or shape.</p> 
+  <p>JSON matchers work more or less like placeholders in practice.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">And</span> assert body.ignoring(<span class="pl-s"><span class="pl-pds">"</span>city<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>realName<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>publisher.location<span class="pl-pds">"</span></span>).is(
+  <span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">  {</span>
+<span class="pl-s">    "name": "&lt;favorite-superhero&gt;",</span>
+<span class="pl-s">    "hasSuperpowers": *any-boolean*,</span>
+<span class="pl-s">    "publisher": {</span>
+<span class="pl-s">      "name": *any-string*,</span>
+<span class="pl-s">      "foundationYear": *any-positive-integer*</span>
+<span class="pl-s">    }</span>
+<span class="pl-s">  }</span>
+<span class="pl-s">  <span class="pl-pds">"""</span></span>
+)
+</pre>
+  </div> 
+  <p>You just need to replace the value of the field by one of the built-in JSON matchers <em>without</em> quotes.</p> 
+  <p>Here are the available matchers:</p> 
+  <ul> 
+   <li><code>*is-present*</code> : checks if the field is defined</li> 
+   <li><code>*any-string*</code> : checks if the field is a String</li> 
+   <li><code>*any-array*</code> : checks if the field is an Array</li> 
+   <li><code>*any-object*</code> : checks if the field is an Object</li> 
+   <li><code>*any-integer*</code> : checks if the field is an Integer</li> 
+   <li><code>*any-positive-integer*</code> : checks if the field is a positive Integer</li> 
+   <li><code>*any-negative-integer*</code> : checks if the field is a negative Integer</li> 
+   <li><code>*any-uuid*</code> : checks if the field is a valid UUID</li> 
+   <li><code>*any-boolean*</code> : checks if the field is a boolean</li> 
+   <li><code>*any-alphanum-string*</code> : checks if the field is an alpha-numeric String</li> 
+   <li><code>*any-date*</code> : checks if the field is a 'yyyy-MM-dd' date</li> 
+   <li><code>*any-date-time*</code> : checks if the field is a 'yyyy-MM-dd'T'HH:mm:ss.SSS'Z'' datetime</li> 
+   <li><code>*any-time*</code> : checks if the field is a 'HH:mm:ss.SSS' time"</li> 
+  </ul> 
+  <p>This feature is still fresh and under experimentation therefore it comes with a couple of limitations:</p> 
+  <ul> 
+   <li>it is not yet possible to register custom JSON matchers</li> 
+   <li>matchers are not supported for JSON arrays assertions</li> 
   </ul> 
   <h2><a id="user-content-custom-steps" class="anchor" href="https://github.com/agourlay/cornichon#custom-steps" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

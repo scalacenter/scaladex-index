@@ -1,0 +1,52 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sbt-pop" class="anchor" href="https://github.com/dispalt/sbt-pop#sbt-pop" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-pop</h1> 
+  <h3><a id="user-content-this-is-alpha-software-with-no-published-releases" class="anchor" href="https://github.com/dispalt/sbt-pop#this-is-alpha-software-with-no-published-releases" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>This is alpha software with no published releases</h3> 
+  <p><code>sbt-pop</code> makes development reloading faster and therefore much better. It uses the same type of mechanism that play uses (and borrows a lot of that code) to achieve "faster" reloads. Particularly, its functionality and requirements of user space code changes are as follows:</p> 
+  <ul> 
+   <li>Uses a series of hierarchical classloaders to trash in the event of a reload, well one specifically, the application classloader.</li> 
+   <li>Creates <strong>your</strong> class dynamically and instantiates it as a descendent of an interface (which is a java only project) which supplies the application classloader with the <code>start</code> method.</li> 
+   <li>Has a hook for shutting down, so you can gracefully close things like db connections, etc.</li> 
+   <li>Uses JDK7 watcher service, so jdk7 minimum.</li> 
+  </ul> 
+  <h2><a id="user-content-how-to" class="anchor" href="https://github.com/dispalt/sbt-pop#how-to" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to</h2> 
+  <ul> 
+   <li>Add the plugin to your <code>plugins.sbt</code> file in your project. This brings in <code>build-link</code> runtime dependency which does not require scala.</li> 
+   <li>In the sbt project you want to use it, you'll have to call <code>.enablePlugins(FastWatch)</code>. and also set the <code>mainClass in run := Some("your.main.class.NOT.OBJECT.which.inherits.from.Base")</code>.</li> 
+   <li>You can also watch extra projects like so:</li> 
+  </ul> 
+  <p>If client is a <code>scalajs</code> project, this will add it to the watcher. At the moment the <code>TaskKey[_]</code> in the second <em>2 spot of the tuple doesn't do anything at the moment. It will scope the `TaskKey[</em>]` to the project specified in the first spot of the tuple.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>popWatchedProjects <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+    (thisProjectRef in client).value <span class="pl-k">-</span><span class="pl-k">&gt;</span> (fastOptJS in <span class="pl-en">Compile</span>)
+),</pre>
+  </div> 
+  <ul> 
+   <li>Make a <code>class</code> not an <code>object</code>, that inherits from <code>com.dispalt.pop.Base</code></li> 
+   <li>Start your own custom server in the <code>start(ClassLoader, port)</code> method.</li> 
+  </ul> 
+  <p>The classloader parameter is useful for things like the typesafe config, make sure to use the provided <code>ClassLoader</code> when dealing with <code>ConfigFactory.load</code></p> 
+  <ul> 
+   <li>Destroy resources in the <code>stop</code> method.</li> 
+   <li>The reload method is unused at the moment.</li> 
+   <li>Port isn't also really necessary to set at the moment, but comes as a parameter.</li> 
+  </ul> 
+  <h2><a id="user-content-similar-solutions" class="anchor" href="https://github.com/dispalt/sbt-pop#similar-solutions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Similar Solutions</h2> 
+  <ul> 
+   <li><a href="https://github.com/spray/sbt-revolver" target="_blank">sbt-revolver</a> - Forks and runs</li> 
+   <li><a href="https://github.com/playframework/playframework" target="_blank">play</a> - Great reload experience</li> 
+  </ul> 
+ </article>
+</div>

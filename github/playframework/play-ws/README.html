@@ -21,6 +21,9 @@
     </svg></a>Shading</h2> 
   <p>Play WS uses shaded versions of AsyncHttpClient and OAuth Signpost, repackaged under the <code>play.shaded.ahc</code> and <code>play.shaded.oauth</code> package names, respectively. Shading AsyncHttpClient means that the version of Netty used behind AsyncHttpClient is completely independent of the application and Play as a whole.</p> 
   <p>Specifically, shading AsyncHttpClient means that there are no version conflicts introduced between Netty 4.0 and Netty 4.1 using Play WS.</p> 
+  <blockquote> 
+   <p><strong>NOTE</strong>: If you are developing play-ws and publishing <code>shaded-asynchttpclient</code> and <code>shaded-oauth</code> using <code>sbt publishLocal</code>, you need to be aware that updating <code>~/.ivy2/local</code> does not overwrite <code>~/.ivy2/cache</code> and so you will not see your updated shaded code until you remove it from cache. See <a href="http://eed3si9n.com/field-test" target="_blank">http://eed3si9n.com/field-test</a> for more details. This bug has been filed as <a href="https://github.com/sbt/sbt/issues/2687" target="_blank">https://github.com/sbt/sbt/issues/2687</a>.</p> 
+  </blockquote> 
   <h3><a id="user-content-shaded-ahc-defaults" class="anchor" href="https://github.com/playframework/play-ws#shaded-ahc-defaults" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -56,6 +59,9 @@
   <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
     <span class="pl-c"><span class="pl-c">//</span> Create Akka system for thread and streaming management</span>
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+    system.registerOnTermination {
+      <span class="pl-en">System</span>.exit(<span class="pl-c1">0</span>)
+    }
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
 
     <span class="pl-c"><span class="pl-c">//</span> Create the standalone WS client</span>
@@ -100,6 +106,7 @@
         <span class="pl-c"><span class="pl-c">//</span> Set up Akka materializer to handle streaming</span>
         <span class="pl-k">final</span> <span class="pl-smi">String</span> name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>wsclient<span class="pl-pds">"</span></span>;
         <span class="pl-smi">ActorSystem</span> system <span class="pl-k">=</span> <span class="pl-smi">ActorSystem</span><span class="pl-k">.</span>create(name);
+        system<span class="pl-k">.</span>registerOnTermination(<span class="pl-smi">System</span><span class="pl-k">.</span>exit(<span class="pl-c1">0</span>));
         <span class="pl-k">final</span> <span class="pl-smi">ActorMaterializerSettings</span> settings <span class="pl-k">=</span> <span class="pl-smi">ActorMaterializerSettings</span><span class="pl-k">.</span>create(system);
         <span class="pl-k">final</span> <span class="pl-smi">ActorMaterializer</span> materializer <span class="pl-k">=</span> <span class="pl-smi">ActorMaterializer</span><span class="pl-k">.</span>create(settings, system, name);
 
@@ -124,6 +131,23 @@
     }
 }</pre>
   </div> 
+  <h2><a id="user-content-releasing" class="anchor" href="https://github.com/playframework/play-ws#releasing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Releasing</h2> 
+  <p>This project uses <code>sbt-release</code> to push to Sonatype and Maven. You will need Lightbend Sonatype credentials and a GPG key that is available on one of the public keyservers to release this project.</p> 
+  <p>To release cleanly, you should clone this project fresh into a directory with writable credentials (i.e. you have ssh key to github):</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>mkdir releases
+<span class="pl-c1">cd</span> releases
+git clone git@github.com:playframework/play-ws.git</pre>
+  </div> 
+  <p>and from there you can release:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre><span class="pl-c1">cd</span> play-ws
+sbt release</pre>
+  </div> 
+  <p>The script will walk you through integration tests and publishing.</p> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/playframework/play-ws#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

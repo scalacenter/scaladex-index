@@ -34,9 +34,9 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Release</h4> 
-  <p>The latest release is 5.2.0 which is compatible with Elasticsearch 5.2.x. There are releases for both Scala 2.11 and Scala 2.12. Scala 2.10 support has been dropped starting with the 5.0.x release train. For releases that are compatible with earlier versions of Elasticsearch, <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sksamuel.elastic4s%22" target="_blank">search maven central</a>. For more information read <a href="https://github.com/sksamuel/elastic4s#using-elastic4s-in-your-project" target="_blank">Using Elastic4s in your project</a>.</p> 
-  <p>Starting from version 5.0.0, the underlying Elasticsearch TCP Java client has dependencies on Netty, Lucene and others that it does not bring in transitively. I do not know the reasoning behind this, as they are needed for the client to work. The elastic4s client brings in the dependencies for you, but in case anything is missed, add it to your build yourself.</p> 
-  <p>The second issue is that it uses Netty 4.1. However some popular projects such as Spark and Play currently use 4.0 and there is a breaking change between the two versions. Therefore if you bring in elastic4s (or even just the Java transport client) you will get NoSuchMethodExceptions if you try to use it with Play or Spark. I am unable of a workaround at present, until Spark and Play update to the latest version, other than switching to the experimental HTTP client.</p> 
+  <p>The latest releases are for Elasticsearch 5.2.x. There are releases for both Scala 2.11 and Scala 2.12. Scala 2.10 support has been dropped starting with the 5.0.x release train. For releases that are compatible with earlier versions of Elasticsearch, <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sksamuel.elastic4s%22" target="_blank">search maven central</a>. For more information read <a href="https://github.com/sksamuel/elastic4s#using-elastic4s-in-your-project" target="_blank">Using Elastic4s in your project</a>.</p> 
+  <p>Starting from version 5.0.0, the underlying Elasticsearch TCP Java client has dependencies on Netty, Lucene and others that it does not bring in transitively.The elastic4s client brings in the dependencies for you, but in case anything is missed, you would need to add it to your build yourself.</p> 
+  <p>The second issue is that it uses Netty 4.1. However some popular projects such as Spark and Play currently use 4.0 and there is a breaking change between the two versions. Therefore if you bring in elastic4s (or even just the elasticsearch provided Java TCP client) you will get <code>NoSuchMethodException</code>s if you try to use it with Play or Spark. I am unaware of a workaround at present, until Spark and Play update to the latest version, other than switching to the experimental HTTP client.</p> 
   <table>
    <thead> 
     <tr> 
@@ -120,13 +120,13 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Quick Start</h2> 
-  <p>To get started you will need to add a dependency to either <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-http" target="_blank">elastic4s-http</a> or <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-tcp" target="_blank">elastic4s-tcp</a> depending on which client you intend you use (or both!)</p> 
+  <p>To get started you will need to add a dependency to either <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-http" target="_blank">elastic4s-http</a> or <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-tcp" target="_blank">elastic4s-tcp</a> depending on which client you intend you use (or both)</p> 
   <p>The basic usage is that you create an instance of a client and then invoke the <code>execute</code> method with the requests you want to perform. The execute method is asynchronous and will return a standard Scala <code>Future[T]</code> where T is the response type appropriate for your request type. For example a <em>search</em> request will return a response of type <code>SearchResponse</code> which contains the results of the search.</p> 
   <p>To create an instance of the HTTP client, use the <code>HttpClient</code> companion object methods. To create an instance of the TCP client, use the <code>TcpClient</code> companion object methods. Requests are the same for either client, but response classes may vary slightly as the HTTP response classes model the returned JSON whereas the TCP response classes wrap the Java client classes.</p> 
   <p>Requests, such as inserting a document, searching, creating an index, and so on, are created using the DSL syntax that is similar in style to SQL queries. For example to create a search request, you would do: <code>search("index" / "type") query "findthistext"</code></p> 
   <p>The DSL methods are located in the <code>ElasticDsl</code> trait which needs to be imported or extended. Although the syntax is identical whether you use the HTTP or TCP client, you must import the appropriate trait (<code>com.sksamuel.elastic4s.ElasticDSL</code> for TCP or <code>com.sksamuel.elastic4s.http.ElasticDSL</code> for HTTP) depending on which client you are using.</p> 
-  <p>One final import is required if you are using the HTTP client. The API needs a way to marshall the JSON response from the elastic server into the strongly typed case classes used by the API. Rather than bringing in a JSON library of our choosing and potentially causing dependency issues (or simply bloat), the client simply expects an implicit <code>JsonFormat</code> implementation. </p> 
-  <p>Elastic4s provides several out of the box (or you can roll your own). The provided implemenations are elastic4s-circe, elastic4s-jackson, elastic4s-json4, and elastic4s-play-json. For example, to use the jackson implementation, add the module to your build and then add this line:</p> 
+  <p>One final import is required if you are using the HTTP client. The API needs a way to unmarshall the JSON response from the elastic server into the strongly typed case classes used by the API. Rather than bringing in a JSON library of our choosing and potentially causing dependency issues (or simply bloat), the client expects an implicit <code>JsonFormat</code> implementation. </p> 
+  <p>Elastic4s provides several out of the box (or you can roll your own). The provided implemenations are <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-circe" target="_blank">elastic4s-circe</a>, <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-jackson" target="_blank">elastic4s-jackson</a>, <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-json4" target="_blank">elastic4s-json4</a>, and <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-play-json" target="_blank">elastic4s-play-json</a>. For example, to use the jackson implementation, add the module to your build and then add this import:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.sksamuel.elastic4s.jackson.ElasticJackson.Implicits.</span><span class="pl-v">_</span></pre>
   </div> 
@@ -202,8 +202,8 @@
     <tr> 
      <td>Close index</td> 
      <td><code>closeIndex(&lt;name&gt;)</code></td> 
+     <td>yes yes</td> 
      <td></td> 
-     <td>yes</td> 
     </tr> 
     <tr> 
      <td>Cluster health</td> 
@@ -334,7 +334,7 @@
     <tr> 
      <td>Index exists</td> 
      <td><code>indexExists(&lt;name&gt;)</code></td> 
-     <td></td> 
+     <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
@@ -348,6 +348,18 @@
      <td><code>listTasks(nodeIds)</code></td> 
      <td></td> 
      <td>yes</td> 
+    </tr> 
+    <tr> 
+     <td>Lock Acquire</td> 
+     <td><code>acquireGlobalLock()</code></td> 
+     <td>yes</td> 
+     <td></td> 
+    </tr> 
+    <tr> 
+     <td>Lock Release</td> 
+     <td><code>releaseGlobalLock()</code></td> 
+     <td>yes</td> 
+     <td></td> 
     </tr> 
     <tr> 
      <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/multiget.md" target="_blank">Multiget</a></td> 
@@ -364,7 +376,7 @@
     <tr> 
      <td>Open index</td> 
      <td><code>openIndex(&lt;name&gt;)</code></td> 
-     <td></td> 
+     <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
