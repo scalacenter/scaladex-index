@@ -15,7 +15,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">akka.</span><span class="pl-v">NotUsed</span>
 <span class="pl-k">import</span> <span class="pl-v">akka.stream.</span><span class="pl-v">Materializer</span>
-<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span>{<span class="pl-v">Flow</span>, <span class="pl-v">Keep</span>}
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span>{<span class="pl-v">Flow</span>, <span class="pl-v">Sink</span>, <span class="pl-v">Keep</span>}
 <span class="pl-k">import</span> <span class="pl-v">com.elkozmon.akka.firebase.</span><span class="pl-v">Document</span>
 <span class="pl-k">import</span> <span class="pl-v">com.elkozmon.akka.firebase.scaladsl.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">com.google.firebase.database.</span><span class="pl-v">FirebaseDatabase</span>
@@ -26,18 +26,23 @@
 
   <span class="pl-k">val</span> <span class="pl-en">transform</span><span class="pl-k">:</span> <span class="pl-en">Flow</span>[<span class="pl-en">Document</span>, <span class="pl-en">Document</span>, <span class="pl-en">NotUsed</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
 
-  <span class="pl-k">val</span> <span class="pl-en">consumer</span> <span class="pl-k">=</span> <span class="pl-en">Consumer</span>.bufferedSource(
+  <span class="pl-k">val</span> <span class="pl-en">parallelism</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">512</span>
+
+  <span class="pl-k">val</span> <span class="pl-en">consumer</span> <span class="pl-k">=</span> <span class="pl-en">Consumer</span>.asyncSource(
     sourceNode <span class="pl-k">=</span> <span class="pl-en">FirebaseDatabase</span>.getInstance().getReference(<span class="pl-s"><span class="pl-pds">"</span>my-source<span class="pl-pds">"</span></span>),
-    bufferSize <span class="pl-k">=</span> <span class="pl-c1">32</span>
+    bufferSize <span class="pl-k">=</span> <span class="pl-c1">256</span>
   )
 
-  <span class="pl-k">val</span> <span class="pl-en">producer</span> <span class="pl-k">=</span> <span class="pl-en">Producer</span>.asyncSink(
+  <span class="pl-k">val</span> <span class="pl-en">producer</span> <span class="pl-k">=</span> <span class="pl-en">Producer</span>.asyncFlow(
     targetNode <span class="pl-k">=</span> <span class="pl-en">FirebaseDatabase</span>.getInstance().getReference(<span class="pl-s"><span class="pl-pds">"</span>my-sink<span class="pl-pds">"</span></span>)
   )
 
   <span class="pl-k">val</span> (consumerControl, futureDone) <span class="pl-k">=</span> consumer
+    .mapAsync(parallelism)(identity)
     .via(transform)
-    .toMat(producer)(<span class="pl-en">Keep</span>.both)
+    .via(producer)
+    .mapAsync(parallelism)(identity)
+    .toMat(<span class="pl-en">Sink</span>.ignore)(<span class="pl-en">Keep</span>.both)
     .run()
 }</pre>
   </div> 

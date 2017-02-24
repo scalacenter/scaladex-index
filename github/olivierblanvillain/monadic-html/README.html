@@ -89,11 +89,53 @@ mount(div, component)</pre>
   </ul> 
   <p>These updates correspond to what React would compute using virtual-DOM diffing.</p> 
   <p>When working with large immutable data structures, this approach is less performant than virtual-DOM diffing. Indeed, creating a large view out of a <code>Rx[List[_]]</code> implies that any changes to the <code>List</code> triggers a re-rendering of the entirety of the view. We plan to address this point in <a href="https://github.com/OlivierBlanvillain/monadic-html/issues/13" target="_blank">#13</a> by combining the current approach with targeted virtual-DOM.</p> 
+  <h2><a id="user-content-interacting-with-js-events" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#interacting-with-js-events" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Interacting with js events</h2> 
+  <p>Interactions with the imperative world of js events in done by attaching even handlers directly to xml nodes:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">button</span> <span class="pl-e">onclick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>clicked!<span class="pl-pds">"</span></span>) }&gt;<span class="pl-en">Click</span> <span class="pl-en">Me</span><span class="pl-k">!</span>&lt;/<span class="pl-ent">button</span>&gt;</pre>
+  </div> 
+  <p>Even handlers can also take one argument, in which case they will be called with raw event objects coming directly from the js world:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">div</span> <span class="pl-e">onkeydown</span>={ (<span class="pl-v">e</span>: js.<span class="pl-en">Dynamic</span>) <span class="pl-k">=&gt;</span> () }&gt;&lt;/<span class="pl-ent">div</span>&gt;</pre>
+  </div> 
+  <p>The function argument can be anything here, so if you're in a type safe mood feel free to use <a href="http://scala-js.github.io/scala-js-dom/" target="_blank">scala-js-dom</a>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>&lt;<span class="pl-ent">div</span> <span class="pl-e">onkeydown</span>={ (<span class="pl-v">e</span>: dom.<span class="pl-en">KeyboardEvent</span>) <span class="pl-k">=&gt;</span> println(e.keyCode) }&gt;&lt;/<span class="pl-ent">div</span>&gt;</pre>
+  </div> 
+  <p>Note that the idiomatic way to handle events is to isolate side effects by opting into the <code>Rx</code> world as soon as possible. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">button</span>(<span class="pl-v">text</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> (xml.<span class="pl-en">Node</span>, <span class="pl-en">Rx</span>[<span class="pl-k">Unit</span>]) <span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">clicked</span><span class="pl-k">:</span> <span class="pl-en">Var</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> <span class="pl-en">Var</span>(())
+  <span class="pl-k">val</span> <span class="pl-en">button</span> <span class="pl-k">=</span> &lt;<span class="pl-ent">button</span> <span class="pl-e">onclick</span>={ () <span class="pl-k">=&gt;</span> clicked <span class="pl-k">:</span><span class="pl-k">=</span> (()) }&gt;{text}&lt;/<span class="pl-ent">button</span>&gt;
+  (button, clicked)
+}</pre>
+  </div> 
+  <h2><a id="user-content-interacting-with-the-dom" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#interacting-with-the-dom" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Interacting with the DOM</h2> 
+  <p>In order to obtain references to the underlying DOM nodes, <code>monadic-html</code> implements lifecycle hooks using custom events:</p> 
+  <ul> 
+   <li><code>mhtml-onmount</code>: called when adding a node to the DOM</li> 
+   <li><code>mhtml-onunmount</code>: called when removing a node from the DOM</li> 
+  </ul> 
+  <p>In both cases, a reference to the underlying element is passed to the event hander, which can be usefull for interoperability with js libraries:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">crazyCanvasStuff</span>(<span class="pl-v">e</span>: dom.html.<span class="pl-en">Canvas</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> ...
+
+&lt;<span class="pl-ent">canvas</span> <span class="pl-e">mhtml-onmount</span>={ e <span class="pl-k">=&gt;</span> crazyCanvasStuff(e) }&gt;&lt;/<span class="pl-ent">canvas</span>&gt;</pre>
+  </div> 
   <h2><a id="user-content-faq" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#faq" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>FAQ</h2> 
-  <p><strong>Does the compiler catch HTML typos?</strong></p> 
+  <h4><a id="user-content-does-the-compiler-catch-html-typos" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#does-the-compiler-catch-html-typos" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Does the compiler catch HTML typos?</h4> 
   <p>No, only invalid XML literals will be rejected at compile time. However, we do provide <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/src/main/scala/mhtml/settings.scala" target="_blank">configurable settings</a> to emit runtime warnings about unknown elements, attributes, entity references and event handlers. For example, the following piece of XML compiles fine:</p> 
   <div class="highlight highlight-source-scala">
    <pre>&lt;<span class="pl-ent">captain</span> <span class="pl-e">yolo</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> <span class="pl-e">onClick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Oh yeah!<span class="pl-pds">"</span></span>) }&gt;&lt;/<span class="pl-ent">captain</span>&gt;</pre>
@@ -104,36 +146,33 @@ mount(div, component)</pre>
 [mhtml] Warning: Unknown element captain. Did you mean caption instead?
 </code></pre> 
   <p><code>MountSettings.default</code> emit warnings only when compiled to with <code>fastOptJS</code>, and becomes silent (and faster) whe compiled with <code>fullOptJS</code>.</p> 
-  <p><strong>Can I insert Any values into xml literals?</strong></p> 
-  <p>No. Monadic-html uses a fork of scala-xml that puts type constraints on what values are allowed in xml element or attribute position. Here is a summary of what types are allowed to be embedded in attribute or element position.</p> 
-  <h4><a id="user-content-both-attributes-and-elements" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#both-attributes-and-elements" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-can-i-insert-any-values-into-xml-literals" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#can-i-insert-any-values-into-xml-literals" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Both attributes and elements:</h4> 
+    </svg></a>Can I insert Any values into xml literals?</h4> 
+  <p>No. Monadic-html uses a fork of scala-xml that puts type constraints on what values are allowed in xml element or attribute position. Here is a summary of what types are allowed to be embedded in attribute or element position.</p> 
+  <p>Both attributes and elements:</p> 
   <ul> 
    <li><code>String</code></li> 
    <li><code>mhtml.Var[T], mhtml.Rx[T] where T is itself embeddable</code></li> 
    <li><code>Option[T] where T can itself be embedded (None → remove from the DOM)</code></li> 
   </ul> 
-  <h4><a id="user-content-attributes" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#attributes" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Attributes</h4> 
+  <p>Attributes:</p> 
   <ul> 
    <li><code>Boolean (false → remove from the DOM)</code></li> 
    <li><code>() =&gt; Unit, T =&gt; Unit event handler</code></li> 
   </ul> 
-  <h4><a id="user-content-elements" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#elements" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Elements</h4> 
+  <p>Elements:</p> 
   <ul> 
    <li><code>Int, Long, Double, Float, Char (silently converted with .toString)</code></li> 
    <li><code>xml.Node</code></li> 
    <li><code>Seq[xml.Node]</code></li> 
   </ul> 
   <p>For examples of how each type is rendered into dom nodes, take a look at the <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/tests/src/test/scala/mhtml/RenderTests.scala" target="_blank">tests</a>.</p> 
-  <p><strong>Global mutable state, Booo! Booo!!!</strong></p> 
+  <h4><a id="user-content-global-mutable-state-booo-booo" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#global-mutable-state-booo-booo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Global mutable state, Booo! Booo!!!</h4> 
   <p><code>Var</code>s don't have to be globally exposed, you can instantiate them locally:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">def</span> <span class="pl-en">createComponent</span>()<span class="pl-k">:</span> xml.<span class="pl-en">Node</span> <span class="pl-k">=</span> {
@@ -151,7 +190,10 @@ mount(div, component)</pre>
   &lt;/<span class="pl-ent">div</span>&gt;</pre>
   </div> 
   <p>In an ideal world, you would use exactly one <code>Rx</code> per signal coming from the outside world, which means using a single <code>:=</code> per <code>Rx</code>. Doing so leads to a very nice functional reactive programming style code, analogous to what you would write in <a href="http://elm-lang.org/" target="_blank">Elm</a>.</p> 
-  <p><strong>How can I turn a <code>List[Rx[A]]</code> into a <code>Rx[List[A]]</code>?</strong></p> 
+  <h4><a id="user-content-how-can-i-turn-a-listrxa-into-a-rxlista" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#how-can-i-turn-a-listrxa-into-a-rxlista" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How can I turn a <code>List[Rx[A]]</code> into a <code>Rx[List[A]]</code>?</h4> 
   <p>Short answer:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">SequencingListFFS</span>[<span class="pl-en">A</span>](<span class="pl-c1">self</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Rx</span>[<span class="pl-en">A</span>]]) {

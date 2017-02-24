@@ -1,0 +1,85 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-maps-blocking-scala-iterators-to-multiple-streaming-libraries" class="anchor" href="https://github.com/longevityframework/unblocking#maps-blocking-scala-iterators-to-multiple-streaming-libraries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maps Blocking Scala Iterators to Multiple Streaming Libraries</h1> 
+  <p>This project is for library writers who want to provide a streaming API, but are do not want to limit themselves to a single Scala streaming library. With <code>unblocking</code>, you express your result one time, and get streaming enumerators for the following Scala streaming libraries:</p> 
+  <ul> 
+   <li><a href="http://doc.akka.io/docs/akka/2.4.16/scala/stream/index.html" target="_blank">Akka Streams</a></li> 
+   <li><a href="https://github.com/travisbrown/iteratee" target="_blank">iteratee.io</a></li> 
+   <li><a href="https://github.com/functional-streams-for-scala/fs2" target="_blank">FS2</a></li> 
+   <li><a href="https://www.playframework.com/documentation/2.5.x/Enumerators" target="_blank">Plate Iteratees</a></li> 
+   <li>For good measure, we throw in the non-streaming, but non-blocking <code>Future[Seq[_]]</code> from the Scala standard library.</li> 
+  </ul> 
+  <p>These streaming libraries all have their own terminologies for output streams - <em>sources</em>, <em>enumerators</em>, and <em>streams</em>. We will use the general term "enumerator" here.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/longevityframework/unblocking#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How It Works</h2> 
+  <p>To produce an enumerator in each of these streaming libraries, you need to provide <code>unblocking</code> with a <code>scala.collection.Iterator</code>, with two caveats:</p> 
+  <ul> 
+   <li>The iterator must provide a <code>close</code> method, (i.e., implement <code>java.io.Closeable</code>), so that you can coordinate with the streaming library to release any underlying resources when the enumerator is closed.</li> 
+   <li>Instead of providing a closeable iterator, you provide a no-arg function that produces closeable iterators, so that the enumerators produced by the streaming libraries are reusable.</li> 
+  </ul> 
+  <p>The actual types work out like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">CloseableIterator</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">Iterator</span>[<span class="pl-en">A</span>] <span class="pl-k">with</span> <span class="pl-e">java.io.Closeable</span>
+
+<span class="pl-k">type</span> <span class="pl-en">IteratorGen</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] <span class="pl-k">=</span> () <span class="pl-k">=&gt;</span> <span class="pl-en">CloseableIterator</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>You can now call the following <code>unblocking</code> methods to acquire your streams:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">toAkkaSource</span>[<span class="pl-en">A</span>](<span class="pl-v">iteratorGen</span>: <span class="pl-en">IteratorGen</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> akka.stream.scaladsl.<span class="pl-en">Source</span>[<span class="pl-en">A</span>, akka.<span class="pl-en">NotUsed</span>]
+
+<span class="pl-k">def</span> <span class="pl-en">toCatsEnumerator</span>[<span class="pl-en">F</span>[_], <span class="pl-en">E</span>](<span class="pl-v">iteratorGen</span>: <span class="pl-en">IteratorGen</span>[<span class="pl-en">E</span>])(<span class="pl-k">implicit</span> <span class="pl-en">F</span><span class="pl-k">:</span> cats.<span class="pl-en">Monad</span>[<span class="pl-en">F</span>])<span class="pl-k">:</span> io.iteratee.<span class="pl-en">Enumerator</span>[<span class="pl-en">F</span>, <span class="pl-en">E</span>]
+
+<span class="pl-k">def</span> <span class="pl-en">toFS2Stream</span>[<span class="pl-en">A</span>](<span class="pl-v">iteratorGen</span>: <span class="pl-en">IteratorGen</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> fs2.<span class="pl-en">Stream</span>[fs2.<span class="pl-en">Task</span>, <span class="pl-en">A</span>]
+
+<span class="pl-k">def</span> <span class="pl-en">toPlayEnumerator</span>[<span class="pl-en">A</span>](<span class="pl-v">iteratorGen</span>: <span class="pl-en">IteratorGen</span>[<span class="pl-en">A</span>])(<span class="pl-k">implicit</span> <span class="pl-v">context</span>: scala.concurrent.<span class="pl-en">ExecutionContext</span>)<span class="pl-k">:</span> play.api.libs.iteratee.<span class="pl-en">Enumerator</span>[<span class="pl-en">A</span>]
+
+<span class="pl-k">def</span> <span class="pl-en">toFutureSeq</span>[<span class="pl-en">A</span>](<span class="pl-v">iteratorGen</span>: <span class="pl-en">IteratorGen</span>[<span class="pl-en">A</span>])(<span class="pl-k">implicit</span> <span class="pl-v">context</span>: scala.concurrent.<span class="pl-en">ExecutionContext</span>)<span class="pl-k">:</span> scala.concurrent.<span class="pl-en">Future</span>[<span class="pl-en">Seq</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>None of these converters are particularly difficult. You could easily write them yourself, directly in your library codebase. But there are advantages to providing them as a bundle, here:</p> 
+  <ul> 
+   <li>Placing the converters in a single location makes it easy for library writers to target multiple streaming libraries in a single pass.</li> 
+   <li>The converters are all tested here, outside the context of the result you are actually trying to stream. The tests are good. And even if they were not, anyone (i.e. you) could contribute some better tests to the project.</li> 
+   <li>If anyone wants to support another streaming library, they could easily add another converter here, for the benefit of many.</li> 
+   <li>It's kind of neat to see all these formulas for building the different enumerators side by side.</li> 
+   <li>We can alleviate some of the pain of keeping dependency versions up to date. I generally update all my library versions every <a href="http://longevityframework.org/" target="_blank">longevity</a> minor release, and those <a href="https://github.com/longevityframework/longevity/releases" target="_blank">occur every month or so</a>, so you can be reasonably sure that the library versions here will stay pretty well up to date.</li> 
+  </ul> 
+  <p>I know, none of these reasons is particularly compelling.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/longevityframework/unblocking#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Right now, we have artifacts for Scala 2.11 and 2.12. We don't provide artifacts for 2.10 yet, because there is not a full suite of 2.10 artifacts for the four streaming libraries.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.longevityframework<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>unblocking<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-versioning-policy" class="anchor" href="https://github.com/longevityframework/unblocking#versioning-policy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Versioning Policy</h2> 
+  <p>We will bump the minor version any time any of the dependent streaming libraries bumps a minor version.</p> 
+  <h2><a id="user-content-future-directions" class="anchor" href="https://github.com/longevityframework/unblocking#future-directions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Future Directions</h2> 
+  <p>It would be cool to have methods that did the reverse translations, e.g., from <code>fs2.Stream[fs2.Task,A]</code> back to <code>IteratorGen[A]</code>. Then we could have conversion methods across all the supported streaming libraries.</p> 
+  <p>I would like to expand the test suite to test individual versions of these libraries. This way, instead of just supporting the latest version of each streaming library, we could support the latest version, plus all previous versions that are compatible with the latest. Then we could provide a matrix of compatible library versions - including across Scala versions - so that libraries could provide version ranges for their dependencies.</p> 
+  <p>You'll notice that a couple of the implementations could benefit from a chunking approach.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/longevityframework/unblocking#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>It's <a href="http://www.apache.org/licenses/" target="_blank">Apache 2</a>. I don't really have any reasons to pick a different license than this seemingly de-facto open source license. If you have some good reasons why this project should be released under a different license, please let me know.</p> 
+  <h2><a id="user-content-please-contribute" class="anchor" href="https://github.com/longevityframework/unblocking#please-contribute" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Please Contribute!</h2> 
+  <p>One of the main reasons I made this a separate library instead of part of <a href="http://longevityframework.org/" target="_blank">longevity</a> is so that we all could benefit from it. If you have any ideas - want to improve the test suite, want to add another streaming library, throw in some basic benchmarking support - please contribute!</p> 
+  <p>I want to be clear here, I am far from an expert with any of these streaming libraries! So if you are familiar with them, and you see something that looks wonky, please fix it! If you can't be bothered to fix it, in the very least, tell me about it. I want to be better with these libraries than I am!</p> 
+  <p>THANK YOU!!!</p> 
+ </article>
+</div>

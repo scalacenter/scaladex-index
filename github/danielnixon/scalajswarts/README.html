@@ -21,7 +21,7 @@
    </thead>
    <tbody> 
     <tr> 
-     <td>0.1.0</td> 
+     <td>0.2.0</td> 
      <td>1.3.0</td> 
      <td>0.6.14</td> 
      <td>2.11.8, 2.12.1</td> 
@@ -41,6 +41,7 @@
    <li><p>Add the following to your <code>build.sbt</code>:</p> 
     <div class="highlight highlight-source-scala">
      <pre>wartremoverWarnings <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">ScalaJSWart</span>.<span class="pl-en">ArrayPartial</span>,
   <span class="pl-en">ScalaJSWart</span>.<span class="pl-en">UndefOrOpsPartial</span>
 )</pre>
     </div></li> 
@@ -49,6 +50,26 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Warts</h2> 
+  <h3><a id="user-content-arraypartial" class="anchor" href="https://github.com/danielnixon/scalajswarts#arraypartial" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ArrayPartial</h3> 
+  <p><code>scala.scalajs.js.Array[T]</code> has <code>apply</code>, <code>pop</code> and <code>shift</code> methods, all of which can return <code>undefined</code> (even though their return type is <code>T</code>, not <code>UndefOr[T]</code>). This can lead to <a href="https://www.scala-js.org/doc/semantics.html#undefined-behaviors" target="_blank"><code>UndefinedBehaviorError</code>s</a>.</p> 
+  <p>You can wrap these methods in an implicit that might look something like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">@</span><span class="pl-en">SuppressWarnings</span>(<span class="pl-en">Array</span>(<span class="pl-s"><span class="pl-pds">"</span>org.danielnixon.scalajswarts.ArrayPartial<span class="pl-pds">"</span></span>))
+  <span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">SaferArray</span>[<span class="pl-en">A</span>](<span class="pl-k">val</span> <span class="pl-en">value</span><span class="pl-k">:</span> scala.scalajs.js.<span class="pl-en">Array</span>[<span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span> {
+    <span class="pl-k">def</span> <span class="pl-en">applyOpt</span>(<span class="pl-v">index</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> liftUndefined(value.apply(index))
+
+    <span class="pl-k">def</span> <span class="pl-en">popOpt</span>()<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> liftUndefined(value.pop())
+
+    <span class="pl-k">def</span> <span class="pl-en">shiftOpt</span>()<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> liftUndefined(value.shift())
+
+    <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">liftUndefined</span>[<span class="pl-en">T</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> scala.<span class="pl-en">Any</span>](<span class="pl-v">v</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">T</span>] <span class="pl-k">=</span> {
+      <span class="pl-k">if</span> (scalajs.js.isUndefined(v)) <span class="pl-c1">None</span> <span class="pl-k">else</span> <span class="pl-en">Some</span>(v)
+    }
+  }</pre>
+  </div> 
   <h3><a id="user-content-undeforopspartial" class="anchor" href="https://github.com/danielnixon/scalajswarts#undeforopspartial" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -59,7 +80,9 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>See also</h2> 
   <ul> 
+   <li><a href="https://github.com/danielnixon/extrawarts" target="_blank">ExtraWarts</a>: Extra WartRemover warts.</li> 
    <li><a href="https://github.com/danielnixon/playwarts" target="_blank">PlayWarts</a>: WartRemover warts for <a href="https://www.playframework.com/" target="_blank">Play Framework</a>.</li> 
+   <li><a href="https://github.com/danielnixon/slickwarts" target="_blank">SlickWarts</a>: WartRemover warts for <a href="http://slick.typesafe.com/" target="_blank">Slick</a>.</li> 
   </ul> 
  </article>
 </div>

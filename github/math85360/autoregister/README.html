@@ -1,0 +1,195 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-autoregister-002-" class="anchor" href="https://github.com/math85360/autoregister#autoregister-002-" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>autoregister 0.0.2 <a href="https://travis-ci.org/math85360/autoregister" target="_blank"><img src="https://camo.githubusercontent.com/72bbe538c36d06550e022ec18ab6c3e5d3deaa69/68747470733a2f2f7472617669732d63692e6f72672f6d61746838353336302f6175746f72656769737465722e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/math85360/autoregister.svg" style="max-width:100%;"></a></h1> 
+  <h1></h1> 
+  <p><strong>autoregister</strong> is a Scala compiler plugin that finds / discovers all classes having a specific annotations and push them in a registry.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">myframework</span>
+
+<span class="pl-k">import</span> <span class="pl-v">autoregister.annotations.</span><span class="pl-v">_</span>
+
+<span class="pl-k">@</span><span class="pl-en">RegisterAllDescendentObjects</span>(to <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>ControllerRegistry.register<span class="pl-pds">"</span></span>)
+<span class="pl-k">trait</span> <span class="pl-en">Controller</span>
+
+<span class="pl-k">object</span> <span class="pl-en">ControllerRegistry</span> {
+    <span class="pl-k">var</span> <span class="pl-en">registered</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>[<span class="pl-en">Controller</span>]()
+
+    <span class="pl-c"><span class="pl-c">//</span> Keep it fastest as possible</span>
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">controller</span>: <span class="pl-en">Controller</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+        registered <span class="pl-k">+</span><span class="pl-k">=</span> controller
+    }
+}</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">mymodule</span>
+
+<span class="pl-k">import</span> <span class="pl-v">myframework.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MyController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
+    <span class="pl-c"><span class="pl-c">//</span> Don't make slow initialization or use lazy val instead of val</span>
+    <span class="pl-c"><span class="pl-c">//</span> Because all registered components will be initialized </span>
+    <span class="pl-c"><span class="pl-c">//</span> at first use of ControllerRegistry</span>
+}</pre>
+  </div> 
+  <p>This scala plugin will transform ControllerRegistry like this :</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">myframework</span>
+
+<span class="pl-k">import</span> <span class="pl-v">autoregister.annotations.</span><span class="pl-v">_</span>
+
+<span class="pl-k">@</span><span class="pl-en">RegisterAllDescendentObjects</span>(to <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>ControllerRegistry.register<span class="pl-pds">"</span></span>)
+<span class="pl-k">trait</span> <span class="pl-en">Controller</span>
+
+<span class="pl-k">object</span> <span class="pl-en">ControllerRegistry</span> {
+    <span class="pl-k">var</span> <span class="pl-en">registered</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>[<span class="pl-en">Controller</span>]()
+
+    <span class="pl-c"><span class="pl-c">//</span> Keep it fastest as possible</span>
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">controller</span>: <span class="pl-en">Controller</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+        registered <span class="pl-k">+</span><span class="pl-k">=</span> controller
+    }
+
+    register(mymodule.<span class="pl-en">MyController</span>)
+}</pre>
+  </div> 
+  <h2><a id="user-content-scalajs-usage-to-register-to-raw-javascript-objects" class="anchor" href="https://github.com/math85360/autoregister#scalajs-usage-to-register-to-raw-javascript-objects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ScalaJS usage to register to raw JavaScript objects</h2> 
+  <h1></h1> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">@</span><span class="pl-en">JSName</span>(<span class="pl-s"><span class="pl-pds">"</span>Registry<span class="pl-pds">"</span></span>)
+<span class="pl-k">object</span> <span class="pl-en">Registry</span> <span class="pl-k">extends</span> <span class="pl-e">js.Object</span> {
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">toRegister</span>: <span class="pl-en">ToRegister</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> js.native
+}
+
+<span class="pl-k">object</span> <span class="pl-en">RegistryProxy</span> {
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">toRegister</span>: <span class="pl-en">ToRegister</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> <span class="pl-en">Registry</span>.register(toRegister)
+
+    <span class="pl-c"><span class="pl-c">//</span> We need this proxy because registered object will be added to end of this object like this :</span>
+    <span class="pl-c"><span class="pl-c">//</span> register(SimpleController)</span>
+}
+
+<span class="pl-k">@</span><span class="pl-en">ExportAllDescendentObjects</span>(to <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>RegistryProxy.register<span class="pl-pds">"</span></span>)
+<span class="pl-k">trait</span> <span class="pl-en">ToRegister</span> <span class="pl-k">extends</span> <span class="pl-e">js.Object</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">Controller</span> <span class="pl-k">extends</span> <span class="pl-e">ToRegister</span>
+
+<span class="pl-k">object</span> <span class="pl-en">SimpleController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span></pre>
+  </div> 
+  <h2><a id="user-content-some-typical-usage-cases" class="anchor" href="https://github.com/math85360/autoregister#some-typical-usage-cases" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Some typical usage cases</h2> 
+  <h1></h1> 
+  <h3><a id="user-content-angular-in-scalajs" class="anchor" href="https://github.com/math85360/autoregister#angular-in-scalajs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Angular in scalaJS</h3> 
+  <p>You can transform this :</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Main</span> {
+    <span class="pl-k">def</span> <span class="pl-en">main</span>() {
+        <span class="pl-en">Angular</span>.module(<span class="pl-s"><span class="pl-pds">"</span>MyModule<span class="pl-pds">"</span></span>)
+            .controller(<span class="pl-en">MyController</span>)
+            .service(<span class="pl-en">MyService</span>)
+    }
+}
+
+<span class="pl-k">object</span> <span class="pl-en">MyController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MyService</span> <span class="pl-k">extends</span> <span class="pl-e">Service</span></pre>
+  </div> 
+  <p>into</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Main</span> {
+    <span class="pl-k">def</span> <span class="pl-en">main</span>() {
+        <span class="pl-en">Registry</span>.toRegisterByAngular.foldLeft(<span class="pl-en">Angular</span>.module(<span class="pl-s"><span class="pl-pds">"</span>MyModule<span class="pl-pds">"</span></span>)) {
+            (module, registerable) <span class="pl-k">=&gt;</span> registerable(module)
+        } 
+    }
+}
+
+<span class="pl-k">trait</span> <span class="pl-en">Registerable</span>[<span class="pl-en">T</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">module</span>: <span class="pl-en">Module</span>, <span class="pl-v">t</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">Module</span>
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Registerable</span> {
+    <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">ControllerRegisterable</span> <span class="pl-k">extends</span> <span class="pl-e">Registerable</span>[<span class="pl-en">Controller</span>] {
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">module</span>: <span class="pl-en">Module</span>, <span class="pl-v">t</span>: <span class="pl-en">Controller</span>) <span class="pl-k">=</span> module.controller(t)
+    }
+    <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">ControllerRegisterable</span> <span class="pl-k">extends</span> <span class="pl-e">Registerable</span>[<span class="pl-en">Service</span>] {
+        <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">module</span>: <span class="pl-en">Module</span>, <span class="pl-v">t</span>: <span class="pl-en">Service</span>) <span class="pl-k">=</span> module.service(t)
+    }
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Registry</span> {
+    <span class="pl-k">var</span> <span class="pl-en">toRegisterByAngular</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>[<span class="pl-en">Module</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Module</span>]()
+
+    <span class="pl-k">def</span> <span class="pl-en">register</span>[<span class="pl-en">T</span><span class="pl-k">:</span><span class="pl-en">Registerable</span>](<span class="pl-v">toRegister</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+        toRegisterByAngular <span class="pl-k">+</span><span class="pl-k">=</span> implicitly[<span class="pl-en">Registerable</span>[<span class="pl-en">T</span>]].register(_, toRegister)
+    }
+}
+
+<span class="pl-k">@</span><span class="pl-en">RegisterAllDescendentObjects</span>(to <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Registry.register<span class="pl-pds">"</span></span>)
+<span class="pl-k">trait</span> <span class="pl-en">MyModuleRegister</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MyController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> <span class="pl-k">with</span> <span class="pl-e">MyModuleRegister</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MyService</span> <span class="pl-k">extends</span> <span class="pl-e">Service</span> <span class="pl-k">with</span> <span class="pl-e">MyModuleRegister</span></pre>
+  </div> 
+  <p>When you add a new controller or service, you don't need anymore to add a line in the main part (just "with MyModuleRegister" to your object). Great ! </p> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/math85360/autoregister#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to Use</h2> 
+  <h1></h1> 
+  <p><strong>Need testing before publishing, please wait</strong></p> 
+  <p><strong>If you need it now, clone this project in a folder and do <code>sbt publish-local</code></strong></p> 
+  <p>To use, add the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.iz2use<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>autoregister<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.2<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
+
+autoCompilerPlugins <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">true</span>
+
+addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.iz2use<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>autoregister<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.2<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/math85360/autoregister#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <h1></h1> 
+  <p>For the first version, all registry and objects to register must be defined in the same build.</p> 
+  <p>You can not have a library defining annotations with Registry and use them in your project importing this library.</p> 
+  <p>To bypass this limit, you can use the @Registry annotation on a method defined on your own project :</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">autoregister.annotations.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Main</span> {
+    <span class="pl-k">@</span><span class="pl-en">Registry</span>
+    <span class="pl-k">def</span> <span class="pl-en">register</span>(<span class="pl-v">any</span>: <span class="pl-en">AnyRef</span>) <span class="pl-k">:</span> <span class="pl-k">Unit</span> {
+    }
+
+    <span class="pl-k">def</span> <span class="pl-en">main</span>() {
+    }
+}</pre>
+  </div> 
+  <h2><a id="user-content-changelog" class="anchor" href="https://github.com/math85360/autoregister#changelog" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ChangeLog</h2> 
+  <h1></h1> 
+  <h2><a id="user-content-mit-license" class="anchor" href="https://github.com/math85360/autoregister#mit-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MIT License</h2> 
+  <h1></h1> 
+  <p>The MIT License (MIT)</p> 
+  <p>Copyright (c) 2017 Mathieu Leguey</p> 
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p> 
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p> 
+  <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p> 
+ </article>
+</div>

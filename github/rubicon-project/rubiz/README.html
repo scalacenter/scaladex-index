@@ -33,7 +33,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation</h2> 
   <p>Add the following to your <code>build.sbt</code> file:</p> 
-  <pre><code>libraryDependencies += "com.rubiconproject" %% "rubiz" % "0.3.+"
+  <pre><code>libraryDependencies += "com.rubiconproject" %% "rubiz" % "0.4.+"
 </code></pre> 
   <p>Import all the additional syntax with <code>import rubiz.syntax.all._</code>. Specific subsets of syntax can be imported if preferred (eg, <code>import rubiz.syntax.either._</code>).</p> 
   <h2><a id="user-content-additions" class="anchor" href="https://github.com/rubicon-project/rubiz#additions" aria-hidden="true" target="_blank">
@@ -48,6 +48,7 @@
    <pre><span class="pl-k">import</span> <span class="pl-v">scalaz.</span><span class="pl-v">Catchable</span>
 <span class="pl-k">import</span> <span class="pl-v">scalaz.syntax.catchable.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">scalaz.effect.</span><span class="pl-v">IO</span>
+<span class="pl-k">import</span> <span class="pl-v">scalaz.concurrent.</span><span class="pl-v">Task</span>
 <span class="pl-k">import</span> <span class="pl-v">rubiz.syntax.catchable.</span><span class="pl-v">_</span></pre>
   </div> 
   <h4><a id="user-content-ensure" class="anchor" href="https://github.com/rubicon-project/rubiz#ensure" aria-hidden="true" target="_blank">
@@ -60,6 +61,79 @@
   .ensure(<span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>Can't make a user without a name.<span class="pl-pds">"</span></span>))(_.nonEmpty)
   .unsafePerformIO)
 <span class="pl-c"><span class="pl-c">//</span> res0: String = username</span></pre>
+  </div> 
+  <h4><a id="user-content-attemptsome" class="anchor" href="https://github.com/rubicon-project/rubiz#attemptsome" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>attemptSome</h4> 
+  <p><code>attempt</code>, but it will only catch/map throwables for which the function is defined. If the function doesn't match for the throwable it will re-throw. A common use case is to map IO (user or DB) exceptions that you have a better type or message for on the left, rethrowing ones you didn't expect.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-en">IO</span>(<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">java.sql.SQLException).attemptSome</span> {
+    <span class="pl-k">case</span> <span class="pl-v">sqlE</span>: java.sql.<span class="pl-en">SQLException</span> <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Computer says no.<span class="pl-pds">"</span></span>
+  }
+  .unsafePerformIO)
+<span class="pl-c"><span class="pl-c">//</span> res1: scalaz.\/[String,Nothing] = -\/(Computer says no.)</span></pre>
+  </div> 
+  <h4><a id="user-content-except" class="anchor" href="https://github.com/rubicon-project/rubiz#except" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>except</h4> 
+  <p>Lets you define an exception handler on the Catchable that maintains the same type.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-en">IO</span>[<span class="pl-k">Int</span>](<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">IllegalArgumentException)</span>
+  .except(e <span class="pl-k">=&gt;</span> <span class="pl-en">IO</span>(<span class="pl-c1">0</span>))
+  .unsafePerformIO)
+<span class="pl-c"><span class="pl-c">//</span> res2: Int = 0</span></pre>
+  </div> 
+  <h4><a id="user-content-exceptsome" class="anchor" href="https://github.com/rubicon-project/rubiz#exceptsome" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>exceptSome</h4> 
+  <p>Like <a href="https://github.com/rubicon-project/rubiz#except" target="_blank"><code>except</code></a> but only executes where the function is defined. Has similar use cases to <a href="https://github.com/rubicon-project/rubiz#attemptSome" target="_blank"><code>attemptSome</code></a>, but when you have a default you want to use instead of a Throwable transformation.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-en">IO</span>[<span class="pl-k">Int</span>](<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">java.sql.SQLException).exceptSome</span> {
+    <span class="pl-k">case</span> <span class="pl-v">sqlE</span>: java.sql.<span class="pl-en">SQLException</span> <span class="pl-k">=&gt;</span> <span class="pl-en">IO</span>(<span class="pl-c1">0</span>)
+  }
+  .unsafePerformIO)
+<span class="pl-c"><span class="pl-c">//</span> res3: Int = 0</span></pre>
+  </div> 
+  <h4><a id="user-content-onexception" class="anchor" href="https://github.com/rubicon-project/rubiz#onexception" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>onException</h4> 
+  <p>Like <code>finally</code>, but only runs when there was an exception.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-k">try</span> {
+  <span class="pl-en">Task</span>.delay(<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">Exception</span>())
+    .onException(<span class="pl-en">Task</span>.delay(println(<span class="pl-s"><span class="pl-pds">"</span>THERE WAS A FIREFIGHT!<span class="pl-pds">"</span></span>)))
+    .run
+} <span class="pl-k">catch</span> {
+  <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">Throwable</span> <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Or something.<span class="pl-pds">"</span></span>)
+})
+<span class="pl-c"><span class="pl-c">//</span> THERE WAS A FIREFIGHT!</span>
+<span class="pl-c"><span class="pl-c">//</span> Or something.</span></pre>
+  </div> 
+  <h4><a id="user-content-ensuring" class="anchor" href="https://github.com/rubicon-project/rubiz#ensuring" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ensuring</h4> 
+  <p>Generalizes <code>finally</code> for all <code>Catchable</code>, not just <code>IO</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-k">try</span> {
+  <span class="pl-en">Task</span>.delay(<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">Exception</span>())
+    .ensuring(<span class="pl-en">Task</span>.delay(println(<span class="pl-s"><span class="pl-pds">"</span>THERE WAS A FIREFIGHT!<span class="pl-pds">"</span></span>)))
+    .run
+} <span class="pl-k">catch</span> {
+  <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">Throwable</span> <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Or something.<span class="pl-pds">"</span></span>)
+})
+<span class="pl-c"><span class="pl-c">//</span> THERE WAS A FIREFIGHT!</span>
+<span class="pl-c"><span class="pl-c">//</span> Or something.</span>
+
+(<span class="pl-en">Task</span>.delay(<span class="pl-c1">0</span>)
+  .ensuring(<span class="pl-en">Task</span>.delay(println(<span class="pl-s"><span class="pl-pds">"</span>THERE WAS A FIREFIGHT!<span class="pl-pds">"</span></span>)))
+  .run)
+<span class="pl-c"><span class="pl-c">//</span> THERE WAS A FIREFIGHT!</span>
+<span class="pl-c"><span class="pl-c">//</span> res6: Int = 0</span></pre>
   </div> 
   <h3><a id="user-content-task" class="anchor" href="https://github.com/rubicon-project/rubiz#task" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -86,7 +160,7 @@
   }
   .run)
 <span class="pl-c"><span class="pl-c">//</span> 2 country names were returned in 1 ms.</span>
-<span class="pl-c"><span class="pl-c">//</span> res2: List[String] = List(Australia, Japan)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res8: List[String] = List(Australia, Japan)</span></pre>
   </div> 
   <h4><a id="user-content-withsideeffecttiming" class="anchor" href="https://github.com/rubicon-project/rubiz#withsideeffecttiming" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -97,8 +171,8 @@
    <pre>(<span class="pl-en">Task</span>.delay(<span class="pl-en">List</span>(<span class="pl-s"><span class="pl-pds">"</span>hello<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>world<span class="pl-pds">"</span></span>))
   .withSideEffectTiming(timing <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>${timing.toMillis} ms run, to the metrics service!<span class="pl-pds">"</span></span>))  <span class="pl-c"><span class="pl-c">//</span> Task[List[String]]</span>
   .run)
-<span class="pl-c"><span class="pl-c">//</span> 10 ms run, to the metrics service!</span>
-<span class="pl-c"><span class="pl-c">//</span> res3: List[String] = List(hello, world)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> 4 ms run, to the metrics service!</span>
+<span class="pl-c"><span class="pl-c">//</span> res9: List[String] = List(hello, world)</span></pre>
   </div> 
   <h4><a id="user-content-labeledtimeout" class="anchor" href="https://github.com/rubicon-project/rubiz#labeledtimeout" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -109,7 +183,7 @@
    <pre>(<span class="pl-en">Task</span>.delay(<span class="pl-en">Thread</span>.sleep(<span class="pl-c1">100.</span>millis.toMillis))
   .labeledTimeout(<span class="pl-c1">2.</span>millis, <span class="pl-s"><span class="pl-pds">"</span>silly example<span class="pl-pds">"</span></span>)
   .attemptRun)
-<span class="pl-c"><span class="pl-c">//</span> res4: scalaz.\/[Throwable,Unit] = -\/(java.util.concurrent.TimeoutException: The 'silly example' task timed out after 2 milliseconds.)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res10: scalaz.\/[Throwable,Unit] = -\/(java.util.concurrent.TimeoutException: The 'silly example' task timed out after 2 milliseconds.)</span></pre>
   </div> 
   <h4><a id="user-content-failmap" class="anchor" href="https://github.com/rubicon-project/rubiz#failmap" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -120,7 +194,7 @@
    <pre>(<span class="pl-en">Task</span>.fail(<span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>Esoteric nonsense.<span class="pl-pds">"</span></span>))
   .failMap(_ <span class="pl-k">=&gt;</span> <span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>Contextual description of what happened.<span class="pl-pds">"</span></span>))
   .attemptRun)
-<span class="pl-c"><span class="pl-c">//</span> res5: scalaz.\/[Throwable,Nothing] = -\/(java.lang.Exception: Contextual description of what happened.)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res11: scalaz.\/[Throwable,Nothing] = -\/(java.lang.Exception: Contextual description of what happened.)</span></pre>
   </div> 
   <h4><a id="user-content-attemptfold" class="anchor" href="https://github.com/rubicon-project/rubiz#attemptfold" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -131,13 +205,13 @@
    <pre>(<span class="pl-en">Task</span>.now(<span class="pl-s"><span class="pl-pds">"</span>Success<span class="pl-pds">"</span></span>)
   .attemptFold(_ <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Failure<span class="pl-pds">"</span></span>)(_ <span class="pl-k">++</span> <span class="pl-s"><span class="pl-pds">"</span>es<span class="pl-pds">"</span></span>)
   .run)
-<span class="pl-c"><span class="pl-c">//</span> res6: String = Successes</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res12: String = Successes</span></pre>
   </div> 
   <div class="highlight highlight-source-scala">
    <pre>(<span class="pl-en">Task</span>.delay[<span class="pl-k">String</span>](<span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>Explosion<span class="pl-pds">"</span></span>))
   .attemptFold(_ <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>The explosion was contained.<span class="pl-pds">"</span></span>)(_ <span class="pl-k">++</span> <span class="pl-s"><span class="pl-pds">"</span>es<span class="pl-pds">"</span></span>)
   .run)
-<span class="pl-c"><span class="pl-c">//</span> res7: String = The explosion was contained.</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res13: String = The explosion was contained.</span></pre>
   </div> 
   <h4><a id="user-content-peek" class="anchor" href="https://github.com/rubicon-project/rubiz#peek" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -152,7 +226,7 @@
   })
   .run)
 <span class="pl-c"><span class="pl-c">//</span> Element was found.</span>
-<span class="pl-c"><span class="pl-c">//</span> res8: Boolean = true</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res14: Boolean = true</span></pre>
   </div> 
   <h4><a id="user-content-peekfail" class="anchor" href="https://github.com/rubicon-project/rubiz#peekfail" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -164,7 +238,22 @@
   .peekFail(_ <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>What is an element, really?<span class="pl-pds">"</span></span>))
   .attemptRun)
 <span class="pl-c"><span class="pl-c">//</span> What is an element, really?</span>
-<span class="pl-c"><span class="pl-c">//</span> res9: scalaz.\/[Throwable,Boolean] = -\/(java.lang.Exception: I can't search this list!)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res15: scalaz.\/[Throwable,Boolean] = -\/(java.lang.Exception: I can't search this list!)</span></pre>
+  </div> 
+  <h4><a id="user-content-using" class="anchor" href="https://github.com/rubicon-project/rubiz#using" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>using</h4> 
+  <p>Ensure that a resource is "closed" when a task completes, regardless of whether it's successful. A <a href="https://github.com/rubicon-project/rubiz/blob/master/src/main/scala/rubiz/CanClose.scala" target="_blank"><code>CanClose</code> instance</a> must be scope to call <code>using</code>. If the object to be closed isn't <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html" target="_blank"><code>java.io.Closeable</code></a> then you'll need to define a <code>CanClose</code> instance.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">CloseableThing</span> <span class="pl-k">extends</span> <span class="pl-e">java.io.Closeable</span> { <span class="pl-k">def</span> <span class="pl-en">close</span><span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> println(<span class="pl-s"><span class="pl-pds">"</span>Not so fast! I have been closed.<span class="pl-pds">"</span></span>) }
+<span class="pl-c"><span class="pl-c">//</span> defined class CloseableThing</span>
+
+<span class="pl-en">Task</span>.delay(<span class="pl-k">new</span> <span class="pl-en">CloseableThing).using</span> { closeableThing <span class="pl-k">=&gt;</span>
+  <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>All your resources are lost to chaos<span class="pl-pds">"</span></span>)
+}.attemptRun
+<span class="pl-c"><span class="pl-c">//</span> Not so fast! I have been closed.</span>
+<span class="pl-c"><span class="pl-c">//</span> res16: scalaz.\/[Throwable,Nothing] = -\/(java.lang.Exception: All your resources are lost to chaos)</span></pre>
   </div> 
   <h3><a id="user-content-either" class="anchor" href="https://github.com/rubicon-project/rubiz#either" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -185,7 +274,7 @@
   .right[<span class="pl-en">Throwable</span>]     <span class="pl-c"><span class="pl-c">//</span> \/[Throwable, List[String]]</span>
   .toTask               <span class="pl-c"><span class="pl-c">//</span> Task[List[String]]</span>
   .run)
-<span class="pl-c"><span class="pl-c">//</span> res10: List[String] = List(USA, Canada)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res17: List[String] = List(USA, Canada)</span></pre>
   </div> 
   <h4><a id="user-content-tom" class="anchor" href="https://github.com/rubicon-project/rubiz#tom" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -198,7 +287,7 @@
   .right[<span class="pl-en">Throwable</span>] <span class="pl-c"><span class="pl-c">//</span> \/[Throwable, String]</span>
   .toM[<span class="pl-en">Task</span>]        <span class="pl-c"><span class="pl-c">//</span> Task[String]</span>
   .run)
-<span class="pl-c"><span class="pl-c">//</span> res12: String = Some Name</span>
+<span class="pl-c"><span class="pl-c">//</span> res19: String = Some Name</span>
 
 <span class="pl-c"><span class="pl-c">//</span> import scalaz.effect.IO</span>
 (<span class="pl-k">new</span> <span class="pl-en">Exception</span>(<span class="pl-s"><span class="pl-pds">"</span>Users do bad things<span class="pl-pds">"</span></span>)
@@ -206,7 +295,7 @@
   .toM[<span class="pl-en">IO</span>]      <span class="pl-c"><span class="pl-c">//</span> IO[String]</span>
   .attempt      <span class="pl-c"><span class="pl-c">//</span> IO[\/[Throwable, String]]</span>
   .unsafePerformIO)
-<span class="pl-c"><span class="pl-c">//</span> res14: scalaz.\/[Throwable,String] = -\/(java.lang.Exception: Users do bad things)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res21: scalaz.\/[Throwable,String] = -\/(java.lang.Exception: Users do bad things)</span></pre>
   </div> 
   <h3><a id="user-content-try" class="anchor" href="https://github.com/rubicon-project/rubiz#try" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -227,7 +316,7 @@
 <span class="pl-c"><span class="pl-c">//</span> badTry: scala.util.Try[Nothing] = Failure(java.lang.Exception: No really, users.)</span>
 
 badTry.toDisjunction
-<span class="pl-c"><span class="pl-c">//</span> res15: scalaz.\/[Throwable,Nothing] = -\/(java.lang.Exception: No really, users.)</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res22: scalaz.\/[Throwable,Nothing] = -\/(java.lang.Exception: No really, users.)</span></pre>
   </div> 
   <h4><a id="user-content-totask-1" class="anchor" href="https://github.com/rubicon-project/rubiz#totask-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -239,7 +328,7 @@ badTry.toDisjunction
 <span class="pl-c"><span class="pl-c">//</span> okTry: scala.util.Try[String] = Success(My examples get worse as time goes on)</span>
 
 okTry.toTask.run
-<span class="pl-c"><span class="pl-c">//</span> res16: String = My examples get worse as time goes on</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> res23: String = My examples get worse as time goes on</span></pre>
   </div> 
   <h2><a id="user-content-tests" class="anchor" href="https://github.com/rubicon-project/rubiz#tests" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -264,7 +353,7 @@ okTry.toTask.run
     </ul></li> 
    <li>Create a Sonatype <a href="http://www.scala-sbt.org/1.0/docs/Using-Sonatype.html#Fourth+-+Adding+credentials" target="_blank">credentials file</a>.</li> 
    <li>Run <code>sbt release</code></li> 
-   <li>Push the newly created tags and version bump commits to <code>rubicon-project/rubiz</code>. </li> 
+   <li>Push the newly created tags and version bump commits to <code>rubicon-project/rubiz</code>.</li> 
   </ul> 
  </article>
 </div>

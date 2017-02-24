@@ -106,6 +106,32 @@
     <span class="pl-c1">...</span>
 }</pre>
   </div> 
+  <p>If a part of the schema is not known at compile time, you can use a json supplier:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyPojo</span> {
+  <span class="pl-k">@</span><span class="pl-en">JsonSchemaInject</span>(jsonSupplier <span class="pl-k">=</span> <span class="pl-c1">classOf</span>[<span class="pl-en">UserNamesLoader</span>])
+  uns<span class="pl-k">:</span><span class="pl-en">Set</span>[<span class="pl-k">String</span>]
+  ...
+  ...
+  ...
+}
+
+<span class="pl-k">class</span> <span class="pl-en">UserNamesLoader</span> <span class="pl-k">extends</span> <span class="pl-e">Supplier</span>[<span class="pl-en">JsonNode</span>] {
+  <span class="pl-k">val</span> <span class="pl-en">_objectMapper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ObjectMapper</span>()
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">get</span>()<span class="pl-k">:</span> <span class="pl-en">JsonNode</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> _objectMapper.createObjectNode()
+    <span class="pl-k">val</span> <span class="pl-en">values</span> <span class="pl-k">=</span> schema.putObject(<span class="pl-s"><span class="pl-pds">"</span>items<span class="pl-pds">"</span></span>).putArray(<span class="pl-s"><span class="pl-pds">"</span>enum<span class="pl-pds">"</span></span>)
+    loadUsers().foreach(u <span class="pl-k">=&gt;</span> values.add(u.name))
+
+    schema
+  }
+  ...
+  ...
+  ...
+}</pre>
+  </div> 
+  <p>This will associate an enum of possible values for the set that you generate at runtime.</p> 
   <p>@JsonSchemaInject can also be used on properties.</p> 
   <h2><a id="user-content-project-status" class="anchor" href="https://github.com/mbknor/mbknor-jackson-jsonschema#project-status" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

@@ -9,14 +9,14 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Getting gfc-aws-kinesis</h2> 
-  <p>The latest version is 0.10.2, which is cross-built against Scala 2.11.x and 2.12.x.</p> 
+  <p>The latest version is 0.10.3, which is cross-built against Scala 2.11.x and 2.12.x.</p> 
   <p>SBT dependency:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.gilt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>gfc-aws-kinesis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.2<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.gilt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>gfc-aws-kinesis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.3<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>SBT Akka stream dependency:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.gilt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>gfc-aws-kinesis-akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.2<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.gilt<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>gfc-aws-kinesis-akka<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.3<span class="pl-pds">"</span></span></pre>
   </div> 
   <h1><a id="user-content-basic-usage" class="anchor" href="https://github.com/gilt/gfc-aws-kinesis#basic-usage" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -24,17 +24,29 @@
     </svg></a>Basic usage</h1> 
   <p>Consume events:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">ARecordReader</span> <span class="pl-k">extends</span> <span class="pl-e">KinesisRecordReader</span>[<span class="pl-en">A</span>]{
-    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">r</span>: <span class="pl-en">Record</span>) <span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=</span> {
-     <span class="pl-c"><span class="pl-c">//</span> parse A</span>
+   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">StringRecordReader</span> <span class="pl-k">extends</span> <span class="pl-e">KinesisRecordReader</span>[<span class="pl-k">String</span>]{
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">r</span>: <span class="pl-en">Record</span>) <span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">String</span>(r.data.array(), <span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>)
+  }
+
+  <span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">KCLConfiguration</span>(<span class="pl-s"><span class="pl-pds">"</span>consumer-name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>kinesis-stream-name<span class="pl-pds">"</span></span>)
+
+  <span class="pl-en">KCLWorkerRunner</span>(config).runAsyncSingleRecordProcessor[<span class="pl-en">A</span>](<span class="pl-c1">1</span> minute) { <span class="pl-v">a</span>: <span class="pl-k">String</span> <span class="pl-k">=&gt;</span>
+     <span class="pl-c"><span class="pl-c">//</span> .. do something with A</span>
+  }</pre>
+  </div> 
+  <p>Publish events:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">implicit</span> <span class="pl-k">object</span> <span class="pl-en">StringRecordWriter</span> <span class="pl-k">extends</span> <span class="pl-e">KinesisRecordWriter</span>[<span class="pl-k">String</span>] {
+    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">toKinesisRecord</span>(<span class="pl-v">a</span>: <span class="pl-k">String</span>) <span class="pl-k">:</span> <span class="pl-en">KinesisRecord</span> <span class="pl-k">=</span> {
+      <span class="pl-en">KinesisRecord</span>(<span class="pl-s"><span class="pl-pds">"</span>partition-key<span class="pl-pds">"</span></span>, a.getBytes(<span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>))
     }
   }
 
-  <span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">DefaultKCLConfiguration</span>(<span class="pl-s"><span class="pl-pds">"</span>consumer-name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>kinesis-stream-name<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">publisher</span> <span class="pl-k">=</span> <span class="pl-en">KinesisPublisher</span>()
 
-  <span class="pl-en">KCLWorkerRunner</span>(config).runAsyncSingleRecordProcessor[<span class="pl-en">A</span>](<span class="pl-c1">1</span> minute) { <span class="pl-v">a</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span>
-     <span class="pl-c"><span class="pl-c">//</span> .. do something with A</span>
-  }</pre>
+  <span class="pl-k">val</span> <span class="pl-en">messages</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>Hello World!<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foo bar<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>baz bam<span class="pl-pds">"</span></span>)
+
+  <span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">KinesisPublisherBatchResult</span>] <span class="pl-k">=</span> publisher.publishBatch(<span class="pl-s"><span class="pl-pds">"</span>kinesis-stream-name<span class="pl-pds">"</span></span>, messages)</pre>
   </div> 
  </article>
 </div>
