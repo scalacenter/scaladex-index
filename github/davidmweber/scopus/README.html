@@ -33,27 +33,22 @@
 make
 make check</pre>
   </div> 
-  <p>If you feel the need to generate header prototypes, build the Scala code then run <code>javah</code> from the root directory of the project as follows:</p> 
-  <div class="highlight highlight-source-shell">
-   <pre>javah  -classpath target/scala-2.10/classes:/usr/local/lib/scala-2.10.4/lib/<span class="pl-k">*</span>\
-    -d src/main/native/opus/ -stubs  za.co.monadic.scopus.Opus$</pre>
-  </div> 
-  <p>You may have to adjust your classpath for your Scala installation and version.</p> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/davidmweber/scopus#usage" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage</h2> 
-  <p>Scopus is available from the Sonatype Maven repo with builds for Scala 2.10 and 2.11. Add the following dependency to your sbt build:</p> 
+  <p>Scopus is available from the Sonatype Maven repo with builds for Scala 2.11 and 2.12. Add the following dependency to your sbt build:</p> 
   <div class="highlight highlight-source-scala">
    <pre>  resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>sonatype-public<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/groups/public<span class="pl-pds">"</span></span>
 
-  libaryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>za.co.monadic<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.8<span class="pl-pds">"</span></span></pre>
+  libaryDependencies <span class="pl-k">+</span><span class="pl-k">=</span>  <span class="pl-s"><span class="pl-pds">"</span>za.co.monadic<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.9<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Encoding a stream is pretty simple. Return types are Scala are wrapped in a <code>Try[_]</code> so it is up to you to manage errors reported by the decoder or the encoder.</p> 
   <div class="highlight highlight-source-scala">
-   <pre>   <span class="pl-k">val</span> <span class="pl-en">enc</span> <span class="pl-k">=</span> <span class="pl-en">OpusEncoder</span>(<span class="pl-en">Sf8000</span>, <span class="pl-c1">1</span>, <span class="pl-en">Audio</span>)
-   enc.setUseDtx(<span class="pl-c1">1</span>)  <span class="pl-c"><span class="pl-c">//</span> Transmit special short packets if silence is detected</span>
+   <pre>   <span class="pl-c"><span class="pl-c">//</span> Variable bit rate Opus encoder with discontinuous transmission</span>
+   <span class="pl-k">val</span> <span class="pl-en">enc</span> <span class="pl-k">=</span> <span class="pl-en">OpusEncoder</span>(<span class="pl-en">Sf8000</span>, <span class="pl-c1">1</span>, <span class="pl-en">Audio</span>).setUseDtx(<span class="pl-c1">1</span>).setVbr(<span class="pl-c1">1</span>)  
 
+   <span class="pl-c"><span class="pl-c">//</span> Corresponding decoder</span>
    <span class="pl-k">val</span> <span class="pl-en">dec</span> <span class="pl-k">=</span> <span class="pl-en">OpusDecoder</span>(<span class="pl-en">Sf8000</span>, <span class="pl-c1">1</span>)
 
    <span class="pl-k">val</span> <span class="pl-en">coded</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">Array</span>[<span class="pl-k">Byte</span>]] <span class="pl-k">=</span> enc(<span class="pl-k">new</span> <span class="pl-en">Array</span>[<span class="pl-k">Short</span>](<span class="pl-c1">160</span>))
