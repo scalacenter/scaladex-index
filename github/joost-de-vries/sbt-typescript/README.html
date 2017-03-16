@@ -1,0 +1,183 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>#sbt-typescript <a href="https://travis-ci.org/joost-de-vries/sbt-typescript" target="_blank"><img src="https://camo.githubusercontent.com/32e19610896ce717a36d4cb4d55632b3ad39bf88/68747470733a2f2f7472617669732d63692e6f72672f6a6f6f73742d64652d76726965732f7362742d747970657363726970742e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/joost-de-vries/sbt-typescript.png?branch=master" style="max-width:100%;"></a> This sbt plugin compiles the Typescript code in your Play application to javascript fit for consumption by your average browser and device. It's especially aimed at Angular2 applications.</p> 
+  <p>###Getting started The easiest way to get started is to use the <a href="https://github.com/joost-de-vries/play-angular2-typescript" target="_blank">Play - Angular2 - Typescript demo project</a>. See the <a href="https://github.com/Microsoft/TypeScript-Handbook/blob/master/pages/Compiler%20Options.md" target="_blank">Typescript 2.0 Handbook</a> for <code>tsc</code> options to use in your <code>tsconfig.json</code>.</p> 
+  <p>###Features The aim of this plugin is to make it easy to write Angular2 applications using the Play framework.<br> As such it</p> 
+  <ul class="contains-task-list"> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> allows transpiling to a single output file. This is important for large applications. At least for as long as http2 isn't prevalent.</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> uses the standard <code>tsconfig.json</code> file for configuration.</li> 
+   <li>Most editors and IDEs use this file to resolve types in the typescript code you're writing.</li> 
+   <li>Also it allows setting of all <code>tsc</code> options. Even the undocumented ones.</li> 
+   <li>And it allows you to switch between <code>sbt-typescript</code> and <code>tsc</code>.</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> allows resolution of module imports against webjars. Since every Angular2 application uses ES6 module imports this is obviously an important requirement.</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> <del>allows for including typings files in the build. This is essential for compilation to ES5 because the standard ES5 lib doesn't have some types that f.i. Angular2 needs. These types are offered for ES5 by ao ES6-shims.</del> Typings are obsolete: thankfully typescript type definitions are delivered now by plain npm.</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> allows for suppression of compilation errors. This may seem strange to people coming from conventional statically typed languages. But the <code>tsc</code> lives in an untyped world. So it <em>will</em> emit perfectly functional code even if some types can't be checked. Suppression of a specific error is particularly useful if one's using a library for which type information is not available.</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> supports writing unittests in typescript</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> uses Typescript 2.0</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> JS parts are written in Typescript.</li> 
+  </ul> 
+  <p>###getting started with Typescript and Angular2 I've made an activator tutorial template to get you started. If you have activator installed you can run <code>activator new play-angular2-typescript</code>. Or you can just clone the <a href="https://github.com/joost-de-vries/play-angular2-typescript" target="_blank">repo</a>.</p> 
+  <p>###Configuring Create a <code>tsconfig.json</code> file in the root of your project with the required <a href="https://github.com/Microsoft/TypeScript/wiki/Compiler-Options" target="_blank">compiler options</a>.<br> Add the following line to your <code>project\plugins.sbt</code>:</p> 
+  <pre><code>addSbtPlugin("name.de-vries" % "sbt-typescript" % "0.3.0-beta.10")
+</code></pre> 
+  <p>If your project is not a Play application it will have to enable <code>sbt-web</code> in <code>build.sbt</code>:</p> 
+  <pre><code>lazy val root = (project in file(".")).enablePlugins(SbtWeb)
+</code></pre> 
+  <p>####Configuring an IDE If you want to use an IDE like IntelliJ you can use the task <code>sbt setupTscCompilation</code>. At this point that copies the npm webjars to <code>&lt;base-dir&gt;/node_modules</code>. Then you can point the IDE to your <code>tsconfig.json</code>.</p> 
+  <p>Make sure <code>tsc</code> is configured to find the locations of the npm webjars. See the example repo for the <code>tsconfig.json</code> configurations to use.</p> 
+  <p>####Compiling to a single js file You can develop using individual javascript files when running <code>sbt ~run</code> in Play and have your whole typescript application concatenated into a single javascript output file for your stage environment without changes to your sources. To do that you have to add a <code>-DtsCompileMode=stage</code> parameter to the sbt task in your CI that creates the stage app. So for Play that will often be <code>sbt stage -DtsCompileMode=stage</code>.</p> 
+  <p>####Type declarations You can just import type declarations as npm packages from <code>@types</code>. For example <code>@types/jasmine</code>.</p> 
+  <p>Typings are deprecated.</p> 
+  <p>####Resolve against webjar npms If you want to resolve modules against <a href="http://www.webjars.org/npm" target="_blank">webjar npm</a>s:</p> 
+  <pre><code>resolveFromWebjarsNodeModulesDir := true
+</code></pre> 
+  <p>This will use the npm webjar directory to resolve types of modules. See <code>src/sbt-test/sbt-typescript/angular2</code> for an example. Make sure to use npm webjars as your dependencies.</p> 
+  <p>####import modules without type information If you are importing modules for which you don't have the typings you can ignore the TS2307 <code>can not find module</code> error:</p> 
+  <pre><code>tsCodesToIgnore := List(canNotFindModule)
+</code></pre> 
+  <p>####ignored compiler options The following <code>tsc</code> compiler options are managed by <code>sbt-typescript</code> so setting them in <code>tsconfig.json</code> has no effect:</p> 
+  <ul> 
+   <li><code>outDir</code> and</li> 
+   <li><code>rootDir</code>.<br> If you use the <code>stage</code> compile mode the <code>outFile</code> option is also managed by <code>sbt-typescript</code>.</li> 
+  </ul> 
+  <p>##release notes</p> 
+  <h4><a id="user-content-v030-beta10" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta10" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.10</h4> 
+  <ul> 
+   <li>upgrade to ts 2.2.1</li> 
+   <li><a href="https://github.com/joost-de-vries/sbt-typescript/issues/19" target="_blank">fixes running on Trireme</a> Tx <a href="https://github.com/VeryBueno" target="_blank">VeryBueno</a>!</li> 
+  </ul> 
+  <h4><a id="user-content-v040-alfa1" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v040-alfa1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.4.0-alfa.1</h4> 
+  <ul> 
+   <li>supports multi project builds. Uses sbt-web webModules for js deps resolution instead of nodeModules. Hence the alfa moniker to see whether f.i. @types resolution still works.</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta9" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta9" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.9</h4> 
+  <ul> 
+   <li>fixes compilation of test assets</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta8-1" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta8-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.8-1</h4> 
+  <ul> 
+   <li>allows configuring outfile with a path</li> 
+   <li>makes compile errors 1 based instead of 0 based</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta8" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta8" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.8</h4> 
+  <ul> 
+   <li>upgrades to typescript 2.1 (npm 2.1.4)</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta7" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta7" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.7</h4> 
+  <ul> 
+   <li>upgrades to typescript 2.1 RC (npm 2.1.1)</li> 
+   <li>resolves webjar @types type definitions</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta6" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta6" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.6</h4> 
+  <ul> 
+   <li>upgrades to typescript 2.0.6</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta5" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta5" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.5</h4> 
+  <ul> 
+   <li>solves an issue (#9) where RxJs would cause a nullpointer.</li> 
+   <li>uses typescript 2.0.3</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta4" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta4" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.4</h4> 
+  <ul> 
+   <li>solves an issue (#9) where RxJs would be extracted to the wrong directory.</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta3" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta3" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.3</h4> 
+  <ul> 
+   <li>uses typescript 2.0 RC (npm 2.0.2)</li> 
+  </ul> 
+  <h4><a id="user-content-v030-beta2" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030-beta2" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0-beta.2</h4> 
+  <ul> 
+   <li>uses typescript 2.0 beta (npm 2.0.0)</li> 
+  </ul> 
+  <h4><a id="user-content-v030snapshot" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v030snapshot" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.3.0SNAPSHOT</h4> 
+  <ul> 
+   <li>uses standard typescript functionality to resolve against webjars. Instead of the previous custom rolled module resolution extension.</li> 
+   <li>uses a snapshot of the upcoming typescript 2.0</li> 
+   <li>add output assertion options</li> 
+  </ul> 
+  <h4><a id="user-content-v027" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v027" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.7</h4> 
+  <ul> 
+   <li>adds convenience task for setting up tsc compilation</li> 
+  </ul> 
+  <h4><a id="user-content-v026" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v026" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.6</h4> 
+  <ul> 
+   <li>fixes jstaskfailure error</li> 
+  </ul> 
+  <h4><a id="user-content-v025" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v025" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.5</h4> 
+  <ul> 
+   <li>allows for developing using individual javascript files and using a single javascript file in production</li> 
+  </ul> 
+  <h4><a id="user-content-v024" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v024" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.4</h4> 
+  <ul> 
+   <li>upgrades to typescript 1.8.10</li> 
+  </ul> 
+  <h4><a id="user-content-v023" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v023" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.3</h4> 
+  <ul> 
+   <li>upgrades to typescript 1.8.7</li> 
+   <li>adds support for tests in typescript</li> 
+  </ul> 
+  <h4><a id="user-content-v022" class="anchor" href="https://github.com/joost-de-vries/sbt-typescript#v022" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>v0.2.2</h4> 
+  <ul> 
+   <li>upgrades to typescript 1.8.2</li> 
+   <li>improves output of single outfile</li> 
+   <li>fixes a nasty bug in module resolution. This is essential for angular2 applications.</li> 
+   <li>gives feedback on faulty compiler options.</li> 
+  </ul> 
+  <p>##status The plugin is young. Currently it is mostly tested against <code>EngineType.Node</code> and Angular2 applications with npm style dependencies.<br> There are some other features I'm planning to implement.</p> 
+  <p>##history I started this plugin because the features I mentioned above were <a href="https://github.com/ArpNetworking/sbt-typescript/issues/1" target="_blank">missing</a> in the <a href="https://github.com/ArpNetworking/sbt-typescript/issues/31" target="_blank">existing</a> <a href="https://github.com/ArpNetworking/sbt-typescript/issues/23#issuecomment-158099296" target="_blank">plugins</a>.<br> And since I'd like Play and sbt(-web) to be kickass build tools for Typescript and Angular2 applications, and I wanted to give back to the open source community, I thought I'd implement it myself.. But not by writing javascript if I could just as well write Typescript...<br> Kudos to Brendan Arp for his <a href="https://github.com/ArpNetworking/sbt-typescript/blob/master/src/main/resources/typescriptc.js" target="_blank">javascript tsc driver</a> to get me started. And also to all of the other plugins mentioned <a href="https://github.com/sbt/sbt-web" target="_blank">here</a>. Open source is an amazing tool for collective learning. Just imagine those poor programmers in the 1970s with only IBM manuals to provide them with information.</p> 
+ </article>
+</div>

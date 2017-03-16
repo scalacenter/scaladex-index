@@ -1,0 +1,386 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-aerospike-spark-connector" class="anchor" href="https://github.com/aerospike/aerospark#aerospike-spark-connector" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Aerospike Spark Connector</h1> 
+  <p>The Aerospike spark connector provides features to represent data stored in Aerospike as a DataFrame in Spark.</p> 
+  <p>Aerospike Spark Connector includes:</p> 
+  <ul> 
+   <li>Reading from Aerospike to a DataFrame</li> 
+   <li>Saving a DataFrame to Aerospike</li> 
+   <li>Spark SQL multiple filters pushed down to the Aerospike cluster</li> 
+  </ul> 
+  <h2><a id="user-content-how-to-build" class="anchor" href="https://github.com/aerospike/aerospark#how-to-build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to build</h2> 
+  <p>The source code for this solution is available on GitHub at <a href="https://github.com/aerospike/aerospark" target="_blank">https://github.com/aerospike/aerospark</a>. SBT is the build tool and it will create a Uber (fat) jar as the final output of the build process. The jar will contain all the class files and dependencies.</p> 
+  <p>This Library requires Java JDK 7+ Scala 2.10, SBT 0.13, Maven and the <code>aerospike-helper-java</code></p> 
+  <p>Before you build the Aerospike spark connector you need to build the <code>aerospike-helper-java</code> JAR and install it in your local maven repository. The <code>aerospike-helper-java</code> JAR is used by the connector to perform efficent, multi-filter queries on Aerospike.</p> 
+  <p>Clone the <a href="https://github.com/aerospike/aerospike-helper" target="_blank">Aerospike Helper</a> repository using this command:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ git clone https://github.com/aerospike/aerospike-helper</pre>
+  </div> 
+  <p>Navigate to the subdirectory <code>java</code> and run the following command to build and install the helper class jar:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ mvn clean install -DskipTests</pre>
+  </div> 
+  <p>When maven is complete the <code>aerospike-helper-java</code> JAR will be installed in your local maven repository</p> 
+  <p>To build the Spark connector: Clone the <a href="https://github.com/aerospike/aerospark" target="_blank">Aerospike Spark</a> repository using this command:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ git clone https://github.com/aerospike/aerospark</pre>
+  </div> 
+  <p>After cloning the repository, build the uber jar using:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ sbt assembly</pre>
+  </div> 
+  <p>Note that during the build, a number of unit tests are run, these tests will assume an Aerospike cluster is running at "127.0.0.1" on port 3000. If you want to ignore the unit tests, use:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ sbt <span class="pl-s"><span class="pl-pds">'</span>set test in assembly := {}<span class="pl-pds">'</span></span> clean assembly</pre>
+  </div> 
+  <p>On conclusion of the build, the uber JAR <code>aerospike-spark-assembly-&lt;version&gt;.jar</code> will be located in the subdirectory <code>target/scala-2.10</code>.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/aerospike/aerospark#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>The assembled JAR can be used in any Spark application providing it's on the class path.</p> 
+  <h3><a id="user-content-spark-shell" class="anchor" href="https://github.com/aerospike/aerospark#spark-shell" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark shell</h3> 
+  <p>To use connector with the spark-shell, use the <code>--jars</code> command line option and include the path to the assembled JAR. Example:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ spark-shell --master local[<span class="pl-k">*</span>] --jars target/scala-2.10/aerospike-spark-assembly-1.1.4.jar</pre>
+  </div> 
+  <p>Import the <code>com.aerospike.spark.sql._</code> package</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.aerospike.spark.sql.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.aerospike.spark.sql.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>and any Aerospike packages and classes. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">AerospikeClient</span>
+<span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">AerospikeClient</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Bin</span>
+<span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Bin</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Key</span>
+<span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Key</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Value</span>
+<span class="pl-k">import</span> <span class="pl-v">com.aerospike.client.</span><span class="pl-v">Value</span>
+</pre>
+  </div> 
+  <p>Load some data into Aerospike with:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    <span class="pl-k">val</span> <span class="pl-en">TEST_COUNT</span> <span class="pl-k">=</span> <span class="pl-c1">100</span>
+    <span class="pl-k">val</span> <span class="pl-en">namespace</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>
+    <span class="pl-k">var</span> <span class="pl-en">client</span><span class="pl-k">=</span><span class="pl-en">AerospikeConnection</span>.getClient(<span class="pl-en">AerospikeConfig</span>.newConfig(<span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>,<span class="pl-c1">3000</span>,<span class="pl-c1">1000</span>))
+    <span class="pl-en">Value</span>.<span class="pl-en">UseDoubleType</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>
+    <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">1</span> to <span class="pl-en">TEST_COUNT</span>) {
+      <span class="pl-k">val</span> <span class="pl-en">key</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Key</span>(namespace, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test-<span class="pl-pds">"</span></span><span class="pl-k">+</span>i)
+      client.put(<span class="pl-c1">null</span>, key,
+         <span class="pl-k">new</span> <span class="pl-en">Bin</span>(<span class="pl-s"><span class="pl-pds">"</span>one<span class="pl-pds">"</span></span>, i),
+         <span class="pl-k">new</span> <span class="pl-en">Bin</span>(<span class="pl-s"><span class="pl-pds">"</span>two<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>two:<span class="pl-pds">"</span></span><span class="pl-k">+</span>i),
+         <span class="pl-k">new</span> <span class="pl-en">Bin</span>(<span class="pl-s"><span class="pl-pds">"</span>three<span class="pl-pds">"</span></span>, i.toDouble)
+      )
+    }
+</pre>
+  </div> 
+  <p>Try a test with the loaded data:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>	<span class="pl-k">val</span> <span class="pl-en">thingsDF</span> <span class="pl-k">=</span> sqlContext.read.
+			format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+			option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+			option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+			option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, namespace).
+			option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+			load 
+	thingsDF.registerTempTable(<span class="pl-s"><span class="pl-pds">"</span>things<span class="pl-pds">"</span></span>)
+	<span class="pl-k">val</span> <span class="pl-en">filteredThings</span> <span class="pl-k">=</span> sqlContext.sql(<span class="pl-s"><span class="pl-pds">"</span>select * from things where one = 55<span class="pl-pds">"</span></span>)
+	<span class="pl-k">val</span> <span class="pl-en">thing</span> <span class="pl-k">=</span> filteredThings.first()</pre>
+  </div> 
+  <h3><a id="user-content-loading-and-saving-dataframes" class="anchor" href="https://github.com/aerospike/aerospark#loading-and-saving-dataframes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Loading and Saving DataFrames</h3> 
+  <p>The Aerospike Spark connector provides functions to load data from Aerospike into a DataFrame and save a DataFrame into Aerospike</p> 
+  <h4><a id="user-content-loading-data" class="anchor" href="https://github.com/aerospike/aerospark#loading-data" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Loading data</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>	<span class="pl-k">val</span> <span class="pl-en">thingsDF</span> <span class="pl-k">=</span> sqlContext.read.
+		format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+		load </pre>
+  </div> 
+  <p>You can see that the read function is configured by a number of options, these are:</p> 
+  <ul> 
+   <li><code>format("com.aerospike.spark.sql")</code> specifies the function library to load the DataFrame.</li> 
+   <li><code>option("aerospike.seedhost", "127.0.0.1")</code> specifies a seed host in the Aerospike cluster.</li> 
+   <li><code>option("aerospike.port", "3000")</code> specifies the port to be used</li> 
+   <li><code>option("aerospike.namespace", "test")</code> specifies the Namespace name to be used e.g. "test"</li> 
+   <li><code>option("aerospike.set", "rdd-test")</code> specifies the Set to be used e.g. "rdd-test" Spark SQL can be used to efficently filter (where lastName = 'Smith') Bin values represented as columns. The filter is passed down to the Aerospike cluster and filtering is done in the server. Here is an example using filtering:</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre>	<span class="pl-k">val</span> <span class="pl-en">thingsDF</span> <span class="pl-k">=</span> sqlContext.read.
+		format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, namespace).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+		load 
+	thingsDF.registerTempTable(<span class="pl-s"><span class="pl-pds">"</span>things<span class="pl-pds">"</span></span>)
+	<span class="pl-k">val</span> <span class="pl-en">filteredThings</span> <span class="pl-k">=</span> sqlContext.sql(<span class="pl-s"><span class="pl-pds">"</span>select * from things where one = 55<span class="pl-pds">"</span></span>)
+</pre>
+  </div> 
+  <p>Additional meta-data columns are automatically included when reading from Aerospike, the default names are:</p> 
+  <ul> 
+   <li><code>__key</code> the values of the primary key if it is stored in Aerospike</li> 
+   <li><code>__digest</code> the digest as Array[byte]</li> 
+   <li><code>__generation</code> the gereration value of the record read</li> 
+   <li><code>__expitation</code> the expiration epoch</li> 
+   <li><code>__ttl</code> the time to live value calcualed from the expiration - now</li> 
+  </ul> 
+  <p>These meta-data column name defaults can be be changed by using additional options during read or write, for example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>	<span class="pl-k">val</span> <span class="pl-en">thingsDF</span> <span class="pl-k">=</span> sqlContext.read.
+		format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.expiryColumn<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>_my_expiry_column<span class="pl-pds">"</span></span>).
+		load </pre>
+  </div> 
+  <h4><a id="user-content-saving-data" class="anchor" href="https://github.com/aerospike/aerospark#saving-data" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Saving data</h4> 
+  <p>A DataFrame can be saved in Aerospike by specifying a column in the DataFrame as the Primary Key or the Digest.</p> 
+  <h5><a id="user-content-saving-by-digest" class="anchor" href="https://github.com/aerospike/aerospark#saving-by-digest" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Saving by Digest</h5> 
+  <p>In this example, the value of the digest is specified by the "__digest" column in the DataFrame.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>	<span class="pl-k">val</span> <span class="pl-en">thingsDF</span> <span class="pl-k">=</span> sqlContext.read.
+		format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, namespace).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+		load 
+		
+    thingsDF.write.
+        mode(<span class="pl-en">SaveMode</span>.<span class="pl-en">Overwrite</span>).
+        format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+        option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, namespace).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>rdd-test<span class="pl-pds">"</span></span>).
+		option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.updateByDigest<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>__digest<span class="pl-pds">"</span></span>).
+        save()                
+</pre>
+  </div> 
+  <h5><a id="user-content-saving-by-key" class="anchor" href="https://github.com/aerospike/aerospark#saving-by-key" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Saving by Key</h5> 
+  <p>In this example, the value of the primary key is specified by the "key" column in the DataFrame.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">StructType</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">StructField</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">LongType</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.types.</span><span class="pl-v">StringType</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">DataFrame</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">Row</span>
+      <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">SaveMode</span>
+
+
+      <span class="pl-k">val</span> <span class="pl-en">namespace</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>
+      <span class="pl-k">val</span> <span class="pl-en">setName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>new-rdd-data<span class="pl-pds">"</span></span>
+      
+      <span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">StructType</span>(<span class="pl-en">Array</span>(
+          <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>,<span class="pl-en">StringType</span>,nullable <span class="pl-k">=</span> <span class="pl-c1">false</span>),
+          <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>last<span class="pl-pds">"</span></span>,<span class="pl-en">StringType</span>,nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>),
+          <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>first<span class="pl-pds">"</span></span>,<span class="pl-en">StringType</span>,nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>),
+          <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>when<span class="pl-pds">"</span></span>,<span class="pl-en">LongType</span>,nullable <span class="pl-k">=</span> <span class="pl-c1">true</span>)
+          )) 
+      <span class="pl-k">val</span> <span class="pl-en">rows</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Fraser_Malcolm<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Fraser<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Malcolm<span class="pl-pds">"</span></span>, <span class="pl-c1">1975L</span>),
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Hawke_Bob<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Hawke<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Bob<span class="pl-pds">"</span></span>, <span class="pl-c1">1983L</span>),
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Keating_Paul<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Keating<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Paul<span class="pl-pds">"</span></span>, <span class="pl-c1">1991L</span>), 
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Howard_John<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Howard<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>, <span class="pl-c1">1996L</span>), 
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Rudd_Kevin<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Rudd<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Kevin<span class="pl-pds">"</span></span>, <span class="pl-c1">2007L</span>), 
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Gillard_Julia<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Gillard<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Julia<span class="pl-pds">"</span></span>, <span class="pl-c1">2010L</span>), 
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Abbott_Tony<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Abbott<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Tony<span class="pl-pds">"</span></span>, <span class="pl-c1">2013L</span>), 
+          <span class="pl-en">Row</span>(<span class="pl-s"><span class="pl-pds">"</span>Tunrbull_Malcom<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>Tunrbull<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Malcom<span class="pl-pds">"</span></span>, <span class="pl-c1">2015L</span>)
+          )
+          
+      <span class="pl-k">val</span> <span class="pl-en">inputRDD</span> <span class="pl-k">=</span> sc.parallelize(rows)
+      
+      <span class="pl-k">val</span> <span class="pl-en">newDF</span> <span class="pl-k">=</span> sqlContext.createDataFrame(inputRDD, schema)
+  
+      newDF.write.
+        mode(<span class="pl-en">SaveMode</span>.<span class="pl-en">Ignore</span>).
+        format(<span class="pl-s"><span class="pl-pds">"</span>com.aerospike.spark.sql<span class="pl-pds">"</span></span>).
+        option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.seedhost<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>).
+						option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.port<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>3000<span class="pl-pds">"</span></span>).
+						option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.namespace<span class="pl-pds">"</span></span>, namespace).
+						option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.set<span class="pl-pds">"</span></span>, setName).
+						option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.updateByKey<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>).
+        save()       </pre>
+  </div> 
+  <h5><a id="user-content-using-ttl-while-saving" class="anchor" href="https://github.com/aerospike/aerospark#using-ttl-while-saving" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using TTL while saving</h5> 
+  <p>Time to live (TTL) can be set individually on each record. The TTL should be stored in a column in the DataSet before it is saved.</p> 
+  <p>To enable updates to TTL, and additional option is specified:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>	option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.ttlColumn<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>expiry<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h3><a id="user-content-schema" class="anchor" href="https://github.com/aerospike/aerospark#schema" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Schema</h3> 
+  <p>Aerospike is Schema-less and Spark DataFrames use a Schema. To facilitate the need for schema, the Aerospike spark connector samples 100 records, via a scan, and reads the Bin names and infers the Bin type.</p> 
+  <p>The number of records scanned can be changed by using the option:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>	option(<span class="pl-s"><span class="pl-pds">"</span>aerospike.schema.scan<span class="pl-pds">"</span></span>, <span class="pl-c1">20</span>)</pre>
+  </div> 
+  <p>Note: the schema is derived each time <code>load</code> is called. If you call <code>load</code> before the Aerospike namespace/set has any data, only the meta-data columns will be available.</p> 
+  <h2><a id="user-content-save-mode-reference" class="anchor" href="https://github.com/aerospike/aerospark#save-mode-reference" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Save mode reference</h2> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>Save mode</th> 
+     <th>Record Exists Policy</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td>ErrorIfExists</td> 
+     <td>CREATE_ONLY</td> 
+    </tr> 
+    <tr> 
+     <td>Ignore</td> 
+     <td>CREATE_ONLY</td> 
+    </tr> 
+    <tr> 
+     <td>Overwrite</td> 
+     <td>REPLACE</td> 
+    </tr> 
+    <tr> 
+     <td>Append</td> 
+     <td>UPDATE_ONLY</td> 
+    </tr>
+   </tbody>
+  </table> 
+  <h2><a id="user-content-options-reference" class="anchor" href="https://github.com/aerospike/aerospark#options-reference" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Options reference</h2> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>Option</th> 
+     <th>Description</th> 
+     <th>Default value</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td>aerospike.seedhost</td> 
+     <td>A host name or address of the cluster</td> 
+     <td>"127.0.0.1"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.port</td> 
+     <td>Port of Aerospike</td> 
+     <td>3000</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.timeout</td> 
+     <td>Timeout for all operations in milliseconds</td> 
+     <td>1000</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.sendKey</td> 
+     <td>If true, store the value of the primary key</td> 
+     <td>false</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.commitLevel</td> 
+     <td>Consistency guarantee when committing a transaction on the server</td> 
+     <td>CommitLevel.COMMIT_ALL</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.generationPolicy</td> 
+     <td>ow to handle record writes based on record generation</td> 
+     <td>GenerationPolicy.NONE</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.namespace</td> 
+     <td>Aerospike Namespace</td> 
+     <td>"test"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.set</td> 
+     <td>Aerospike Set</td> 
+     <td>no default</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.updateByKey</td> 
+     <td>This option specifies that updates are done by key with the value in the column specified <code>option("aerospike.updateByKey", "key")</code></td> 
+     <td></td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.updateByDigest</td> 
+     <td>This option specifies that updates are done by digest with the value in the column specified <code>option("aerospike.updateByDigest", "Digest")</code></td> 
+     <td></td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.schema.scan</td> 
+     <td>The number of records to scan to infer schema</td> 
+     <td>100</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.keyColumn</td> 
+     <td>The name of the key column in the Data Frame</td> 
+     <td>"__key"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.digestColumn</td> 
+     <td>The name of the digest column in the Data Frame</td> 
+     <td>"__digest"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.expiryColumn</td> 
+     <td>The name of the expiry column in the Data Frame</td> 
+     <td>"__expiry"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.generationColumn</td> 
+     <td>The name of the generation column in the Data Frame</td> 
+     <td>"__generation"</td> 
+    </tr> 
+    <tr> 
+     <td>aerospike.ttlColumn</td> 
+     <td>The name of the TTL column in the Data Frame</td> 
+     <td>"__ttl"</td> 
+    </tr>
+   </tbody>
+  </table> 
+ </article>
+</div>

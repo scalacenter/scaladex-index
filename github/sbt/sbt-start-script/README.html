@@ -1,0 +1,96 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h2><a id="user-content-consider-sbt-native-packager-instead" class="anchor" href="https://github.com/sbt/sbt-start-script#consider-sbt-native-packager-instead" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Consider sbt-native-packager instead</h2> 
+  <p>The more general native-packager plugin may replace this one in the future: <a href="https://github.com/sbt/sbt-native-packager" target="_blank">https://github.com/sbt/sbt-native-packager</a></p> 
+  <p>The rough way to get a start script with sbt-native-packager, modulo any details of your app, is:</p> 
+  <ol> 
+   <li>add sbt-native-packager plugin to your project</li> 
+   <li>remove start-script-plugin</li> 
+   <li>add <code>settings(com.typesafe.sbt.SbtNativePackager.packageArchetype.java_application: _*)</code></li> 
+   <li><code>stage</code> task will now generate a script <code>target/universal/stage/bin/project-name</code> instead of <code>target/start</code></li> 
+   <li>the sbt-native-packager-generated script looks at a <code>java_opts</code> env var but you cannot pass Java opts as parameters to the script as you could with <code>target/start</code></li> 
+   <li>the sbt-native-packager-generated script copies dependency jars into <code>target/</code>, so you don't need the Ivy cache</li> 
+  </ol> 
+  <p>Many were using sbt-start-script with Heroku, sbt-native-packager has two tricky things on Heroku right now:</p> 
+  <ol> 
+   <li>Heroku sets <code>JAVA_OPTS</code> and not <code>java_opts</code>. See <a href="https://github.com/sbt/sbt-native-packager/issues/47" target="_blank">https://github.com/sbt/sbt-native-packager/issues/47</a> and <a href="https://github.com/sbt/sbt-native-packager/issues/48" target="_blank">https://github.com/sbt/sbt-native-packager/issues/48</a> ... for now you have to manually configure <code>java_opts</code> and not specify memory options, or hack sbt-native-packager.</li> 
+   <li>You need to hack the build pack to drop the Ivy cache, or your slug will be bloated or even exceed the max size.</li> 
+  </ol> 
+  <p>Also of course you have to change your <code>Procfile</code> for the new name of the script.</p> 
+  <h2><a id="user-content-about-this-plugin-sbt-start-script" class="anchor" href="https://github.com/sbt/sbt-start-script#about-this-plugin-sbt-start-script" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>About this plugin (sbt-start-script)</h2> 
+  <p>This plugin allows you to generate a script <code>target/start</code> for a project. The script will run the project "in-place" (without having to build a package first).</p> 
+  <p>The <code>target/start</code> script is similar to <code>sbt run</code> but it doesn't rely on SBT. <code>sbt run</code> is not recommended for production use because it keeps SBT itself in-memory. <code>target/start</code> is intended to run an app in production.</p> 
+  <p>The plugin adds a task <code>start-script</code> which generates <code>target/start</code>. It also adds a <code>stage</code> task, aliased to the <code>start-script</code> task.</p> 
+  <p><code>stage</code> by convention performs any tasks needed to prepare an app to be run in-place. Other plugins that use a different approach to prepare an app to run could define <code>stage</code> as well, while <code>start-script</code> is specific to this plugin.</p> 
+  <p>The <code>target/start</code> script must be run from the root build directory (note: NOT the root <em>project</em> directory). This allows inter-project dependencies within your build to work properly.</p> 
+  <h2><a id="user-content-details" class="anchor" href="https://github.com/sbt/sbt-start-script#details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Details</h2> 
+  <p>To use the plugin with SBT 0.12.x:</p> 
+  <pre><code>addSbtPlugin("com.typesafe.sbt" % "sbt-start-script" % "0.9.0")
+</code></pre> 
+  <p>You can place that code in <code>~/.sbt/plugins/build.sbt</code> to install the plugin globally, or in <code>YOURPROJECT/project/plugins.sbt</code> to install the plugin for your project.</p> 
+  <p>To use with SBT 0.13.x:</p> 
+  <pre><code>addSbtPlugin("com.typesafe.sbt" % "sbt-start-script" % "0.10.0")
+</code></pre> 
+  <p>Note: the global directory for 0.13.x is <code>~/.sbt/0.13</code> instead of <code>~/.sbt</code>.</p> 
+  <p>If you install the plugin globally, it will add a command <code>add-start-script-tasks</code> to every project using SBT. You can run this command to add the tasks from the plugin, such as <code>start-script</code> (the <code>start-script</code> task won't exist until you <code>add-start-script-tasks</code>).</p> 
+  <p>If you incorporate the plugin into your project, then you'll want to explicitly add the settings from the plugin, such as the <code>start-script</code> task, to your project. In this case there's no need to use <code>add-start-script-tasks</code> since you'll already add them in your build.</p> 
+  <p>Here's how you add the settings from the plugin in a <code>build.sbt</code>:</p> 
+  <pre><code>import com.typesafe.sbt.SbtStartScript
+
+seq(SbtStartScript.startScriptForClassesSettings: _*)
+</code></pre> 
+  <p>In an SBT "full configuration" you would do something like:</p> 
+  <pre><code>settings = SbtStartScript.startScriptForClassesSettings
+</code></pre> 
+  <p>You have to choose which settings to add from these options:</p> 
+  <ul> 
+   <li><code>startScriptForClassesSettings</code> (the script will run from .class files)</li> 
+   <li><code>startScriptForJarSettings</code> (the script will run from .jar file from 'package')</li> 
+   <li><code>startScriptForWarSettings</code> (the script will run a .war with Jetty)</li> 
+  </ul> 
+  <p><code>startScriptForWarSettings</code> requires <a href="https://github.com/siasia/xsbt-web-plugin/" target="_blank">https://github.com/siasia/xsbt-web-plugin/</a> to provide the <code>package-war</code> task.</p> 
+  <p>If you have an aggregate project, you may want a <code>stage</code> task even though there's nothing to run, just so it will recurse into sub-projects. One way to get a <code>stage</code> task that does nothing is:</p> 
+  <pre><code>SbtStartScript.stage in Compile := Unit
+</code></pre> 
+  <p>which sets the <code>stage</code> key to <code>Unit</code>.</p> 
+  <h2><a id="user-content-key-names" class="anchor" href="https://github.com/sbt/sbt-start-script#key-names" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Key names</h2> 
+  <p>Note that all the keys (except <code>stage</code>) are in the <code>SbtStartScript.StartScriptKeys</code> object, so the scala version of the <code>start-script</code> key is <code>SbtStartScript.StartScriptKeys.startScript</code>. This is the standard convention for sbt plugins. Do an <code>import SbtStartScript.StartScriptKeys._</code> if you want all the keys unprefixed in your scope. Then, if you want to change a setting, you can simply reference the key directly in your `build.sbt'.</p> 
+  <p>For example, to change the filename of the generated script to something other than <code>target/start</code> (which is controlled by the key <code>SbtStartScript.StartScriptKeys.startScriptName</code>), add the following to <code>build.sbt</code> after the above import statement:</p> 
+  <pre><code>startScriptName &lt;&lt;= target / "run"
+</code></pre> 
+  <h2><a id="user-content-migration-from-earlier-versions-of-xsbt-start-script-plugin" class="anchor" href="https://github.com/sbt/sbt-start-script#migration-from-earlier-versions-of-xsbt-start-script-plugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Migration from earlier versions of xsbt-start-script-plugin</h2> 
+  <p>After 0.5.2, the plugin and its APIs were renamed to use consistent conventions (matching other plugins). The renamings were:</p> 
+  <ul> 
+   <li>the plugin itself is now <code>sbt-start-script</code> not <code>xsbt-start-script-plugin</code>; update this in your <code>plugins.sbt</code></li> 
+   <li>the Maven group and Java package are now <code>com.typesafe.sbt</code> rather than <code>com.typesafe.startscript</code>; update this in your <code>plugins.sbt</code> and in your build files</li> 
+   <li>the plugin object is now <code>SbtStartScript</code> rather than <code>StartScriptPlugin</code>, update this in your build files</li> 
+   <li>if you used any keys directly, they are now inside a nested object <code>StartScriptKeys</code> so for example rather than writing <code>startScriptFile</code> you would write <code>StartScriptKeys.startScriptFile</code> <em>or</em> you need to <code>import StartScriptKeys._</code></li> 
+   <li><code>StartScriptKeys.startScriptFile</code> did not match the string name of that settings <code>start-script-name</code> so now you should use <code>StartScriptKeys.startScriptName</code></li> 
+  </ul> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/sbt/sbt-start-script#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>sbt-start-script is open source software licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 License</a>.</p> 
+  <h2><a id="user-content-contribution-policy" class="anchor" href="https://github.com/sbt/sbt-start-script#contribution-policy" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contribution policy</h2> 
+  <p>Contributions via GitHub pull requests are gladly accepted from their original author. Before sending the pull request, please agree to the Contributor License Agreement at <a href="http://typesafe.com/contribute/cla" target="_blank">http://typesafe.com/contribute/cla</a> (it takes 30 seconds; you use your GitHub account to sign the agreement).</p> 
+ </article>
+</div>

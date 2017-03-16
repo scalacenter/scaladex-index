@@ -1,0 +1,69 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sbt-export-repo" class="anchor" href="https://github.com/sbt/sbt-export-repo#sbt-export-repo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-export-repo</h1> 
+  <p>sbt-export-repo exports your dependency graph to a preloaded local repository.</p> 
+  <p>This is an experimental plugin provided as-is.</p> 
+  <h2><a id="user-content-setup" class="anchor" href="https://github.com/sbt/sbt-export-repo#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>setup</h2> 
+  <p>Add the following to <code>project/exportrepo.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.eed3si9n<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-export-repo<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Then, create <code>dist</code> subproject in <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">root</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>)).
+  aggregate(app, dist).
+  settings(
+    inThisBuild(<span class="pl-en">List</span>(
+      scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.11.8<span class="pl-pds">"</span></span>,
+      organization <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.example<span class="pl-pds">"</span></span>,
+      version <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0-SNAPSHOT<span class="pl-pds">"</span></span>
+    )),
+    name <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>something root<span class="pl-pds">"</span></span>,
+    publish <span class="pl-k">:</span><span class="pl-k">=</span> (),
+    publishLocal <span class="pl-k">:</span><span class="pl-k">=</span> ()
+  )
+
+<span class="pl-c"><span class="pl-c">//</span> Your normal subproject</span>
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">app</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>app<span class="pl-pds">"</span></span>))
+
+<span class="pl-c"><span class="pl-c">//</span> This subproject is used for exporting repo only</span>
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">dist</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>dist<span class="pl-pds">"</span></span>)).
+  enablePlugins(<span class="pl-en">ExportRepoPlugin</span>).
+  dependsOn(app). <span class="pl-c"><span class="pl-c">//</span> add your subprojects to export</span>
+  settings(
+    name <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>dist<span class="pl-pds">"</span></span>,
+    <span class="pl-c"><span class="pl-c">//</span> add external libraries too. why not?</span>
+    libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.typelevel<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.6.0<span class="pl-pds">"</span></span>,
+    publish <span class="pl-k">:</span><span class="pl-k">=</span> (),
+    publishLocal <span class="pl-k">:</span><span class="pl-k">=</span> ()
+  )</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/sbt/sbt-export-repo#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>usage</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> publishLocal
+<span class="pl-k">&gt;</span> dist<span class="pl-k">/</span>exportRepo</pre>
+  </div> 
+  <p>This will create an Ivy repo image under <code>dist/target/preloaded-local</code> containing the transitive dependencies of both the internal and external dependencies you added to <code>dist</code> (e.g. <code>app</code> and Cats).</p> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/sbt/sbt-export-repo#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>credits</h2> 
+  <ul> 
+   <li>Export repo feature was extracted from Lightbend Activator's build, in particular <a href="https://github.com/typesafehub/activator/commit/03f2e315011ce43e13e8ac5714a28c0fea0c73c6" target="_blank">typesafehub/activator@03f2e3</a> by <a href="https://github.com/jsuereth" target="_blank">@jsuereth</a></li> 
+  </ul> 
+  <h3><a id="user-content-license" class="anchor" href="https://github.com/sbt/sbt-export-repo#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>license</h3> 
+  <p>Apache-2.0</p> 
+ </article>
+</div>
