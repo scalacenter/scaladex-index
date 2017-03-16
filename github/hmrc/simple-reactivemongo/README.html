@@ -106,28 +106,33 @@ libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <spa
     </svg></a>Create a repository class using AtomicsUpdate</h4> 
   <p>The AtomicUpdate trait is a wrapper around the findAndModify command which modifies and returns a single document, using atomic operations. By default, the returned mongo document will include the modifications made on the update. Please refer to the mongo documentation concerning the commands which can be supplied to the update operations.</p> 
   <p>To include the trait AtomicsUpdate to your existing repository, follow the steps below.</p> 
-  <p>1) Update your repository to use the AtomicUpdate trait, passing the type of the object being read/written.</p> 
+  <ol> 
+   <li>Update your repository to use the AtomicUpdate trait, passing the type of the object being read/written.</li> 
+  </ol> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">SimpleTestRepository</span>(<span class="pl-k">implicit</span> <span class="pl-v">mc</span>: <span class="pl-en">MongoConnector</span>)
   <span class="pl-k">extends</span> <span class="pl-e">ReactiveRepository</span>[<span class="pl-en">TestObject</span>, <span class="pl-en">BSONObjectID</span>](<span class="pl-s"><span class="pl-pds">"</span>simpleTestRepository<span class="pl-pds">"</span></span>, mc.db, <span class="pl-en">TestObject</span>.formats, <span class="pl-en">ReactiveMongoFormats</span>.objectIdFormats)
   <span class="pl-k">with</span> <span class="pl-e">AtomicUpdate</span>[<span class="pl-en">TestObject</span>]
   {</pre>
   </div> 
-  <p>2) Include the below override in your class which is extending AtomicUpdate. This function is invoked by AtomicUpdate to decide if the update is either an upsert or an update.</p> 
+  <ol start="2"> 
+   <li>Include the below override in your class which is extending AtomicUpdate. This function is invoked by AtomicUpdate to decide if the update is either an upsert or an update.</li> 
+  </ol> 
   <div class="highlight highlight-source-scala">
    <pre>    <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">isInsertion</span>(<span class="pl-v">suppliedId</span>: <span class="pl-en">BSONObjectID</span>, <span class="pl-v">returned</span>: <span class="pl-en">AtomicTestObject</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span>
       suppliedId.equals(returned.id)</pre>
   </div> 
   <p>The two functions exposed from the AtomicUpdate trait are detailed below which both return the type Future[Option[DatabaseUpdate[T]]], where DatabaseUpdate encapsulates the update type which can be either Saved (new insert) or Updated (updated record). Please note the document with the modifications applied on the update command to mongo will be returned.</p> 
-  <p>1) def atomicUpsert(finder: BSONDocument, modifierBson: BSONDocument) This function will invoke atomicSaveOrUpdate passing the 'upsert' flag as true. Function used to insert a new record.</p> 
-  <p>2)  def atomicSaveOrUpdate(finder: BSONDocument, modifierBson: BSONDocument, upsert: Boolean)  This function is used to override the upsert parameter.</p> 
+  <ol> 
+   <li> <p>def atomicUpsert(finder: BSONDocument, modifierBson: BSONDocument) This function will invoke atomicSaveOrUpdate passing the 'upsert' flag as true. Function used to insert a new record.</p> </li> 
+   <li> <p> def atomicSaveOrUpdate(finder: BSONDocument, modifierBson: BSONDocument, upsert: Boolean)  This function is used to override the upsert parameter.</p> </li> 
+  </ol> 
   <p>The parameters for the functions above are defined below:-</p> 
   <ul> 
    <li>finder - A BSON finder used to find an existing record.</li> 
    <li>modifierBson - The BSON modifier to be applied.</li> 
    <li>upsert - If the value is true, a BSONDocument will be added to the modifierBson parameter to generate the Id field on the collection using BSONObjectID.generate. If the value is false, no additional BSONDocument will be applied to modifierBson. If the 'finder' returns no document, then None will be returned. If unsure if the record already exists, then set the 'upsert' value to true.</li> 
-  </ul> 
-  <p>Please refer to the unit test AtomicUpdateSpec for simple examples concerning using the trait AtomicUpdate.</p> 
+  </ul> Please refer to the unit test AtomicUpdateSpec for simple examples concerning using the trait AtomicUpdate. 
   <p>For documentation, please refer to <a href="http://docs.mongodb.org/manual/reference/command/findAndModify" target="_blank">http://docs.mongodb.org/manual/reference/command/findAndModify</a>.</p> 
  </article>
 </div>

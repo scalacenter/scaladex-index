@@ -35,13 +35,13 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage</h2> 
   <p>MemSQL Spark Connector leverages Spark SQL's Data Sources API. The connection to MemSQL relies on the following Spark configuration settings.</p> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>Setting name</th> 
      <th>Default value if not specified</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>spark.memsql.host</td> 
@@ -67,9 +67,13 @@
      <td>spark.memsql.defaultSaveMode</td> 
      <td>"error" (see description below)</td> 
     </tr> 
+    <tr> 
+     <td>spark.memsql.disablePartitionPushdown</td> 
+     <td>false</td> 
+    </tr>
    </tbody>
   </table> 
-  <p>Additionally, note that all MemSQL credentials have to be the same on all nodes</p> 
+  <p>Note that all MemSQL credentials have to be the same on all nodes to take advantage of partition pushdown, which queries leaves directly.</p> 
   <h3><a id="user-content-loading-data-from-memsql" class="anchor" href="https://github.com/memsql/memsql-spark-connector#loading-data-from-memsql" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -80,17 +84,17 @@
 <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">SparkSession</span>
 
 <span class="pl-k">val</span> <span class="pl-en">conf</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkConf</span>()
-    .setAppName(<span class="pl-s"><span class="pl-pds">"</span>MemSQL Spark Connector Example<span class="pl-pds">"</span></span>)
-    .set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>10.0.0.190<span class="pl-pds">"</span></span>)
-    .set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.password<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foobar<span class="pl-pds">"</span></span>)
-    .set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.defaultDatabase<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>customers<span class="pl-pds">"</span></span>)
+	.setAppName(<span class="pl-s"><span class="pl-pds">"</span>MemSQL Spark Connector Example<span class="pl-pds">"</span></span>)
+	.set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>10.0.0.190<span class="pl-pds">"</span></span>)
+	.set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.password<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foobar<span class="pl-pds">"</span></span>)
+	.set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.defaultDatabase<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>customers<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">spark</span> <span class="pl-k">=</span> <span class="pl-en">SparkSession</span>.builder().config(conf).getOrCreate()
 
 <span class="pl-k">val</span> <span class="pl-en">customersFromIllinois</span> <span class="pl-k">=</span> spark
-    .read
-    .format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
-    .options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>customers.illinois<span class="pl-pds">"</span></span>)))
-    .load()
+	.read
+	.format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
+	.options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>customers.illinois<span class="pl-pds">"</span></span>)))
+	.load()
 <span class="pl-c"><span class="pl-c">//</span> customersFromIllinois is now a Spark DataFrame which represents the specified MemSQL table</span>
 <span class="pl-c"><span class="pl-c">//</span> and can be queried using Spark DataFrame query functions</span>
 
@@ -106,17 +110,17 @@ customersFromIllinois.show()</pre>
 <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">SparkSession</span>
 
 <span class="pl-k">val</span> <span class="pl-en">conf</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkConf</span>()
-    .setAppName(<span class="pl-s"><span class="pl-pds">"</span>MemSQL Spark Connector Example<span class="pl-pds">"</span></span>)
-    .set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>10.0.0.190<span class="pl-pds">"</span></span>)
-    .set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.password<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foobar<span class="pl-pds">"</span></span>)
+	.setAppName(<span class="pl-s"><span class="pl-pds">"</span>MemSQL Spark Connector Example<span class="pl-pds">"</span></span>)
+	.set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>10.0.0.190<span class="pl-pds">"</span></span>)
+	.set(<span class="pl-s"><span class="pl-pds">"</span>spark.memsql.password<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>foobar<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">spark</span> <span class="pl-k">=</span> <span class="pl-en">SparkSession</span>.builder().config(conf).getOrCreate()
 
 <span class="pl-k">val</span> <span class="pl-en">customersFromIllinois</span> <span class="pl-k">=</span> spark
-    .read
-    .format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
-    .options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>select age_group, count(*) from customers.illinois where number_of_orders &gt; 3 GROUP BY age_group<span class="pl-pds">"</span></span>),
-                 <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>customers<span class="pl-pds">"</span></span>))
-    .load()
+	.read
+	.format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
+	.options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>select age_group, count(*) from customers.illinois where number_of_orders &gt; 3 GROUP BY age_group<span class="pl-pds">"</span></span>),
+				 <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>customers<span class="pl-pds">"</span></span>))
+	.load()
 
 customersFromIllinois.show()
 <span class="pl-c"><span class="pl-c">//</span> +-----------+---------+</span>
@@ -140,19 +144,19 @@ customersFromIllinois.show()
                             <span class="pl-en">StructField</span>(<span class="pl-s"><span class="pl-pds">"</span>Age<span class="pl-pds">"</span></span>, <span class="pl-en">IntegerType</span>, <span class="pl-c1">false</span>)))
 <span class="pl-k">val</span> <span class="pl-en">df</span> <span class="pl-k">=</span> sqlContext.createDataFrame(rdd, schema)
 df
-    .write
-    .format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
-    .mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>)
-    .save(<span class="pl-s"><span class="pl-pds">"</span>people.students<span class="pl-pds">"</span></span>)</pre>
+	.write
+	.format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
+	.mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>)
+	.save(<span class="pl-s"><span class="pl-pds">"</span>people.students<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <p>The <code>mode</code> specifies how to handle duplicate keys when the MemSQL table has a primary key. The default, if unspecified, is "error", which means that if a row with the same primary key already exists in MemSQL's people.students table, an error is to be thrown. Other save modes:</p> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>Save mode string</th> 
      <th>Description</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>"error"</td> 
@@ -165,7 +169,7 @@ df
     <tr> 
      <td>"overwrite"</td> 
      <td>MemSQL will replace the existing record with the new record</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <p>The second interface to save data to MemSQL is via the <code>saveToMemSQL</code> implicit function on a DataFrame you wish to save:</p> 
@@ -185,13 +189,13 @@ df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>people.students<
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Types</h2> 
   <p>When saving a Dataframe from Spark to MemSQL, the SparkType of each Dataframe column will be converted to the following MemSQL type:</p> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>SparkType</th> 
      <th>MemSQL Type</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>ShortType</td> 
@@ -236,17 +240,17 @@ df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>people.students<
     <tr> 
      <td>DateType</td> 
      <td>DATE</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <p>When reading a MemSQL table as a Spark Dataframe, the MemSQL column type will be converted to the following SparkType:</p> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>MemSQL Type</th> 
      <th>SparkType</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>TINYINT, SMALLINT</td> 
@@ -291,7 +295,7 @@ df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>people.students<
     <tr> 
      <td>BIT, BLOG, BINARY</td> 
      <td>BinaryType</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <p>MemSQL Spark 2.0 Connector does not support GeoSpatial or JSON MemSQL types since Spark 2.0 has currently disabled user defined types (see <a href="https://issues.apache.org/jira/browse/SPARK-14155" target="_blank">JIRA issue</a>). These types, when read, will become BinaryType.</p> 
@@ -308,10 +312,10 @@ df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>people.students<
   <p>Do:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> spark
-    .read
-    .format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
-    .options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>select * from people join department on people.deptId = department.id<span class="pl-pds">"</span></span>)))
-    .load()</pre>
+	.read
+	.format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
+	.options(<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>query<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>select * from people join department on people.deptId = department.id<span class="pl-pds">"</span></span>)))
+	.load()</pre>
   </div> 
   <h2><a id="user-content-building-and-testing" class="anchor" href="https://github.com/memsql/memsql-spark-connector#building-and-testing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

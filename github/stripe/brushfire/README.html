@@ -79,12 +79,15 @@ cat iris.output/step_03
   <span class="pl-k">import</span> <span class="pl-v">JsonInjections.</span><span class="pl-v">_</span>
 
   <span class="pl-k">def</span> <span class="pl-en">trainer</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
-}</pre>
-  </div> 
-  <p>You should import either <code>JsonInjections</code> or <code>KryoInjections</code> to specify serialization in either JSON or base64-encoded Kryo, respectively; the former has the advantage of being human readable, the latter is more efficient, which can be important for very large trees.</p> 
-  <p>To construct a <code>Trainer</code>, you need to pass it training data as a Scalding <code>TypedPipe</code> of Brushfire <a href="http://stripe.github.io/brushfire/#com.stripe.brushfire.Instance" target="_blank">Instance[K, V,T]</a> objects. <code>Instance</code> looks like this:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Instance</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>, <span class="pl-en">T</span>](<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">timestamp</span>: <span class="pl-k">Long</span>, <span class="pl-v">features</span>: <span class="pl-en">Map</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>], <span class="pl-v">target</span>: <span class="pl-en">T</span>)</pre>
+}
+```
+
+<span class="pl-en">You</span> should <span class="pl-k">import</span> <span class="pl-v">either `JsonInjections` or `KryoInjections` to specify serialization in either JSON or base64-encoded Kryo, respectively</span>; the former has the advantage of being human readable, the latter is more efficient, which can be important <span class="pl-k">for</span> very large trees.
+
+<span class="pl-en">To</span> construct a `<span class="pl-en">Trainer</span>`, you need to pass it training data as a <span class="pl-en">Scalding</span> `<span class="pl-en">TypedPipe</span>` of <span class="pl-en">Brushfire</span> [<span class="pl-en">Instance</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>,<span class="pl-en">T</span>]](http<span class="pl-k">:</span><span class="pl-c"><span class="pl-c">//</span>stripe.github.io/brushfire/#com.stripe.brushfire.Instance) objects. `Instance` looks like this:</span>
+
+````scala
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Instance</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>, <span class="pl-en">T</span>](<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">timestamp</span>: <span class="pl-k">Long</span>, <span class="pl-v">features</span>: <span class="pl-en">Map</span>[<span class="pl-en">K</span>, <span class="pl-en">V</span>], <span class="pl-v">target</span>: <span class="pl-en">T</span>)</pre>
   </div> 
   <ul> 
    <li>The <code>id</code> should be unique for each instance.</li> 
@@ -116,31 +119,30 @@ cat iris.output/step_03
   <span class="pl-k">def</span> <span class="pl-en">trainer</span> <span class="pl-k">=</span> <span class="pl-en">Trainer</span>(trainingData, <span class="pl-en">KFoldSampler</span>(<span class="pl-c1">4</span>)).expandTimes(args(<span class="pl-s"><span class="pl-pds">"</span>output<span class="pl-pds">"</span></span>), <span class="pl-c1">5</span>)
 }</pre>
   </div> 
-  <h1><a id="user-content-in-memory-expansion" class="anchor" href="https://github.com/stripe/brushfire#in-memory-expansion" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>In Memory Expansion</h1> 
+  <p>#In Memory Expansion</p> 
   <p>Having expanded as deep as you want using the distributed algorithm, you may wish to ask for further, in-memory expansion of any nodes that are sufficiently small at this point by calling <code>expandSmallNodes(path: String, times: Int)</code>. By default, this will downsample every node to at most 10,000 instances of training data, and expand until they have fewer than 10 instances. You may need to tune this value, which you do by setting an implicit <code>Stopper</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">implicit</span> stopper <span class="pl-k">=</span> <span class="pl-en">FrequencyStopper</span>(<span class="pl-c1">10000</span>, <span class="pl-c1">10</span>)
-trainer.expandInMemory(args(<span class="pl-s"><span class="pl-pds">"</span>output<span class="pl-pds">"</span></span>) <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/mem<span class="pl-pds">"</span></span>, <span class="pl-c1">100</span>)</pre>
-  </div> 
-  <p>Note that the distributed algorithm will <em>stop</em> expanding at the same instance count that the in-memory algorithm wants, ie, 10,000 instances by default.</p> 
-  <h1><a id="user-content-dispatched" class="anchor" href="https://github.com/stripe/brushfire#dispatched" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Dispatched</h1> 
-  <p>If you have mixed features, the recommended value type is <code>Dispatched[Int,String,Double,String]</code>, which requires your feature values to match any one of these four cases:</p> 
-  <ul> 
-   <li><code>Ordinal(v: Int)</code> for numeric features with a reasonably small number of possible values</li> 
-   <li><code>Nominal(v: String)</code> for categorical features with a reasonably small number of possible values</li> 
-   <li><code>Continuous(v: Double)</code> for numeric features with a large or infinite number of possible values</li> 
-   <li><code>Sparse(v: String)</code> for categorical features with a large or infinite number of possible values</li> 
-  </ul> 
-  <p>Note that using <code>Sparse</code> and especially <code>Continuous</code> features will currently slow learning down considerably. (But on the other hand, if you try to use <code>Ordinal</code> or <code>Nominal</code> with a feature that has hundreds of thousands of unique values, it will be even slower, and then fail).</p> 
-  <p>Example of a features map:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Ordinal</span>(<span class="pl-c1">35</span>), <span class="pl-s"><span class="pl-pds">"</span>gender<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Nominal</span>(<span class="pl-s"><span class="pl-pds">"</span>male<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>weight<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Continuous</span>(<span class="pl-c1">130.23</span>), <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Sparse</span>(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>))</pre>
+trainer.expandInMemory(args(<span class="pl-s"><span class="pl-pds">"</span>output<span class="pl-pds">"</span></span>) <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/mem<span class="pl-pds">"</span></span>, <span class="pl-c1">100</span>)
+```
+
+<span class="pl-en">Note</span> that the distributed algorithm will <span class="pl-k">*</span>stop<span class="pl-k">*</span> expanding at the same instance count that the in<span class="pl-k">-</span>memory algorithm wants, ie, <span class="pl-c1">10</span>,<span class="pl-c1">000</span> instances by default.
+
+# <span class="pl-en">Dispatched</span>
+
+<span class="pl-en">If</span> you have mixed features, the recommended value <span class="pl-k">type</span> <span class="pl-en">is</span> `<span class="pl-en">Dispatched</span>[<span class="pl-k">Int</span>,<span class="pl-k">String</span>,<span class="pl-k">Double</span>,<span class="pl-k">String</span>]`, which requires your feature values to <span class="pl-k">match</span> any one of these four <span class="pl-v">cases</span>:
+
+<span class="pl-k">*</span> `<span class="pl-en">Ordinal</span>(<span class="pl-v">v</span>: <span class="pl-k">Int</span>)` <span class="pl-k">for</span> numeric features <span class="pl-k">with</span> <span class="pl-e">a</span> reasonably small number of possible values
+<span class="pl-k">*</span> `<span class="pl-en">Nominal</span>(<span class="pl-v">v</span>: <span class="pl-k">String</span>)` <span class="pl-k">for</span> categorical features <span class="pl-k">with</span> <span class="pl-e">a</span> reasonably small number of possible values
+<span class="pl-k">*</span> `<span class="pl-en">Continuous</span>(<span class="pl-v">v</span>: <span class="pl-k">Double</span>)` <span class="pl-k">for</span> numeric features <span class="pl-k">with</span> <span class="pl-e">a</span> large or infinite number of possible values
+<span class="pl-k">*</span> `<span class="pl-en">Sparse</span>(<span class="pl-v">v</span>: <span class="pl-k">String</span>)` <span class="pl-k">for</span> categorical features <span class="pl-k">with</span> <span class="pl-e">a</span> large or infinite number of possible values
+
+<span class="pl-en">Note</span> that using `<span class="pl-en">Sparse</span>` and especially `<span class="pl-en">Continuous</span>` features will currently slow learning down considerably. (<span class="pl-en">But</span> on the other hand, <span class="pl-k">if</span> you <span class="pl-k">try</span> to use `<span class="pl-en">Ordinal</span>` or `<span class="pl-en">Nominal</span>` <span class="pl-k">with</span> <span class="pl-e">a</span> feature that has hundreds of thousands of unique values, it will be even slower, and then fail).
+
+<span class="pl-en">Example</span> of a features <span class="pl-v">map</span>:
+
+````scala
+<span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Ordinal</span>(<span class="pl-c1">35</span>), <span class="pl-s"><span class="pl-pds">"</span>gender<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Nominal</span>(<span class="pl-s"><span class="pl-pds">"</span>male<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>weight<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Continuous</span>(<span class="pl-c1">130.23</span>), <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Sparse</span>(<span class="pl-s"><span class="pl-pds">"</span>John<span class="pl-pds">"</span></span>))</pre>
   </div> 
   <h1><a id="user-content-extending-brushfire" class="anchor" href="https://github.com/stripe/brushfire#extending-brushfire" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

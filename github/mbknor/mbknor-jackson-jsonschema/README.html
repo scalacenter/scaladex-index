@@ -18,13 +18,13 @@
      <li><strong>@JsonSchemaDefault</strong></li> 
      <li><strong>@JsonSchemaOptions</strong></li> 
      <li><strong>@JsonSchemaInject</strong></li> 
-    </ul></li> 
+    </ul> </li> 
    <li>Supports many Javax-validation @Annotations</li> 
    <li>Works well with Generated GUI's using <a href="https://github.com/jdorn/json-editor" target="_blank">https://github.com/jdorn/json-editor</a> 
     <ul> 
      <li>(Must be configured to use this mode)</li> 
      <li>Special handling of Option-/Optional-properties using oneOf.</li> 
-    </ul></li> 
+    </ul> </li> 
    <li>Supports custom Class-to-format-Mapping</li> 
    <li>Supports injecting custom json-schema-fragments using the <strong>@JsonSchemaInject</strong>-annotation.</li> 
   </ul> 
@@ -132,7 +132,22 @@
 }</pre>
   </div> 
   <p>This will associate an enum of possible values for the set that you generate at runtime.</p> 
+  <p>If you need even more control over the schema-generating runtime, you can use <strong>@JsonSchemaInject.jsonSupplierViaLookup</strong> like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyPojo</span> {
+  <span class="pl-k">@</span><span class="pl-en">JsonSchemaInject</span>(jsonSupplierViaLookup <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>theKeyToUseWhenLookingUpASupplier<span class="pl-pds">"</span></span>)
+  uns<span class="pl-k">:</span><span class="pl-en">Set</span>[<span class="pl-k">String</span>]
+  ...
+  ...
+  ...
+}</pre>
+  </div> 
+  <p>Then you have to add the mapping between the key 'theKeyToUseWhenLookingUpASupplier' and the Supplier-instance in the config-object used when creating the JsonSchemaGenerator.</p> 
+  <p>The default behaviour of @JsonSchemaInject is to <strong>merge</strong> the injected json into the generated JsonSchema. If you want to have full control over it, you can specify @JsonSchemaInject.merge = false to <strong>replace</strong> the generated jsonSchema with the injected json.</p> 
   <p>@JsonSchemaInject can also be used on properties.</p> 
+  <p>Another way of altering the generated schema is to use the config-param <strong>classTypeReMapping</strong>.</p> 
+  <p>This can be used to remap the Class found by Jackson into another Class before generating the schema for it.</p> 
+  <p>It might be the case that you have a complex Class-structure using Polymorphism, but for some reason you know upfront that the user needs to enter/specify a specific subType. To enforce this into the generated schema, you can map the SuperType into the specific-type.</p> 
   <h2><a id="user-content-project-status" class="anchor" href="https://github.com/mbknor/mbknor-jackson-jsonschema#project-status" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -238,7 +253,7 @@
   <p>When support is enabled, the following types may be made nullable:</p> 
   <ul> 
    <li>Use <code>Optional&lt;T&gt;</code> (or Scala's <code>Option</code>)</li> 
-   <li>Use a non-optional, non-primitive type (IE: <code>String</code>, <code>Boolean</code>, <code>Integer</code> etc) </li> 
+   <li>Use a non-optional, non-primitive type (IE: <code>String</code>, <code>Boolean</code>, <code>Integer</code> etc)</li> 
   </ul> 
   <p>If you've otherwise enabled support for nullable types, but need to suppress this at a per-property level, you can do this like so:</p> 
   <div class="highlight highlight-source-java">

@@ -57,7 +57,7 @@
      <li>Fetching exact matches</li> 
      <li>Fetching ranges</li> 
      <li>Storing with indexes</li> 
-    </ul></li> 
+    </ul> </li> 
    <li>Getting/setting bucket properties</li> 
    <li>ping</li> 
   </ul> 
@@ -71,9 +71,10 @@
    <li>Automatic (de)serialization of Scala (case) classes using type classes 
     <ul> 
      <li>builtin spray-json (de)serializers</li> 
-    </ul></li> 
+    </ul> </li> 
    <li>Automatic indexing of Scala (case) classes using type classes</li> 
    <li>Auto-retry of fetches and stores (a standard feature of the underlying spray-client library)</li> 
+   <li>Optional compression of Riak HTTP <strong>responses</strong> (see <em>enable-http-compression</em> setting).</li> 
   </ul> 
   <p>The following Riak (http) API features are not supported at this time:</p> 
   <ul> 
@@ -93,18 +94,24 @@
   <ul> 
    <li>2i fetches do not use streaming when processing the initial Riak response containing all matching keys. This means that this list of keys matching the specified index is currently read into memory in its entirety. Fetches with large (100k+) result sets can be slow because of this and might potentially cause memory problems. A future release will solve this by streaming the data using Play iteratees.</li> 
    <li>2i index names and index values containing some special characters will not be handled correctly. This is due to the way these have to be encoded for transmission over HTTP. And earlier version did manual double URL encoding/decoding but that was not a sustainable solution. Please avoid using characters like ' ', ',', '?', '&amp;', etc. in index names and index values for now.</li> 
+   <li>HTTP compression, when enabled (<em>enable-http-compression = true</em>), is only used for <strong>Riak responses</strong>. Request payloads are sent to Riak as they are due to a number of known limitations: 
+    <ul> 
+     <li>Riak value that has been stored with a non-empty <code>Content-Encoding</code> header is always served by Riak with that encoding, regardless the value of <code>Accept-Encoding</code> <em>fetch object request</em> header. See <a href="https://github.com/agemooij/riak-scala-client/issues/42" target="_blank">https://github.com/agemooij/riak-scala-client/issues/42</a> for details.</li> 
+     <li>Riak <em>set bucket properties</em> endpoint doesn't handle compressed payloads properly. See <a href="https://github.com/agemooij/riak-scala-client/issues/41" target="_blank">https://github.com/agemooij/riak-scala-client/issues/41</a> for details.</li> 
+     <li>Delete requests with <code>Accept-Encoding: gzip</code> header may be served with <code>HTTP 404 Not Found</code> responses which have <code>Content-Encoding: gzip</code> header, but <code>text/plain</code> body. See <a href="https://github.com/agemooij/riak-scala-client/issues/43" target="_blank">https://github.com/agemooij/riak-scala-client/issues/43</a> for details.</li> 
+    </ul> </li> 
   </ul> 
   <h2><a id="user-content-why-such-a-boring-name" class="anchor" href="https://github.com/agemooij/riak-scala-client#why-such-a-boring-name" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Why such a boring name?</h2> 
-  <p>It seems all the cool and appropriate names, like <a href="https://github.com/xaleraz/Riaktive" target="_blank">riaktive</a>, <a href="https://github.com/timperrett/riakka" target="_blank">riakka</a>, <a href="https://github.com/benmyles/riaktor" target="_blank">riaktor</a>, <a href="https://github.com/ariejdl/scala-riak" target="_blank">scalariak</a>, etc. have already been taken by other projects. But there seems to be a common riak-xxx-client naming pattern used by Riak client libraries for other languages so that's what ended up deciding the, admittedly boring, name.</p> 
+  <p>It seems all the cool and appropriate names, like [riaktive], [riakka], [riaktor], [scalariak], etc. have already been taken by other projects. But there seems to be a common riak-xxx-client naming pattern used by Riak client libraries for other languages so that's what ended up deciding the, admittedly boring, name.</p> 
   <p>If you come up with a cooler name, please let us know and eternal fame will be yours!</p> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/agemooij/riak-scala-client#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>License</h2> 
-  <p>The <em>riak-scala-client</em> is licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">APL 2.0</a>.</p> 
-  <p>[spray-json] <a href="https://github.com/spray/spray-json/" target="_blank">https://github.com/spray/spray-json/</a></p> 
+  <p>The <em>riak-scala-client</em> is licensed under [APL 2.0].</p> 
+  <p>[spray-json] <a href="https://github.com/spray/spray-json/" target="_blank">https://github.com/spray/spray-json/</a> [APL 2.0]: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a> [riaktive]: <a href="https://github.com/xaleraz/Riaktive" target="_blank">https://github.com/xaleraz/Riaktive</a> [riakka]: <a href="https://github.com/timperrett/riakka" target="_blank">https://github.com/timperrett/riakka</a> [riaktor]: <a href="https://github.com/benmyles/riaktor" target="_blank">https://github.com/benmyles/riaktor</a> [scalariak]: <a href="https://github.com/ariejdl/scala-riak" target="_blank">https://github.com/ariejdl/scala-riak</a></p> 
  </article>
 </div>

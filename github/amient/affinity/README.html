@@ -6,7 +6,7 @@
     </svg></a>Design Goals</h1> 
   <ul> 
    <li>library for building stateful, scalable Data APIs on top of streaming foundation</li> 
-   <li>can be attached to stream-processing pipelines based around kafka and participate either as a producer/source or consumer/materializer of state </li> 
+   <li>can be attached to stream-processing pipelines based around kafka and participate either as a producer/source or consumer/materializer of state</li> 
    <li>fault-tolerance build on top of a distributed-log</li> 
    <li>horizontally scalable and fully asynchronous</li> 
    <li>zero-downtime possible</li> 
@@ -21,7 +21,7 @@
     </svg></a>Cluster Overview</h2> 
   <p><a href="https://github.com/amient/affinity/blob/master/doc/affinity.png" target="_blank"><img src="https://github.com/amient/affinity/raw/master/doc/affinity.png" alt="Cluster Architecture" style="max-width:100%;"></a></p> 
   <ul> 
-   <li>akka for asynchronous communication </li> 
+   <li>akka for asynchronous communication</li> 
    <li>akka http as the main interface with websocket layer</li> 
    <li>zookeeper for distributed coordination (other coordinators pluggable)</li> 
    <li>RocksDb, MemDb, ConcurrentMap and other MemStore implementations</li> 
@@ -31,7 +31,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>State Management</h2> 
-  <p>All data is stored in the physical storage in the form of change log, e.g. Kafka compacted topic. Each physical partition can have multiple active API Partitions, one of which is always a master and the remainder are standby(s). </p> 
+  <p>All data is stored in the physical storage in the form of change log, e.g. Kafka compacted topic. Each physical partition can have multiple active API Partitions, one of which is always a master and the remainder are standby(s).</p> 
   <p>In the most consistent setup, master takes all reads and writes and records each write in the storage change log while reads come directly from the in-memory data set. After storage has accepted the write, master updates its own in-memory state - this way the level of data loss acceptance can be controlled by simply configuring the appropriate ack level in the underlying storage.</p> 
   <p>Standby(s) tail the changelog continuously and keep their in-memory state up-to-date. In in the event of master failure, one of the standby(s) is picked to be the new master. This way zero-downtime is possible for both failures as well as upgrades.</p> 
   <p>In cases where eventual read consistency is sufficient, standby(s) can also be used as read replicas (this is currently not implemented but the design is expecting this to come in future).</p> 
@@ -54,22 +54,22 @@
   </ul> 
   <p>The following core features are already in place:</p> 
   <ul> 
-   <li>HTTP Interface is completely async done with Akka Http. </li> 
+   <li>HTTP Interface is completely async done with Akka Http.</li> 
    <li>HTTP Handlers participate in handling the incoming HTTP Requests by chaining the receive: Receive method of the Gateway Actor</li> 
    <li>Handlers translate requests into Akka Messages - they can either ? Ask and get response which they turn into HTTP Response or just ! Tell and respond with No Content or Accepted, etc.</li> 
-   <li>WebSockets can be attached to Key-Value entities which then receive automatically all changes to that entity as well as any other user-defined events </li> 
+   <li>WebSockets can be attached to Key-Value entities which then receive automatically all changes to that entity as well as any other user-defined events</li> 
    <li>Akka Cluster that comes with Akka is not used, instead a custom cluster management is implemented using a third-party coordinator</li> 
    <li>Each Gateway Actor System maintains a list of Service Actors in its hierarchy which implement the the routing logic. This routing logic mimics the partitioning strategy used in the underlying storage.</li> 
    <li>Each Service is therefore a dynamic Akka Router which maintains a copy of the active Partition Actors, kept up to date by a pluggable Coordinator (ZooKeeper and Embedded embedded implementations provided)</li> 
    <li>Each Handler has access to all Service Actors by extending the Gateway as mentioned above. Any task that needs to be handled by a partitioned logic is passed to the Service Actor. This may be a simple forward or it can be an orchestrated sequence of Asks and Tells.</li> 
    <li>Gateways are hence the orchestration layer and Services are individual microservices or keyspaces whose logic is completely constrained to the partition scope.</li> 
    <li>Cluster Actor routes all request to Partition Actors which implement the logic over the data partition and respond to the sender which will ultimately be the calling Handler but sometimes the caller may be other Services in the cluster. The partition doesn't have any knowledge of the larger cluster it is part of.</li> 
-   <li>If there are multiple Partition Actors for the same physical partition Coordinator uses distributed logic to choose one of them as master and the others become standby.<br></li> 
+   <li>If there are multiple Partition Actors for the same physical partition Coordinator uses distributed logic to choose one of them as master and the others become standby.</li> 
    <li>On becoming a Master, the Partition Actor stops consuming (tailing) the the underlying topic, because the master receives all the writes, its in-memory state is consistent and it only publishes to the kafka for future bootstrap and keeping other standby(s) for the partitions up to date.</li> 
    <li>On becoming a Standby, the Partition Actor resumes consuming the underlying topic and stops receiving until it again becomes a master.</li> 
    <li>Standby is not a read replica at the moment but it could be an option</li> 
    <li>custom Akka ack implementation which is strongly typed</li> 
-   <li>Lightweight Transactions can be wrapped around orchestrated logic which use reversible Instructions to rollback failed operations<br></li> 
+   <li>Lightweight Transactions can be wrapped around orchestrated logic which use reversible Instructions to rollback failed operations</li> 
    <li>Support for different Avro schema providers which are implementations of a generalised concept similar to Confluent Schema Registry (for which an implementation is provided) - this allows to use embedded schema provider for development and testing while in production can be deployed with full distributed schema registry. These avro registries are implemented with standard Akka Serialisation and are at the same time compatible with Confluent Schema Registry which means the same serialization is used for Akka transport, MemStores and Storage.</li> 
   </ul> 
   <h2><a id="user-content-testing-the-code" class="anchor" href="https://github.com/amient/affinity#testing-the-code" aria-hidden="true" target="_blank">

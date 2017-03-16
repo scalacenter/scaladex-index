@@ -85,7 +85,7 @@ val singleWordNumber =  `[20..90/10]` | `[1..19]`
 val twoWordNumber    =  `[20..90/10]` ~ `[1..9]`
     val `[1..99]`        = twoWordNumber | singleWordNumber
 </code></pre> 
-  <p>How to deal with the numerals that are composed from two words? From the syntactic point of view these are simply two expressions joined with <code>~</code>. However, from the abstraction point of view we have two ways of joining the numbers - addition ("twenty" and "one" = 20 + 1 = 21) and multiplication ("five" and "thousand" = 5 * 1000 = 5000). On the concretization level we may use division with reminder (21%10 = 1, 21-1=20) and division (5000/1000 = 5). Let's represent the translation between the abstraction levels with an additional operator ^^, that describes the way of transformation between the abstraction levels. For instance, we may represent numerals in the following way: </p> 
+  <p>How to deal with the numerals that are composed from two words? From the syntactic point of view these are simply two expressions joined with <code>~</code>. However, from the abstraction point of view we have two ways of joining the numbers - addition ("twenty" and "one" = 20 + 1 = 21) and multiplication ("five" and "thousand" = 5 * 1000 = 5000). On the concretization level we may use division with reminder (21%10 = 1, 21-1=20) and division (5000/1000 = 5). Let's represent the translation between the abstraction levels with an additional operator ^^, that describes the way of transformation between the abstraction levels. For instance, we may represent numerals in the following way:</p> 
   <pre><code>val `[20..99] without 20..90/10` = `[20..90/10]` ~ `[1..9]` ^^ ModSplit(10L)
 </code></pre> 
   <p>Here we miss single word numerals. They differ a bit because the second part of the pair (ones) is missed and can be modelled with 0. In grammars the missed part can be represented with Epsilon, that matches an empty stream. On the higher abstraction level we replace the empty stream with the constant 0L. Let's denote this with a symbol <code>|?</code> :</p> 
@@ -95,7 +95,7 @@ val twoWordNumber    =  `[20..90/10]` ~ `[1..9]`
   <p>To represent the range from 1 to 99 we may combine the expressions with <code>|</code>. However, what part should be selected during synthesis? To select proper part let's add a selector <code>LessThanSelector(20L)</code>, that chooses the right expression when the actual number is less than the threshold.</p> 
   <pre><code>val `[1..99]` = `[20..99]` | `[1..19]` selectBy LessThanSelector(20L)
 </code></pre> 
-  <p>To represent hundreds we need to split the single number into 3 parts - the amount of hundreds, word "hundred", and the number that is less than a hundred. To represent the operation we use <code>OrderSplit(100L)</code> marker. </p> 
+  <p>To represent hundreds we need to split the single number into 3 parts - the amount of hundreds, word "hundred", and the number that is less than a hundred. To represent the operation we use <code>OrderSplit(100L)</code> marker.</p> 
   <pre><code>val `[100..900/100]` = `[1..9]` ~ `[100]` ^^ OrderSplit(100L)
 val `[100..999]`     = `[100..900/100]` ~ (`[1..99]` |? 0L) ^^ ModSplit(100L)
 val `[1..999]`          = `[100..999]` | `[1..99]` selectBy LessThanSelector(100L)
@@ -210,7 +210,7 @@ case class Failure[T](reason: String) extends ParseResult[T]
 }
 </code></pre> 
   <p>The parser takes lemma stream on input. To parse plain text we can convert the parser as follows:</p> 
-  <p>implicit def toSimpleParserT:SimpleParser[T] = (text:String) =&gt; { val res = p(text.split(" ").map(wordToLemma)) if(res.tail.nonEmpty) throw new IllegalArgumentException(s"Cannot parse \"$text\"") res.value }</p> 
+  <p>implicit def toSimpleParserT:SimpleParser[T] = (text:String) =&gt; { val res = p(text.split(" ").map(wordToLemma)) if(res.tail.nonEmpty) throw new IllegalArgumentException(s"Cannot parse "$text"") res.value }</p> 
   <p>After this conversion we may use it directly to parse numerals.</p> 
   <pre><code>assert(parse("twenty seven millions three thousands two handred forty five") === 27003245L)
 </code></pre> 

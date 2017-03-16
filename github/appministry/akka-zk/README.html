@@ -28,7 +28,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Dependencies</h3> 
   <pre><code>libraryDependencies ++= Seq(
-  "uk.co.appministry" %% "akka-zk" % "0.1.0-snapshot"
+  "uk.co.appministry" %% "akka-zk" % "0.1.0"
 )
 </code></pre> 
   <h2><a id="user-content-examples" class="anchor" href="https://github.com/appministry/akka-zk#examples" aria-hidden="true" target="_blank">
@@ -54,19 +54,19 @@
     </svg></a>Connecting</h3> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>examples<span class="pl-pds">"</span></span>)
-
+ 
 <span class="pl-k">val</span> <span class="pl-en">runner</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>(<span class="pl-k">new</span> <span class="pl-en">Actor</span> {
-
+  
   <span class="pl-k">val</span> <span class="pl-en">zkClient</span> <span class="pl-k">=</span> context.system.actorOf(<span class="pl-en">Props</span>(<span class="pl-k">new</span> <span class="pl-en">ZkClientActor))</span>
   context.watch(zkClient)
-
+  
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">supervisorStrategy</span> <span class="pl-k">=</span> <span class="pl-en">OneForOneStrategy</span>() {
     <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">ZkClientConnectionFailedException</span> <span class="pl-k">=&gt;</span>
       <span class="pl-c"><span class="pl-c">//</span> ZooKeeper client was unable to connect to the server for `connectionAttempts` times.</span>
       <span class="pl-c"><span class="pl-c">//</span> The client is stopped and a new actor has to be created.</span>
       <span class="pl-en">Escalate</span>
   }
-
+  
   <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
     <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>connect<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span>
       zkClient <span class="pl-k">!</span> <span class="pl-en">ZkRequestProtocol</span>.<span class="pl-en">Connect</span>(connectionString <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>10.100.0.21:2181<span class="pl-pds">"</span></span>,
@@ -75,7 +75,7 @@
     <span class="pl-k">case</span> <span class="pl-en">ZkResponseProtocol</span>.<span class="pl-en">Connected</span>(request, reactiveStreamsPublisher) <span class="pl-k">=&gt;</span>
       <span class="pl-c"><span class="pl-c">//</span> zkClient is now ready for work</span>
   }
-
+  
 }))
 runner <span class="pl-k">!</span> <span class="pl-s"><span class="pl-pds">"</span>connect<span class="pl-pds">"</span></span></pre>
   </div> 
@@ -93,23 +93,23 @@ runner <span class="pl-k">!</span> <span class="pl-s"><span class="pl-pds">"</sp
   <p>The <code>StateChange</code> events are automatically delivered, there is no subscription required. However, the <code>ChildChange</code> and <code>DataChange</code> events are per <code>path</code> thus requiring an explicit subscription. To initialize a subscription:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>examples<span class="pl-pds">"</span></span>)
-
+ 
 <span class="pl-k">val</span> <span class="pl-en">runner</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">Props</span>(<span class="pl-k">new</span> <span class="pl-en">Actor</span> {
-
+  
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>(
     <span class="pl-en">ActorMaterializerSettings</span>(system).withInputBuffer(
       initialSize <span class="pl-k">=</span> <span class="pl-c1">10</span>,
       maxSize <span class="pl-k">=</span> <span class="pl-c1">64</span>))
-
+  
   <span class="pl-k">val</span> <span class="pl-en">zkClient</span> <span class="pl-k">=</span> context.system.actorOf(<span class="pl-en">Props</span>(<span class="pl-k">new</span> <span class="pl-en">ZkClientActor))</span>
-
+  
   <span class="pl-k">def</span> <span class="pl-en">receive</span> <span class="pl-k">=</span> {
     <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>connect<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span>
       zkClient <span class="pl-k">!</span> <span class="pl-en">ZkRequestProtocol</span>.<span class="pl-en">Connect</span>(connectionString <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>10.100.0.21:2181<span class="pl-pds">"</span></span>,
                                            connectionAttempts <span class="pl-k">=</span> <span class="pl-c1">5</span>,
                                            sessionTimeout <span class="pl-k">=</span> <span class="pl-c1">30</span> seconds)
     <span class="pl-k">case</span> <span class="pl-en">ZkResponseProtocol</span>.<span class="pl-en">Connected</span>(request, publisher) <span class="pl-k">=&gt;</span>
-
+      
       <span class="pl-c"><span class="pl-c">//</span> a very simple example:</span>
       <span class="pl-en">Source</span>.fromPublisher[<span class="pl-en">ZkClientStreamProtocol</span>.<span class="pl-en">StreamResponse</span>](publisher).map { message <span class="pl-k">=&gt;</span>
         message <span class="pl-k">match</span> {
@@ -118,9 +118,9 @@ runner <span class="pl-k">!</span> <span class="pl-s"><span class="pl-pds">"</sp
           <span class="pl-k">case</span> <span class="pl-v">m</span>: <span class="pl-en">ZkClientStreamProtocol</span>.<span class="pl-en">StateChange</span> <span class="pl-k">=&gt;</span> <span class="pl-c"><span class="pl-c">//</span> state change event</span>
         }
       }.runWith(<span class="pl-en">Sink</span>.ignore)
-
+      
       <span class="pl-c1">self</span> <span class="pl-k">!</span> <span class="pl-s"><span class="pl-pds">"</span>subscribe<span class="pl-pds">"</span></span>
-
+      
     <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>subscribe<span class="pl-pds">"</span></span> <span class="pl-k">=&gt;</span>
       zkClient <span class="pl-k">!</span> <span class="pl-en">ZkRequestProtocol</span>.<span class="pl-en">SubscribeChildChanges</span>(<span class="pl-s"><span class="pl-pds">"</span>/some/zookeeper/path<span class="pl-pds">"</span></span>)
       zkClient <span class="pl-k">!</span> <span class="pl-en">ZkRequestProtocol</span>.<span class="pl-en">SubscribeDataChanges</span>(<span class="pl-s"><span class="pl-pds">"</span>/some/other/zookeeper/path<span class="pl-pds">"</span></span>)

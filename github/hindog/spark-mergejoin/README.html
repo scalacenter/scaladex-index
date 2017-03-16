@@ -13,22 +13,22 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>The Problem</h4> 
-  <p>In the standard distribution, Spark includes RDD <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions" target="_blank">join</a> operators that must collect <strong>all values across all rows on both sides of the join for any given key</strong> into an in-memory buffer before it can output the joined values for that key. Because of this, you might experience scalability issues when joining large datasets or datasets that exhibit a <a href="https://en.wikipedia.org/wiki/Cardinality_(data_modeling)" target="_blank">low-cardinality</a> or <a href="https://en.wikipedia.org/wiki/Skewness" target="_blank">skewed</a> distribution of values. </p> 
+  <p>In the standard distribution, Spark includes RDD <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions" target="_blank">join</a> operators that must collect <strong>all values across all rows on both sides of the join for any given key</strong> into an in-memory buffer before it can output the joined values for that key. Because of this, you might experience scalability issues when joining large datasets or datasets that exhibit a <a href="https://en.wikipedia.org/wiki/Cardinality_(data_modeling)" target="_blank">low-cardinality</a> or <a href="https://en.wikipedia.org/wiki/Skewness" target="_blank">skewed</a> distribution of values.</p> 
   <h4><a id="user-content-is-there-a-work-around-for-this-issue-when-using-the-existing-spark-join-operators" class="anchor" href="https://github.com/hindog/spark-mergejoin#is-there-a-work-around-for-this-issue-when-using-the-existing-spark-join-operators" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Is there a work-around for this issue when using the existing Spark join operators?</h4> 
   <p>Well... yes and no. Outlined below are some of the possible resolutions that one might try to work around the issue:</p> 
   <ol> 
-   <li><p><strong>Increase the partition count.</strong> Increasing the number of partitions won't help, since the source of the problem is related to processing of a <strong>single key</strong> whose values will end up in the same partition, regardless of partition count.</p></li> 
-   <li><p><strong>Increasing the executor memory.</strong> This can solve the problem in some cases where we are able to allocate enough memory for every executor to ensure we can handle the largest set of values for any given key. There are several drawbacks to this approach, though:</p> 
+   <li> <p><strong>Increase the partition count.</strong> Increasing the number of partitions won't help, since the source of the problem is related to processing of a <strong>single key</strong> whose values will end up in the same partition, regardless of partition count.</p> </li> 
+   <li> <p><strong>Increasing the executor memory.</strong> This can solve the problem in some cases where we are able to allocate enough memory for every executor to ensure we can handle the largest set of values for any given key. There are several drawbacks to this approach, though:</p> 
     <ol> 
-     <li><p><strong>Allocating the required amount of memory might not be possible.</strong> If the maximum physical memory available to any given executor exceeds the amount we need, then we're out of luck.</p></li> 
-     <li><p><strong>It requires us to know, ahead of time, the maximum amount of memory any given executor will need.</strong> This usually involves a trial-and-error effort which can be time-consuming, especially when production-sized data is required to replicate the issue. Also if the data changes shape over time, the job may suddenly begin to fail, requiring us to tweak the job's settings rather than allowing it degrade gracefully and still succeed.</p></li> 
-     <li><p><strong>All executors will need to allocate enough memory for the worst-case, which leads to over-allocation.</strong> When dealing with skewed data, only a few keys may require a large amount of memory to complete the join. These keys could end up being handled by any executor, so we need to ensure that <em>all</em> executors are configured with enough memory to satisfy the worst-case, even if the majority of executors might never encounter a key that requires a significant amount of memory.</p></li> 
-     <li><p><strong>Sometimes we'd like to use fewer cluster resources at the expense of a longer job run time.</strong> In some cases, we don't need a job to run as fast as possible and we'd like to trade cluster utilization for execution time. The merge-join operators will try to buffer as many values as possible in-memory before spilling to disk for better performance, but don't actually require that any values be buffered at all. If a job's executors are configured with less memory, it may cause more data to spill to disk which will cause the job to run longer, but sometimes this is a decent trade-off as long as the job still completes within an acceptable timeframe while making more memory available for other jobs.</p></li> 
-    </ol></li> 
-   <li><p><strong>Implement the solution differently to avoid the join.</strong> Sure, sometimes there may be another way to solve the problem, but you may be sacrificing developer time, performance, and/or readability to do so. There could also be cases where there isn't a viable work-around and are forced to abandon Spark and resort to using another framework.</p></li> 
+     <li> <p><strong>Allocating the required amount of memory might not be possible.</strong> If the maximum physical memory available to any given executor exceeds the amount we need, then we're out of luck.</p> </li> 
+     <li> <p><strong>It requires us to know, ahead of time, the maximum amount of memory any given executor will need.</strong> This usually involves a trial-and-error effort which can be time-consuming, especially when production-sized data is required to replicate the issue. Also if the data changes shape over time, the job may suddenly begin to fail, requiring us to tweak the job's settings rather than allowing it degrade gracefully and still succeed.</p> </li> 
+     <li> <p><strong>All executors will need to allocate enough memory for the worst-case, which leads to over-allocation.</strong> When dealing with skewed data, only a few keys may require a large amount of memory to complete the join. These keys could end up being handled by any executor, so we need to ensure that <em>all</em> executors are configured with enough memory to satisfy the worst-case, even if the majority of executors might never encounter a key that requires a significant amount of memory.</p> </li> 
+     <li> <p><strong>Sometimes we'd like to use fewer cluster resources at the expense of a longer job run time.</strong> In some cases, we don't need a job to run as fast as possible and we'd like to trade cluster utilization for execution time. The merge-join operators will try to buffer as many values as possible in-memory before spilling to disk for better performance, but don't actually require that any values be buffered at all. If a job's executors are configured with less memory, it may cause more data to spill to disk which will cause the job to run longer, but sometimes this is a decent trade-off as long as the job still completes within an acceptable timeframe while making more memory available for other jobs.</p> </li> 
+    </ol> </li> 
+   <li> <p><strong>Implement the solution differently to avoid the join.</strong> Sure, sometimes there may be another way to solve the problem, but you may be sacrificing developer time, performance, and/or readability to do so. There could also be cases where there isn't a viable work-around and are forced to abandon Spark and resort to using another framework.</p> </li> 
   </ol> 
   <h4><a id="user-content-ok-got-it-so-how-does-this-solve-all-of-that" class="anchor" href="https://github.com/hindog/spark-mergejoin#ok-got-it-so-how-does-this-solve-all-of-that" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -41,13 +41,13 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Requirements</h2> 
   <p>This library has different versions based on the Spark version used due to changes in the internals of Spark between these versions. It is also cross-published for Scala 2.10, so 2.10 users should replace 2.11 with 2.10 in the commands listed below.</p> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>Spark Version</th> 
      <th>Merge-Join Version</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>2.0.x</td> 
@@ -60,7 +60,7 @@
     <tr> 
      <td>1.5.x</td> 
      <td>1.5.0</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <h3><a id="user-content-for-spark-20" class="anchor" href="https://github.com/hindog/spark-mergejoin#for-spark-20" aria-hidden="true" target="_blank">
@@ -116,14 +116,14 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Operators</h4> 
-  <p>The table below lists each of the standard join operators available for type <code>RDD[(K, V)]</code> and their corresponding merge-join operator provided by this library. <strong>One additional requirement for the merge-join operators is that an implicit **<code>Ordering[K]</code></strong> must be in scope.**</p> 
-  <table>
+  <p>The table below lists each of the standard join operators available for type <code>RDD[(K, V)]</code> and their corresponding merge-join operator provided by this library. <strong>One additional requirement for the merge-join operators is that an implicit <strong><code>Ordering[K]</code></strong> must be in scope.</strong></p> 
+  <table> 
    <thead> 
     <tr> 
      <th>Standard Join</th> 
      <th>Merge-Join Equivalent</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td><code>join</code></td> 
@@ -140,7 +140,7 @@
     <tr> 
      <td><code>fullOuterJoin</code></td> 
      <td><code>fullOuterMergeJoin</code></td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <p>For further documentation, refer to the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#com.hindog.spark.rdd.PairRDDFunctions" target="_blank">API docs</a>.</p> 
@@ -158,41 +158,41 @@
 <span class="pl-k">val</span> <span class="pl-en">innerJoined</span> <span class="pl-k">=</span> rdd1.mergeJoin(rdd2)
 innerJoined.collect.foreach(println)
 <span class="pl-c"><span class="pl-c">//</span>  (1,(1,x))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(2,x))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(1,y))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(1,z))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(2,x))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(1,y))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(1,z))</span>
 
 <span class="pl-k">val</span> <span class="pl-en">leftJoined</span> <span class="pl-k">=</span> rdd1.leftOuterJoin(rdd2)
 leftJoined.collect.foreach(println)
-<span class="pl-c"><span class="pl-c">//</span>  (1,(1,Some(x)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(2,Some(x)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(1,Some(y)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(1,Some(z)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (3,(1,None))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(1,Some(x)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(2,Some(x)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(1,Some(y)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(1,Some(z)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(3,(1,None))</span>
 
 <span class="pl-k">val</span> <span class="pl-en">rightJoined</span> <span class="pl-k">=</span> rdd1.rightOuterJoin(rdd2)
 rightJoined.collect.foreach(println)
-<span class="pl-c"><span class="pl-c">//</span>  (4,(None,w))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(Some(1),x))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(Some(2),x))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(Some(1),y))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(Some(1),z))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(4,(None,w))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(Some(1),x))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(Some(2),x))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(Some(1),y))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(Some(1),z))</span>
 
 <span class="pl-k">val</span> <span class="pl-en">fullJoined</span> <span class="pl-k">=</span> rdd1.fullOuterMergeJoin(rdd2)
 fullJoined.collect.foreach(println)
-<span class="pl-c"><span class="pl-c">//</span>  (4,(None,Some(w)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(Some(1),Some(x)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (1,(Some(2),Some(x)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(Some(1),Some(y)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (2,(Some(1),Some(z)))</span>
-<span class="pl-c"><span class="pl-c">//</span>  (3,(Some(1),None))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(4,(None,Some(w)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(Some(1),Some(x)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(1,(Some(2),Some(x)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(Some(1),Some(y)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(2,(Some(1),Some(z)))</span>
+<span class="pl-c"><span class="pl-c">//</span>	(3,(Some(1),None))</span>
 </pre>
   </div> 
   <h4><a id="user-content-sparkconf-options" class="anchor" href="https://github.com/hindog/spark-mergejoin#sparkconf-options" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>SparkConf Options</h4> 
-  <table>
+  <table> 
    <thead> 
     <tr> 
      <th>Key</th> 
@@ -200,14 +200,14 @@ fullJoined.collect.foreach(println)
      <th>Default</th> 
      <th>Description</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td><code>spark.mergejoin.includeSpillMetrics</code></td> 
      <td><code>Boolean</code></td> 
      <td><code>true</code></td> 
      <td>Whether to include bytes spilled to memory/disk while performing the join to each task's metrics <strong>in addition</strong> to the standard task metrics. Set this to <code>false</code> if you don't want to add these metrics to the standard task metrics.</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <h2><a id="user-content-implementation-details" class="anchor" href="https://github.com/hindog/spark-mergejoin#implementation-details" aria-hidden="true" target="_blank">
@@ -217,10 +217,10 @@ fullJoined.collect.foreach(println)
   <p>The operators return an instance <a href="https://hindog.github.io/spark-mergejoin/latest/api/#com.hindog.spark.rdd.MergeJoinRDD" target="_blank">MergeJoinRDD</a> which delegates internally to a specific implementation of <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a> for each join type.</p> 
   <p>There are a few optimizations in place to try to minimize the amount of work that's being done during the join:</p> 
   <ul> 
-   <li><p>In cases were we have a key on one side but not the other, we skip creation of the spillable collection and output the tuples directly according to the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a>'s <code>leftOuter</code>/<code>rightOuter</code> method.</p></li> 
-   <li><p>When we do have a key present on both sides, we need to accumulate the values for the right side (which is why it should ideally be the "smaller" of the two sides). To do this, we create a spillable collection for the right side that will <strong>buffer as many values as possible in memory before spilling to disk</strong> so we only pay the penalty for spilling to disk for keys where it is necessary.</p></li> 
-   <li><p>Since the methods for the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a> contract (eg: <code>inner</code>, <code>leftOuter</code>, <code>rightOuter</code>) return an <code>Iterator</code> of values for each unique key, we don't need to perform join logic on each <em>value iteration</em>-- instead we perform join logic for each <em>unique key iteration</em>.</p></li> 
-   <li><p>In cases where there are no values to emit for a particular key, the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a> can return an empty <code>Iterator</code> for that key which causes an immediate advance to the next key instead of emitting+filtering the output rows. (ie: consider a naive approach that instead might have the <code>Joiner</code> emit <code>Option[(K, (V, W))]</code> for every value and rely on the caller to filter out the <code>None</code>'s)</p></li> 
+   <li> <p>In cases were we have a key on one side but not the other, we skip creation of the spillable collection and output the tuples directly according to the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a>'s <code>leftOuter</code>/<code>rightOuter</code> method.</p> </li> 
+   <li> <p>When we do have a key present on both sides, we need to accumulate the values for the right side (which is why it should ideally be the "smaller" of the two sides). To do this, we create a spillable collection for the right side that will <strong>buffer as many values as possible in memory before spilling to disk</strong> so we only pay the penalty for spilling to disk for keys where it is necessary.</p> </li> 
+   <li> <p>Since the methods for the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a> contract (eg: <code>inner</code>, <code>leftOuter</code>, <code>rightOuter</code>) return an <code>Iterator</code> of values for each unique key, we don't need to perform join logic on each <em>value iteration</em>-- instead we perform join logic for each <em>unique key iteration</em>.</p> </li> 
+   <li> <p>In cases where there are no values to emit for a particular key, the <a href="https://hindog.github.io/spark-mergejoin/latest/api/#org.apache.spark.rdd.mergejoin.MergeJoin$$Joiner" target="_blank">MergeJoin.Joiner</a> can return an empty <code>Iterator</code> for that key which causes an immediate advance to the next key instead of emitting+filtering the output rows. (ie: consider a naive approach that instead might have the <code>Joiner</code> emit <code>Option[(K, (V, W))]</code> for every value and rely on the caller to filter out the <code>None</code>'s)</p> </li> 
   </ul> 
  </article>
 </div>

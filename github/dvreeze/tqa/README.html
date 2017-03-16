@@ -4,28 +4,33 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>TQA</h1> 
-  <p>Lean XBRL Taxonomy Query API (TQA). There are just 3 layers: taxonomy DOM, relationships, and taxonomies that combine the 2 (as a taxonomy query API).</p> 
-  <p>It knows about taxonomy data as type-safe XML in an XBRL context, supporting several different DOM abstractions (core/dimensional, formula, table etc.), and it knows about relationships connecting these type-safe DOM elements.</p> 
-  <p>It can be used for validating XBRL instances, including (pluggable) schema validation of XBRL instances.</p> 
-  <p>It is immutable if the underlying yaidom elements are immutable. The underlying backing elements can be any BackingElemApi implementation.</p> 
-  <p>It understands networks of relationships, and prohibition/overriding.</p> 
-  <p>It tries to keep memory footprint low, even if the underlying XML is always available. One trick to minimize memory footprint is almost emptying label/reference linkbases without breaking DTS discovery.</p> 
-  <p>Examples can be written against this API in tutorials explaining XBRL (for example dimensional validation) to developers.</p> 
-  <p>Ad-hoc querying of taxonomy data must be made very easy with this TQA.</p> 
-  <p>Creation of taxonomy DOM elements or of relationships should never fail, so that TQA can be used for taxonomy validation as well. Instance methods on DOM elements, relationships and taxonomies can fail however, so it may be needed to query at a lower level of abstraction if the loaded taxonomy has not at all been validated yet.</p> 
-  <p>Technically, there is a clear distinction between data and behavior, except maybe in the taxonomy Scala package. Relationships do not carry around entire taxonomies as context, but use the ResolvedLocatorOrResource abstraction instead. Hence, creation of a relationship from scratch is feasible now.</p> 
-  <p>Some design choices in this TQA are:</p> 
+  <p>XBRL Taxonomy Query API (TQA). It is based on the yaidom XML query API, and offers a Scala Collections processing experience.</p> 
+  <p>TQA contains 3 layers. The lowest layer is the taxonomy DOM, offering a more type-safe yaidom querying experience for taxonomy data (linkbase content and taxonomy schema content). On top of that is the relationship layer, where XLink arcs of the lowest layer are "resolved". On top of that is the layer of the taxonomy query API itself, which returns relationship and type-safe DOM data.</p> 
+  <p>Some design requirements are:</p> 
   <ul> 
-   <li>Relationships and concept declarations can be queried on the same "taxonomy" object, without unwrapping</li> 
-   <li>We can build rich wrappers around taxonomy objects, but the same query API (plus more) is retained (think: decorator pattern)</li> 
-   <li>The query API is clear and sufficiently easy to use from a REPL session</li> 
-   <li>Objects that are expensive to create are created by a factory method with an appropriate name, making the constructor sufficiently private</li> 
-   <li>Most objects can be created even if the taxonomy is invalid, so TQA can also be used for validating taxonomies</li> 
-   <li>In particular, incomplete taxonomies can be created, as long as we pass knowledge about known substitution groups along</li> 
-   <li>It is up to the user of the API if taxonomy objects are created in a very lenient way or a very strict way</li> 
-   <li>DTS discovery can be tweaked, and so can post-processing of parsed taxonomy documents</li> 
-   <li>Finding relationships and schema content on concept (target) expanded names is fast</li> 
-   <li>The backing element implementations can be native yaidom but can also be Saxon tiny trees!</li> 
+   <li>The TQA query API is easy to learn for developers who know XBRL (Core and Dimensions), Scala and yaidom.</li> 
+   <li>It must be clear (to those developers), sufficiently complete but still as small as feasible.</li> 
+   <li>The scope of TQA is only querying (Core and Dimensional) taxonomy content; for example, it does not know anything about XPath.</li> 
+   <li>TQA knows about networks of relationships, and about prohibition/overriding.</li> 
+   <li>It knows about XML base, embedded linkbases, XPointer (as used in an XBRL context), etc.</li> 
+   <li>The same query API is useful for very different use cases where taxonomy data is queried (ranging from very "lenient" to very "strict").</li> 
+   <li>The backing DOM implementation (exposed via the yaidom query API) is pluggable.</li> 
+   <li>TQA is immutable and thread-safe if the underlying DOM implementations are immutable and thread-safe.</li> 
+   <li>TQA is extensible; for example, formula and table support is included via "extensions".</li> 
   </ul> 
+  <p>Given the limited scope of TQA, it is quite useful as a basis for more interesting applications like XBRL validators. To a large extent TQA can help reduce the size and "conceptual weight" of an XBRL validator code base.</p> 
+  <p>Some use cases where TQA must be useful are:</p> 
+  <ul> 
+   <li>Representing an XBRL-valid DTS, when validating an XBRL instance against it.</li> 
+   <li>Representing a potentially XBRL-invalid DTS, when checking it for XBRL validity.</li> 
+   <li>Representing a non-closed arbitrary collection of taxonomy documents, when validating those documents against some "best practices".</li> 
+   <li>Creating test taxonomies from "templates". This requires that TQA models are sufficiently easy to (functionally) update.</li> 
+   <li>Representing a potentially huge "all-entrypoint" DTS, for certain types of reports.</li> 
+   <li>Ad-hoc querying of taxonomies.</li> 
+  </ul> 
+  <p>Note that non-closed arbitrary collection of taxonomy documents only become somewhat useful if sufficient knowledge about substitution groups is provided as well.</p> 
+  <p>The backing DOM implementation is pluggable for a reason. In production code, a yaidom wrapper around Saxon tiny trees can be very attractive for its performance characteristics. In particular, the memory footprint of Saxon tiny trees is very low. In test code, on the other hand, native yaidom DOM implementations can be handy because they are easier to debug. In both cases the backing DOM trees are immutable, and by extension the TQA models are immutable as well.</p> 
+  <p>TQA should be a good vehicle for explaining XBRL (for example dimensional validation) to developers.</p> 
+  <p>TODO Can TQA itself become a good basis for (pluggable) schema validation as well?</p> 
  </article>
 </div>

@@ -1,0 +1,114 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sbt-doge" class="anchor" href="https://github.com/sbt/sbt-doge#sbt-doge" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-doge</h1> 
+  <p>sbt-doge is a sbt plugin to aggregate across <code>crossScalaVersions</code> for multi-project builds, which I call partial cross building.</p> 
+  <p><a href="https://github.com/sbt/sbt-doge/blob/master/sbt-doge.png?raw=true" target="_blank"><img src="https://github.com/sbt/sbt-doge/raw/master/sbt-doge.png?raw=true" alt="sbt-doge" style="max-width:100%;"></a></p> 
+  <p>Current implementation of <code>+</code> cross building operator does not take in account for the <code>crossScalaVersions</code> of the sub projects. Until that's fixed, here's an alternative implementation of it.</p> 
+  <h2><a id="user-content-setup" class="anchor" href="https://github.com/sbt/sbt-doge#setup" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>setup</h2> 
+  <p>This is an auto plugin, so you need sbt 0.13.5+. Put this in <code>project/doge.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.eed3si9n<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-doge<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.5<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/sbt/sbt-doge#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>usage</h2> 
+  <p>First, define a multi-project build with a root project aggregating some child projects:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">commonSettings</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Def</span>.<span class="pl-en">Setting</span>[_]] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  organization <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.example.doge<span class="pl-pds">"</span></span>,
+  version <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>0.1-SNAPSHOT<span class="pl-pds">"</span></span>
+)
+
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">rootProj</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>)).
+  aggregate(libProj, fooPlugin).
+  settings(<span class="pl-v">commonSettings</span>: _<span class="pl-k">*</span>)
+
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">libProj</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>lib<span class="pl-pds">"</span></span>)).
+  settings(<span class="pl-v">commonSettings</span>: _<span class="pl-k">*</span>).
+  settings(
+    name <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>foo-lib<span class="pl-pds">"</span></span>,
+    scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.11.1<span class="pl-pds">"</span></span>,
+    crossScalaVersions <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>2.11.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2.10.4<span class="pl-pds">"</span></span>)
+  )
+
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">fooPlugin</span> <span class="pl-k">=</span>(project in file(<span class="pl-s"><span class="pl-pds">"</span>sbt-foo<span class="pl-pds">"</span></span>)).
+  dependsOn(libProj).
+  settings(<span class="pl-v">commonSettings</span>: _<span class="pl-k">*</span>).
+  settings(
+    name <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-foo<span class="pl-pds">"</span></span>,
+    sbtPlugin <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-c1">true</span>,
+    scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.10.4<span class="pl-pds">"</span></span>,
+    crossScalaVersions <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>2.10.4<span class="pl-pds">"</span></span>)
+  )</pre>
+  </div> 
+  <p>Next run this from the root project:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> ;so clean; such test; very publishLocal</pre>
+  </div> 
+  <p>sbt-doge will break the above into the following commands and executes them:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">&gt;</span> wow <span class="pl-c1">2.11.1</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>clean
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>clean
+<span class="pl-k">&gt;</span> fooPlugin<span class="pl-k">/</span>clean
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span>
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.11.1</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>test
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>test
+<span class="pl-k">&gt;</span> fooPlugin<span class="pl-k">/</span>test
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span>
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.11.1</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>publishLocal
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span>
+<span class="pl-k">&gt;</span> libProj<span class="pl-k">/</span>publishLocal
+<span class="pl-k">&gt;</span> fooPlugin<span class="pl-k">/</span>publishLocal
+<span class="pl-k">&gt;</span> wow <span class="pl-c1">2.10.4</span></pre>
+  </div> 
+  <p>It is looking into <code>aggregate</code> of the current project, and for each aggregated project, running a loop for each <code>crossScalaVersions</code> and executing the passed in command. The currently supported prefixes are: <code>much</code>, <code>so</code>, <code>such</code>, and <code>very</code>.</p> 
+  <p><code>wow</code> is a better implementation of <code>++</code> that only affects the aggregated projects.</p> 
+  <h2><a id="user-content-crossperprojectplugin" class="anchor" href="https://github.com/sbt/sbt-doge#crossperprojectplugin" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>CrossPerProjectPlugin</h2> 
+  <p><code>CrossPerProjectPlugin</code> overrides sbt's <code>+</code> and <code>++</code> commands and uses doge's implementation that aggregates command respecting <code>crossScalaVersions</code> at each subproject. It is not a triggered plugin and so must be enabled using <code>enablePlugins(CrossPerProjectPlugin)</code>.</p> 
+  <p>can now be written as</p> 
+  <pre><code>&gt; ;+ clean; + test; + publishLocal
+</code></pre> 
+  <h2><a id="user-content-strict-aggregation" class="anchor" href="https://github.com/sbt/sbt-doge#strict-aggregation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>strict aggregation</h2> 
+  <p>sbt-doge adds strict aggregation command <code>plz</code>. <code>plz 2.11.5 compile</code> will aggregate only the subproject that contains <code>2.11.5</code> in <code>crossScalaVersions</code>. The alias for <code>plz</code> command is <code>+++</code> for <code>CrossPerProjectPlugin</code>.</p> 
+  <h2><a id="user-content-usage-from-sbt-release" class="anchor" href="https://github.com/sbt/sbt-doge#usage-from-sbt-release" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage from sbt-release</h2> 
+  <p>sbt-doge can be used with the <a href="https://github.com/sbt/sbt-release" target="_blank">sbt-release</a> plugin for the purposes of cross publishing as of sbt-release 1.0.4 onward. To use it you will want to ensure that <code>releaseCrossBuild</code> is set to <code>false</code>, and that your release steps incorporate certain <code>+</code> commands. Here is an example that substitues the regular test and publish steps with their cross build equivalents (the <code>CrossPerProjectPlugin</code> is also required to be enabled for each sub project):</p> 
+  <pre><code>  releaseCrossBuild := false
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    releaseStepCommandAndRemaining("+test"),
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommandAndRemaining("+publish"),
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+</code></pre> 
+  <p>You will also need to ensure that any sub project that is used as a classpath dependency of another sub project i.e. referenced in a <code>dependsOn</code>, is also aggregated.</p> 
+  <p>The <a href="https://github.com/typesafehub/conductr-lib" target="_blank">ConductR Library</a> project incorporates the above settings in order to deliver a complex build for Scala 2.11 and Scala 2.12. Certain sub projects are excluded from Scala 2.12 concerns as there will not be any support for them e.g. when considering Play 2.3 and Play 2.4. The resultant artifacts are signed and published to Maven Central.</p> 
+ </article>
+</div>

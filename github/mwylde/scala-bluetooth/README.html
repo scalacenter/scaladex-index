@@ -8,32 +8,32 @@
   <p>Bluetooth <a href="https://learn.adafruit.com/introduction-to-bluetooth-low-energy?view=all" target="_blank">is complicated</a> and DBus <a href="https://dbus.freedesktop.org/doc/dbus-specification.html" target="_blank">is <em>extremely</em> complicated</a>. This library aims to hide most of the complication of dealing with DBus, but does not abstract much over the underlying Bluetooth concepts.</p> 
   <p>Enough talk. You just want to make a sweet light display:</p> 
   <div class="highlight highlight-source-scala">
-   <pre> <span class="pl-k">object</span> <span class="pl-en">DanceParty</span> {
-  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
-    <span class="pl-k">val</span> <span class="pl-en">manager</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BluetoothManager</span>
-    <span class="pl-k">val</span> <span class="pl-en">adapter</span> <span class="pl-k">=</span> manager.defaultAdapter.get
-    <span class="pl-k">if</span> (<span class="pl-k">!</span>adapter.powered) {
-      <span class="pl-en">Await</span>.result(adapter.powered <span class="pl-k">=</span> <span class="pl-c1">true</span>, <span class="pl-c1">10</span> seconds)
-    }
-    adapter.startDiscovery()
-    <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">1000</span>)
+   <pre><span class="pl-k">object</span> <span class="pl-en">DanceParty</span> {
+ <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+   <span class="pl-k">val</span> <span class="pl-en">manager</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BluetoothManager</span>
+   <span class="pl-k">val</span> <span class="pl-en">adapter</span> <span class="pl-k">=</span> manager.defaultAdapter.get
+   <span class="pl-k">if</span> (<span class="pl-k">!</span>adapter.powered) {
+     <span class="pl-en">Await</span>.result(adapter.powered <span class="pl-k">=</span> <span class="pl-c1">true</span>, <span class="pl-c1">10</span> seconds)
+   }
+   adapter.startDiscovery()
+   <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">1000</span>)
 
-    <span class="pl-k">val</span> <span class="pl-en">lights</span> <span class="pl-k">=</span> manager.devices.filter(_.name.startsWith(<span class="pl-s"><span class="pl-pds">"</span>LEDBlue<span class="pl-pds">"</span></span>))
-    lights.foreach(_.connect(stayConnected <span class="pl-k">=</span> <span class="pl-c1">true</span>))
+   <span class="pl-k">val</span> <span class="pl-en">lights</span> <span class="pl-k">=</span> manager.devices.filter(_.name.startsWith(<span class="pl-s"><span class="pl-pds">"</span>LEDBlue<span class="pl-pds">"</span></span>))
+   lights.foreach(_.connect(stayConnected <span class="pl-k">=</span> <span class="pl-c1">true</span>))
 
-    <span class="pl-en">Range</span>(<span class="pl-c1">0</span>, <span class="pl-c1">100</span>).foreach((i) <span class="pl-k">=&gt;</span> {
-      <span class="pl-k">val</span> <span class="pl-en">color</span> <span class="pl-k">=</span> (<span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>))
-      <span class="pl-k">val</span> <span class="pl-en">message</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">0x56</span>, color._1, color._2, color._3, <span class="pl-c1">0x00</span>, <span class="pl-c1">0xf0</span>, <span class="pl-c1">0xaa</span>)
-      lights.toParArray.foreach(light <span class="pl-k">=&gt;</span> {
-        light.getCharForUUID(<span class="pl-s"><span class="pl-pds">"</span>0000ffe9<span class="pl-pds">"</span></span>)
-          .foreach((char) <span class="pl-k">=&gt;</span> char.writeValue(message.map(_.toByte)))
-      })
-      <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">200</span>)
-    })
+   <span class="pl-en">Range</span>(<span class="pl-c1">0</span>, <span class="pl-c1">100</span>).foreach((i) <span class="pl-k">=&gt;</span> {
+     <span class="pl-k">val</span> <span class="pl-en">color</span> <span class="pl-k">=</span> (<span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>), <span class="pl-en">Random</span>.nextInt(<span class="pl-c1">255</span>))
+     <span class="pl-k">val</span> <span class="pl-en">message</span> <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-c1">0x56</span>, color._1, color._2, color._3, <span class="pl-c1">0x00</span>, <span class="pl-c1">0xf0</span>, <span class="pl-c1">0xaa</span>)
+     lights.toParArray.foreach(light <span class="pl-k">=&gt;</span> {
+       light.getCharForUUID(<span class="pl-s"><span class="pl-pds">"</span>0000ffe9<span class="pl-pds">"</span></span>)
+         .foreach((char) <span class="pl-k">=&gt;</span> char.writeValue(message.map(_.toByte)))
+     })
+     <span class="pl-en">Thread</span>.sleep(<span class="pl-c1">200</span>)
+   })
 
-    lights.foreach(_.disconnect())
-    manager.close()
-  }
+   lights.foreach(_.disconnect())
+   manager.close()
+ }
 }</pre>
   </div> 
   <p>See <a href="https://github.com/mwylde/scala-bluetooth/tree/master/examples" target="_blank">here</a> for more examples.</p> 

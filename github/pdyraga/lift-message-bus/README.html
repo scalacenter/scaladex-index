@@ -4,7 +4,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>MessageBus for Lift framework</h1> 
-  <p><code>MessageBus</code> facilitates communication between <code>LiftActors</code>. </p> 
+  <p><code>MessageBus</code> facilitates communication between <code>LiftActors</code>.</p> 
   <p>Originally, the idea was to allow any two or more Comets communicate with each other even if they all live in separate user sessions. Lift does not allow to obtain reference to Comet actors from other user sessions. This is reasonable limitation. However, sometimes, we need to send an instant notification to all Comets rendering the given page so that they can execute <code>partialUpdate</code> as soon as some event occurrs. Polling database each second for changes from all Comets displaying the given page is less than optimal in most cases. Here the <code>MessageBus</code> comes into play.</p> 
   <p>Comets (actually any descendants of <code>LifActor</code>) subscribe to <code>Topic</code>s which are abstractions allowing to specify in which type of messages the given listener is interested. In our implementation, <code>Topic</code> is a trait with one method <code>def name: String</code>. Here are two example <code>Topic</code> implementations:</p> 
   <pre><code>case class WombatPhotosTopic(wombatId: String) extends Topic {
@@ -25,11 +25,11 @@ MessageBus ! Subscribe(listener3, BeaverPhotosTopic("3"))
   <pre><code>MessageBus ! For(WombatPhotosTopic("1"), WombatPhoto('w1.jpg')) // 1
 MessageBus ! ForAll[WombatPhotosTopic](WombatPhoto('w2.jpg')) // 2
 </code></pre> 
-  <p>The first message will be delivered only to <code>listener1</code> while second message will be delivered both to <code>listener1</code> and <code>listener2</code>. </p> 
+  <p>The first message will be delivered only to <code>listener1</code> while second message will be delivered both to <code>listener1</code> and <code>listener2</code>.</p> 
   <p>Actors can unsubscribe from the given <code>Topic</code> sending <code>Unsubscribe</code> message:</p> 
   <pre><code>MessageBus ! Unsubscribe(this, BeaverPhotosTopic("3"))
 </code></pre> 
-  <p>Actors should listen for messages from <code>MessageBus</code> in the same way as they listen for any other type of message. That is, for example, <code>messageHandler</code> method for <code>LiftActor</code>s and <code>high/low/mediumPriority</code> methods for <code>CometActor</code>s: </p> 
+  <p>Actors should listen for messages from <code>MessageBus</code> in the same way as they listen for any other type of message. That is, for example, <code>messageHandler</code> method for <code>LiftActor</code>s and <code>high/low/mediumPriority</code> methods for <code>CometActor</code>s:</p> 
   <pre><code>case object BeaverPhotosTopic extends Topic {
   val name = "beaver-photos"
 }
@@ -44,7 +44,7 @@ class BeaverPhotosWall extends NamedCometActorTrait {
     super.localShutdown
     MessageBus ! Unsubscribe(this, BeaverPhotosTopic)
   }
-
+  
   override def lowPriority = {
     case NewBeaverPhotoPosted(photo) =&gt;
       partialUpdate(renderNewPhoto(photo))

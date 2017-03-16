@@ -28,8 +28,8 @@
 <span class="pl-c"><span class="pl-c">//</span>         |    The arguments to that method are pickled automatically</span>
 <span class="pl-c"><span class="pl-c">//</span>         Call a method on the `Api` trait</span></pre>
   </div> 
-  <p>This provides a range of nice properties: under-the-hood the macro converts your method calls into RPCs, together with the relevant serialization code, but you do not need to deal with that yourself. Furthermore, since the RPCs appear to be method calls, tools like IDEs are able to work with them, e.g. doing project-wide renames or analysis (jump-to-definition, find-usages, etc.). </p> 
-  <p>Most importantly, the compiler is able to typecheck these RPCs, and ensure that you are always calling them with the correct arguments, and handling the return-value correctly in turn. This removes an entire class of errors. </p> 
+  <p>This provides a range of nice properties: under-the-hood the macro converts your method calls into RPCs, together with the relevant serialization code, but you do not need to deal with that yourself. Furthermore, since the RPCs appear to be method calls, tools like IDEs are able to work with them, e.g. doing project-wide renames or analysis (jump-to-definition, find-usages, etc.).</p> 
+  <p>Most importantly, the compiler is able to typecheck these RPCs, and ensure that you are always calling them with the correct arguments, and handling the return-value correctly in turn. This removes an entire class of errors.</p> 
   <p>Autowire is completely agnostic to both the serialization library, and the transport-mechanism.</p> 
   <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/lihaoyi/autowire#getting-started" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -62,7 +62,7 @@
 <span class="pl-k">object</span> <span class="pl-en">MyServer</span> <span class="pl-k">extends</span> <span class="pl-e">autowire.Server</span>[<span class="pl-k">String</span>, upickle.<span class="pl-en">Reader</span>, upickle.<span class="pl-en">Writer</span>]{
   <span class="pl-k">def</span> <span class="pl-en">write</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Writer</span>](<span class="pl-v">r</span>: <span class="pl-en">Result</span>) <span class="pl-k">=</span> upickle.write(r)
   <span class="pl-k">def</span> <span class="pl-en">read</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">p</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> upickle.read[<span class="pl-en">Result</span>](p)
-
+  
   <span class="pl-k">val</span> <span class="pl-en">routes</span> <span class="pl-k">=</span> <span class="pl-en">MyServer</span>.route[<span class="pl-en">MyApi</span>](<span class="pl-en">MyApiImpl</span>)
 }
 
@@ -82,7 +82,7 @@
   </div> 
   <p>In this example, we have a shared <code>MyApi</code> trait, which contains a trait/interface which is shared by both client and server. The server contains an implementation of this trait, while the client can make calls against the trait using the <code>route</code> macro provided by <code>MyServer</code>.</p> 
   <p>Although in this example everything is happening locally, this example goes through the entire serialization/de-serialization process when transferring the arguments/return-value. Thus, it is trivial to replace the direct call to <code>MyServer.routes</code> to a remote call over HTTP or TCP or some other transport with <code>MyClient</code> and <code>MyServer</code>/<code>MyApiImpl</code> living on different machines or even running on different platforms (e.g. Scala-JS/Scala-JVM).</p> 
-  <p>Here's a <a href="https://github.com/lihaoyi/workbench-example-app/tree/autowire" target="_blank">longer example</a>, which takes advantage of autowire's cross-platform-ness to write an interactive client-server web-app. </p> 
+  <p>Here's a <a href="https://github.com/lihaoyi/workbench-example-app/tree/autowire" target="_blank">longer example</a>, which takes advantage of autowire's cross-platform-ness to write an interactive client-server web-app.</p> 
   <p>Note that:</p> 
   <ul> 
    <li>The client proxy, <code>MyClient[MyApi]</code> in this example, must be explicitly written out, and followed by <code>.call()</code> at each site where a remote call is made. That is, you cannot assign <code>MyClient[MyApi]</code> to a variable and use that instead.</li> 
@@ -99,7 +99,7 @@
   <span class="pl-k">type</span> <span class="pl-en">Request</span> <span class="pl-k">=</span> <span class="pl-en">Core</span>.<span class="pl-en">Request</span>[<span class="pl-en">PickleType</span>]
   <span class="pl-k">def</span> <span class="pl-en">read</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">p</span>: <span class="pl-en">PickleType</span>)<span class="pl-k">:</span> <span class="pl-en">Result</span>
   <span class="pl-k">def</span> <span class="pl-en">write</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Writer</span>](<span class="pl-v">r</span>: <span class="pl-en">Result</span>)<span class="pl-k">:</span> <span class="pl-en">PickleType</span>
-
+  
 <span class="pl-c">  <span class="pl-c">/**</span></span>
 <span class="pl-c">   * A method for you to override, that actually performs the heavy</span>
 <span class="pl-c">   * lifting to transmit the marshalled function call from the [[<span class="pl-e">Client</span>]]</span>
@@ -113,7 +113,7 @@
    <pre><span class="pl-k">trait</span> <span class="pl-en">Server</span>[<span class="pl-en">PickleType</span>, <span class="pl-en">Reader</span>[_], <span class="pl-en">Writer</span>[_]] {
   <span class="pl-k">type</span> <span class="pl-en">Request</span> <span class="pl-k">=</span> <span class="pl-en">Core</span>.<span class="pl-en">Request</span>[<span class="pl-en">PickleType</span>]
   <span class="pl-k">type</span> <span class="pl-en">Router</span> <span class="pl-k">=</span> <span class="pl-en">Core</span>.<span class="pl-en">Router</span>[<span class="pl-en">PickleType</span>]
-
+  
   <span class="pl-k">def</span> <span class="pl-en">read</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">p</span>: <span class="pl-en">PickleType</span>)<span class="pl-k">:</span> <span class="pl-en">Result</span>
   <span class="pl-k">def</span> <span class="pl-en">write</span>[<span class="pl-en">Result</span><span class="pl-k">:</span> <span class="pl-en">Writer</span>](<span class="pl-v">r</span>: <span class="pl-en">Result</span>)<span class="pl-k">:</span> <span class="pl-en">PickleType</span>
 
@@ -155,13 +155,13 @@
   <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Request</span>[<span class="pl-en">PickleType</span>](<span class="pl-v">path</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>], <span class="pl-v">args</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">PickleType</span>])
 }</pre>
   </div> 
-  <p>is outside the scope of Autowire, as is how you serialize/deserialize the arguments/return-value using the <code>read</code> and <code>write</code> functions. </p> 
+  <p>is outside the scope of Autowire, as is how you serialize/deserialize the arguments/return-value using the <code>read</code> and <code>write</code> functions.</p> 
   <p>In short,</p> 
   <ul> 
    <li><code>{Client, Server}.{read, write}</code> is your chance to substitute in whatever serialization library you want. Any library should work, as long as you can put the serialization code into the <code>read</code> and <code>write</code> functions to serialize an object of type <code>T</code>. Autowire works with any transport and any serialization library, including <a href="http://docs.oracle.com/javase/tutorial/jndi/objects/serial.html" target="_blank">Java-serialization</a>, <a href="https://github.com/EsotericSoftware/kryo" target="_blank">Kryo</a> and <a href="https://www.playframework.com/documentation/2.4.x/ScalaJsonCombinators" target="_blank">Play-Json</a>, with <a href="https://github.com/lihaoyi/autowire/blob/master/blob/master/jvm/src/test/scala/autowire/InteropTests.scala" target="_blank">unit tests</a> to ensure that they are working.</li> 
-   <li><code>Client.doCall</code> and <code>Server.route</code> is your chance to choose whatever transport mechanism you want to use. By that point, the arguments/return-value have already been mostly serialized, with only a small amount of structure (e.g. the map of argument-names to serialized-values) left behind. Exactly how you get the <code>Request</code> object from the <code>Client</code> to the <code>Server</code> (HTTP, TCP, etc.) and the response-data back is up to you as long as you can give Autowire a <code>Future[PickleType]</code> in exchange for its <code>Request</code>.<br></li> 
+   <li><code>Client.doCall</code> and <code>Server.route</code> is your chance to choose whatever transport mechanism you want to use. By that point, the arguments/return-value have already been mostly serialized, with only a small amount of structure (e.g. the map of argument-names to serialized-values) left behind. Exactly how you get the <code>Request</code> object from the <code>Client</code> to the <code>Server</code> (HTTP, TCP, etc.) and the response-data back is up to you as long as you can give Autowire a <code>Future[PickleType]</code> in exchange for its <code>Request</code>.</li> 
   </ul> 
-  <p>If you still don't fully understand, and need help getting something working, take a look at the <a href="https://github.com/lihaoyi/workbench-example-app/tree/autowire" target="_blank">complete example</a>. </p> 
+  <p>If you still don't fully understand, and need help getting something working, take a look at the <a href="https://github.com/lihaoyi/workbench-example-app/tree/autowire" target="_blank">complete example</a>.</p> 
   <h1><a id="user-content-error-handling" class="anchor" href="https://github.com/lihaoyi/autowire#error-handling" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -222,8 +222,8 @@
 [error]                 ^</pre>
   </div> 
   <ul> 
-   <li><p>Similarly, since Autowire RPC calls are (at least superficially) just method calls, things like find-usages, rename-all, and other such tools all work flawlessly across these calls.</p></li> 
-   <li><p>Autowire deals directly with <code>Future</code>s; this means that it plays nicely with the rest of the Scala ecosystem, including tools such as <code>async</code> and <code>await</code>, while making it much easier for future developers to reason about than callback soup. </p></li> 
+   <li> <p>Similarly, since Autowire RPC calls are (at least superficially) just method calls, things like find-usages, rename-all, and other such tools all work flawlessly across these calls.</p> </li> 
+   <li> <p>Autowire deals directly with <code>Future</code>s; this means that it plays nicely with the rest of the Scala ecosystem, including tools such as <code>async</code> and <code>await</code>, while making it much easier for future developers to reason about than callback soup.</p> </li> 
   </ul> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c"><span class="pl-c">//</span> endpoint definition</span>
@@ -235,13 +235,13 @@
 }</pre>
   </div> 
   <ul> 
-   <li>Also shown in the example above, serialization and deserialization of data structures is handled implicitly. Thus you can call functions which return non-trivial structures and receive the structured data directly, without having to fiddle with JSON or other ad-hoc encodings yourself. </li> 
+   <li>Also shown in the example above, serialization and deserialization of data structures is handled implicitly. Thus you can call functions which return non-trivial structures and receive the structured data directly, without having to fiddle with JSON or other ad-hoc encodings yourself.</li> 
   </ul> 
   <h1><a id="user-content-limitations" class="anchor" href="https://github.com/lihaoyi/autowire#limitations" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Limitations</h1> 
-  <p>Autowire can only serialize and deserialize things that the chosen serialization library can. For example, if you choose to go with uPickle, this means most of the immutable data structures in the standard library and case classes, but circular data structures aren't supported, and arbitrary object graphs don't work. </p> 
+  <p>Autowire can only serialize and deserialize things that the chosen serialization library can. For example, if you choose to go with uPickle, this means most of the immutable data structures in the standard library and case classes, but circular data structures aren't supported, and arbitrary object graphs don't work.</p> 
   <p>Autowire does not support method overloading on the interfaces/traits used for making the RPCs.</p> 
   <p>Apart from that, Autowire is a pretty thin layer on top of any existing serialization library and transport layer, and does not project much functionality apart from routing. It is up to the developer using Autowire to decide how he wants to transport the serialized data back and forth, how he wants to respond to errors, etc.</p> 
   <p>To see a simple example involving a ScalaJS client and Spray server, check out this example:</p> 
@@ -255,8 +255,8 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>0.2.6</h2> 
   <ul> 
-   <li><p><code>.call()</code>s now wrap the endpoint using <code>Future()</code> instead of <code>Future.successful</code>, which means exceptions now get caught and propagated inside the <code>Future</code> rather than blowing up the call stack</p></li> 
-   <li><p>Cross-publish for Scala 2.12.0</p></li> 
+   <li> <p><code>.call()</code>s now wrap the endpoint using <code>Future()</code> instead of <code>Future.successful</code>, which means exceptions now get caught and propagated inside the <code>Future</code> rather than blowing up the call stack</p> </li> 
+   <li> <p>Cross-publish for Scala 2.12.0</p> </li> 
   </ul> 
  </article>
 </div>

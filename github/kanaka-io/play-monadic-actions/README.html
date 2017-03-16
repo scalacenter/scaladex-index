@@ -10,15 +10,15 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Motivation</h2> 
-  <p>It is commonly admitted that controllers should be lean and only focus on parsing an incoming HTTP request, call (possibly many) service methods and finally build an HTTP response (preferably with a proper status). In the context of an asynchronous framework like Play!, most of these operations results are (or can be) wrapped in a <code>Future</code>, and since their outcome can be either positive or negative, these results have a type that is more or less isomorphic to <code>Future[Either[X, Y]]</code>. </p> 
-  <p>This matter of facts raises some readability issues. Consider for example the following action : </p> 
+  <p>It is commonly admitted that controllers should be lean and only focus on parsing an incoming HTTP request, call (possibly many) service methods and finally build an HTTP response (preferably with a proper status). In the context of an asynchronous framework like Play!, most of these operations results are (or can be) wrapped in a <code>Future</code>, and since their outcome can be either positive or negative, these results have a type that is more or less isomorphic to <code>Future[Either[X, Y]]</code>.</p> 
+  <p>This matter of facts raises some readability issues. Consider for example the following action :</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">ExampleController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
-
+  
   <span class="pl-k">val</span> <span class="pl-en">beerOrderForm</span><span class="pl-k">:</span> <span class="pl-en">Form</span>[<span class="pl-en">BeerOrder</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
   <span class="pl-k">def</span> <span class="pl-en">findAdultUser</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">UnderageError</span>, <span class="pl-en">User</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
   <span class="pl-k">def</span> <span class="pl-en">sellBeer</span>(<span class="pl-v">beerName</span>: <span class="pl-k">String</span>, <span class="pl-v">customer</span>: <span class="pl-en">User</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">OutOfStockError</span>, <span class="pl-en">Beer</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
-
+  
   <span class="pl-k">def</span> <span class="pl-en">orderBeer</span>() <span class="pl-k">=</span> <span class="pl-en">Action</span>.async {
      beerOrderForm.bindFromRequest().fold(
        formWithErrors <span class="pl-k">=&gt;</span> <span class="pl-en">BadRequest</span>(views.html.orderBeer(formWithErrors),
@@ -38,7 +38,7 @@
   }
 }</pre>
   </div> 
-  <p>This is pretty straightforward, and yet the different <em>steps</em> of the computation are not made very clear. And since I've typed this in a regular text editor with no syntax highlighting nor static code analysis, there is an obvious error that you may not have spotted (there's a <code>map</code> instead of a <code>flatMap</code> somewhere). </p> 
+  <p>This is pretty straightforward, and yet the different <em>steps</em> of the computation are not made very clear. And since I've typed this in a regular text editor with no syntax highlighting nor static code analysis, there is an obvious error that you may not have spotted (there's a <code>map</code> instead of a <code>flatMap</code> somewhere).</p> 
   <p>This library addresses this problem by defining a <code>Step[A]</code> monad, which is roughly a <code>Future[Either[Result, A]]</code>, but with a right bias on the <code>Either</code> part, and providing a little DSL to lift relevant types into this monad's context.</p> 
   <p>Using it, the previous example becomes :</p> 
   <div class="highlight highlight-source-scala">
@@ -48,11 +48,11 @@
 <span class="pl-k">import</span> <span class="pl-v">play.api.libs.concurrent.Execution.Implicits.</span><span class="pl-v">defaultContext </span>
 
 <span class="pl-k">class</span> <span class="pl-en">ExampleController</span> <span class="pl-k">extends</span> <span class="pl-e">Controller</span> {
-
+  
   <span class="pl-k">val</span> <span class="pl-en">beerOrderForm</span><span class="pl-k">:</span> <span class="pl-en">Form</span>[<span class="pl-en">BeerOrder</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
   <span class="pl-k">def</span> <span class="pl-en">findAdultUser</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">UnderageError</span>, <span class="pl-en">User</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
   <span class="pl-k">def</span> <span class="pl-en">sellBeer</span>(<span class="pl-v">beerName</span>: <span class="pl-k">String</span>, <span class="pl-v">customer</span>: <span class="pl-en">User</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Either</span>[<span class="pl-en">OutOfStockError</span>, <span class="pl-en">Beer</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
-
+  
   <span class="pl-k">def</span> <span class="pl-en">orderBeer</span>() <span class="pl-k">=</span> <span class="pl-en">Action</span>.async {
     <span class="pl-k">for</span> {
       beerOrder <span class="pl-k">&lt;</span><span class="pl-k">-</span> beerOrderForm.bindFromRequest()    <span class="pl-k">?|</span> (formWithErrors <span class="pl-k">=&gt;</span> <span class="pl-en">BadRequest</span>(views.html.orderBeer(formWithErrors))
@@ -67,8 +67,8 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>How it works</h2> 
-  <p>The DSL introduces the binary <code>?|</code> operator. The happy path goes on the left hand side of the operator and the error path goes on the right : <code>happy ?| error</code>. Such expression produces a <code>Step[A]</code> which has all the required methods to make it usable in a for-comprehension. </p> 
-  <p>So for example, if a service methods <code>foo</code>returns a <code>Future[Option[A]]</code>, we assume the happy path to be the case where the <code>Future</code> succeeds with a <code>Some[A]</code> and the error path to be the case where it succeeds with a <code>None</code> (the case where the <code>Future</code> fails is already taken care of by play's error handler). So we need to provide a proper <code>Result</code> to be returned in the error case (most probably a <code>NotFound</code>) and then we can write </p> 
+  <p>The DSL introduces the binary <code>?|</code> operator. The happy path goes on the left hand side of the operator and the error path goes on the right : <code>happy ?| error</code>. Such expression produces a <code>Step[A]</code> which has all the required methods to make it usable in a for-comprehension.</p> 
+  <p>So for example, if a service methods <code>foo</code>returns a <code>Future[Option[A]]</code>, we assume the happy path to be the case where the <code>Future</code> succeeds with a <code>Some[A]</code> and the error path to be the case where it succeeds with a <code>None</code> (the case where the <code>Future</code> fails is already taken care of by play's error handler). So we need to provide a proper <code>Result</code> to be returned in the error case (most probably a <code>NotFound</code>) and then we can write</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">for</span> {
  <span class="pl-c"><span class="pl-c">//</span> ...</span>
@@ -85,7 +85,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Filtering and Pattern-matching</h2> 
   <p><code>Step[_]</code> defines a <code>withFilter</code> method, which means that one can use pattern matching and filtering in for-comprehensions involving <code>Step[_]</code>.</p> 
-  <p>For example, if <code>bar</code> is of type <code>Future[Option[(Int, String)]]</code>, one can write </p> 
+  <p>For example, if <code>bar</code> is of type <code>Future[Option[(Int, String)]]</code>, one can write</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">for</span> {
  (i, s) <span class="pl-k">&lt;</span><span class="pl-k">-</span> bar <span class="pl-k">?|</span> <span class="pl-en">NotFound</span> <span class="pl-k">if</span> s.length <span class="pl-k">&gt;=</span> i
@@ -96,8 +96,8 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Supported conversions</h2> 
-  <p>The DSL supports the following conversions : </p> 
-  <table>
+  <p>The DSL supports the following conversions :</p> 
+  <table> 
    <thead> 
     <tr> 
      <th>Defining module</th> 
@@ -105,7 +105,7 @@
      <th>Type of the right hand side</th> 
      <th>Type of the extracted value</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td><code>play-monadic-actions</code></td> 
@@ -274,7 +274,7 @@
      <td><code>Future[Validation[B, A]]</code></td> 
      <td><code>B =&gt; Result</code></td> 
      <td><code>A</code></td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
   <h2><a id="user-content-installation" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#installation" aria-hidden="true" target="_blank">
@@ -286,14 +286,14 @@
   <div class="highlight highlight-source-scala">
    <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>io.kanaka<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-monadic-actions<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.0.0<span class="pl-pds">"</span></span></pre>
   </div> 
-  <p>There are also contrib modules for interoperability with scalaz and cats : </p> 
-  <table>
+  <p>There are also contrib modules for interoperability with scalaz and cats :</p> 
+  <table> 
    <thead> 
     <tr> 
      <th>module name</th> 
      <th>is compatible with / built against</th> 
     </tr> 
-   </thead>
+   </thead> 
    <tbody> 
     <tr> 
      <td>play-monadic-actions-cats</td> 
@@ -306,10 +306,10 @@
     <tr> 
      <td>play-monadic-actions-scalaz-7-2</td> 
      <td>scalaz 7.2.3</td> 
-    </tr> 
+    </tr>
    </tbody>
   </table> 
-  <p>Each of these module provides <code>Functor</code> and <code>Monad</code> instances for <code>Step[_]</code> as well as conversions for relevant types in the target library </p> 
+  <p>Each of these module provides <code>Functor</code> and <code>Monad</code> instances for <code>Step[_]</code> as well as conversions for relevant types in the target library</p> 
   <p>These instances and conversions are made available by importing <code>io.kanaka.monadic.dsl.compat.cats._</code> and <code>io.kanaka.monadic.dsl.compat.scalaz._</code> respectively.</p> 
   <h2><a id="user-content-compatibility" class="anchor" href="https://github.com/kanaka-io/play-monadic-actions#compatibility" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -335,6 +335,6 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Credits</h2> 
   <p>This project is widely inspired from the <a href="https://github.com/lunatech-labs/play-monad-transformers#master" target="_blank">play-monad-transformers activator template</a> by Lunatech.</p> 
-  <p>It also uses <a href="https://github.com/alexarchambault/coursier" target="_blank">coursier</a> to fetch dependencies in parallel, which is a pure bliss. Take a look if you don't know it yet. </p> 
+  <p>It also uses <a href="https://github.com/alexarchambault/coursier" target="_blank">coursier</a> to fetch dependencies in parallel, which is a pure bliss. Take a look if you don't know it yet.</p> 
  </article>
 </div>

@@ -22,9 +22,9 @@
      <li>Unnecessary mutability</li> 
      <li>Broken lifecycle management (e.g. in broken logic to attempt to recreate a closed Cluster instance)</li> 
      <li>Broken contracts (e.g. each Connector trait allows to define a keySpace, but only one of them will "win")</li> 
-     <li>Both too much and too little separation of concerns in various parts of the old modules (e.g. too much in extensive delegation between multiple trait hierarchies that primarily deal with simply providing a Session, too little in entangling Zookeeper lookup logic with general Cluster creation) </li> 
+     <li>Both too much and too little separation of concerns in various parts of the old modules (e.g. too much in extensive delegation between multiple trait hierarchies that primarily deal with simply providing a Session, too little in entangling Zookeeper lookup logic with general Cluster creation)</li> 
      <li>Dead code</li> 
-    </ul></li> 
+    </ul> </li> 
   </ul> 
   <h2><a id="user-content-the-basics" class="anchor" href="https://github.com/sphonic/sphonic-phantom#the-basics" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -35,12 +35,12 @@
    <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span> (<span class="pl-v">id</span>: <span class="pl-en">UUID</span>, <span class="pl-v">value</span>: <span class="pl-k">String</span>)
 
 <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Foos</span> <span class="pl-k">extends</span> <span class="pl-e">CassandraTable</span>[<span class="pl-en">Foos</span>, <span class="pl-en">Foo</span>] <span class="pl-k">with</span> <span class="pl-e">Connector</span> {
-
+  
   <span class="pl-k">object</span> <span class="pl-en">id</span> <span class="pl-k">extends</span> <span class="pl-e">UUIDColumn</span>(<span class="pl-c1">this</span>) <span class="pl-k">with</span> <span class="pl-e">PartitionKey</span>[<span class="pl-en">UUID</span>]
   <span class="pl-k">object</span> <span class="pl-en">value</span> <span class="pl-k">extends</span> <span class="pl-e">StringColumn</span>(<span class="pl-c1">this</span>)
 
   <span class="pl-k">def</span> <span class="pl-en">fromRow</span>(<span class="pl-v">row</span>: <span class="pl-en">Row</span>)<span class="pl-k">:</span> <span class="pl-en">Foo</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(id(row), value(row))
-
+  
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">store</span>(<span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> {
     insert
       .value(_.id, foo.id)
@@ -56,7 +56,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
 <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
   </div> 
@@ -74,19 +74,19 @@ val bars = new Bars with keySpace.Connector
   <p>To make this more convenient, you can wrap the table creation in a container class that expects the fully configured <code>KeySpace</code> as a parameter:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">MyTables</span> (<span class="pl-v">keySpace</span>: <span class="pl-en">KeySpace</span>) {
-
+    
   <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
   <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
-
+      
 }</pre>
   </div> 
   <p>And then use it like this:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-k">val</span> <span class="pl-en">tables</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyTables</span>(keySpace)
-
+    
 tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>.randomUUID, <span class="pl-s"><span class="pl-pds">"</span>value<span class="pl-pds">"</span></span>))</pre>
   </div> 
   <p>The connector module does not prescribe a particular model here, but in most cases you want to separate the plumbing of Connector mixin (which always stays the same) from the dynamic keySpace creation (which depends on the environment).</p> 
@@ -100,7 +100,7 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
 <span class="pl-k">val</span> <span class="pl-en">hosts</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>35.0.0.1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>35.0.0.2<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">port</span> <span class="pl-k">=</span> <span class="pl-c1">9099</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts, port).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-c"><span class="pl-c">//</span> Embedded Cassandra for testing</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoint</span>.embedded.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp-test<span class="pl-pds">"</span></span>)</pre>
   </div> 
@@ -120,10 +120,10 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
   <p>In the rare event of combining multiple keySpaces in your application, you just need to prepare the table container class to expect two different <code>KeySpace</code> instances:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">MyTables</span> (<span class="pl-v">fooSpace</span>: <span class="pl-en">KeySpace</span>, <span class="pl-v">barSpace</span>: <span class="pl-en">KeySpace</span>) {
-
+    
   <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">fooSpace.Connector</span>
   <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">barSpace.Connector</span>
-
+      
 }</pre>
   </div> 
   <p>And then use this container like this:</p> 
@@ -133,7 +133,7 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
 <span class="pl-k">val</span> <span class="pl-en">builder</span> <span class="pl-k">=</span> <span class="pl-en">ContactPoints</span>(hosts)
 <span class="pl-k">val</span> <span class="pl-en">fooSpace</span> <span class="pl-k">=</span> builder.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myFoos<span class="pl-pds">"</span></span>)
 <span class="pl-k">val</span> <span class="pl-en">barSpace</span> <span class="pl-k">=</span> builder.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myBars<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-k">val</span> <span class="pl-en">tables</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">MyTables</span>(fooSpace, barSpace)</pre>
   </div> 
   <p>Just make sure that you create all keySpaces from the same builder, to let them share the underlying Cassandra <code>Cluster</code> instance.</p> 
@@ -147,14 +147,14 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c"><span class="pl-c">//</span> Using localhost:2181</span>
 <span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ZkContactPointLookup</span>.local.keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
 <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
   </div> 
   <p>Or providing the Zookeeper connection explicitly:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">keySpace</span> <span class="pl-k">=</span> <span class="pl-en">ZkContactPointLookup</span>(<span class="pl-s"><span class="pl-pds">"</span>37.0.0.5<span class="pl-pds">"</span></span>, <span class="pl-c1">2282</span>).keySpace(<span class="pl-s"><span class="pl-pds">"</span>myApp<span class="pl-pds">"</span></span>)
-
+    
 <span class="pl-k">object</span> <span class="pl-en">foos</span> <span class="pl-k">extends</span> <span class="pl-e">Foos</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span>
 <span class="pl-k">object</span> <span class="pl-en">bars</span> <span class="pl-k">extends</span> <span class="pl-e">Bars</span> <span class="pl-k">with</span> <span class="pl-e">keySpace.Connector</span></pre>
   </div> 
@@ -202,15 +202,15 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
     </svg></a>Design Guidelines for Testing</h2> 
   <p>When designing a test suite that uses phantom, you should be aware of the three levels of parallelism that exist when tests are run by sbt and ScalaTest:</p> 
   <ul> 
-   <li><p><strong>Running tests for multiple projects in a single build</strong>: Parallelism is controlled by sbt. Projects always build in parallel (unless they depend on each other), per default within a single JVM, but with different ClassLoaders, alternatively in a separate JVM if you set <code>fork := true</code> in your build.</p></li> 
-   <li><p><strong>Running multiple suites in a single project</strong>: Parallelism is controlled by ScalaTest. By default suites run in parallel. When sequential execution is needed (which should be a rare case) ScalaTest offers a <code>Sequential</code> class that allows to define a list of suites that need to run sequentially.</p></li> 
-   <li><p><strong>Running multiple tests in a single suite</strong>: Parallelism is controlled by ScalaTest. Here, by default the tests within a suite run sequentially. When parallel execution is desired, ScalaTest offers a <code>ParallelTestExecution</code> trait that can be mixed into your suite.</p></li> 
+   <li> <p><strong>Running tests for multiple projects in a single build</strong>: Parallelism is controlled by sbt. Projects always build in parallel (unless they depend on each other), per default within a single JVM, but with different ClassLoaders, alternatively in a separate JVM if you set <code>fork := true</code> in your build.</p> </li> 
+   <li> <p><strong>Running multiple suites in a single project</strong>: Parallelism is controlled by ScalaTest. By default suites run in parallel. When sequential execution is needed (which should be a rare case) ScalaTest offers a <code>Sequential</code> class that allows to define a list of suites that need to run sequentially.</p> </li> 
+   <li> <p><strong>Running multiple tests in a single suite</strong>: Parallelism is controlled by ScalaTest. Here, by default the tests within a suite run sequentially. When parallel execution is desired, ScalaTest offers a <code>ParallelTestExecution</code> trait that can be mixed into your suite.</p> </li> 
   </ul> 
   <p>With these options in mind, the following guidelines apply for writing tests for phantom's sbt plugin that uses Cassandra in embedded mode:</p> 
   <ul> 
-   <li><p>The plugin forces the tests to run in a forked JVM (you do not have to explicitly set this option yourself). This is solely due to implementation details of the main <code>phantom-dsl</code> artifact, that uses runtime reflection to determine things like the table name or the columns defined for a table. Since reflection is not thread-safe in Scala 2.10, phantom uses a lock for these lookups, but when the tests are not forked, the fact that sbt runs multiple projects in a separate ClassLoader circumnavigates the locks causing intermittent exceptions in the reflection code. </p></li> 
-   <li><p>For all other levels of parallelism there are no restrictions, but you need to keep in mind that all projects and all suites run against the same instance of embedded Cassandra. Therefore, if you use the same table within multiple suites, it is recommended to shield them from each other through the use of different keyspaces, which is easy to do with the new phantom-connector API. The names of the keyspaces for tests can be hardcoded within the suites as they do not depend on the environment.</p></li> 
-   <li><p>If you code a single suite with the default (tests run sequentially) and you use all test data in read-mode only, you can populate the tables in a <code>beforeAll</code> method and then use them in all tests. If the tests write data, you can truncate tables before each test method.</p></li> 
+   <li> <p>The plugin forces the tests to run in a forked JVM (you do not have to explicitly set this option yourself). This is solely due to implementation details of the main <code>phantom-dsl</code> artifact, that uses runtime reflection to determine things like the table name or the columns defined for a table. Since reflection is not thread-safe in Scala 2.10, phantom uses a lock for these lookups, but when the tests are not forked, the fact that sbt runs multiple projects in a separate ClassLoader circumnavigates the locks causing intermittent exceptions in the reflection code.</p> </li> 
+   <li> <p>For all other levels of parallelism there are no restrictions, but you need to keep in mind that all projects and all suites run against the same instance of embedded Cassandra. Therefore, if you use the same table within multiple suites, it is recommended to shield them from each other through the use of different keyspaces, which is easy to do with the new phantom-connector API. The names of the keyspaces for tests can be hardcoded within the suites as they do not depend on the environment.</p> </li> 
+   <li> <p>If you code a single suite with the default (tests run sequentially) and you use all test data in read-mode only, you can populate the tables in a <code>beforeAll</code> method and then use them in all tests. If the tests write data, you can truncate tables before each test method.</p> </li> 
   </ul> 
   <h2><a id="user-content-background-on-design-decisions-for-testing" class="anchor" href="https://github.com/sphonic/sphonic-phantom#background-on-design-decisions-for-testing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -220,8 +220,8 @@ tables.foos.store(<span class="pl-en">Foo</span>(<span class="pl-en">UUID</span>
   <p>An alternative approach had been tested that involved running all projects in a single JVM and having traits mixed into the test classes that start the embedded Cassandra server only once, controlled by a JVM-wide singleton object and without even trying to look for an existing Cassandra server.</p> 
   <p>Unfortunatley this approach does not work for the following two reasons:</p> 
   <ul> 
-   <li><p>phantom uses Scala SDK reflection that does not work reliably when running tests with multiple ClassLoaders as described above.</p></li> 
-   <li><p>For the same reason (sbt using multiple ClassLoaders) there is also no way to have a TestSuite mixin delegate to a global stateful singleton, as each project with its own ClassLoader gets its own singleton instance. So there is no way from within test helpers to manage state globally for the whole JVM.</p></li> 
+   <li> <p>phantom uses Scala SDK reflection that does not work reliably when running tests with multiple ClassLoaders as described above.</p> </li> 
+   <li> <p>For the same reason (sbt using multiple ClassLoaders) there is also no way to have a TestSuite mixin delegate to a global stateful singleton, as each project with its own ClassLoader gets its own singleton instance. So there is no way from within test helpers to manage state globally for the whole JVM.</p> </li> 
   </ul> 
   <p>The only approach for running embedded Cassandra that appeared to be working in multiple tests with the existing Eris Analytics project has been to let sbt manage the embedded Cassandra (as an sbt Task that gets triggered before the test task is run). When run as an sbt task, a singleton is really global for the whole build as the build classes do not get loaded multiple times.</p> 
  </article>

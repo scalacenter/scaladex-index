@@ -381,7 +381,7 @@ serializer.save(someAnnotation, pw)
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Serialization to/from <code>json</code></h3> 
-  <p>As of v5.9.6, <code>Document</code> and <code>Mention</code> instances can be serialized to/from <code>json</code> (<a href="https://gist.github.com/myedibleenso/87a3191c73938840b8ed768ec305db38" target="_blank">see the complete working example</a>). </p> 
+  <p>As of v5.9.6, <code>Document</code> and <code>Mention</code> instances can be serialized to/from <code>json</code> (<a href="https://gist.github.com/myedibleenso/87a3191c73938840b8ed768ec305db38" target="_blank">see the complete working example</a>).</p> 
   <h2><a id="user-content-cleaning-up-the-interned-strings" class="anchor" href="https://github.com/clulab/processors#cleaning-up-the-interned-strings" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -401,13 +401,16 @@ serializer.save(someAnnotation, pw)
     </svg></a>Using processors from Java</h2> 
   <p>Scala is (largely) compatible with Java, so this library can be directly used from Java. Below is Java code that translates most of the functionality from the first Scala example in this document to Java:</p> 
   <div class="highlight highlight-source-java">
-   <pre><span class="pl-k">import</span> <span class="pl-smi">org.clulab.struct.CorefMention</span>;
-<span class="pl-k">import</span> <span class="pl-smi">org.clulab.struct.DirectedGraphEdgeIterator</span>;
-<span class="pl-k">import</span> <span class="pl-smi">org.clulab.processors.*</span>;
-<span class="pl-k">import</span> <span class="pl-smi">org.clulab.processors.corenlp.CoreNLPProcessor</span>;
-<span class="pl-k">import</span> <span class="pl-smi">org.clulab.processors.fastnlp.FastNLPProcessor</span>;
+   <pre><span class="pl-k">package</span> <span class="pl-smi">org.clulab.processors</span>;
 
-<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">ProcessorJavaExample</span> {
+
+<span class="pl-k">import</span> <span class="pl-smi">org.clulab.discourse.rstparser.DiscourseTree</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.clulab.processors.fastnlp.FastNLPProcessor</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.clulab.processors.corenlp.CoreNLPProcessor</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.clulab.struct.CorefMention</span>;
+<span class="pl-k">import</span> <span class="pl-smi">org.clulab.struct.DirectedGraphEdgeIterator</span>;
+
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">ProcessorsJavaExample</span> {
     <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-smi">String</span> [] <span class="pl-v">args</span>) <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
         <span class="pl-c"><span class="pl-c">//</span> create the processor</span>
         <span class="pl-smi">Processor</span> proc <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">CoreNLPProcessor</span>(<span class="pl-c1">true</span>, <span class="pl-c1">false</span>, <span class="pl-c1">0</span>, <span class="pl-c1">100</span>);
@@ -479,6 +482,12 @@ serializer.save(someAnnotation, pw)
                         <span class="pl-s"><span class="pl-pds">"</span> endTokenOffset:<span class="pl-pds">"</span></span> <span class="pl-k">+</span> mention<span class="pl-k">.</span>endOffset());
                 }
             }
+        }
+	
+        <span class="pl-c"><span class="pl-c">//</span> let's print the discourse tree</span>
+        <span class="pl-k">if</span>(doc<span class="pl-k">.</span>discourseTree()<span class="pl-k">.</span>isDefined()) {
+            <span class="pl-smi">DiscourseTree</span> tree <span class="pl-k">=</span> doc<span class="pl-k">.</span>discourseTree()<span class="pl-k">.</span>get();
+            <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(<span class="pl-s"><span class="pl-pds">"</span>Discourse tree:<span class="pl-cce">\n</span><span class="pl-pds">"</span></span> <span class="pl-k">+</span> tree);
         }
     }
 
@@ -582,16 +591,20 @@ Constituent tree:
 
 
 Found one coreference chain containing the following mentions:
-    sentenceIndex:1 headIndex:2 startTokenOffset:2 endTokenOffset:7
+	sentenceIndex:1 headIndex:2 startTokenOffset:2 endTokenOffset:7
 Found one coreference chain containing the following mentions:
-    sentenceIndex:0 headIndex:1 startTokenOffset:0 endTokenOffset:2
-    sentenceIndex:1 headIndex:0 startTokenOffset:0 endTokenOffset:1
+	sentenceIndex:0 headIndex:1 startTokenOffset:0 endTokenOffset:2
+	sentenceIndex:1 headIndex:0 startTokenOffset:0 endTokenOffset:1
 Found one coreference chain containing the following mentions:
-    sentenceIndex:1 headIndex:5 startTokenOffset:5 endTokenOffset:7
+	sentenceIndex:1 headIndex:5 startTokenOffset:5 endTokenOffset:7
 Found one coreference chain containing the following mentions:
-    sentenceIndex:0 headIndex:4 startTokenOffset:4 endTokenOffset:5
+	sentenceIndex:0 headIndex:4 startTokenOffset:4 endTokenOffset:5
 Found one coreference chain containing the following mentions:
-    sentenceIndex:1 headIndex:8 startTokenOffset:8 endTokenOffset:9
+	sentenceIndex:1 headIndex:8 startTokenOffset:8 endTokenOffset:9
+Discourse tree:
+elaboration (LeftToRight)
+	TEXT:John Smith went to China .
+    TEXT:He visited Beijing , on January 10th , 2013 .
 </code></pre> 
   <h2><a id="user-content-the-discourse-parser" class="anchor" href="https://github.com/clulab/processors#the-discourse-parser" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

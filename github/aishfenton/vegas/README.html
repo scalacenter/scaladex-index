@@ -41,7 +41,16 @@ plot.show</pre>
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Rendering</h2> 
-  <p>Vegas provides several options for rendering plots. The primary focus is using Vegas within interactive notebook environments, such as Jupyter and Zeppelin.</p> 
+  <p>Vegas provides several options for rendering plots. The primary focus is using Vegas within interactive notebook environments, such as Jupyter and Zeppelin. Rendering is provided via an implicit instance of <code>ShowRender</code>, which tells Vegas how to display the plot in a particular environment. The default instance of <code>ShowRender</code> uses a macro which attempts to guess your environment, but if for some reason that fails, you can specify your own instance:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for outputting HTML, provide a function String =&gt; Unit which will receive the HTML for the plot</span>
+<span class="pl-c"><span class="pl-c">//</span> and use vegas.render.ShowHTML to create an instance for it</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">renderer</span> <span class="pl-k">=</span> vegas.render.<span class="pl-en">ShowHTML</span>(str <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>The HTML is $str<span class="pl-pds">"</span></span>))
+
+<span class="pl-c"><span class="pl-c">//</span> to specify a function that receives the SpecBuilder instead, use vegas.render.ShowRender.using</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">renderer</span> <span class="pl-k">=</span> vegas.render.<span class="pl-en">ShowRender</span>.using(sb <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>The SpecBuilder is $sb<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>The following examples describe some common cases; these <em>should</em> be handled by the default macro, but are useful to see (in case you need to construct your own instance of <code>ShowRender</code>):</p> 
   <h3><a id="user-content-notebooks" class="anchor" href="https://github.com/aishfenton/vegas#notebooks" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -50,49 +59,42 @@ plot.show</pre>
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Jupyter - Scala</h4> 
-  <p>If you're using <a href="https://github.com/alexarchambault/jupyter-scala" target="_blank">jupyter-scala</a>, then you must include the following in your notebook before using Vegas.</p> 
+  <p>If you're using <a href="https://github.com/alexarchambault/jupyter-scala" target="_blank">jupyter-scala</a>, then can include the following in your notebook before using Vegas.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">$ivy.`org.</span><span class="pl-v">vegas-viz::vegas:</span>{<span class="pl-v">vegas-version</span>}<span class="pl-v">`</span></pre>
   </div> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">vegas.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">vegas.render.HTMLRenderer.</span><span class="pl-v">_</span>
-
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">displayer</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> publish.html(_)</pre>
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">render</span> <span class="pl-k">=</span> vegas.render.<span class="pl-en">ShowHTML</span>(publish(_))</pre>
   </div> 
   <h4><a id="user-content-jupyter---apache-toree" class="anchor" href="https://github.com/aishfenton/vegas#jupyter---apache-toree" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Jupyter - Apache Toree</h4> 
   <p>And if you're using <a href="https://toree.incubator.apache.org/" target="_blank">Apache Toree</a>, then this:</p> 
-  <pre><code>%AddDeps com.github.vegas-viz vegas_2.11 {vegas-version} --transitive
+  <pre><code>%AddDeps org.vegas-viz vegas_2.11 {vegas-version} --transitive
 </code></pre> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">vegas.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">vegas.render.HTMLRenderer.</span><span class="pl-v">_</span>
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">displayer</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> { s <span class="pl-k">=&gt;</span> kernel.display.content(<span class="pl-s"><span class="pl-pds">"</span>text/html<span class="pl-pds">"</span></span>, s) }</pre>
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">render</span> <span class="pl-k">=</span> vegas.render.<span class="pl-en">ShowHTML</span>(kernel.display.content(<span class="pl-s"><span class="pl-pds">"</span>text/html<span class="pl-pds">"</span></span>, _))</pre>
   </div> 
   <h4><a id="user-content-zeppelin" class="anchor" href="https://github.com/aishfenton/vegas#zeppelin" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Zeppelin</h4> 
-  <p>Lastly, if you're using <a href="https://zeppelin.incubator.apache.org/" target="_blank">Apache Zeppelin</a> then use the following to initialize the notebook.</p> 
+  <p>If you're using <a href="https://zeppelin.incubator.apache.org/" target="_blank">Apache Zeppelin</a>:</p> 
   <pre><code>%dep
 z.load("org.vegas-viz:vegas_2.11:{vegas-version}")
 </code></pre> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">vegas.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">vegas.render.HTMLRenderer.</span><span class="pl-v">_</span>
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">displayer</span><span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> { s <span class="pl-k">=&gt;</span> print(<span class="pl-s"><span class="pl-pds">"</span>%html <span class="pl-pds">"</span></span> <span class="pl-k">+</span> s) }</pre>
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">render</span> <span class="pl-k">=</span> vegas.render.<span class="pl-en">ShowHTML</span>(s <span class="pl-k">=&gt;</span> print(<span class="pl-s"><span class="pl-pds">"</span>%html <span class="pl-pds">"</span></span> <span class="pl-k">+</span> s))</pre>
   </div> 
-  <p>The last line in each of the above is required to connect Vegas to the notebook's HTML renderer (so that the returned HTML is rendered instead of displayed as a string). </p> 
+  <p>The last line in each of the above is required to connect Vegas to the notebook's HTML renderer (so that the returned HTML is rendered instead of displayed as a string).</p> 
   <p>See a comprehensive list example notebook of plots <a href="http://nbviewer.jupyter.org/github/aishfenton/Vegas/blob/master/notebooks/jupyter_example.ipynb" target="_blank">here</a></p> 
   <h3><a id="user-content-standalone" class="anchor" href="https://github.com/aishfenton/vegas#standalone" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Standalone</h3> 
-  <p>Vegas can also be used to produce standalone HTML or even render plots within a built-in display app (useful if you wanted to display plots for a command-line-app). </p> 
-  <p>The construction of the plot is <strong>independent from the rendering strategy</strong>: the same plot can be rendered as HTML or in a Window simply by importing a different renderer in the scope. </p> 
+  <p>Vegas can also be used to produce standalone HTML or even render plots within a built-in display app (useful if you wanted to display plots for a command-line-app).</p> 
+  <p>The construction of the plot is <strong>independent from the rendering strategy</strong>: the same plot can be rendered as HTML or in a Window simply by importing a different renderer in the scope.</p> 
   <p><em>Note that the rendering examples below are wrapped in separate functions to avoid ambiguous implicit conversions if they were imported in the same scope.</em></p> 
   <p>A plot is defined as:</p> 
   <div class="highlight highlight-source-scala">
@@ -117,21 +119,18 @@ z.load("org.vegas-viz:vegas_2.11:{vegas-version}")
   <p>The following renders the plot as HTML (which prints to the console).</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">def</span> <span class="pl-en">renderHTML</span> <span class="pl-k">=</span> {
-  <span class="pl-k">import</span> <span class="pl-v">vegas.render.HTMLRenderer.</span><span class="pl-v">_</span>
-
-  println(plot.pageHTML())
+  println(plot.html.pageHTML) <span class="pl-c"><span class="pl-c">//</span> a complete HTML page containing the plot</span>
+  println(plot.html.frameHTML(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)) <span class="pl-c"><span class="pl-c">//</span> an iframe containing the plot</span>
 }</pre>
   </div> 
   <h4><a id="user-content-window" class="anchor" href="https://github.com/aishfenton/vegas#window" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Window</h4> 
-  <p>Vegas also contains a self-contained display app for displaying plots (internally it uses JavaFX's HTML renderer). The following demonstrates this and can be used from the command line. </p> 
+  <p>Vegas also contains a self-contained display app for displaying plots (internally it uses JavaFX's HTML renderer). The following demonstrates this and can be used from the command line.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">def</span> <span class="pl-en">renderWindow</span> <span class="pl-k">=</span> {
-  <span class="pl-k">import</span> <span class="pl-v">vegas.render.WindowRenderer.</span><span class="pl-v">_</span>
-
-  plot.show
+  plot.window.show
 }</pre>
   </div> 
   <p>Make sure JavaFX is installed on your system or ships with your JDK distribution.</p> 

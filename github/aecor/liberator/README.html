@@ -23,6 +23,7 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalameta<
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage example</h3> 
+  <p>The <code>?</code> syntax for type lambdas is provided by <a href="https://github.com/non/kind-projector" target="_blank">kind-projector</a> compiler plugin.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">io.aecor.liberator.macros.</span><span class="pl-v">free</span>
 
@@ -42,26 +43,26 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalameta<
 <span class="pl-k">object</span> <span class="pl-en">KeyValueStore</span> {
   <span class="pl-c"><span class="pl-c">//</span> A helper method to get an instance of KeyValueStore[F]</span>
   <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">F</span>[_]](<span class="pl-k">implicit</span> <span class="pl-v">instance</span>: <span class="pl-en">KeyValueStore</span>[<span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">KeyValueStore</span>[<span class="pl-en">F</span>] <span class="pl-k">=</span> instance
-
-
+  
+  
   <span class="pl-c"><span class="pl-c">//</span> A free AST</span>
   <span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">KeyValueStoreFree</span>[<span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Product</span> <span class="pl-k">with</span> <span class="pl-e">Serializable</span>
   <span class="pl-k">object</span> <span class="pl-en">KeyValueStoreFree</span> {
     <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">SetValue</span>(<span class="pl-v">key</span>: <span class="pl-k">String</span>, <span class="pl-v">value</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">KeyValueStoreFree</span>[<span class="pl-k">Unit</span>]
     <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">GetValue</span>(<span class="pl-v">key</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">KeyValueStoreFree</span>[<span class="pl-en">Option</span>[<span class="pl-k">String</span>]]
   }
-
+  
   <span class="pl-c"><span class="pl-c">//</span> A function to convert a natural transformation to your trait</span>
   <span class="pl-k">def</span> <span class="pl-en">fromFunctionK</span>[<span class="pl-en">F</span>[_]](<span class="pl-v">f</span>: <span class="pl-en">KeyValueStoreFree</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">KeyValueStore</span>[<span class="pl-en">F</span>] <span class="pl-k">=</span> 
     <span class="pl-k">new</span> <span class="pl-en">KeyValueStore</span>[<span class="pl-en">F</span>] {
       <span class="pl-k">def</span> <span class="pl-en">setValue</span>(<span class="pl-v">key</span>: <span class="pl-k">String</span>, <span class="pl-v">value</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> 
         f(<span class="pl-en">KeyValueStoreFree</span>.<span class="pl-en">SetValue</span>(key, value))
-
+        
       <span class="pl-k">def</span> <span class="pl-en">getValue</span>(<span class="pl-v">key</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-en">Option</span>[<span class="pl-k">String</span>]] <span class="pl-k">=</span> 
         f(<span class="pl-en">KeyValueStoreFree</span>.<span class="pl-en">GetValue</span>(key))
     }
-
-
+    
+    
   <span class="pl-c"><span class="pl-c">//</span> A function to create a natural tranformation from your trait</span>
   <span class="pl-k">def</span> <span class="pl-en">toFunctionK</span>[<span class="pl-en">F</span>[_]](<span class="pl-v">ops</span>: <span class="pl-en">KeyValueStore</span>[<span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">KeyValueStoreFree</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">F</span> <span class="pl-k">=</span> 
     new (<span class="pl-en">KeyValueStoreFree</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">F</span>) {
@@ -70,13 +71,13 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalameta<
         <span class="pl-k">case</span> <span class="pl-en">KeyValueStoreFree</span>.<span class="pl-en">GetValue</span>(key) <span class="pl-k">=&gt;</span> ops.getValue(key)
       }
     }
-
+    
   <span class="pl-k">type</span> <span class="pl-en">FreeHelper1</span>[<span class="pl-en">F</span>[_]] <span class="pl-k">=</span> { <span class="pl-k">type</span> <span class="pl-en">Out</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">Free</span>[<span class="pl-en">F</span>, <span class="pl-en">A</span>] } <span class="pl-c"><span class="pl-c">//</span>workaround of a bug in scala.meta</span>
   <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">freeInstance</span>[<span class="pl-en">F</span>[_]](<span class="pl-k">implicit</span> <span class="pl-v">inject</span>: <span class="pl-en">Inject</span>[<span class="pl-en">KeyValueStoreFree</span>, <span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">KeyValueStore</span>[<span class="pl-en">FreeHelper1</span>[<span class="pl-en">F</span>]#<span class="pl-en">Out</span>] <span class="pl-k">=</span> 
     fromFunctionK(new (<span class="pl-en">KeyValueStoreFree</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">FreeHelper1</span>[<span class="pl-en">F</span>]#<span class="pl-en">Out</span>) { 
       <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-v">op</span>: <span class="pl-en">KeyValueStoreFree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Free</span>[<span class="pl-en">F</span>, <span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">Free</span>.inject(op) 
     })
-
+    
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">freeAlgebra</span><span class="pl-k">:</span> <span class="pl-en">FreeAlgebra</span>.<span class="pl-en">Aux</span>[<span class="pl-en">KeyValueStore</span>, <span class="pl-en">KeyValueStoreFree</span>] <span class="pl-k">=</span> 
     <span class="pl-k">new</span> <span class="pl-en">FreeAlgebra</span>[<span class="pl-en">KeyValueStore</span>] {
       <span class="pl-k">type</span> <span class="pl-en">Out</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">KeyValueStoreFree</span>[<span class="pl-en">A</span>]
