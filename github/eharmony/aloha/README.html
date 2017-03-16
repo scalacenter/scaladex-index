@@ -1,0 +1,82 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-aloha--" class="anchor" href="https://github.com/eharmony/aloha#aloha--" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Aloha <a href="https://travis-ci.org/eHarmony/aloha" target="_blank"><img src="https://camo.githubusercontent.com/440d1fb0d2536acefb9cf0daa0228abe3c83ca85/68747470733a2f2f7472617669732d63692e6f72672f654861726d6f6e792f616c6f68612e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/eHarmony/aloha.svg?branch=master" style="max-width:100%;"></a> <a href="https://waffle.io/eHarmony/aloha" target="_blank"><img src="https://camo.githubusercontent.com/c4ad1d3bfc3d8b9f29d5f5efb1928f31594725e2/68747470733a2f2f62616467652e776166666c652e696f2f654861726d6f6e792f616c6f68612e706e673f6c6162656c3d7265616479267469746c653d5265616479" alt="Stories in Ready" data-canonical-src="https://badge.waffle.io/eHarmony/aloha.png?label=ready&amp;title=Ready" style="max-width:100%;"></a></h1> 
+  <p>The Aloha libraries provide implementations of machine learning models used at eHarmony. The distinction between Aloha and other machine learning libraries such as <a href="http://www.cs.waikato.ac.nz/ml/weka/" target="_blank">Weka</a>, <a href="http://www.torch.ch/" target="_blank">Torch</a>, <a href="http://mahout.apache.org/" target="_blank">Mahout</a>, etc, is that Aloha models:</p> 
+  <ol> 
+   <li>do not have predefined input and output types</li> 
+   <li>can be parsed by a single factory</li> 
+   <li>have external specifications (JSON)</li> 
+  </ol> 
+  <p>So, Aloha models are are not written in terms of <a href="http://weka.sourceforge.net/doc.dev/weka/core/Instance.html" target="_blank">Instance</a>s, <a href="https://github.com/torch/torch7/blob/master/doc/tensor.md" target="_blank">Tensor</a>s, or <a href="https://builds.apache.org/job/Mahout-Quality/javadoc/org/apache/mahout/cf/taste/model/DataModel.html" target="_blank">DataModel</a>s. Instead, models are written generically, and different <a href="http://en.wikipedia.org/wiki/Formal_semantics_of_programming_languages" target="_blank">semantics</a> implementations are provided to give meaning to the features extracted from the arbitrary input types on which the models operate.</p> 
+  <p>While these differences may not sound extremely useful, together they produce a number of advantages. The most notable is probably the way input features make their way to the models. Typically, when interacting with APIs, data is translated into a format that can be understood by the objects being called. By tying a model interface to an input type specified inside the library, we require the caller to convert the data to the input type before the model can use the data to make a prediction. There are some ways to ease the woes that are involved in the <a href="http://en.wikipedia.org/wiki/Extract,_transform,_load" target="_blank">ETL</a> process, but as we've seen many times, transforming data can be slow, error-prone, and ultimately, unnecessary altogether. It's almost always the case that data is in an alternate format than the one required for learning or prediction. Because data, in its natural form, typically has a <a href="http://en.wikipedia.org/wiki/Graph_(mathematics)" target="_blank">graph</a>-like structure and many machine learning algorithms operate on <a href="http://en.wikipedia.org/wiki/Vector_space" target="_blank">vector spaces</a>, we often have to perform such a transformation. The question is who should do the data transformation.</p> 
+  <p>Rather than requiring the calling code to transform data, Aloha takes the stance that it's better for the models to transform data in a lazy way when needed. From the <a href="http://www.martinfowler.com/eaaCatalog/lazyLoad.html" target="_blank">Lazy Load</a> page of <a href="http://en.wikipedia.org/wiki/Martin_Fowler" target="_blank">Martin Fowler</a>'s <a href="http://www.martinfowler.com/eaaCatalog/index.html" target="_blank">Catalog of Patterns of Enterprise Application Architecture</a>, we know that</p> 
+  <blockquote> 
+   <p>[<em>it</em>] makes loading easier on the developer using the object, who otherwise has to load all the objects he needs explicitly.</p> 
+  </blockquote> 
+  <p>and</p> 
+  <blockquote> 
+   <p>if you're lazy about doing things you'll win when it turns out you don't need to do them at all.</p> 
+  </blockquote> 
+  <p>Aloha considers both of these properties very important. The calling code should be as simple as possible and <em>SHOULD NOT</em> have to do any unnecessary work. The problem usually is that the calling code doesn't know what is unnecessary. This could be ameliorated in the traditional setting by adding a <em>what-features-the-model-needs</em> method to the API but this too can be a problem in situations when the model has different needs conditional on the data passed to the model. This is especially true with decision trees. Many times, the branches require different features. To provide all features ahead of time is often wasteful.</p> 
+  <p>Since models are specified in JSON and can be parsed by a single factory, we can pass around model definitions as messages and expose parsers as service interfaces. This means that we can train models in mini batches and atomically hot swap out models in prod without server restarts, if desired.</p> 
+  <h2><a id="user-content-so-how-does-it-all-work" class="anchor" href="https://github.com/eharmony/aloha#so-how-does-it-all-work" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>So, how does it all work?</h2> 
+  <h2><a id="user-content-models" class="anchor" href="https://github.com/eharmony/aloha#models" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Models</h2> 
+  <h3><a id="user-content-regression-model" class="anchor" href="https://github.com/eharmony/aloha#regression-model" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Regression Model</h3> 
+  <h4><a id="user-content-regression-model-json-sections" class="anchor" href="https://github.com/eharmony/aloha#regression-model-json-sections" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Regression Model JSON Sections</h4> 
+  <h5><a id="user-content-features" class="anchor" href="https://github.com/eharmony/aloha#features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features</h5> 
+  <h6><a id="user-content-defaults" class="anchor" href="https://github.com/eharmony/aloha#defaults" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Defaults</h6> 
+  <p>There are two kinds of defaults:</p> 
+  <ul> 
+   <li>Variable-Level Defaults</li> 
+   <li>Feature-Level Defaults</li> 
+  </ul> 
+  <p><em>Variable-Level Defaults</em> occur inside variable specifications and have the same syntax as one might find in bash. See the <a href="http://tldp.org/LDP/abs/html/parameter-substitution.html" target="_blank">Advanced Bash-Scripting Guide, Chapter 10</a> for syntax on variable substitution and defaulting.</p> 
+  <p>As an example instance in Aloha, take</p> 
+  <pre><code>"${user.profile.height:-160}",
+</code></pre> 
+  <p>This seemingly tries to extract the user height (in centimeters) and if the value does not exist, it will insert the value of 160 (<em>NOT -160</em>). Note that while not specified, default type matters. Hopefully, it should be obvious that the default should have the same type as the variable. To specify different literal types, the normal java rules apply:</p> 
+  <ul> 
+   <li>For 32-bit integer (i.e. int), just specify the integer literal <code>"${x:-1}"</code></li> 
+   <li>For 64-bit integer (i.e. long), append an L <code>"${x:-1L}"</code></li> 
+   <li>For IEEE 754 32-bit floats, append an f. <code>"${x:-1f}"</code></li> 
+   <li>For IEEE 754 64-bit floats (i.e. double), specify at least a single decimal place with no suffix <code>"${x:-1.0}"</code></li> 
+   <li>For 1-byte integer, specify like: <code>"${x:-1.toByte}"</code></li> 
+   <li>For 2-byte integer (i.e. short), specify like: <code>"${x:-1.toShort}"</code></li> 
+   <li>For Boolean values, specify using <em>true</em> or <em>false</em>, all lowercase: <code>"${x:-false}"</code></li> 
+   <li>For Strings, specify the String literal. Be sure to properly escape the string: <code>"${x:-\"[default string]\"}"</code></li> 
+  </ul> 
+  <p><em>Feature-Level Defaults</em> specification syntax varies by model because it is tied to the <a href="http://en.wikipedia.org/wiki/Codomain" target="_blank">codomain</a> of the functions that the semantics produces for, and injects into, the model. For instance, in the regression model, the semantics produces functions that have a codomain of unordered sequences of key-value pairs. Therefore, the feature-level default default of regression models is the same type and is specified as the value associated with the "<em>default</em>" key:</p> 
+  <pre><code>{
+    "spec": "sos2U(log2(${pairing.distance}), 0, 10, 1)",
+    "default": [["=UNK", 1]]
+}
+</code></pre> 
+  <p>The <code>[["=UNK", 1]]</code> represent a sequence of one key-value pair whose key is <em>=UNK</em> and whose value is 1.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/eharmony/aloha#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Aloha is released under the <a href="http://opensource.org/licenses/MIT" target="_blank">MIT License</a>.</p> 
+ </article>
+</div>

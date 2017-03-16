@@ -29,7 +29,7 @@
    <pre><span class="pl-c"><span class="pl-c">//</span> enable Play cache API (based on your Play version) and optionally exclude EhCache implementation</span>
 libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> play.sbt.<span class="pl-en">PlayImport</span>.cache exclude(<span class="pl-s"><span class="pl-pds">"</span>net.sf.ehcache<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>ehcache-core<span class="pl-pds">"</span></span>)
 <span class="pl-c"><span class="pl-c">//</span> include play-redis library</span>
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.karelcemus<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-redis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.3.1<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.karelcemus<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-redis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <h3><a id="user-content-using-with-guice" class="anchor" href="https://github.com/karelcemus/play-redis#using-with-guice" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -78,6 +78,13 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
   cache.get[ <span class="pl-k">Double</span> ]( <span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span> )
   <span class="pl-c"><span class="pl-c">//</span> returns Option[ MyCaseClass ]</span>
   cache.get[ <span class="pl-en">MyCaseClass</span> ]( <span class="pl-s"><span class="pl-pds">"</span>object<span class="pl-pds">"</span></span> )
+
+  <span class="pl-c"><span class="pl-c">//</span> set multiple values at once</span>
+  cache.setAll( <span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1.23</span>, <span class="pl-s"><span class="pl-pds">"</span>key2<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">5</span>, <span class="pl-s"><span class="pl-pds">"</span>key3<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">6</span> )
+  <span class="pl-c"><span class="pl-c">//</span> set only when all keys are unused</span>
+  cache.setAllIfNotExist( <span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1.23</span>, <span class="pl-s"><span class="pl-pds">"</span>key2<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">5</span>, <span class="pl-s"><span class="pl-pds">"</span>key3<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">6</span> )
+  <span class="pl-c"><span class="pl-c">//</span> get multiple keys at once, returns a list of options</span>
+  cache.getAll[ <span class="pl-k">Double</span> ]( <span class="pl-s"><span class="pl-pds">"</span>key<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>key2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>key3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>key6<span class="pl-pds">"</span></span> )
 
   <span class="pl-c"><span class="pl-c">//</span> returns T where T is Double. If the value is not in the cache</span>
   <span class="pl-c"><span class="pl-c">//</span> the computed result is saved</span>
@@ -396,7 +403,7 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
    <tbody> 
     <tr> 
      <td>2.5.x</td> 
-     <td align="right">1.3.1</td> 
+     <td align="right">1.4.0</td> 
     </tr> 
     <tr> 
      <td>2.4.x</td> 
@@ -414,14 +421,15 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Changelog</h2> 
-  <h3><a id="user-content-link-132" class="anchor" href="https://github.com/karelcemus/play-redis#link-132" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-link-140" class="anchor" href="https://github.com/karelcemus/play-redis#link-140" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a><a href="https://github.com/KarelCemus/play-redis/tree/1.3.2" target="_blank">
+    </svg></a><a href="https://github.com/KarelCemus/play-redis/tree/1.4.0" target="_blank">
     <g-emoji alias="link" fallback-src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f517.png" ios-version="6.0">
      🔗
-    </g-emoji> 1.3.2</a></h3> 
+    </g-emoji> 1.4.0</a></h3> 
   <p>Implemented <code>RedisCacheComponents</code> to support <a href="https://github.com/karelcemus/play-redis#using-with-compile-time-di" target="_blank">compile-time DI</a></p> 
+  <p>Implemented <a href="https://redis.io/commands/mget" target="_blank">MGET</a>, <a href="https://redis.io/commands/mset" target="_blank">MSET</a> and <a href="https://redis.io/commands/msetnx" target="_blank">MSETNX</a> redis commands.</p> 
   <h3><a id="user-content-link-131" class="anchor" href="https://github.com/karelcemus/play-redis#link-131" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

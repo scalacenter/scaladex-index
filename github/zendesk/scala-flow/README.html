@@ -1,0 +1,232 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-scala-flow" class="anchor" href="https://github.com/zendesk/scala-flow#scala-flow" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>scala-flow</h1> 
+  <p><em>scala-flow</em> is a lightweight library intended to make developing Google DataFlow jobs in Scala easier. The core dataflow classes are enriched to allow more idiomatic and concise Scala usage while preserving full access to the underlying Java SDK.</p> 
+  <p>Coders for Scala primitives and collection classes have been implemented so that you can conveniently return these types from your PTransforms. In addition you can easily create coders for your own case classes.</p> 
+  <p><strong>Caveat:</strong> This library is still evolving rapidly as we improve our knowledge and understanding of Dataflow, so there will be a some flux in the API as we discover and refine what works well and what doesn't.</p> 
+  <p>As a preview of what's possible here's the eponymous MinimalWordCount example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Pipeline</span>.create(...)
+  .apply(<span class="pl-en">TextIO</span>.<span class="pl-en">Read</span>.from(<span class="pl-s"><span class="pl-pds">"</span>gs://dataflow-samples/shakespeare/kinglear.txt<span class="pl-pds">"</span></span>))
+  .flatMap(_.split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>W+<span class="pl-pds">"</span></span>).filter(_.nonEmpty).toIterable)
+  .apply(<span class="pl-en">Count</span>.perElement[<span class="pl-k">String</span>])
+  .map(kv <span class="pl-k">=&gt;</span> kv.getKey <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> kv.getValue)
+  .apply(<span class="pl-en">TextIO</span>.<span class="pl-en">Write</span>.to(<span class="pl-s"><span class="pl-pds">"</span>results.text<span class="pl-pds">"</span></span>))
+  .run()</pre>
+  </div> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/zendesk/scala-flow#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <h4><a id="user-content-pipeline" class="anchor" href="https://github.com/zendesk/scala-flow#pipeline" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pipeline</h4> 
+  <p><code>Pipeline</code> has been enriched with a handful of methods.</p> 
+  <p>To create a <code>PCollection</code> from in-memory data use the <code>transform</code> method instead of <code>apply</code>. This method ensures that the coder is set correctly on the input data.</p> 
+  <p>In addition a <code>run</code> method has been added to the <code>POutput</code> type, so that you can fluently chain transforms then run your pipeline. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>.create(...)
+  .transform(<span class="pl-en">Create</span>.of(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>))
+  .apply(...transforms...)
+  .run()</pre>
+  </div> 
+  <h4><a id="user-content-basic-pcollection-methods" class="anchor" href="https://github.com/zendesk/scala-flow#basic-pcollection-methods" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Basic PCollection Methods</h4> 
+  <p><code>PCollection</code> now has <code>map</code>, <code>flatMap</code>, <code>filter</code> and <code>collect</code> methods that each behave as you would expect.</p> 
+  <p>Simple example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>.create(...)
+  .transform(<span class="pl-en">Create</span>.of(<span class="pl-s"><span class="pl-pds">"</span>123<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>456<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>789<span class="pl-pds">"</span></span>))
+  .flatMap(_.split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+  .map(_.toInt)
+  .filter(_ <span class="pl-k">&lt;</span> <span class="pl-c1">5</span>)
+  .collect {
+    <span class="pl-k">case</span> x <span class="pl-k">if</span> x <span class="pl-k">%</span> <span class="pl-c1">3</span> <span class="pl-k">==</span> <span class="pl-c1">0</span> <span class="pl-k">=&gt;</span> <span class="pl-k">if</span> (x <span class="pl-k">%</span> <span class="pl-c1">5</span> <span class="pl-k">==</span> <span class="pl-c1">0</span>) <span class="pl-s"><span class="pl-pds">"</span>FizzBuzz<span class="pl-pds">"</span></span> <span class="pl-k">else</span> <span class="pl-s"><span class="pl-pds">"</span>Fizz<span class="pl-pds">"</span></span>
+    <span class="pl-k">case</span> x <span class="pl-k">if</span> x <span class="pl-k">%</span> <span class="pl-c1">5</span> <span class="pl-k">==</span> <span class="pl-c1">0</span> <span class="pl-k">=&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Buzz<span class="pl-pds">"</span></span>
+  }
+  .run()</pre>
+  </div> 
+  <h4><a id="user-content-pcollection-extras" class="anchor" href="https://github.com/zendesk/scala-flow#pcollection-extras" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PCollection Extras</h4> 
+  <h5><a id="user-content-logging-side-effect" class="anchor" href="https://github.com/zendesk/scala-flow#logging-side-effect" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Logging Side Effect</h5> 
+  <p>A side-effecting method <code>foreach</code> has been added in order to allow handy debug logging. This method supplies each element of the <code>PCollection</code> to it's argument then passes on the element unchanged. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>(...)
+  .transform(<span class="pl-en">Create</span>.of(<span class="pl-s"><span class="pl-pds">"</span>123<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>456<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>789<span class="pl-pds">"</span></span>))
+  .foreach(println)
+  .apply(...continue as normal...) </pre>
+  </div> 
+  <h5><a id="user-content-extracting-timetamps" class="anchor" href="https://github.com/zendesk/scala-flow#extracting-timetamps" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Extracting Timetamps</h5> 
+  <p><code>extractTimestamp</code> converts each element in the PCollection to a tuple with its corresponding timestamp. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">collection</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[(<span class="pl-k">String</span>, <span class="pl-en">Instant</span>)] <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>.create(...)
+  .transform(<span class="pl-en">Create</span>.of(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>))
+  .withTimestamps</pre>
+  </div> 
+  <h5><a id="user-content-converting-to-a-kv" class="anchor" href="https://github.com/zendesk/scala-flow#converting-to-a-kv" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Converting to a <code>KV</code></h5> 
+  <p>The <code>withKey</code> method provides a drop in replacement for the <code>WithKeys</code> transform.</p> 
+  <h5><a id="user-content-merging-pcollections-of-the-same-type" class="anchor" href="https://github.com/zendesk/scala-flow#merging-pcollections-of-the-same-type" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Merging PCollections of the same type</h5> 
+  <p>The <code>flattenWith</code> method is the equivalent to the <code>Flatten</code> transform, allowing collections of the same type to be merged together. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">first</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">second</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">third</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> ...
+  
+<span class="pl-k">val</span> <span class="pl-en">combined</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> first.flattenWith(second, third)</pre>
+  </div> 
+  <h5><a id="user-content-naming-your-transforms" class="anchor" href="https://github.com/zendesk/scala-flow#naming-your-transforms" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Naming your transforms</h5> 
+  <p>To provide better visualization of the Pipeline graph and to allow updating of running jobs, you can name blocks of transforms using the <code>transformWith</code> method. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>.create(...)
+    .transformWith(<span class="pl-s"><span class="pl-pds">"</span>Load Resources<span class="pl-pds">"</span></span>) { _
+      .apply(<span class="pl-en">TextIO</span>.<span class="pl-en">Read</span>.from(<span class="pl-s"><span class="pl-pds">"</span>gs://dataflow-samples/shakespeare/kinglear.txt<span class="pl-pds">"</span></span>))
+    }
+    .transformWith(<span class="pl-s"><span class="pl-pds">"</span>Split and count Words<span class="pl-pds">"</span></span>) { _
+      .flatMap(_.split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>W+<span class="pl-pds">"</span></span>).filter(_.nonEmpty).toIterable)
+      .apply(<span class="pl-en">Count</span>.perElement[<span class="pl-k">String</span>])
+    }
+    .transformWith(<span class="pl-s"><span class="pl-pds">"</span>Output Results<span class="pl-pds">"</span></span>) { _
+      .map(kv <span class="pl-k">=&gt;</span> kv.getKey <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> kv.getValue)
+      .apply(<span class="pl-en">TextIO</span>.<span class="pl-en">Write</span>.to(<span class="pl-s"><span class="pl-pds">"</span>results.text<span class="pl-pds">"</span></span>))
+    }
+    .run()</pre>
+  </div> 
+  <p>Under the hood this method simply converts each nested block of methods into a <code>PTransform</code> class.</p> 
+  <h5><a id="user-content-pardo-escape-hatch" class="anchor" href="https://github.com/zendesk/scala-flow#pardo-escape-hatch" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ParDo Escape Hatch</h5> 
+  <p>The <code>parDo</code> method provides an escape hatch in case none of the existing methods do what you want. Pass any arbitrary function wth a <code>DoFn</code> signature to this method and it will be converted to a <code>ParDo</code> transform. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">Pipeline</span>.create(...)
+  .apply(<span class="pl-en">TextIO</span>.<span class="pl-en">Read</span>.from(<span class="pl-s"><span class="pl-pds">"</span>gs://dataflow-samples/shakespeare/kinglear.txt<span class="pl-pds">"</span></span>))
+  .parDo { (<span class="pl-v">c</span>: <span class="pl-en">DoFn</span>[<span class="pl-k">String</span>, <span class="pl-k">String</span>]#<span class="pl-en">ProcessContext</span>) <span class="pl-k">=&gt;</span>
+    <span class="pl-c"><span class="pl-c">/*</span> Do anything whatsoever here <span class="pl-c">*/</span></span>
+    c.output(...)
+  }</pre>
+  </div> 
+  <h4><a id="user-content-kv-collection" class="anchor" href="https://github.com/zendesk/scala-flow#kv-collection" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>KV Collection</h4> 
+  <p>Several methods have been added specifically for KV collections:</p> 
+  <p>The <code>mapValue</code> and <code>flatMapValue</code> methods allow you to change the value of a <code>KV</code> pair without affecting they key. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> <span class="pl-en">Pipeline</span>.create(...)
+  .transform(<span class="pl-en">Create</span>.of(<span class="pl-s"><span class="pl-pds">"</span>123<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>456<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>789<span class="pl-pds">"</span></span>)
+  .withKey(_.toInt)
+  .mapValue(_.split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+  .flatMapValue(_.mkString(<span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"><span class="pl-c">/*</span> Result contains KV(123, "1.2.3"), KV(456, "4.5.6."), KV(789, "7.8.9") <span class="pl-c">*/</span></span>  </pre>
+  </div> 
+  <p>In addition there are <code>combinePerKey</code>, <code>topPerKey</code> and <code>groupPerKey</code> methods that work exactly the same as the Dataflow transform equivalents.</p> 
+  <h4><a id="user-content-joining-kv-pcollections" class="anchor" href="https://github.com/zendesk/scala-flow#joining-kv-pcollections" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Joining KV PCollections</h4> 
+  <p>In order to join two or more collections of <code>KV</code> values by key you can use <code>coGroupByKey</code>, a type-safe wrapper around Dataflow's <a href="https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/transforms/join/CoGroupByKey" target="_blank"><code>CoGroupByKey</code></a> transform.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">buyOrders</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-en">KV</span>[<span class="pl-en">CustomerId</span>, <span class="pl-en">BuyOrder</span>]] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">sellOrders</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-en">KV</span>[<span class="pl-en">CustomerId</span>, <span class="pl-en">SellOrder</span>]] <span class="pl-k">=</span> ...
+
+<span class="pl-k">val</span> <span class="pl-en">allOrders</span><span class="pl-k">:</span> <span class="pl-en">PCollection</span>[<span class="pl-en">KV</span>[<span class="pl-en">CustomerId</span>, (<span class="pl-en">Iterable</span>[<span class="pl-en">BuyOrder</span>], <span class="pl-en">Iterable</span>[<span class="pl-en">SellOrder</span>])]] <span class="pl-k">=</span> buyOrders.coGroupByKey(sellOrders)</pre>
+  </div> 
+  <h3><a id="user-content-coders" class="anchor" href="https://github.com/zendesk/scala-flow#coders" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Coders</h3> 
+  <p>Implicit coders for the following types have been added:</p> 
+  <ul> 
+   <li><code>Int</code>, <code>Long</code>, <code>Double</code></li> 
+   <li><code>Option</code>, <code>Try</code>, <code>Either</code></li> 
+   <li><code>Tuple2</code> to <code>Tuple22</code></li> 
+   <li><code>Iterable</code>, <code>List</code>, <code>Set</code>, <code>Map</code>, <code>Array</code></li> 
+  </ul> 
+  <p>Every method mentioned above required a coder for its output type to be implicitly available. This happens by default for any of the types listed above (and also any arbitrary combination e.g. <code>List[Option[(Either[String, Int], Array[Double])]]</code>) If you create coders for any other types then you'll need to ensure that they are available in the implicit scope somewhere.</p> 
+  <h4><a id="user-content-case-class-coders" class="anchor" href="https://github.com/zendesk/scala-flow#case-class-coders" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Case Class Coders</h4> 
+  <p>You can create a custom coder for any case class containing up to 22 members using the <code>caseClassCoder</code> method. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Bar</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Qux</span>[<span class="pl-en">T</span>](<span class="pl-v">value</span> : <span class="pl-en">T</span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fooCoder</span> <span class="pl-k">=</span> caseClassCoder(<span class="pl-en">Foo</span>)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">barCoder</span> <span class="pl-k">=</span> caseClassCoder(<span class="pl-en">Bar</span>)
+<span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">quxCoder</span> <span class="pl-k">=</span> caseClassCoder(<span class="pl-en">Qux</span>.apply[<span class="pl-en">T</span>] _)</pre>
+  </div> 
+  <p>The last line shows demonstrates how to create a coder for a generic types, this is essentially a much simpler replacement for a <code>CoderFactory</code>.</p> 
+  <h4><a id="user-content-serializable-coder" class="anchor" href="https://github.com/zendesk/scala-flow#serializable-coder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Serializable Coder</h4> 
+  <p>By default Dataflow will always try to create a <code>SerializableCoder</code> if no other suitable coder can be found. <code>scala-flow</code> provides an equivalent with the <code>serializableCoder</code> method. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-k">val</span> <span class="pl-en">name</span><span class="pl-k">:</span> <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Serializable</span>
+ 
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fooCoder</span> <span class="pl-k">=</span> serializableCoder(<span class="pl-en">Foo</span>) </pre>
+  </div> 
+  <h2><a id="user-content-why-create-a-scala-dataflow-library" class="anchor" href="https://github.com/zendesk/scala-flow#why-create-a-scala-dataflow-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why create a Scala Dataflow library?</h2> 
+  <p>There are already some existing libraries for working with Dataflow:</p> 
+  <ul> 
+   <li><a href="https://beam.apache.org" target="_blank">Apache Beam</a>: Supports not only Dataflow, but also Spark, Apex and FLink.</li> 
+   <li><a href="https://github.com/spotify/scio" target="_blank">Scio</a>: Spotify have developed this excellent and extensive Scala library</li> 
+  </ul> 
+  <p>We initially used Beam directly but quickly found that the complex nature of the Java API (particulary around type erasure), made Scala interop tricky. We then evaluated Scio, but while we were learning the complex Dataflow concepts we wanted something that was very lightweight, and that kept us very close to the API. Hence this library that we feel fits in a niche between the two libraries above.</p> 
+  <h2><a id="user-content-roadmap" class="anchor" href="https://github.com/zendesk/scala-flow#roadmap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Roadmap</h2> 
+  <ul> 
+   <li>Create version of each method that accepts a name to better support updating pipelines</li> 
+   <li>Switch underlying support to Apache Beam</li> 
+  </ul> 
+  <h2><a id="user-content-credits" class="anchor" href="https://github.com/zendesk/scala-flow#credits" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Credits</h2> 
+  <p>The case class coder approach was heavily inspired by <a href="https://github.com/spray/spray-json" target="_blank">Spray Json</a>, a really nice, light weight JSON parser.</p> 
+  <h2><a id="user-content-contributing" class="anchor" href="https://github.com/zendesk/scala-flow#contributing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h2> 
+  <p>Bug reports and pull requests are welcome on GitHub at <a href="https://github.com/zendesk/scala-flow/" target="_blank">https://github.com/zendesk/scala-flow/</a></p> 
+  <h2><a id="user-content-copyright-and-license" class="anchor" href="https://github.com/zendesk/scala-flow#copyright-and-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright and license</h2> 
+  <p>Copyright 2017 Zendesk, Inc.</p> 
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.</p> 
+  <p>You may obtain a copy of the License at <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>
