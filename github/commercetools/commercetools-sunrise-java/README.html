@@ -29,7 +29,7 @@
     </svg></a>Starting from scratch</h3> 
   <p>Alternatively you can start your own Play Framework project and configure it yourself, using Sunrise as dependency:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">sunriseFrameworkVersion</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>0.14.0<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> or desired version</span>
+   <pre><span class="pl-k">val</span> <span class="pl-en">sunriseFrameworkVersion</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M1<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> or desired version</span>
 libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
   <span class="pl-c"><span class="pl-c">//</span> add Sunrise Framework dependencies as needed, e.g.:</span>
   <span class="pl-s"><span class="pl-pds">"</span>com.commercetools.sunrise<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>product-catalog<span class="pl-pds">"</span></span> <span class="pl-k">%</span> sunriseFrameworkVersion,
@@ -42,9 +42,23 @@ libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <spa
   <p>These dependencies provide default Controllers which can be enabled by extending them into your own Controller and registering a route for it.</p> 
   <p>For example, if we wanted to enable an endpoint to see the contents of the cart, we would simply extend the <code>SunriseCartDetailController</code>:</p> 
   <div class="highlight highlight-source-java">
-   <pre><span class="pl-k">@RequestScoped</span>
-<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">CartDetailController</span> <span class="pl-k">extends</span> <span class="pl-e">SunriseCartDetailController</span> {
-  <span class="pl-c"><span class="pl-c">//</span> here you can register components or override methods to change behaviour</span>
+   <pre><span class="pl-c"><span class="pl-c">//</span> here you can register controller components</span>
+<span class="pl-k">@RegisteredComponents</span>(<span class="pl-smi">CartOperationsControllerComponentSupplier</span><span class="pl-k">.</span>class)
+<span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-en">CartDetailController</span> <span class="pl-k">extends</span> <span class="pl-e">SunriseCartDetailController</span> {
+
+    <span class="pl-k">@Inject</span>
+    <span class="pl-k">public</span> <span class="pl-en">CartDetailController</span>(<span class="pl-k">final</span> <span class="pl-smi">TemplateRenderer</span> <span class="pl-v">templateRenderer</span>,
+                                <span class="pl-k">final</span> <span class="pl-smi">CartFinder</span> <span class="pl-v">cartFinder</span>,
+                                <span class="pl-k">final</span> <span class="pl-smi">CartDetailPageContentFactory</span> <span class="pl-v">pageContentFactory</span>) {
+        <span class="pl-c1">super</span>(templateRenderer, cartFinder, pageContentFactory);
+    }
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getTemplateName</span>() {
+        <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">"</span>cart<span class="pl-pds">"</span></span>;
+    }
+    
+    <span class="pl-c"><span class="pl-c">//</span> here you can override methods to change behaviour</span>
 }</pre>
   </div> 
   <p>Then we only need to associate our <code>CartDetailController</code> to a route with the desired pattern in <code>conf/routes</code>:</p> 
