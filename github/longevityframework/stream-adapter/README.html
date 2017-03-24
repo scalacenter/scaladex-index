@@ -1,0 +1,91 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-a-collection-of-converters-between-various-scala-streaming-libraries" class="anchor" href="https://github.com/longevityframework/stream-adapter#a-collection-of-converters-between-various-scala-streaming-libraries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>A collection of converters between various Scala streaming libraries</h1> 
+  <p>Did you ever find yourself with a stream from one streaming library, but some other part of your program expects a stream from some other library? Do you want to provide streaming as part of your API, don't want to limit yourself to a single streaming library? <code>stream-adapter</code> provides tooling to help address both of these situations.</p> 
+  <h2><a id="user-content-converting-between-two-streaming-libraries" class="anchor" href="https://github.com/longevityframework/stream-adapter#converting-between-two-streaming-libraries" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Converting between two streaming libraries</h2> 
+  <p><code>stream-adapter</code> provides conversions between the following Scala streaming libraries:</p> 
+  <ul> 
+   <li><a href="http://doc.akka.io/docs/akka/2.4.17/scala/stream/index.html" target="_blank">Akka Streams</a></li> 
+   <li><a href="https://github.com/functional-streams-for-scala/fs2" target="_blank">FS2</a></li> 
+   <li><a href="https://github.com/travisbrown/iteratee" target="_blank">iteratee.io</a></li> 
+   <li><a href="https://www.playframework.com/documentation/2.5.x/Enumerators" target="_blank">Play enumerators</a></li> 
+  </ul> 
+  <p>More can be added relatively easily, as we will see below. Let's start with an Akka <code>Source</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.</span><span class="pl-v">ActorMaterializer</span>
+<span class="pl-k">import</span> <span class="pl-v">akka.stream.scaladsl.</span><span class="pl-v">Source</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">actorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>streamadapter<span class="pl-pds">"</span></span>)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+<span class="pl-k">val</span> <span class="pl-en">akkaSource</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>(<span class="pl-c1">0.</span>until(<span class="pl-c1">10</span>))</pre>
+  </div> 
+  <p>We can convert this to an <code>fs2.Stream</code> like so:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">fs2Stream</span><span class="pl-k">:</span> fs2.<span class="pl-en">Stream</span>[fs2.<span class="pl-en">Task</span>, <span class="pl-k">Int</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.akka.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.fs2.</span><span class="pl-v">_</span>
+  adapt[<span class="pl-en">AkkaSource</span>, <span class="pl-en">FS2Stream</span>, <span class="pl-k">Int</span>](akkaSource)
+}</pre>
+  </div> 
+  <p>Converting streams requires a small handful of wildcard imports. I like to put these in an anonymous block, as above, so they don't apply to the rest of the code in the file.</p> 
+  <p>Unfortunately, the effects for <code>fs2.Stream</code> is hardwired to <code>fs2.Task</code> for the moment. We should be able to handle other effects in the future.</p> 
+  <p>Let's now convert that FS2 stream into an <code>io.iteratee.Enumerator</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">iterateeIoEnumerator</span><span class="pl-k">:</span> io.iteratee.<span class="pl-en">Enumerator</span>[cats.<span class="pl-en">Eval</span>, <span class="pl-k">Int</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">S</span> <span class="pl-k">=</span> fs2.<span class="pl-en">Strategy</span>.fromFixedDaemonPool(<span class="pl-c1">8</span>, threadName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>worker<span class="pl-pds">"</span></span>)
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.fs2.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.iterateeio.</span><span class="pl-v">_</span>
+  adapt[<span class="pl-en">FS2Stream</span>, <span class="pl-en">EvalEnumerator</span>, <span class="pl-k">Int</span>](fs2Stream)
+}</pre>
+  </div> 
+  <p>All three of the type arguments to <code>adapt</code> should be inferrable by the compiler. The first and the third argument are inferrable from the argument, <code>fs2Stream</code>, and the second argument should be inferrable from the left-hand side. But I haven't figured out how to get the compiler to infer any of them yet. Can you help? It's not as simple as you might think, because the implicit resolution has to navigate between types with two type parameters, such as <code>Enumerator[Eval, Int]</code>, and types with a single type parameter, such as <code>streamadapter.iterateeio.EvalEnumerator[Int]</code>.</p> 
+  <p>Let's in turn convert this iteratee.io enumerator into a Play enumerator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">playEnumerator</span><span class="pl-k">:</span> play.api.libs.iteratee.<span class="pl-en">Enumerator</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> {
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.iterateeio.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">streamadapter.play.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+  adapt[<span class="pl-en">EvalEnumerator</span>, <span class="pl-en">PlayEnumerator</span>, <span class="pl-k">Int</span>](iterateeIoEnumerator)
+}</pre>
+  </div> 
+  <p>All four enumerators above will produce the same elements, zero through nine, as you can see for yourself by running <a href="https://github.com/longevityframework/stream-adapter/blob/master/core/src/test/scala/streamadapter/usage/Usage.scala" target="_blank">Usage.scala</a>.</p> 
+  <h2><a id="user-content-how-it-works" class="anchor" href="https://github.com/longevityframework/stream-adapter#how-it-works" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How it works</h2> 
+  <p>The <code>stream-adapter</code> provides a class <code>Chunkerator</code> that captures most of the functionality of a stream in a synchronous data structure. Streams are re-runnable, so we provide a <code>Function0</code> that produces an iterator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Chunkerator</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Function0</span>[<span class="pl-en">CloseableChunkIter</span>[<span class="pl-en">A</span>]] { <span class="pl-c"><span class="pl-c">//</span> ...</span></pre>
+  </div> 
+  <p>The <code>CloseableChunkIter</code> is an iterator over "chunks", which are used by various streaming libraries for performance reasons:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">CloseableChunkIter</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">CloseableIter</span>[<span class="pl-en">Seq</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>A <code>CloseableIter</code> is just an iterator that supports a <code>close</code> operation, so the consumer can communicate to the producer that it finished early, allowing the producer to free up resources:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">CloseableIter</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] <span class="pl-k">extends</span> <span class="pl-e">Iterator</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">close</span><span class="pl-k">:</span> <span class="pl-k">Unit</span>
+}</pre>
+  </div> 
+  <p>For each streaming library, we provide two adapters: one from a <code>Chunkerator</code> to a stream, and the other from a stream to a <code>Chunkerator</code>. We can then combine two adapters to produce an adapter between any two streaming libraries, using <code>Chunkerator</code> as a mediator. This way, we can have eight converters - two for each of four streaming libraries - instead of the twelve we would need if we were going to provide custom adapters for every pair of streaming libraries. And if we add another streaming library to the mix, we only need to add two adapters, instead of eight.</p> 
+  <p>One advantage to this approach is for people who are writing libraries that provide a streaming API, but don't want to lock it down to a single streaming library. In this case, they can just produce a single <code>Chunkerator</code>, and use <code>stream-adapter</code> to produce streams from multiple libraries. In fact, this is how I am using it. I only use the stream to <code>Chunkerator</code> converters for testing.</p> 
+  <p>Of course, this approach does not rule out the possibility of providing custom adapters that remove the mediating step. We may have to juggle the implicits a bit to make this work, but it shouldn't be a big deal.</p> 
+  <h2><a id="user-content-limitations" class="anchor" href="https://github.com/longevityframework/stream-adapter#limitations" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <p>This early release is very raw, and there are a number of improvements that could be made. I've created GitHub issues to keep track of all the ideas I've come up with. Rather than repeating myself here, I'll ask you to browse the issues yourself:</p> 
+  <ul> 
+   <li><a href="https://github.com/longevityframework/stream-adapter/issues" target="_blank">https://github.com/longevityframework/stream-adapter/issues</a></li> 
+  </ul> 
+ </article>
+</div>

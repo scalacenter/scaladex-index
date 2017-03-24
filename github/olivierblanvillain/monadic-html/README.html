@@ -136,7 +136,11 @@ mount(div, component)</pre>
 <span class="pl-c"><span class="pl-c">//</span> numbers =&gt; 0 1 4 3 2 ...</span>
 <span class="pl-c"><span class="pl-c">//</span> doubles =&gt; 0 2 8 6 4 ...</span></pre>
     </div> </li> 
-   <li> <p><code>def flatMap[B](f: A =&gt; Rx[B]): Rx[B]</code></p> <p>Dynamically switch between different <code>Rx</code>s according to the given function, applied on each element of this <code>Rx</code>. Each switch will cancel the subscriptions for the previous outgoing <code>Rx</code>, and lunch a subscriptions on the next <code>Rx</code>.</p> <p>Together with <code>Rx#map</code> and <code>Rx.apply</code>, flatMap, <code>Rx</code> is a <code>Monad</code>. <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-rx-cats/src/main/scala/mhtml/cats.scala" target="_blank">Proof</a>.</p> </li> 
+   <li> <p><code>def flatMap[B](f: A =&gt; Rx[B]): Rx[B]</code></p> <p>Dynamically switch between different <code>Rx</code>s according to the given function, applied on each element of this <code>Rx</code>. Each switch will cancel the subscriptions for the previous outgoing <code>Rx</code> and start a new subscription on the next <code>Rx</code>.</p> <p>Together with <code>Rx#map</code> and <code>Rx.apply</code>, flatMap forms a <code>Monad</code>. <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-rx-cats/src/main/scala/mhtml/cats.scala" target="_blank">Proof</a>.</p> </li> 
+   <li> <p><code>def product[B](other: Rx[B]): Rx[(A, B)]</code></p> <p>Create the Cartesian product of two <code>Rx</code>. The output tuple contains the latest values from each input <code>Rx</code>, which updates whenever the value from either input <code>Rx</code> update. This method is faster than combining <code>Rx</code>s using <code>for { a &lt;- ra; b &lt;- rb } yield (a, b)</code>.</p> <pre><code>// r1      =&gt; 0     8                       9     ...
+// r2      =&gt; 1           4     5     6           ...
+// product =&gt; (0,1) (8,1) (8,4) (8,5) (8,6) (9,6) ...
+</code></pre> <p>This method, together with <code>Rx.apply</code>, forms am <code>Applicative</code>. <code>|@|</code> syntax is available via the <code>monadic-rx-cats</code> package.</p> </li> 
    <li> <p><code>def dropRepeats: Rx[A]</code></p> <p>Drop repeated value of this <code>Rx</code>.</p> 
     <div class="highlight highlight-source-scala">
      <pre><span class="pl-k">val</span> <span class="pl-en">numbers</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-k">Int</span>]
@@ -152,7 +156,7 @@ mount(div, component)</pre>
 <span class="pl-c"><span class="pl-c">//</span> r1     =&gt; 0 8     3 ...</span>
 <span class="pl-c"><span class="pl-c">//</span> r2     =&gt; 1   4 3   ...</span>
 <span class="pl-c"><span class="pl-c">//</span> merged =&gt; 0 8 4 3 3 ...</span></pre>
-    </div> <p>With this operation, <code>Rx</code> is a <code>Semigroup</code>. <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-rx-cats/src/main/scala/mhtml/cats.scala" target="_blank">Proof</a>.</p> </li> 
+    </div> <p>With this operation, <code>Rx</code> forms a <code>Semigroup</code>. <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-rx-cats/src/main/scala/mhtml/cats.scala" target="_blank">Proof</a>. <code>|+|</code> syntax is available via the <code>monadic-rx-cats</code> package.</p> </li> 
    <li> <p><code>def foldp[B](seed: B)(step: (B, A) =&gt; B): Rx[B]</code></p> <p>Produces a <code>Rx</code> containing cumulative results of applying a binary operator to each element of this <code>Rx</code>, starting from a <code>seed</code> and the current value, and moving forward in time.</p> 
     <div class="highlight highlight-source-scala">
      <pre><span class="pl-k">val</span> <span class="pl-en">numbers</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-k">Int</span>]
