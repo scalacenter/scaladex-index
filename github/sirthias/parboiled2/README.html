@@ -169,7 +169,7 @@ parser.topLevelRule.run() <span class="pl-c"><span class="pl-c">//</span> by def
    <pre><span class="pl-k">def</span> <span class="pl-en">foo</span> <span class="pl-k">=</span> rule { <span class="pl-c1">'a'</span> <span class="pl-k">~</span> (<span class="pl-c1">'b'</span> <span class="pl-k">~</span> <span class="pl-c1">'c'</span> <span class="pl-k">|</span> <span class="pl-c1">'b'</span> <span class="pl-k">~</span> <span class="pl-c1">'d'</span>) }</pre>
   </div> 
   <p>When this rule is confronted with the input <code>abd</code> the parser matches the input in these steps:</p> 
-  <ol class="arabic simple"> 
+  <ol> 
    <li>Rule <code>foo</code> starts executing, which calls its first sub-rule <code>'a'</code>. The cursor is at position 0.</li> 
    <li>Rule <code>'a'</code> is executed against input position 0, matches (succeeds) and the cursor is advanced to position 1.</li> 
    <li>Rule <code>'b' ~ 'c' | 'b' ~ 'd'</code> starts executing, which calls its first sub-rule <code>'b' ~ 'c'</code>.</li> 
@@ -934,7 +934,7 @@ parser.topLevelRule.run() <span class="pl-c"><span class="pl-c">//</span> by def
   <p>As described in the section about <a href="https://github.com/sirthias/parboiled2#how-the-parser-matches-input" target="_blank">How the Parser matches Input</a> above the parser consumes input by applying grammar rules and backtracking in the case of mismatches. As such rule mismatches are an integral part of the parsers operation and do not generally mean that there is something wrong with the input. Only when the root rule itself mismatches and the parser has no backtracking options remaining does it become clear that a parse error is present. At that point however, when the root rule mismatches, the information about where exactly the problematic input was and which of the many rule mismatches that the parser experienced during the run were the "bad" ones is already lost.</p> 
   <p><em>parboiled</em> overcomes this problem by simply re-running the failed parser, potentially many times, and "watching" it as it tries to consume the erroneous input. With every re-run <em>parboiled</em> learns a bit more about the position and nature of the error and when this analysis is complete a <code>ParseError</code> instance is constructed and handed to the application as the result of the parsing run, which can then use the error information on its level (e.g. for formatting it and displaying it to the user). Note that re-running the parser in the presence of parse errors does result in unsuccessful parsing runs being potentially much slower than successful ones. However, since in the vast majority of use cases failed runs constitute only a small minority of all parsing runs and the normal flow of application logic is disrupted anyway, this slow-down is normally quite acceptable, especially if it results in better error messages. See the section on <a href="https://github.com/sirthias/parboiled2#limiting-error-re-runs" target="_blank">Limiting Error Re-Runs</a> if this is not true for your application.</p> 
   <p>In principle the error reporting process looks like this:</p> 
-  <ol class="arabic simple"> 
+  <ol> 
    <li>The grammar's root rule is run at maximum speed against the parser input. If this succeeds then all is well and the parsing result is immediately dispatched to the user.</li> 
    <li>If the root rule did not match we know that there we have a parsing error. The parser is then run again to establish the "principal error location". The principal error location is the first character in the input that could not be matched by any rule during the parsing run. In order words, it is the maximum value that the parser's <code>cursor</code> member had during the parsing run.</li> 
    <li>Once the error location is known the parser is run again. This time all rule mismatches against the input character at error location are recorded. These rule mismatches are used to determine what input the grammar "expects" at the error location but failed to see. For every such "error rule mismatch" the parser collects the "rule trace", i.e. the stack of rules that led to it. Currently this is done by throwing a special exception that bubbles up through the JVM call stack and records rule stack information on its way up. A consequence of this design is that the parser needs to be re-run once per "error rule mismatch".</li> 
@@ -1013,7 +1013,7 @@ Tim has money, Tom Is poor
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a><a href="https://github.com/sirthias/parboiled2#id28" target="_blank">Naming Rules</a></h4> 
   <p><em>parboiled</em> uses a somewhat involved logic to determine what exactly to report as "mismatched" and "expected" for a given parse error. Essentially the process looks like this:</p> 
-  <ol class="arabic simple"> 
+  <ol> 
    <li>Compare all rule trace for the error and drop a potentially existing common prefix. This is done because, if all traces share a common prefix, this prefix can be regarded as the "context" of the error which is probably apparent to the user and as such doesn't need to be reported.</li> 
    <li>For each trace (suffix), find the first frame that tried to start its match at the reported error position. The string representation of this frame (which might be an assigned name) is selected for "expected" reporting.</li> 
    <li>Duplicate "expected" strings are removed.</li> 
@@ -1271,7 +1271,7 @@ abcx
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a><a href="https://github.com/sirthias/parboiled2#id43" target="_blank">Running the Examples</a></h2> 
   <p>Follow these steps to run the example parsers defined <a href="https://github.com/sirthias/parboiled2/tree/master/examples/src/main/scala/org/parboiled2/examples" target="_blank">here</a> on your own machine:</p> 
-  <ol class="arabic"> 
+  <ol> 
    <li><p>Clone the <em>parboiled2</em> repository:</p> <pre>git clone git://github.com/sirthias/parboiled2.git
 </pre> </li> 
    <li><p>Change into the base directory:</p> <pre>cd parboiled2
