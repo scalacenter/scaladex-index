@@ -28,7 +28,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>SBT</h3> 
   <p>Add this to your sbt build file :</p> 
-  <pre><code>libraryDependencies += "com.spinoco" %% "fs2-http" % "0.1.6" 
+  <pre><code>libraryDependencies += "com.spinoco" %% "fs2-http" % "0.1.7" 
 </code></pre> 
   <h3><a id="user-content-dependencies" class="anchor" href="https://github.com/spinoco/fs2-http#dependencies" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -46,14 +46,14 @@
    </thead> 
    <tbody> 
     <tr> 
-     <td>0.1.6</td> 
+     <td>0.1.7</td> 
      <td>2.11, 2.12</td> 
-     <td>0.9.4</td> 
+     <td>0.9.5</td> 
      <td>1.10.3</td> 
      <td>2.3.2</td> 
     </tr> 
     <tr> 
-     <td>0.1.4</td> 
+     <td>0.1.6</td> 
      <td>2.11, 2.12</td> 
      <td>0.9.4</td> 
      <td>1.10.3</td> 
@@ -81,6 +81,9 @@ import http.websocket._
 import spinoco.protocol.http.header._
 import spinoco.protocol.http._
 import spinoco.protocol.http.header.value._
+
+// import resources (Executor, Strategy, Asynchronous Channel Group, ...) 
+import spinoco.fs2.http.Resources._
 </code></pre> 
   <h3><a id="user-content-http-client" class="anchor" href="https://github.com/spinoco/fs2-http#http-client" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -124,13 +127,21 @@ http.client[Task]().flatMap { client =&gt;
 }.unsafeRun()
 </code></pre> 
   <p>The above code will create a pipe that receives websocket frames and expects the server to echo them back. As you see, there is no direct access to response or body, instead websockets are always supplied with fs2 <code>Pipe</code> to send and receive data. This is in fact quite a powerful construct that allows you to asynchronously send and receive data to/from server over http/https with full back-pressure support.</p> 
-  <p>Websockets use <code>Frame\[A\]</code> to send and receive data. Frame is used to tag a given frame as binary or text. To encode/decode <code>A</code> the <code>scodec.Encoder</code> and <code>scodec.Decoder</code> is used.</p> 
+  <p>Websockets use <code>Frame[A]</code> to send and receive data. Frame is used to tag a given frame as binary or text. To encode/decode <code>A</code> the <code>scodec.Encoder</code> and <code>scodec.Decoder</code> is used.</p> 
   <h3><a id="user-content-http-server" class="anchor" href="https://github.com/spinoco/fs2-http#http-server" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>HTTP Server</h3> 
   <p>fs2-http supports building simple yet fully functional HTTP servers. The following construct builds a very simple echo server:</p> 
-  <pre><code> def service(request: HttpRequestHeader, body: Stream[Task,Byte]): Stream[Task,HttpResponse[Task]] = {
+  <pre><code> import java.net.InetSocketAddress
+ import java.util.concurrent.Executors
+ import java.nio.channels.AsynchronousChannelGroup
+
+ val ES = Executors.newCachedThreadPool(Strategy.daemonThreadFactory("ACG"))
+ implicit val ACG = AsynchronousChannelGroup.withThreadPool(ES) // http.server requires a group
+ implicit val S = Strategy.fromExecutor(ES) // Async (Task) requires a strategy
+
+ def service(request: HttpRequestHeader, body: Stream[Task,Byte]): Stream[Task,HttpResponse[Task]] = {
     if (request.path != Uri.Path / "echo") Stream.emit(HttpResponse(HttpStatusCode.Ok).withUtf8Body("Hello World"))
     else {
       val ct =  request.headers.collectFirst { case `Content-Type`(ct) =&gt; ct }.getOrElse(ContentType(MediaType.`application/octet-stream`, None, None))

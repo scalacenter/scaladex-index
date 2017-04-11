@@ -1,0 +1,128 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-mirage-scala" class="anchor" href="https://github.com/takezoe/mirage-scala#mirage-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>mirage-scala</h1> 
+  <p>The SQL Centric Database Access Library for Scala</p> 
+  <h2><a id="user-content-introduction" class="anchor" href="https://github.com/takezoe/mirage-scala#introduction" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introduction</h2> 
+  <p>mirage-scala is Scala wrapper for <a href="https://github.com/takezoe/mirage" target="_blank">Mirage</a>.</p> 
+  <p>It provides the dynamic SQL template language called <a href="http://amateras.sourceforge.jp/site/mirage/2waysql.html" target="_blank">2waySQL</a>. Directives is embedded as SQL comment, so the 2WaySQL template is also executable as raw SQL. It makes testability of SQL.</p> 
+  <p>To use mirage-scala with sbt based project, please add following dependency into your <code>build.sbt</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jp.sf.amateras.mirage<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>mirage-scala<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a id="user-content-2waysql-dynamic-template" class="anchor" href="https://github.com/takezoe/mirage-scala#2waysql-dynamic-template" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>2WaySQL dynamic template</h2> 
+  <p>This is a simple example to query using mirage-scala:</p> 
+  <p>At first, define the DTO which is mapped to ResultList as case class. It's possible to specify <code>Option[T]</code> as property type for null-able properties.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> A class which mapped to ResultList</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Book</span>(
+  <span class="pl-v">bookId</span>: <span class="pl-en">IdentityPk</span>[<span class="pl-k">Int</span>],
+  <span class="pl-v">bookName</span>: <span class="pl-k">String</span>,
+  <span class="pl-v">author</span>: <span class="pl-k">String</span>,
+  <span class="pl-v">price</span>: <span class="pl-en">Option</span>[<span class="pl-k">Int</span>]
+)</pre>
+  </div> 
+  <p>Execute SQL using <code>SqlManager</code>. mirage-scala provides dynamic SQL template called <a href="http://amateras.sourceforge.jp/site/mirage/2waysql.html" target="_blank">2waySQL</a> in <code>Sql()</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">jp.sf.amateras.mirage.scala.</span><span class="pl-v">_</span>
+
+<span class="pl-en">Session</span>.withTransaction { session <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">sqlManager</span><span class="pl-k">:</span> <span class="pl-en">SqlManager</span> <span class="pl-k">=</span> session.sqlManager
+
+  <span class="pl-k">val</span> <span class="pl-en">books</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Book</span>] <span class="pl-k">=</span> sqlManager.getResultList[<span class="pl-en">Book</span>](
+    <span class="pl-en">Sql</span>(<span class="pl-s"><span class="pl-pds">"""</span></span>
+<span class="pl-s">      SELECT BOOK_ID, BOOK_NAME, AUTHOR, PRICE</span>
+<span class="pl-s">      FROM BOOK</span>
+<span class="pl-s">      /*IF author!=null*/</span>
+<span class="pl-s">        WHERE AUTHOR = /*author*/</span>
+<span class="pl-s">      /*END*/</span>
+<span class="pl-s">    <span class="pl-pds">"""</span></span>), <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>author<span class="pl-pds">"</span></span><span class="pl-k">-</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>))
+
+  books.foreach { book <span class="pl-k">=&gt;</span>
+    println(<span class="pl-s"><span class="pl-pds">"</span>bookId: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> book.bookId)
+    println(<span class="pl-s"><span class="pl-pds">"</span>bookName: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> book.bookName)
+    println(<span class="pl-s"><span class="pl-pds">"</span>author: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> book.author)
+    println(<span class="pl-s"><span class="pl-pds">"</span>price: <span class="pl-pds">"</span></span> <span class="pl-k">+</span> book.price)
+    println(<span class="pl-s"><span class="pl-pds">"</span>--<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>You can also use the external SQL file using <code>SqlFile()</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">List</span>[<span class="pl-en">Book</span>] <span class="pl-k">=</span> sqlManager.getResultList[<span class="pl-en">Book</span>](
+  <span class="pl-en">SqlFile</span>(<span class="pl-s"><span class="pl-pds">"</span>META-INF/selectBooks.sql<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>author<span class="pl-pds">"</span></span><span class="pl-k">-</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <p>In mirage-scala, it's also possible to use <code>Map[String, _]</code> as result class / parameter class instead of the case class.</p> 
+  <p>See also <a href="http://amateras.sourceforge.jp/site/mirage/welcome.html" target="_blank">Mirage documentation</a> to learn about usage of Mirage.</p> 
+  <h2><a id="user-content-sql-less-update" class="anchor" href="https://github.com/takezoe/mirage-scala#sql-less-update" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SQL less update</h2> 
+  <p>mirage-scala also supports SQL less select / update using the entity class.</p> 
+  <p>If the primary key is set at the server-side, for example, it's auto incremented, You have to specify <code>Auto</code> for the primary key property.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">book</span><span class="pl-k">:</span> <span class="pl-en">Book</span> <span class="pl-k">=</span> <span class="pl-en">Book</span>(
+  <span class="pl-en">Auto</span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Mirage in Action<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>,
+  <span class="pl-en">Some</span>(<span class="pl-c1">20</span>)
+)
+
+sqlManager.insertEntity(book);</pre>
+  </div> 
+  <p>If the primary key must be set by the application, you can use <code>Id(value)</code> to set the value to the primary key property.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">book</span><span class="pl-k">:</span> <span class="pl-en">Book</span> <span class="pl-k">=</span> <span class="pl-en">Book</span>(
+  <span class="pl-en">Id</span>(<span class="pl-c1">1</span>),
+  <span class="pl-s"><span class="pl-pds">"</span>Mirage in Action<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>,
+  <span class="pl-en">Some</span>(<span class="pl-c1">20</span>)
+)
+
+sqlManager.insertEntity(book);</pre>
+  </div> 
+  <p>Also batch updating is available.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> batch inserting</span>
+sqlManager.insertBatch(book1, book2, book3);
+sqlManager.insertBatch(<span class="pl-v">books</span>: _<span class="pl-k">*</span>);
+
+<span class="pl-c"><span class="pl-c">//</span> batch updating</span>
+sqlManager.updateBatch(book1, book2, book3);
+sqlManager.updateBatch(<span class="pl-v">books</span>: _<span class="pl-k">*</span>);
+
+<span class="pl-c"><span class="pl-c">//</span> batch deleting</span>
+sqlManager.deleteBatch(book1, book2, book3);
+sqlManager.deleteBatch(<span class="pl-v">books</span>: _<span class="pl-k">*</span>);</pre>
+  </div> 
+  <h2><a id="user-content-resultset-stream" class="anchor" href="https://github.com/takezoe/mirage-scala#resultset-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>ResultSet stream</h2> 
+  <p>To handle large data, create stream by <code>stream()</code> method and process each records by <code>foreach()</code> method.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>sqlManager
+  .stream(<span class="pl-en">Sql</span>(<span class="pl-s"><span class="pl-pds">"</span>SELECT BOOK_ID, BOOK_NAME, AUTHOR, PRICE FROM BOOK<span class="pl-pds">"</span></span>))
+  .foreach[<span class="pl-en">Book</span>] { book <span class="pl-k">=&gt;</span>
+    println(book)
+  }</pre>
+  </div> 
+  <p>If you would like to aggregate streaming values, you can use <code>foldLeft</code> method instead:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">sum</span> <span class="pl-k">=</span> sqlManager
+  .stream(<span class="pl-en">Sql</span>(<span class="pl-s"><span class="pl-pds">"</span>SELECT BOOK_ID, BOOK_NAME, AUTHOR, PRICE FROM BOOK<span class="pl-pds">"</span></span>))
+  .foldLeft[<span class="pl-en">Book</span>, <span class="pl-k">Int</span>](<span class="pl-c1">0</span>){ <span class="pl-k">case</span> (book, i) <span class="pl-k">=&gt;</span>
+    i <span class="pl-k">+</span> book.price
+  }</pre>
+  </div> 
+ </article>
+</div>

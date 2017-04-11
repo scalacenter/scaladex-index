@@ -107,68 +107,88 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Authenticated data structures</h3> 
-  <p>Scrypto supports authenticated AVL+ trees with the batching compression support and guaranteed verifier efficiency, see <a href="http://eprint.iacr.org/2016/994" target="_blank">http://eprint.iacr.org/2016/994</a> for details. The implementation can be found in the <code>scorex.crypto.authds.avltree.batch</code> package. Here are code snippets on how to generate proofs and check them. In this example we demonstrate two batches of two modifications per batch, starting with the empty tree: in the first batch, a prover inserts two values into the tree; in the second batch, the prover updates the first value and deletes the second one.</p> 
+  <p>Scrypto supports two-party authenticated AVL+ trees with the batching compression support and guaranteed verifier efficiency, as described in <a href="http://eprint.iacr.org/2016/994" target="_blank">http://eprint.iacr.org/2016/994</a>. The implementation can be found in the <code>scorex.crypto.authds.avltree.batch</code> package.</p> 
+  <p>The overall approach is as follows. The prover has a data structure of (key, value) pairs and can perform operations on it using <code>performOneOperation</code> method. An operation (see <code>scorex.crypto.authds.avltree.batch.Operation</code>) is either a lookup or a modification. We provide sample modifications (such as insertions, removals, and additions/subtractions from the value of a given key), but users of this code may define their own (such as subtractions that allow negative values, unlike our subtractions). A modification may be defined to fail under certain conditions (e.g., a deletion of a key that is not there, or a subtraction that results in a negative value), in which case the tree is not modified. If the operation succeeds, it returns the value associated with the key before the operation was performed. The prover can compute the digest of the current state of the data structure via the <code>digest</code> method. At any point the prover may use <code>generateProof</code>, which will produce a proof covering the batch of operations (except the ones that failed) since the last <code>generateProof</code>.</p> 
+  <p>The verifier is constructed from the digest that preceeded the latest batch of operations and the proof for the latest batch. The verifier can also be given optional parameters for the maximum number of operations (and at most how many of those are deletions) in order to guarantee a bound on the verifier running time in case of a malicious proof, thus mitigating denial of service attacks. Once constructed, the verifier can replay the same sequence of operations to compute the new digest and to be assured that the operations do not fail and their return values are correct. Note that the verifier is not assured that the sequence of operations is the same as the one the prover performed---it is assumed that the prover and verifier agree on the sequence of operations (two-party authenticated data structures are useful when the prover and verifier agree on the sequence of operations). However, if the verifier digest matches the prover digest after the sequence of operations, then the verifier is assured that the state of the data structure is the same, regardless of what sequence of operations led to this state.</p> 
+  <p>We also provide <code>unauthenticatedLookup</code> for the prover, in order to allow the prover to look up values in the data structure without affecting the proof.</p> 
+  <p>Here are code examples for generating proofs and checking them. In this example we demonstrate two batches of operations, starting with the empty tree. In the first batch, a prover inserts three values into the tree; in the second batch, the prover changes the first value, attempts to subtract too much from the second one, which fails, looks up the third value, and attempts to delete a nonexisting value, which also fails. We use 1-byte keys for simplicity; in a real deployment, keys would be longer.</p> 
   <ul> 
-   <li>First, we create a prover and get an initial root hash from it (in a real application, this value is a public constant because anyone, including verifiers, can compute it by using the same two lines of code)</li> 
+   <li>First, we create a prover and get an initial digest from it (in a real application, this value is a public constant because anyone, including verifiers, can compute it by using the same two lines of code)</li> 
   </ul> 
   <div class="highlight highlight-source-scala">
    <pre>  <span class="pl-k">val</span> <span class="pl-en">prover</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLProver</span>(keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>)
-  <span class="pl-k">val</span> <span class="pl-en">initRoot</span> <span class="pl-k">=</span> prover.rootHash</pre>
+  <span class="pl-k">val</span> <span class="pl-en">initialDigest</span> <span class="pl-k">=</span> prover.digest</pre>
   </div> 
   <ul> 
-   <li>Second, we create the first batch of tree modifications, inserting keys 1 and 2 with values 0 for each</li> 
+   <li>Second, we create the first batch of tree modifications, inserting keys 1, 2, and 3 with values 10, 20, and 30. We use <code>com.google.common.primitives.Longs.toByteArray</code> to get 8-byte values out of longs.</li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">val</span> <span class="pl-en">op1</span> <span class="pl-k">=</span> <span class="pl-en">Insert</span>(<span class="pl-en">Array</span>(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-k">Byte</span>), <span class="pl-en">Array</span>.fill(<span class="pl-c1">8</span>)(<span class="pl-c1">0</span><span class="pl-k">:</span><span class="pl-k">Byte</span>))
-  <span class="pl-k">val</span> <span class="pl-en">op2</span> <span class="pl-k">=</span> <span class="pl-en">Insert</span>(<span class="pl-en">Array</span>(<span class="pl-c1">2</span><span class="pl-k">:</span><span class="pl-k">Byte</span>), <span class="pl-en">Array</span>.fill(<span class="pl-c1">8</span>)(<span class="pl-c1">0</span><span class="pl-k">:</span><span class="pl-k">Byte</span>))</pre>
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">key1</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-k">Byte</span>);
+  <span class="pl-k">val</span> <span class="pl-en">key2</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>(<span class="pl-c1">2</span><span class="pl-k">:</span><span class="pl-k">Byte</span>);
+  <span class="pl-k">val</span> <span class="pl-en">key3</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>(<span class="pl-c1">3</span><span class="pl-k">:</span><span class="pl-k">Byte</span>);
+  <span class="pl-k">val</span> <span class="pl-en">op1</span> <span class="pl-k">=</span> <span class="pl-en">Insert</span>(key1, <span class="pl-en">Longs</span>.toByteArray(<span class="pl-c1">10</span>))
+  <span class="pl-k">val</span> <span class="pl-en">op2</span> <span class="pl-k">=</span> <span class="pl-en">Insert</span>(key2, <span class="pl-en">Longs</span>.toByteArray(<span class="pl-c1">20</span>))
+  <span class="pl-k">val</span> <span class="pl-en">op3</span> <span class="pl-k">=</span> <span class="pl-en">Insert</span>(key3, <span class="pl-en">Longs</span>.toByteArray(<span class="pl-c1">30</span>))</pre>
   </div> 
   <ul> 
-   <li>Prover applies the two modifications to an empty tree, obtains the first batch proof, and announces the next root hash <code>root1</code></li> 
+   <li>The prover applies the three modifications to the empty tree, obtains the first batch proof, and announces the next digest <code>digest1</code>.</li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>  prover.performOneOperation(op1)
-  prover.performOneOperation(op2)
+   <pre>  prover.performOneOperation(op1) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
+  prover.performOneOperation(op2) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
+  prover.performOneOperation(op3) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
   <span class="pl-k">val</span> <span class="pl-en">proof1</span> <span class="pl-k">=</span> prover.generateProof
-  <span class="pl-k">val</span> <span class="pl-en">root1</span> <span class="pl-k">=</span> prover.rootHash</pre>
+  <span class="pl-k">val</span> <span class="pl-en">digest1</span> <span class="pl-k">=</span> prover.digest</pre>
   </div> 
   <ul> 
-   <li>A proof is just an array of bytes, so you can immediately send it over a wire or save it to a disk. Next, the prover performs two more modifications, obtains a second proof, and announces the second root hash <code>root2</code></li> 
+   <li> <p>A proof is just an array of bytes, so you can immediately send it over a wire or save it to a disk.</p> </li> 
+   <li> <p>Next, the prover attempts to perform five more modifications: changing the first value to 50, subtracting 40 from the second value (which will fail, because our UpDateLongBy operation is designed to fail on negative values), looking up the third value, deleting the key 5 (which will also fail, because key 5 does not exist), and deleting the third value. After the four operations, the prover obtains a second proof, and announces the new digest <code>digest2</code></p> </li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>   <span class="pl-k">val</span> <span class="pl-en">op3</span> <span class="pl-k">=</span> <span class="pl-en">Update</span>(<span class="pl-en">Array</span>(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-k">Byte</span>), <span class="pl-en">Array</span>.fill(<span class="pl-c1">8</span>)(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-k">Byte</span>))
-   <span class="pl-k">val</span> <span class="pl-en">op4</span> <span class="pl-k">=</span> <span class="pl-en">Remove</span>(<span class="pl-en">Array</span>(<span class="pl-c1">2</span><span class="pl-k">:</span><span class="pl-k">Byte</span>))
-   prover.performOneOperation(op3)
-   prover.performOneOperation(op4)
-   <span class="pl-k">val</span> <span class="pl-en">proof2</span> <span class="pl-k">=</span> prover.generateProof
-   <span class="pl-k">val</span> <span class="pl-en">root2</span> <span class="pl-k">=</span> prover.rootHash</pre>
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">op4</span> <span class="pl-k">=</span> <span class="pl-en">Update</span>(key1, <span class="pl-en">Longs</span>.toByteArray(<span class="pl-c1">50</span>))
+  <span class="pl-k">val</span> <span class="pl-en">op5</span> <span class="pl-k">=</span> <span class="pl-en">UpdateLongBy</span>(key2, <span class="pl-k">-</span><span class="pl-c1">40</span>)
+  <span class="pl-k">val</span> <span class="pl-en">op6</span> <span class="pl-k">=</span> <span class="pl-en">Lookup</span>(key3) 
+  <span class="pl-k">val</span> <span class="pl-en">op7</span> <span class="pl-k">=</span> <span class="pl-en">Remove</span>(<span class="pl-en">Array</span>(<span class="pl-c1">5</span><span class="pl-k">:</span><span class="pl-k">Byte</span>))
+  <span class="pl-k">val</span> <span class="pl-en">op8</span> <span class="pl-k">=</span> <span class="pl-en">Remove</span>(key3)
+  prover.performOneOperation(op4) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(10)))</span>
+  <span class="pl-c"><span class="pl-c">//</span> Here we can, for example, perform prover.unauthenticatedLookup(key1) to get 50</span>
+  <span class="pl-c"><span class="pl-c">//</span> without affecting the proof or anything else</span>
+  prover.performOneOperation(op5) <span class="pl-c"><span class="pl-c">//</span> Returns Failure</span>
+  prover.performOneOperation(op6) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>
+  prover.performOneOperation(op7) <span class="pl-c"><span class="pl-c">//</span> Returns Failure</span>
+  prover.performOneOperation(op8) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>
+  <span class="pl-k">val</span> <span class="pl-en">proof2</span> <span class="pl-k">=</span> prover.generateProof <span class="pl-c"><span class="pl-c">//</span> Proof only for op4 and op6</span>
+  <span class="pl-k">val</span> <span class="pl-en">digest2</span> <span class="pl-k">=</span> prover.digest</pre>
   </div> 
   <ul> 
-   <li>We now verify the proofs. For each batch, we construct a verifier using the digest that preceded the batch and the proof of the batch, and apply modifications. If verification fails, the verifier digest will equal None. Else, the verifier's new digest is the correct one for the tree as modified by the verifier. Furthermore, if the verifier performed the same modifications as the prover, then the verifier and prover digests will match.</li> 
+   <li> <p>We now verify the proofs. For each batch, we first construct a verifier using the digest that preceded the batch and the proof of the batch; we also supply an upper bound on the number of operations in the batch and an upper bound on how many of those operations are deletions. Note that the number of operations can be None, in which case there is no guaranteed running time bound; furthermore, the number of deletions can be None, in which case the guaranteed running time bound is not as small as it can be if a good upper bound on the number of deletion is supplied.</p> </li> 
+   <li> <p>Once the verifier for a particular batch is constructed, we perform the same operations as the prover, one by one (but not the ones that failed for the prover). If verification fails at any point (at construction time or during an operation), the verifier digest will equal None from that point forward, and no further verifier operations will change the digest. Else, the verifier's new digest is the correct one for the tree as modified by the verifier. Furthermore, if the verifier performed the same modifications as the prover, then the verifier and prover digests will match.</p> </li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">val</span> <span class="pl-en">verifier1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(initRoot, proof1, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>)
-  verifier1.performOneOperation(op1)           
-  verifier1.performOneOperation(op2)
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">verifier1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(initialDigest, proof1, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>, maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">2</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">0</span>))
+  verifier1.performOneOperation(op1) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)        </span>
+  verifier1.performOneOperation(op2) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
+  verifier1.performOneOperation(op3) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
   verifier1.digest <span class="pl-k">match</span> {
-    <span class="pl-k">case</span> <span class="pl-en">Some</span>(rt1) <span class="pl-k">if</span> rt1.sameElements(root1) <span class="pl-k">=&gt;</span>
-      <span class="pl-c"><span class="pl-c">//</span>If announced root1 is already trusted, then verification of the second batch can simply start here</span>
-      <span class="pl-k">val</span> <span class="pl-en">verifier2</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(rt1, proof2, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>)
-      verifier2.performOneModification(op3)
-      verifier2.performOneModification(op4)
+    <span class="pl-k">case</span> <span class="pl-en">Some</span>(d1) <span class="pl-k">if</span> digest1.sameElements(digest1) <span class="pl-k">=&gt;</span>
+      <span class="pl-c"><span class="pl-c">//</span>If digest1 from the prover is already trusted, then verification of the second batch can simply start here</span>
+      <span class="pl-k">val</span> <span class="pl-en">verifier2</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(d1, proof2, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>, maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">3</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">1</span>))
+      verifier2.performOneOperation(op4) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(10)))</span>
+      verifier2.performOneOperation(op6) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>
+      verifier2.performOneOperation(op8) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>
       verifier2.digest <span class="pl-k">match</span> {
-        <span class="pl-k">case</span> <span class="pl-en">Some</span>(rt2) <span class="pl-k">if</span> rt2.sameElements(root2) <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>declared root2 value and proofs are valid<span class="pl-pds">"</span></span>)
-        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>second proof or announced root value NOT valid<span class="pl-pds">"</span></span>)
+        <span class="pl-k">case</span> <span class="pl-en">Some</span>(d2) <span class="pl-k">if</span> d2.sameElements(digest2) <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>first and second digest value and proofs are valid<span class="pl-pds">"</span></span>)
+        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>second proof or announced digest NOT valid<span class="pl-pds">"</span></span>)
       }
     <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
-      println(<span class="pl-s"><span class="pl-pds">"</span>first proof or announced root1 NOT valid<span class="pl-pds">"</span></span>)
+      println(<span class="pl-s"><span class="pl-pds">"</span>first proof or announced digest NOT valid<span class="pl-pds">"</span></span>)
   }</pre>
   </div> 
-  <p>Note that the verifier has additional optional parameters that can be used to limit its maximum running time, to prevent a malicious prover from forcing the verifier to waste cycles.</p> 
   <h1><a id="user-content-tests" class="anchor" href="https://github.com/scorexproject/scrypto#tests" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Tests</h1> 
-  <p>Run <code>sbt test</code> from a folder contains the framework to launch tests.</p> 
+  <p>Run <code>sbt test</code> from a folder containing the framework to launch tests.</p> 
   <h1><a id="user-content-license" class="anchor" href="https://github.com/scorexproject/scrypto#license" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

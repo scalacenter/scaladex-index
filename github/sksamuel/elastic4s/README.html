@@ -47,6 +47,10 @@
    </thead> 
    <tbody> 
     <tr> 
+     <td>5.3.x</td> 
+     <td>5.3.x</td> 
+    </tr> 
+    <tr> 
      <td>5.2.x</td> 
      <td>5.2.x</td> 
     </tr> 
@@ -121,40 +125,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Quick Start</h2> 
-  <p>To get started you will need to add a dependency to either <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-http" target="_blank">elastic4s-http</a> or <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-tcp" target="_blank">elastic4s-tcp</a> depending on which client you intend you use (or both)</p> 
-  <p>The basic usage is that you create an instance of a client and then invoke the <code>execute</code> method with the requests you want to perform. The execute method is asynchronous and will return a standard Scala <code>Future[T]</code> where T is the response type appropriate for your request type. For example a <em>search</em> request will return a response of type <code>SearchResponse</code> which contains the results of the search.</p> 
-  <p>To create an instance of the HTTP client, use the <code>HttpClient</code> companion object methods. To create an instance of the TCP client, use the <code>TcpClient</code> companion object methods. Requests are the same for either client, but response classes may vary slightly as the HTTP response classes model the returned JSON whereas the TCP response classes wrap the Java client classes.</p> 
-  <p>Requests, such as inserting a document, searching, creating an index, and so on, are created using the DSL syntax that is similar in style to SQL queries. For example to create a search request, you would do: <code>search("index" / "type") query "findthistext"</code></p> 
-  <p>The DSL methods are located in the <code>ElasticDsl</code> trait which needs to be imported or extended. Although the syntax is identical whether you use the HTTP or TCP client, you must import the appropriate trait (<code>com.sksamuel.elastic4s.ElasticDSL</code> for TCP or <code>com.sksamuel.elastic4s.http.ElasticDSL</code> for HTTP) depending on which client you are using.</p> 
-  <p>One final import is required if you are using the HTTP client. The API needs a way to unmarshall the JSON response from the elastic server into the strongly typed case classes used by the API. Rather than bringing in a JSON library of our choosing and potentially causing dependency issues (or simply bloat), the client expects an implicit <code>JsonFormat</code> implementation.</p> 
-  <p>Elastic4s provides several out of the box (or you can roll your own) JSON serializers and deserializers. The provided implemenations are <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-circe" target="_blank">elastic4s-circe</a>, <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-jackson" target="_blank">elastic4s-jackson</a>, <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-json4" target="_blank">elastic4s-json4</a>, and <a href="http://search.maven.org/#search%7Cga%7C1%7Celastic4s-play-json" target="_blank">elastic4s-play-json</a>. For example, to use the jackson implementation, add the module to your build and then add this import:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">com.sksamuel.elastic4s.jackson.ElasticJackson.Implicits.</span><span class="pl-v">_</span></pre>
-  </div> 
-  <p>An example is worth 1000 characters so here is a quick example of how to connect to a node with a client and index a one field document. Then we will search for that document using a simple text query.</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">com.sksamuel.elastic4s.</span><span class="pl-v">TcpClient</span>
-<span class="pl-k">import</span> <span class="pl-v">com.sksamuel.elastic4s.ElasticDsl.</span><span class="pl-v">_</span>
-
-<span class="pl-k">object</span> <span class="pl-en">Test</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
-
-  <span class="pl-c"><span class="pl-c">//</span> Here we create an instance of the TCP client</span>
-  <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">TcpClient</span>.transport(<span class="pl-en">ElasticsearchClientUri</span>(host, port))
-
-  <span class="pl-c"><span class="pl-c">//</span> await is a helper method to make this operation synchronous instead of async</span>
-  <span class="pl-c"><span class="pl-c">//</span> You would normally avoid doing this in a real program as it will block your thread</span>
-  client.execute { 
-  	indexInto(<span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>artists<span class="pl-pds">"</span></span>) fields (<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>coldplay<span class="pl-pds">"</span></span>) refresh(<span class="pl-en">RefreshPolicy</span>.<span class="pl-en">IMMEDIATE</span>)
-  }.await
-
-  <span class="pl-c"><span class="pl-c">//</span> now we can search for the document we just indexed</span>
-  <span class="pl-k">val</span> <span class="pl-en">resp</span> <span class="pl-k">=</span> client.execute { 
-    search(<span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>artists<span class="pl-pds">"</span></span>) query <span class="pl-s"><span class="pl-pds">"</span>coldplay<span class="pl-pds">"</span></span> 
-  }.await
-  
-  println(resp)
-}</pre>
-  </div> 
+  <p>See the <a href="https://sksamuel.github.io/elastic4s/docs/index.html" target="_blank">Getting Started Guide</a></p> 
   <h3><a id="user-content-eventual-consistency" class="anchor" href="https://github.com/sksamuel/elastic4s#eventual-consistency" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -177,13 +148,13 @@
    </thead> 
    <tbody> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/aliases.md" target="_blank">Add Alias</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/indices/aliases.html" target="_blank">Add Alias</a></td> 
      <td><code>addAlias(&lt;alias&gt;).on(&lt;index&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td>Bulk</td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/bulk.html" target="_blank">Bulk</a></td> 
      <td><code>bulk(query1, query2, query3...)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -219,19 +190,19 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/createindex.md" target="_blank">Create Index</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/indices/createindex.html" target="_blank">Create Index</a></td> 
      <td><code>createIndex(&lt;name&gt;).mappings( mapping(&lt;name&gt;).as( ... fields ... ) )</code></td> 
      <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/snapshot.md" target="_blank">Create Repository</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/misc/snapshot.html" target="_blank">Create Repository</a></td> 
      <td><code>createRepository(&lt;repo&gt;).type(&lt;type&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/snapshot.md" target="_blank">Create Snapshot</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/misc/snapshot.html" target="_blank">Create Snapshot</a></td> 
      <td><code>createSnapshot(&lt;name&gt;).in(&lt;repo&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
@@ -243,7 +214,7 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/delete.md" target="_blank">Delete by id</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/delete.html" target="_blank">Delete by id</a></td> 
      <td><code>delete(&lt;id&gt;).from(&lt;index&gt; / &lt;type&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -255,13 +226,13 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/delete.md" target="_blank">Delete index</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/delete.html" target="_blank">Delete index</a></td> 
      <td><code>deleteIndex(&lt;index&gt;) [settings]</code></td> 
      <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/snapshot.md" target="_blank">Delete Snapshot</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/misc/snapshot.html" target="_blank">Delete Snapshot</a></td> 
      <td><code>deleteSnapshot(&lt;name&gt;).in(&lt;repo&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
@@ -273,7 +244,7 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/explain.md" target="_blank">Explain</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/search/explain.html" target="_blank">Explain</a></td> 
      <td><code>explain(&lt;index&gt;, &lt;type&gt;, &lt;id&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -291,7 +262,7 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/get.md" target="_blank">Get</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/get.html" target="_blank">Get</a></td> 
      <td><code>get(&lt;id&gt;).from(&lt;index&gt; / &lt;type&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -327,7 +298,7 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/index.md" target="_blank">Index</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/index.html" target="_blank">Index</a></td> 
      <td><code>indexInto(&lt;index&gt; / &lt;type&gt;).doc(&lt;doc&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -363,13 +334,13 @@
      <td></td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/multiget.md" target="_blank">Multiget</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/multiget.html" target="_blank">Multiget</a></td> 
      <td><code>multiget( get(1).from(&lt;index&gt; / &lt;type&gt;), get(2).from(&lt;index&gt; / &lt;type&gt;) )</code></td> 
      <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/multisearch.md" target="_blank">Multisearch</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/search/multisearch.html" target="_blank">Multisearch</a></td> 
      <td><code>multi( search(...), search(...) )</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -381,7 +352,7 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/optimize.md" target="_blank">Force Merge</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/indices/optimize.html" target="_blank">Force Merge</a></td> 
      <td><code>forceMerge(&lt;indexes&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
@@ -389,7 +360,7 @@
     <tr> 
      <td>Put mapping</td> 
      <td><code>putMapping(&lt;index&gt; / &lt;type&gt;) as { mappings block }</code></td> 
-     <td></td> 
+     <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
@@ -411,19 +382,19 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/aliases.md" target="_blank">Remove Alias</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/indices/aliases.html" target="_blank">Remove Alias</a></td> 
      <td><code>removeAlias(&lt;alias&gt;).on(&lt;index&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/snapshot.md" target="_blank">Restore Snapshot</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/misc/snapshot.html" target="_blank">Restore Snapshot</a></td> 
      <td><code>restoreSnapshot(&lt;name&gt;).from(&lt;repo&gt;)</code></td> 
      <td></td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/search.md" target="_blank">Search</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/search/search.html" target="_blank">Search</a></td> 
      <td><code>search(&lt;index&gt; / &lt;type&gt;).query(&lt;query&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
@@ -441,20 +412,20 @@
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/update.md" target="_blank">Update</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/document/update.html" target="_blank">Update</a></td> 
      <td><code>update(&lt;id&gt;).in(&lt;index&gt; / &lt;type&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
     </tr> 
     <tr> 
-     <td><a href="https://github.com/sksamuel/elastic4s/blob/master/guide/validate.md" target="_blank">Validate</a></td> 
+     <td><a href="https://sksamuel.github.io/elastic4s/docs/search/validate.html" target="_blank">Validate</a></td> 
      <td><code>validateIn(&lt;index/type&gt;).query(&lt;query&gt;)</code></td> 
      <td>yes</td> 
      <td>yes</td> 
     </tr>
    </tbody>
   </table> 
-  <p>Please also note <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/javainterop.md" target="_blank">some java interoperability notes</a>.</p> 
+  <p>Please also note <a href="https://sksamuel.github.io/elastic4s/docs/misc/javainterop.html" target="_blank">some java interoperability notes</a>.</p> 
   <h2><a id="user-content-connecting-to-a-cluster" class="anchor" href="https://github.com/sksamuel/elastic4s#connecting-to-a-cluster" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -542,12 +513,12 @@ client.execute {
 }</pre>
   </div> 
   <p>Then Elasticsearch is configured with those mappings for those fields only. It is still fully dynamic and other fields will be created as needed with default options. Only the fields specified will have their type preset.</p> 
-  <p>More examples on the create index syntax can be <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/createindex.md" target="_blank">found here</a>.</p> 
+  <p>More examples on the create index syntax can be <a href="https://sksamuel.github.io/elastic4s/docs/indices/createindex.html" target="_blank">found here</a>.</p> 
   <h2><a id="user-content-analyzers" class="anchor" href="https://github.com/sksamuel/elastic4s#analyzers" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Analyzers</h2> 
-  <p>Analyzers control how Elasticsearch parses the fields for indexing. For example, you might decide that you want whitespace to be important, so that "band of brothers" is indexed as a single "word" rather than the default which is to split on whitespace. There are many advanced options available in analayzers. Elasticsearch also allows us to create custom analyzers. For more details <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/analyzers.md" target="_blank">read about the DSL support for analyzers</a>.</p> 
+  <p>Analyzers control how Elasticsearch parses the fields for indexing. For example, you might decide that you want whitespace to be important, so that "band of brothers" is indexed as a single "word" rather than the default which is to split on whitespace. There are many advanced options available in analayzers. Elasticsearch also allows us to create custom analyzers. For more details <a href="https://sksamuel.github.io/elastic4s/docs/misc/analyzers.html" target="_blank">read about the DSL support for analyzers</a>.</p> 
   <h2><a id="user-content-indexing" class="anchor" href="https://github.com/sksamuel/elastic4s#indexing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -646,7 +617,7 @@ client.execute {
    <pre>search(<span class="pl-s"><span class="pl-pds">"</span>places<span class="pl-pds">"</span></span> <span class="pl-k">/</span> <span class="pl-s"><span class="pl-pds">"</span>cities<span class="pl-pds">"</span></span>) query regexQuery(<span class="pl-s"><span class="pl-pds">"</span>country<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>France<span class="pl-pds">"</span></span>)</pre>
   </div> 
   <p>There are many other types, such as range for numeric fields, wildcards, distance, geo shapes, matching.</p> 
-  <p>Read more about search syntax <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/search.md" target="_blank">here</a>. Read about <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/multisearch.md" target="_blank">multisearch here</a>. Read about <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/suggestions.md" target="_blank">suggestions here</a>.</p> 
+  <p>Read more about search syntax: <a href="https://sksamuel.github.io/elastic4s/docs/search/search.html" target="_blank">Search</a> Read about <a href="https://sksamuel.github.io/elastic4s/docs/search/multisearch.html" target="_blank">Multisearch</a>. Read about <a href="https://sksamuel.github.io/elastic4s/docs/search/suggestions.html" target="_blank">Suggestions</a>.</p> 
   <h2><a id="user-content-hitreader-typeclass" class="anchor" href="https://github.com/sksamuel/elastic4s#hitreader-typeclass" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -705,7 +676,7 @@ client.execute {
   )
 }</pre>
   </div> 
-  <p>See more <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/get.md" target="_blank">get examples</a> and usage of multiget <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/multiget.md" target="_blank">here</a></p> 
+  <p>See more <a href="https://sksamuel.github.io/elastic4s/docs/document/get.html" target="_blank">get examples</a> and usage of <a href="https://sksamuel.github.io/elastic4s/docs/document/multiget.html" target="_blank">Multiget</a> here.</p> 
   <h2><a id="user-content-deleting" class="anchor" href="https://github.com/sksamuel/elastic4s#deleting" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -722,7 +693,7 @@ client.execute {
   deleteIn(<span class="pl-s"><span class="pl-pds">"</span>bands<span class="pl-pds">"</span></span>).by(termQuery(<span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>pop<span class="pl-pds">"</span></span>))
 }</pre>
   </div> 
-  <p>See more about delete on the <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/delete.md" target="_blank">delete page</a></p> 
+  <p>See more about delete on the <a href="https://sksamuel.github.io/elastic4s/docs/document/delete.html" target="_blank">delete page</a></p> 
   <h2><a id="user-content-updates" class="anchor" href="https://github.com/sksamuel/elastic4s#updates" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -736,7 +707,7 @@ client.execute {
   )
 }</pre>
   </div> 
-  <p>Read more about updates and see <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/update.md" target="_blank">more examples</a>.</p> 
+  <p>For more examples see the <a href="https://sksamuel.github.io/elastic4s/docs/document/update.html" target="_blank">Update</a> page.</p> 
   <h2><a id="user-content-more-like-this" class="anchor" href="https://github.com/sksamuel/elastic4s#more-like-this" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -768,7 +739,7 @@ client.execute {
 }</pre>
   </div> 
   <p>A single HTTP or TCP request is now needed for 4 operations. In addition Elasticsearch can now optimize the requests, by combinging inserts or using aggressive caching.</p> 
-  <p>The example above uses simple documents just for clarity of reading; the usual optional settings can still be used. See more information on the <a href="https://github.com/sksamuel/elastic4s/blob/master/guide/bulk.md" target="_blank">bulk page</a>.</p> 
+  <p>The example above uses simple documents just for clarity of reading; the usual optional settings can still be used. See more information on the <a href="https://sksamuel.github.io/elastic4s/docs/document/bulk.html" target="_blank">Bulk</a>.</p> 
   <h2><a id="user-content-json-output" class="anchor" href="https://github.com/sksamuel/elastic4s#json-output" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -910,6 +881,7 @@ publisher.subscribe(subscriber)</pre>
    <li>Fixed regression on object field definitions</li> 
    <li>Fixed NPE when local node is started with http false</li> 
    <li>Fixed error on get alias when index does not exist</li> 
+   <li>Added <code>RequestConfigCallback</code> and <code>HttpClientConfigCallback</code> support to the HTTP client</li> 
   </ul> 
   <h6><a id="user-content-5211" class="anchor" href="https://github.com/sksamuel/elastic4s#5211" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

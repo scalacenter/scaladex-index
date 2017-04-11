@@ -21,10 +21,10 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Setup</h2> 
   <p>Create a file in ~/project/play-webpack.sbt</p> 
-  <pre><code>addSbtPlugin("com.bowlingx" %% "play-webpack-plugin" % "0.1.3")
+  <pre><code>addSbtPlugin("com.bowlingx" %% "play-webpack-plugin" % "0.1.5")
 </code></pre> 
   <p>Add the following dependencies:</p> 
-  <pre><code>libraryDependencies += "com.bowlingx" %% "play-webpack" % "0.1.3"
+  <pre><code>libraryDependencies += "com.bowlingx" %% "play-webpack" % "0.1.5"
 </code></pre> 
   <p>The plugin will convert a webpack JSON manifest file (generated with <a href="https://github.com/kossnocorp/assets-webpack-plugin" target="_blank">https://github.com/kossnocorp/assets-webpack-plugin</a>) to a scala object that can be used directly in play templates for example. The plugin is theoretically not limited to play. I will extend the project to support other frameworks in the future.</p> 
   <p>To make the assets available in your template file:</p> 
@@ -71,7 +71,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Default Settings</h3> 
-  <p>The plugin defines the following configuration:</p> 
+  <p>The plugin defines the following configuration (your <code>application.conf</code>):</p> 
   <pre><code>webpack {
   # the default bundles to include
   prependBundles = ["manifest", "vendor"]
@@ -81,13 +81,11 @@
 
   # The public path of the assets
   publicPath = "/assets/compiled"
-  # The path where they are stored relative to project route
+  # The path where they are stored relative to project root
   serverPath = "/public/compiled"
 }
-
-play.modules.enabled += "com.bowlingx.ReactModule"
 </code></pre> 
-  <p>The default path of the manifest file (relative to project root)</p> 
+  <p>The default path of the manifest file (relative to project root) (in your <code>build.sbt</code>)</p> 
   <pre><code>webpackManifest := Option(file("conf/webpack-assets.json"))
 </code></pre> 
   <h1><a id="user-content-server-side-rendering-with-nashorn" class="anchor" href="https://github.com/bowlingx/play-webpack#server-side-rendering-with-nashorn" aria-hidden="true" target="_blank">
@@ -107,6 +105,29 @@ class YourPlayController @Inject()(engine: Engine, components: ControllerCompone
 }
 </code></pre> 
   <p>See a full example in <code>src/play-module/src/test</code>.</p> 
+  <h2><a id="user-content-promises" class="anchor" href="https://github.com/bowlingx/play-webpack#promises" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Promises</h2> 
+  <p>The library makes it possible to use an async result. Support for <code>setTimeout</code> and <code>clearTimeout</code> exists since version <code>0.1.5</code>.</p> 
+  <p>All this just requires to return a <code>Promise</code> in the render function. A simulated <code>Promise</code> looks like this:</p> 
+  <pre><code>global.yourGlobalMethod = function () {
+  return {
+    then: function (resolve, reject) {
+      setTimeout(function () {
+        resolve("This is an async resolved String");
+      }, 100);
+    }
+  };
+};
+</code></pre> 
+  <p>If you need <code>Promise</code> support in your library, use any polyfill available. This library does not ship with a polyfill.</p> 
+  <p>Supported Libraries (tested by the Author)</p> 
+  <ul> 
+   <li>reactjs</li> 
+   <li>react-apollo (<a href="https://github.com/apollographql/react-apollo" target="_blank">https://github.com/apollographql/react-apollo</a>)</li> 
+  </ul> 
+  <p>Sample integration Demo with apollo and sangria (<a href="http://sangria-graphql.org/" target="_blank">http://sangria-graphql.org/</a>) is on it's way.</p> 
   <h2><a id="user-content-workflow" class="anchor" href="https://github.com/bowlingx/play-webpack#workflow" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

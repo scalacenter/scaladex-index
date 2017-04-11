@@ -18,6 +18,7 @@
   <pre><code>addSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.2.0")
 </code></pre> 
   <p>Then make sure to <strong>NOT set the version setting</strong>, otherwise you will override <code>sbt-dynver</code>.</p> 
+  <p>In CI, you may need to run <code>git fetch --tags</code> if the repo is cloned with <code>--no-tags</code>.</p> 
   <p>Other than that, as <code>sbt-dynver</code> is an AutoPlugin that is all that is required.</p> 
   <h2><a id="user-content-detail" class="anchor" href="https://github.com/dwijnand/sbt-dynver#detail" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -47,8 +48,8 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Tasks</h2> 
   <ul> 
-   <li><code>dynver</code>: Returns the version of your project, from git</li> 
-   <li><code>dynverCurrentDate</code>: Returns the captured current date. Used for both the dirty suffix of <code>dynverGitDescribeOutput</code> and for the fallback version (e.g if not a git repo).</li> 
+   <li><code>dynver</code>: Returns the dynamic version of your project, inferred from the git metadata</li> 
+   <li><code>dynverCurrentDate</code>: Returns the captured current date. Used for (a) the dirty suffix of <code>dynverGitDescribeOutput</code> and (b) the fallback version (e.g if not a git repo).</li> 
    <li><code>dynverGitDescribeOutput</code>: Returns the captured <code>git describe</code> out, in a structured form. Useful to define a <a href="https://github.com/dwijnand/sbt-dynver#custom-version-string" target="_blank">custom version string</a>.</li> 
    <li><code>dynverCheckVersion</code>: Checks if version and dynver match</li> 
    <li><code>dynverAssertVersion</code>: Asserts if version and dynver match</li> 
@@ -58,7 +59,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Custom version string</h2> 
   <p>Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.</p> 
-  <p>As an example, Docker rejects tags which include <code>+</code>'s (<a href="https://github.com/dwijnand/sbt-dynver/issues/5" target="_blank">#5</a>.</p> 
+  <p>As an example, Docker rejects tags which include <code>+</code>'s (<a href="https://github.com/dwijnand/sbt-dynver/issues/5" target="_blank">#5</a>).</p> 
   <p>A simply way to solve this is to simply post-process the value of <code>version in ThisBuild</code> (and optionally <code>dynver in ThisBuild</code>), for example by replacing '+' with '-':</p> 
   <div class="highlight highlight-source-scala">
    <pre>version in <span class="pl-en">ThisBuild</span> <span class="pl-k">~</span><span class="pl-k">=</span> (_.replace(<span class="pl-c1">'+'</span>, <span class="pl-c1">'-'</span>))
@@ -79,7 +80,12 @@ inThisBuild(<span class="pl-en">List</span>(
    }
 ))</pre>
   </div> 
-  <p>Essentially this defines how to transform the structured output of <code>git describe</code>'s into a string, defines the fallback version string, and then wires everything back together.</p> 
+  <p>Essentially this:</p> 
+  <ol> 
+   <li>defines how to transform the structured output of <code>git describe</code>'s into a string, with <code>versionFmt</code></li> 
+   <li>defines the fallback version string, with <code>fallbackVersion</code>, and</li> 
+   <li>wires everything back together</li> 
+  </ol> 
   <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/dwijnand/sbt-dynver#dependencies" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -91,7 +97,7 @@ inThisBuild(<span class="pl-en">List</span>(
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Licence</h2> 
-  <p>Copyright 2016 Dale Wijnand</p> 
+  <p>Copyright 2016-2017 Dale Wijnand</p> 
   <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
   <p><a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
   <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 

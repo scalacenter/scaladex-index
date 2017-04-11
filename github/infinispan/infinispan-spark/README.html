@@ -17,6 +17,7 @@
    <li>Create a DStream for events (insert, modify and delete) in a cache</li> 
    <li>Spark serialiser based on JBoss Marshalling</li> 
    <li>Scala 2.10.x and 2.11.x binaries</li> 
+   <li>Dataset API with push down predicates support</li> 
    <li>Java API</li> 
   </ul> 
   <h4><a id="user-content-compatibility" class="anchor" href="https://github.com/infinispan/infinispan-spark#compatibility" aria-hidden="true" target="_blank">
@@ -61,6 +62,13 @@
      <td>2.0.0</td> 
      <td>2.10.x / 2.11.x</td> 
      <td>8</td> 
+    </tr> 
+    <tr> 
+     <td>0.5</td> 
+     <td>8.2.x 9.x</td> 
+     <td>2.1.0</td> 
+     <td>2.11.x</td> 
+     <td>8</td> 
     </tr>
    </tbody>
   </table> 
@@ -69,104 +77,117 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Dependency:</h4> 
   <p>Sbt:</p> 
-  <p><code>"org.infinispan" %% "infinispan-spark" % "0.4"</code></p> 
+  <p><code>"org.infinispan" %% "infinispan-spark" % "0.5"</code></p> 
   <p>Maven:</p> 
-  <p>Scala 2.11</p> 
   <pre><code>&lt;dependency&gt;
     &lt;groupId&gt;org.infinispan&lt;/groupId&gt;
     &lt;artifactId&gt;infinispan-spark_2.11&lt;/artifactId&gt;
-    &lt;version&gt;0.4&lt;/version&gt;
+    &lt;version&gt;0.5&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre> 
-  <p>Scala 2.10</p> 
-  <pre><code>&lt;dependency&gt;
-    &lt;groupId&gt;org.infinispan&lt;/groupId&gt;
-    &lt;artifactId&gt;infinispan-spark_2.10&lt;/artifactId&gt;
-    &lt;version&gt;0.4&lt;/version&gt;
-&lt;/dependency&gt;
-</code></pre> 
-  <h4><a id="user-content-supported-configurations" class="anchor" href="https://github.com/infinispan/infinispan-spark#supported-configurations" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-configuration" class="anchor" href="https://github.com/infinispan/infinispan-spark#configuration" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Supported Configurations:</h4> 
+    </svg></a>Configuration</h4> 
+  <p>The connector is configured using the <code>org.infinispan.spark.config.ConnectorConfiguration</code> class, the following methods are provided:</p> 
   <table> 
    <thead> 
     <tr> 
-     <th>Name</th> 
+     <th>Method</th> 
      <th>Description</th> 
      <th>Default</th> 
     </tr> 
    </thead> 
    <tbody> 
     <tr> 
-     <td>infinispan.client.hotrod.server_list</td> 
+     <td>setServerList(String)</td> 
      <td>List of servers</td> 
      <td>localhost:11222</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.cacheName</td> 
-     <td>The name of the cache that will back the RDD</td> 
+     <td>setCacheName(String)</td> 
+     <td>The name of the Infinispan cache to be used in the computations</td> 
      <td>default cache</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.read_batch_size</td> 
+     <td>setReadBatchSize(Integer)</td> 
      <td>Batch size (number of entries) when reading from the cache</td> 
      <td>10000</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.write_batch_size</td> 
+     <td>setWriteBatchSize(Integer)</td> 
      <td>Batch size (number of entries) when writing to the cache</td> 
      <td>500</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.number_server_partitions</td> 
-     <td>Number of partitions created per Infinispan server</td> 
+     <td>setPartitions(Integer)</td> 
+     <td>Number of partitions created per Infinispan server when processing data</td> 
      <td>2</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.query.proto.protofiles</td> 
-     <td>Map&lt;String, String&gt; with protobuf file names and contents</td> 
-     <td>Can be omitted if entities are <a href="https://github.com/infinispan/infinispan/blob/master/client/hotrod-client/src/test/java/org/infinispan/client/hotrod/marshall/ProtoStreamMarshallerWithAnnotationsTest.java#L39" target="_blank">annotated</a> with protobuf encoding information. Protobuf encoding is required to filter the RDD by Query</td> 
+     <td>addProtoFile(String name, String contents)</td> 
+     <td>Register a protobuf file describing one or more entities in the cache</td> 
+     <td>Can be omitted if entities are <a href="https://github.com/infinispan/infinispan/blob/master/client/hotrod-client/src/test/java/org/infinispan/client/hotrod/marshall/ProtoStreamMarshallerWithAnnotationsTest.java#L39" target="_blank">annotated</a> with protobuf encoding information. Protobuf encoding is required to filter the RDD by Query or to use the Dataset API</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.query.proto.marshallers</td> 
-     <td>List of protostream marshallers classes for the objects in the cache</td> 
-     <td>Can be ommited if entities are <a href="https://github.com/infinispan/infinispan/blob/master/client/hotrod-client/src/test/java/org/infinispan/client/hotrod/marshall/ProtoStreamMarshallerWithAnnotationsTest.java#L39" target="_blank">annotated</a> with protobuf encoding information. Protobuf encoding is required to filter the RDD by Query</td> 
+     <td>addMessageMarshaller(Class)</td> 
+     <td>Registers a <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#storing_protobuf_encoded_entities" target="_blank">Message Marshaller</a> for an entity in the cache</td> 
+     <td>Can be omitted if entities are <a href="https://github.com/infinispan/infinispan/blob/master/client/hotrod-client/src/test/java/org/infinispan/client/hotrod/marshall/ProtoStreamMarshallerWithAnnotationsTest.java#L39" target="_blank">annotated</a> with protobuf encoding information. Protobuf encoding is required to filter the RDD by Query or to use the Dataset API</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.query.proto.protoclasses</td> 
-     <td>Collection&lt;Class&gt; containing protobuf annotations such as @ProtoMessage and @ProtoField</td> 
-     <td>Alternative to using <code>infinispan.rdd.query.proto.protofiles</code> and <code>infinispan.rdd.query.proto.marshallers</code> configurations, since both will be auto-generated based on the annotations.</td> 
+     <td>addProtoAnnotatedClass(Class)</td> 
+     <td>Registers a Class containing protobuf annotations such as @ProtoMessage and @ProtoField</td> 
+     <td>Alternative to using <code>addProtoFile</code> and <code>addMessageMarshaller</code> methods, since both will be auto-generated based on the annotations.</td> 
     </tr> 
     <tr> 
-     <td>infinispan.rdd.query.proto.autoregister</td> 
-     <td>If <code>true</code> will automatically register protobuf schemas in the server. The schema can either be provided by <code>infinispan.rdd.query.proto.protofiles</code> or inferred from the annotations present on <code>infinispan.rdd.query.proto.protoclasses</code></td> 
-     <td>false</td> 
+     <td>setAutoRegisterProto()</td> 
+     <td>Will cause automatically registration of protobuf schemas in the server. The schema can either be provided by <code>addProtoFile()</code> or inferred from the annotated classes registered with <code>addProtoAnnotatedClass</code></td> 
+     <td>no automatic registration is done</td> 
     </tr> 
+    <tr> 
+     <td>addHotRodClientProperty(key, value)</td> 
+     <td>Used to configured extra Hot Rod client properties when contacting the Infinispan Server</td> 
+     <td></td> 
+    </tr> 
+    <tr> 
+     <td>setTargetEntity(Class)</td> 
+     <td>Used in conjunction with the Dataset API to specify the Query target</td> 
+     <td>If omitted, and in case there is only one class annotated with protobuf configured, it will choose that class</td> 
+    </tr>
+   </tbody>
+  </table> 
+  <h5><a id="user-content-connecting-to-secure-servers" class="anchor" href="https://github.com/infinispan/infinispan-spark#connecting-to-secure-servers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Connecting to secure servers</h5> 
+  <p>The following properties can be used via <code>ConnectorConfiguration.addHotRodClientProperty(prop, value)</code> in order to connect to Infinispan server with security enabled:</p> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>Property</th> 
+     <th>Description</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
     <tr> 
      <td>infinispan.client.hotrod.use_ssl</td> 
      <td>Enable SSL</td> 
-     <td>false</td> 
     </tr> 
     <tr> 
      <td>infinispan.client.hotrod.key_store_file_name</td> 
      <td>The JKS keystore file name, required when mutual SSL authentication is enabled in the Infinispan server. Can be either the file path or a class path resource. Examples: "/usr/local/keystore.jks", "classpath:/keystore.jks"</td> 
-     <td></td> 
     </tr> 
     <tr> 
      <td>infinispan.client.hotrod.trust_store_file_name</td> 
      <td>The JKS keystore path or classpath containing server certificates</td> 
-     <td></td> 
     </tr> 
     <tr> 
      <td>infinispan.client.hotrod.key_store_password</td> 
      <td>Password for the key store</td> 
-     <td></td> 
     </tr> 
     <tr> 
      <td>infinispan.client.hotrod.trust_store_password</td> 
      <td>Password for the trust store</td> 
-     <td></td> 
     </tr>
    </tbody>
   </table> 
@@ -179,21 +200,21 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Creating an RDD</h5> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Properties</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.config.</span><span class="pl-v">ConnectorConfiguration</span>
 <span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.rdd.</span><span class="pl-v">_</span>
 
-<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Properties</span>
-config.put(<span class="pl-s"><span class="pl-pds">"</span>infinispan.rdd.cacheName<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>my-cache<span class="pl-pds">"</span></span>)
-config.put(<span class="pl-s"><span class="pl-pds">"</span>infinispan.client.hotrod.server_list<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>10.9.0.8:11222<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">infinispanRDD</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">InfinispanRDD</span>[<span class="pl-k">String</span>, <span class="pl-en">MyEntity</span>](sc, configuration <span class="pl-k">=</span> config)</pre>
+<span class="pl-k">val</span> <span class="pl-en">sc</span><span class="pl-k">:</span> <span class="pl-en">SparkContext</span> <span class="pl-k">=</span>  ...
+
+<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConnectorConfiguration</span>().setCacheName(<span class="pl-s"><span class="pl-pds">"</span>my-cache<span class="pl-pds">"</span></span>).setServerList(<span class="pl-s"><span class="pl-pds">"</span>10.9.0.8:11222<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">infinispanRDD</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">InfinispanRDD</span>[<span class="pl-k">String</span>, <span class="pl-en">MyEntity</span>](sc, config)</pre>
   </div> 
   <h5><a id="user-content-creating-an-rdd-using-a-custom-splitter" class="anchor" href="https://github.com/infinispan/infinispan-spark#creating-an-rdd-using-a-custom-splitter" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Creating an RDD Using a custom Splitter</h5> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Properties</span>
-<span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.rdd.</span><span class="pl-v">_</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.rdd.</span><span class="pl-v">_</span>
 
 <span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span>  ...
 <span class="pl-k">val</span> <span class="pl-en">mySplitter</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CustomSplitter</span>(...)
@@ -207,17 +228,17 @@ config.put(<span class="pl-s"><span class="pl-pds">"</span>infinispan.client.hot
    <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.stream.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.streaming.</span>{<span class="pl-v">Seconds</span>, <span class="pl-v">StreamingContext</span>}
 <span class="pl-k">import</span> <span class="pl-v">org.apache.spark.storage.</span><span class="pl-v">StorageLevel</span>
-<span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Properties</span>
+<span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.config.</span><span class="pl-v">ConnectorConfiguration</span>
 
 <span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> ... <span class="pl-c"><span class="pl-c">//</span> Spark context</span>
-<span class="pl-k">val</span> <span class="pl-en">props</span> <span class="pl-k">=</span> ... <span class="pl-c"><span class="pl-c">//</span> java.util.Properties with Infinispan RDD configuration</span>
+<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> ... <span class="pl-c"><span class="pl-c">//</span> ConnectorConfiguration with Infinispan RDD configuration</span>
 <span class="pl-k">val</span> <span class="pl-en">ssc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">StreamingContext</span>(sc, <span class="pl-en">Seconds</span>(<span class="pl-c1">1</span>))
-<span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">InfinispanInputDStream</span>[<span class="pl-k">String</span>, <span class="pl-en">MyEntity</span>](ssc, <span class="pl-en">StorageLevel</span>.<span class="pl-en">MEMORY_ONLY</span>, props)</pre>
+<span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">InfinispanInputDStream</span>[<span class="pl-k">String</span>, <span class="pl-en">MyEntity</span>](ssc, <span class="pl-en">StorageLevel</span>.<span class="pl-en">MEMORY_ONLY</span>, config)</pre>
   </div> 
-  <h5><a id="user-content-filtering-by-pre-built-query-object" class="anchor" href="https://github.com/infinispan/infinispan-spark#filtering-by-pre-built-query-object" aria-hidden="true" target="_blank">
+  <h5><a id="user-content-filtering-by-a-pre-built-query-object" class="anchor" href="https://github.com/infinispan/infinispan-spark#filtering-by-a-pre-built-query-object" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Filtering by pre-built Query object</h5> 
+    </svg></a>Filtering by a pre-built Query object</h5> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.client.hotrod.</span>{<span class="pl-v">RemoteCacheManager</span>, <span class="pl-v">Search</span>, <span class="pl-v">RemoteCache</span>}
 <span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.rdd.</span><span class="pl-v">InfinispanRDD</span>
@@ -226,7 +247,7 @@ config.put(<span class="pl-s"><span class="pl-pds">"</span>infinispan.client.hot
 <span class="pl-k">val</span> <span class="pl-en">cache</span><span class="pl-k">:</span> <span class="pl-en">RemoteCache</span> <span class="pl-k">=</span> ...
 
 <span class="pl-c"><span class="pl-c">//</span> Assuming MyEntity is already stored in the cache with protobuf encoding, and has protobuf annotations.</span>
-<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">Search</span>.getQueryFactory(cache).from(<span class="pl-c1">classOf</span>[<span class="pl-en">MyEntity</span>]).having(<span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>).equal(<span class="pl-s"><span class="pl-pds">"</span>some value<span class="pl-pds">"</span></span>).toBuilder[<span class="pl-en">RemoteQuery</span>].build
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-en">Search</span>.getQueryFactory(cache).from(<span class="pl-c1">classOf</span>[<span class="pl-en">MyEntity</span>]).having(<span class="pl-s"><span class="pl-pds">"</span>field<span class="pl-pds">"</span></span>).equal(<span class="pl-s"><span class="pl-pds">"</span>some value<span class="pl-pds">"</span></span>).build()
 
 <span class="pl-k">val</span> <span class="pl-en">filteredRDD</span> <span class="pl-k">=</span> rdd.filterByQuery(query)</pre>
   </div> 
@@ -256,20 +277,72 @@ config.put(<span class="pl-s"><span class="pl-pds">"</span>infinispan.client.hot
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Write arbitrary key/value RDDs to Infinispan</h5> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Properties</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.config.</span><span class="pl-v">ConnectorConfiguration</span>
 <span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.</span><span class="pl-v">_</span>
 
-<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">config</span><span class="pl-k">:</span> <span class="pl-en">ConnectorConfiguration</span> <span class="pl-k">=</span> ...
 <span class="pl-k">val</span> <span class="pl-en">sc</span><span class="pl-k">:</span> <span class="pl-en">SparkContext</span> <span class="pl-k">=</span> ...
 
 <span class="pl-k">val</span> <span class="pl-en">simpleRdd</span> <span class="pl-k">=</span> sc.parallelize((<span class="pl-c1">1</span> to <span class="pl-c1">1000</span>)).zipWithIndex()
 simpleRdd.writeToInfinispan(config) </pre>
   </div> 
+  <h5><a id="user-content-using-the-datasetapi-with-support-to-push-down-predicates" class="anchor" href="https://github.com/infinispan/infinispan-spark#using-the-datasetapi-with-support-to-push-down-predicates" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using the DatasetAPI with support to push down predicates</h5> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.protostream.annotations.</span>{<span class="pl-v">ProtoField</span>, <span class="pl-v">ProtoMessage</span>}
+<span class="pl-k">import</span> <span class="pl-v">scala.annotation.meta.</span><span class="pl-v">beanGetter</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.beans.</span><span class="pl-v">BeanProperty</span>
+
+<span class="pl-c"><span class="pl-c">/**</span></span>
+<span class="pl-c">* Entities can be annotated in order to automatically generate protobuf schemas.</span>
+<span class="pl-c">* Also, they should be valid java beans. From Scala this can be achieved as:</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
+<span class="pl-k">@</span><span class="pl-en">ProtoMessage</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)
+<span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-k">@</span>(<span class="pl-en">ProtoField</span><span class="pl-k">@</span>beanGetter)(number <span class="pl-k">=</span> <span class="pl-c1">1</span>, required <span class="pl-k">=</span> <span class="pl-c1">true</span>) <span class="pl-k">@</span><span class="pl-en">BeanProperty</span> <span class="pl-k">var</span> <span class="pl-en">name</span><span class="pl-k">:</span> <span class="pl-k">String</span>,
+           <span class="pl-k">@</span>(<span class="pl-en">ProtoField</span><span class="pl-k">@</span>beanGetter)(number <span class="pl-k">=</span> <span class="pl-c1">2</span>, required <span class="pl-k">=</span> <span class="pl-c1">true</span>) <span class="pl-k">@</span><span class="pl-en">BeanProperty</span> <span class="pl-k">var</span> <span class="pl-en">age</span><span class="pl-k">:</span> <span class="pl-k">Int</span>) {
+
+   <span class="pl-k">def</span> <span class="pl-en">this</span>() <span class="pl-k">=</span> {
+      <span class="pl-c1">this</span>(name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, age <span class="pl-k">=</span> <span class="pl-k">-</span><span class="pl-c1">1</span>)
+   }
+}
+</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">org.infinispan.spark.config.</span><span class="pl-v">ConnectorConfiguration</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Configure the connector using the ConnectorConfiguration: register entities annotated with Protobuf, </span>
+<span class="pl-c"><span class="pl-c">//</span> and turn on automatic registration of schemas</span>
+<span class="pl-k">val</span> <span class="pl-en">infinispanConfig</span><span class="pl-k">:</span> <span class="pl-en">ConnectorConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ConnectorConfiguration</span>()
+         .setServerList(<span class="pl-s"><span class="pl-pds">"</span>server1:11222,server2:11222<span class="pl-pds">"</span></span>)
+         .addProtoAnnotatedClass(<span class="pl-c1">classOf</span>[<span class="pl-en">User</span>])
+         .setAutoRegisterProto()
+
+<span class="pl-c"><span class="pl-c">//</span> Create the SparkSession</span>
+<span class="pl-k">val</span> <span class="pl-en">sparkSession</span> <span class="pl-k">=</span> <span class="pl-en">SparkSession</span>.builder().config(<span class="pl-k">new</span> <span class="pl-en">SparkConf</span>().setMaster(<span class="pl-s"><span class="pl-pds">"</span>masterHost<span class="pl-pds">"</span></span>)).getOrCreate()
+
+<span class="pl-c"><span class="pl-c">//</span> Load the "infinispan" datasource into a DataFame, using the infinispan config </span>
+<span class="pl-k">val</span> <span class="pl-en">df</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> sparkSession.read.format(<span class="pl-s"><span class="pl-pds">"</span>infinispan<span class="pl-pds">"</span></span>).options(infinispanConfig.toStringsMap).load()
+
+<span class="pl-c"><span class="pl-c">//</span> From here it's possible to query using the Dataset API...</span>
+<span class="pl-k">val</span> <span class="pl-en">rows</span><span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-en">Row</span>] <span class="pl-k">=</span> df.filter(df(<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>).gt(<span class="pl-c1">30</span>)).filter(df(<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>).lt(<span class="pl-c1">40</span>)).collect()
+
+<span class="pl-c"><span class="pl-c">//</span> ... or execute SQL queries</span>
+df.createOrReplaceTempView(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">query</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SELECT first(r.name) as name, first(r.age) as age FROM user u GROUP BY r.age<span class="pl-pds">"</span></span>
+
+<span class="pl-k">val</span> <span class="pl-en">rowsFromSQL</span><span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-en">Row</span>] <span class="pl-k">=</span> sparkSession.sql(query).collect()
+</pre>
+  </div> 
   <h4><a id="user-content-build-instructions" class="anchor" href="https://github.com/infinispan/infinispan-spark#build-instructions" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Build instructions</h4> 
-  <p>Package for Scala 2.11: <code>./sbt package</code><br> Create examples uberjar: <code>./sbt examples/assembly</code><br> Run all tests: <code>./sbt test</code> Create code coverage report: <code>./sbt clean coverage test coverageReport</code></p> 
+  <p>Package: <code>./sbt package</code><br> Create examples uberjar: <code>./sbt examples/assembly</code><br> Run all tests: <code>./sbt test</code> Create code coverage report: <code>./sbt clean coverage test coverageReport</code></p> 
   <h4><a id="user-content-publishing" class="anchor" href="https://github.com/infinispan/infinispan-spark#publishing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
