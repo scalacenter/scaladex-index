@@ -1,0 +1,75 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-refined-anorm" class="anchor" href="https://github.com/derekmorr/refined-anorm#refined-anorm" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Refined Anorm</h1> 
+  <p>Adds support for <a href="https://github.com/fthomas/refined" target="_blank">Refinement types</a> to the <a href="https://github.com/playframework/anorm" target="_blank">Anorm</a> database access layer for Scala.</p> 
+  <h1><a id="user-content-usage" class="anchor" href="https://github.com/derekmorr/refined-anorm#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <p>Add the following to Anorm models:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">refined.anorm.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>Then you'll be able to serialize and deserialize refined types with JDBC.</p> 
+  <p>For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">/**</span> 802.1Q Vlan ID <span class="pl-c">*/</span></span>
+<span class="pl-k">type</span> <span class="pl-en">VlanId</span> <span class="pl-k">=</span> <span class="pl-k">Int</span> <span class="pl-en">Refined</span> <span class="pl-en">Interval</span>.<span class="pl-en">Closed</span>[<span class="pl-en">W</span>.`<span class="pl-c1">0</span>`.<span class="pl-en">T</span>, <span class="pl-en">W</span>.`<span class="pl-c1">4095</span>`.<span class="pl-en">T</span>]
+
+<span class="pl-k">type</span> <span class="pl-en">NonBlankString</span> <span class="pl-k">=</span> <span class="pl-k">String</span> <span class="pl-en">Refined</span> <span class="pl-en">And</span>[<span class="pl-en">NonEmpty</span>, <span class="pl-en">Exists</span>[<span class="pl-en">Not</span>[<span class="pl-en">Whitespace</span>]]]
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Vlan</span>(<span class="pl-v">id</span>: <span class="pl-en">VlanId</span>, <span class="pl-v">name</span>: <span class="pl-en">NonBlankString</span>)
+
+<span class="pl-k">object</span> <span class="pl-en">Vlan</span> {
+   <span class="pl-k">import</span> <span class="pl-v">refined.anorm.</span><span class="pl-v">_</span>
+   <span class="pl-k">val</span> <span class="pl-en">parser</span><span class="pl-k">:</span> <span class="pl-en">RowParser</span>[<span class="pl-en">Vlan</span>] <span class="pl-k">=</span> <span class="pl-en">Macro</span>.namedParser[<span class="pl-en">Vlan</span>]
+  
+  <span class="pl-k">def</span> <span class="pl-en">getById</span>(<span class="pl-v">id</span>: <span class="pl-en">VlanId</span>)(<span class="pl-k">implicit</span> <span class="pl-v">connection</span>: <span class="pl-en">Connection</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Vlan</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">SQL</span><span class="pl-s"><span class="pl-pds">"""</span>SELECT id, name FROM vlans WHERE id = $id<span class="pl-pds">"""</span></span>.as(<span class="pl-en">Vlan</span>.parser.singleOpt)
+  }
+ 
+  <span class="pl-k">def</span> <span class="pl-en">create</span>(<span class="pl-v">vlan</span>: <span class="pl-en">Vlan</span>)(<span class="pl-k">implicit</span> <span class="pl-v">connection</span>: <span class="pl-en">Connection</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> {
+    <span class="pl-en">SQL</span><span class="pl-s"><span class="pl-pds">"""</span>INSERT INTO vlans (id, name) VALUES (${vlan.id}, ${vlan.name})<span class="pl-pds">"""</span></span>.executeUpdate() <span class="pl-k">==</span> <span class="pl-c1">1</span>
+  }
+}</pre>
+  </div> 
+  <p>There is a complete, working example in the integration tests (in <code>src/it</code>).</p> 
+  <h1><a id="user-content-testing-the-app" class="anchor" href="https://github.com/derekmorr/refined-anorm#testing-the-app" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing the app</h1> 
+  <p>To run unit tests, run</p> 
+  <pre><code>sbt test
+</code></pre> 
+  <p>To run the integration tests:</p> 
+  <ol> 
+   <li>Install a database (PostgreSQL is the default).</li> 
+   <li>Create a database named <code>refinement</code>. Grant a user read/write and <code>create table</code> access to it.</li> 
+   <li>Edit <code>src/it/resources/application.conf</code>: 
+    <ol> 
+     <li>Edit the <code>username</code> and <code>password</code> fields</li> 
+     <li>Adjust the database URL if necessary.</li> 
+    </ol> </li> 
+   <li>Run <code>sbt it:test</code></li> 
+  </ol> 
+  <h1><a id="user-content-code-coverage-report" class="anchor" href="https://github.com/derekmorr/refined-anorm#code-coverage-report" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code coverage report</h1> 
+  <p>To generate a code coverage report run,</p> 
+  <pre><code>sbt clean coverage test coverageReport
+</code></pre> 
+  <p>The HTML report will be written to <code>target/scala-2.12/scoverage-report/index.html</code>.</p> 
+  <h1><a id="user-content-code-quality-analysis" class="anchor" href="https://github.com/derekmorr/refined-anorm#code-quality-analysis" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code quality analysis</h1> 
+  <p>The project uses the <a href="https://github.com/sksamuel/scapegoat" target="_blank">scapegoat tool</a> for code quality analysis. Run run a scapegoat report, run</p> 
+  <pre><code>sbt scapegoat
+</code></pre> 
+  <p>The HTML report will be written to <code>target/scala-2.12/scapegoat-report/scapegoat.html</code></p> 
+ </article>
+</div>

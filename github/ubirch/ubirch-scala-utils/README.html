@@ -135,10 +135,11 @@ libraryDependencies ++= Seq(
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Scala Dependency</h3> 
   <pre><code>resolvers ++= Seq(
-  Resolver.sonatypeRepo("releases")
+  Resolver.sonatypeRepo("releases"),
+  "elasticsearch-releases" at "https://artifacts.elastic.co/maven"
 )
 libraryDependencies ++= Seq(
-  "com.ubirch.util" %% "elasticsearch-client-binary" % "0.6.0"
+  "com.ubirch.util" %% "elasticsearch-client-binary" % "2.0.1"
 )
 </code></pre> 
   <h3><a id="user-content-config-1" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#config-1" aria-hidden="true" target="_blank">
@@ -156,19 +157,19 @@ libraryDependencies ++= Seq(
    </thead> 
    <tbody> 
     <tr> 
-     <td align="left">esBinaryClient.connection.host</td> 
+     <td align="left">esBinaryClient.connection.hosts</td> 
      <td align="left">Connection</td> 
-     <td align="left">host ES is running on</td> 
+     <td align="left">list of ES hosts to connect to</td> 
     </tr> 
     <tr> 
-     <td align="left">esBinaryClient.connection.port</td> 
+     <td align="left">esBinaryClient.connection.xpackEnabled</td> 
      <td align="left">Connection</td> 
-     <td align="left">port ES is running on</td> 
+     <td align="left">(optional) set to "true" to activate Shield/X-Pack (default=false)</td> 
     </tr> 
     <tr> 
-     <td align="left">esBinaryClient.connection.cluster</td> 
+     <td align="left">esBinaryClient.connection.settings</td> 
      <td align="left">Connection</td> 
-     <td align="left">(optional) ES cluster to connect to</td> 
+     <td align="left">ES connection settings (like cluster, Shield/X-Pack configs, etc</td> 
     </tr> 
     <tr> 
      <td align="left">esBinaryClient.bulk.bulkActions</td> 
@@ -192,12 +193,61 @@ libraryDependencies ++= Seq(
     </tr>
    </tbody>
   </table> 
-  <p>Example Config:</p> 
+  <p>Example Config (minimum config to connect to cloud.elastic.co with Shield/X-Pack):</p> 
   <pre><code>esBinaryClient {
   connection {
-    host = localhost
-    port = 9300 // 9300 is the default port for the binary client
-    cluster = elasticsearch // (optional) connect to an Elasticsearch cluster
+    hosts = ["1234asdf.us-east-1.aws.found.io:9343"]
+    xpackEnabled = true
+    settings = [
+      { "cluster.name": "1234asdf" },
+      { "xpack.security.user": ${ELASTIC_IO_USER}":"${ELASTIC_IO_PASSWORD} },
+      { "xpack.security.transport.ssl.enabled": "true" },
+      { "request.headers.X-Found-Cluster": "${cluster.name}" }
+    ]
+  }
+  bulk { // only needed if you mixin `ESBulkStorage`
+    bulkActions = 10000
+    bulkSize = 10 # bulkSize in mega bytes
+    flushInterval = 1 # flush every x seconds
+    concurrentRequests = 2 # connection pooling: max concurrent requests
+  }
+}
+</code></pre> 
+  <p>Example Config (extended config to connect to cloud.elastic.co with Shield/X-Pack):</p> 
+  <pre><code>esBinaryClient {
+  clusterName = "1234asdf"
+  connection {
+    hosts = [${esBinaryClient.clusterName}".us-east-1.aws.found.io:9343"]
+    xpackEnabled = true
+    settings = [
+      { "cluster.name": ${esBinaryClient.clusterName} },
+      { "xpack.security.user": ${ELASTIC_IO_USER}":"${ELASTIC_IO_PASSWORD} },
+      { "xpack.security.transport.ssl.enabled": "true" },
+      { "request.headers.X-Found-Cluster": "${cluster.name}" },
+      { "xpack.ssl.key": "/path/to/client.key" }, // (optional)
+      { "xpack.ssl.certificate": "/path/to/client.crt" }, // (optional)
+      { "xpack.ssl.certificate_authorities": "/path/to/ca.crt" }, // (optional)
+      { "transport.sniff": "true"}, // (optional)
+      { "transport.ping_schedule": "5s"}, // (optional)
+      { "client.transport.ping_timeout": "10s"}, // (optional) default: 5s
+      { "client.transport.nodes_sampler_interval": "10s"} // (optional) default: 5s
+    ]
+  }
+  bulk { // only needed if you mixin `ESBulkStorage`
+    bulkActions = 10000
+    bulkSize = 10 # bulkSize in mega bytes
+    flushInterval = 1 # flush every x seconds
+    concurrentRequests = 2 # connection pooling: max concurrent requests
+  }
+}
+</code></pre> 
+  <p>Example Config (simple localhost cluster without Shield/X-Pack):</p> 
+  <pre><code>esBinaryClient {
+  connection {
+    hosts = ["localhost:9300", "localhost:9301"]
+    settings = [
+      { "cluster.name": "my-test-cluster" }
+    ]
   }
   bulk { // only needed if you mixin `ESBulkStorage`
     bulkActions = 10000
@@ -211,6 +261,39 @@ libraryDependencies ++= Seq(
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Release History</h3> 
+  <h4><a id="user-content-version-201-2017-04-21" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-201-2017-04-21" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 2.0.1 (2017-04-21)</h4> 
+  <ul> 
+   <li>replace log4j dependency with log4f-to-slf4j bridge (see <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-api/5.3/_using_another_logger.html" target="_blank">https://www.elastic.co/guide/en/elasticsearch/client/java-api/5.3/_using_another_logger.html</a>)</li> 
+   <li>improve exception handling in <code>ESStorageBase</code></li> 
+   <li>fix existential types problem in <code>SortUtil.sortBuilder</code></li> 
+  </ul> 
+  <h4><a id="user-content-version-200-2017-04-18" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-200-2017-04-18" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 2.0.0 (2017-04-18)</h4> 
+  <ul> 
+   <li>update from Elasticsearch version 2.4.4 to 5.3.0</li> 
+  </ul> 
+  <h4><a id="user-content-version-071-2017-04-18" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-071-2017-04-18" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.7.1 (2017-04-18)</h4> 
+  <ul> 
+   <li>update Elasticsearch from version 2.4.2 to 2.4.4</li> 
+  </ul> 
+  <h4><a id="user-content-version-070-2017-04-13" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-070-2017-04-13" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.7.0 (2017-04-13)</h4> 
+  <ul> 
+   <li>refactored config to allow configuring more than one host (<code>esBinaryClient.connection.hosts</code> replaces: <code>esBinaryClient.connection.host</code> and <code>esBinaryClient.connection.port</code>)</li> 
+   <li>add Shield/X-Pack on/off switch: see config key <code>esBinaryClient.connection.xpackEnabled</code></li> 
+   <li>removed config key <code>esBinaryClsient.connection.cluster</code></li> 
+   <li>connection settings are now generic: see config key <code>esBinaryClient.connection.settings</code></li> 
+  </ul> 
   <h4><a id="user-content-version-062-2017-04-10" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-062-2017-04-10" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -457,16 +540,38 @@ libraryDependencies ++= Seq(
     </svg></a>Scala Dependency</h3> 
   <pre><code>resolvers ++= Seq(
   Resolver.sonatypeRepo("releases"),
-  Resolver.bintrayRepo("rick-beton", "maven")
+  Resolver.bintrayRepo("rick-beton", "maven"),
+  "elasticsearch-releases" at "https://artifacts.elastic.co/maven"
 )
 libraryDependencies ++= Seq(
-  "com.ubirch.util" %% "elasticsearch-util" % "0.1.0"
+  "com.ubirch.util" %% "elasticsearch-util" % "2.0.0"
 )
 </code></pre> 
   <h3><a id="user-content-release-history-3" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#release-history-3" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Release History</h3> 
+  <h4><a id="user-content-version-200-2017-04-18-1" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-200-2017-04-18-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 2.0.0 (2017-04-18)</h4> 
+  <ul> 
+   <li>update from Elasticsearch version 2.4.4 to 5.3.0</li> 
+  </ul> 
+  <h4><a id="user-content-version-101-2017-04-18" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-101-2017-04-18" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 1.0.1 (2017-04-18)</h4> 
+  <ul> 
+   <li>update Elasticsearch from version 2.4.2 to 2.4.4</li> 
+  </ul> 
+  <h4><a id="user-content-version-100-2017-04-12" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-100-2017-04-12" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 1.0.0 (2017-04-12)</h4> 
+  <ul> 
+   <li>refactored <code>ElasticsearchMappingsBase</code> to use the official ES driver's <code>IndicesAdminClient</code> instead of HTTP calls</li> 
+  </ul> 
   <h4><a id="user-content-version-010" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-010" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -736,7 +841,7 @@ libraryDependencies ++= Seq(
   "RoundEights" at "http://maven.spikemark.net/roundeights"
 )
 libraryDependencies ++= Seq(
-  "com.ubirch.util" %% "oidc-utils" % "0.2.4"
+  "com.ubirch.util" %% "oidc-utils" % "0.3.0"
 )
 </code></pre> 
   <h3><a id="user-content-config-3" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#config-3" aria-hidden="true" target="_blank">
@@ -790,6 +895,21 @@ libraryDependencies ++= Seq(
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Release History</h3> 
+  <h4><a id="user-content-version-030-2017-04-21" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-030-2017-04-21" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.3.0 (2017-04-21)</h4> 
+  <ul> 
+   <li>add field <code>providerId</code> to <code>UserContext</code></li> 
+  </ul> 
+  <h4><a id="user-content-version-025-2017-04-10" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-025-2017-04-10" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version 0.2.5 (2017-04-10)</h4> 
+  <ul> 
+   <li>update json4s to version 3.5.1</li> 
+   <li>update Akka Http to 10.0.5</li> 
+  </ul> 
   <h4><a id="user-content-version-024-2017-04-10" class="anchor" href="https://github.com/ubirch/ubirch-scala-utils#version-024-2017-04-10" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

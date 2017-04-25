@@ -27,29 +27,40 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage</h2> 
-  <p>To use Matryoshka, the following import should bring in pretty much everything:</p> 
+  <ol> 
+   <li>Add a dependency</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.slamdata<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>matryoshka-core<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.18.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Optionally, you can also depend on <code>matryoshka-scalacheck</code> to get <code>Arbitrary</code>/<code>Cogen</code>/<code>Shrink</code> instances for a bunch of pattern functors and fixed points.</p> 
+  <ol start="2"> 
+   <li> <p>Apply some fix for SI-2712. Prior to 2.12, use @milessabin’s <a href="https://github.com/milessabin/si2712fix-plugin" target="_blank">compiler plugin</a>. As of 2.12, you can simply add <code>scalacOptions += "-Ypartial-unification"</code> to your build.sbt.</p> </li> 
+   <li> <p>Add imports as needed. Usually the following should suffice</p> </li> 
+  </ol> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">matryoshka.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">matryoshka.implicits.</span><span class="pl-v">_</span></pre>
   </div> 
-  <p>Also, there are a number of implicits that scalac has trouble finding. Adding @milessabin’s <a href="https://github.com/milessabin/si2712fix-plugin" target="_blank">SI-2712 fix compiler plugin</a> will simplify a ton of Matryoshka-related code.</p> 
+  <p>but if you need some of our pattern functors, then <code>matryoshka.patterns._</code> should be added. Also, there will be cases where you need to specify explicit types (although we generally recommend abstracting over <code>{Bir|Cor|R}ecursive</code> type classes), so you may need <code>matryoshka.data._</code> (for <code>Fix</code>, <code>Mu</code>, and <code>Nu</code>) and/or <code>matryoshka.instances.fixedpoint._</code> for things like <code>Nat</code>, <code>List</code>, <code>Cofree</code>, etc. defined in terms of <code>Mu</code>/<code>Nu</code>.</p> 
   <h2><a id="user-content-introduction" class="anchor" href="https://github.com/slamdata/matryoshka#introduction" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Introduction</h2> 
   <p>This library is predicated on the idea of rewriting your recursive data structures, replacing the recursive type reference with a fresh type parameter.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Expr</span>
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Expr</span>
 <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Num</span>(<span class="pl-v">value</span>: <span class="pl-k">Long</span>)      <span class="pl-k">extends</span> <span class="pl-e">Expr</span>
 <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Mul</span>(<span class="pl-v">l</span>: <span class="pl-en">Expr</span>, <span class="pl-v">r</span>: <span class="pl-en">Expr</span>) <span class="pl-k">extends</span> <span class="pl-e">Expr</span></pre>
   </div> 
   <p>could be rewritten as</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Expr</span>[<span class="pl-en">A</span>]
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Expr</span>[<span class="pl-en">A</span>]
 <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Num</span>[<span class="pl-en">A</span>](<span class="pl-v">value</span>: <span class="pl-k">Long</span>) <span class="pl-k">extends</span> <span class="pl-e">Expr</span>[<span class="pl-en">A</span>]
 <span class="pl-k">final</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Mul</span>[<span class="pl-en">A</span>](<span class="pl-v">l</span>: <span class="pl-en">A</span>, <span class="pl-v">r</span>: <span class="pl-en">A</span>)  <span class="pl-k">extends</span> <span class="pl-e">Expr</span>[<span class="pl-en">A</span>]</pre>
   </div> 
-  <p>This trait generally allows a <code>Traverse</code> instance (or at least a <code>Functor</code> instance). Then you use one of the fixed point type constructors below to regain your recursive type.</p> 
+  <p>This abstract class generally allows a <code>Traverse</code> instance (or at least a <code>Functor</code> instance). Then you use one of the fixed point type constructors below to regain your recursive type.</p> 
+  <p>You may also want instances for <code>Delay[Equal, ?]</code>, <code>Delay[Order, ?]</code>, and <code>Delay[Show, ?]</code> (which are very similar to their non-<code>Delay</code> equivalents) to get instances for fixed points of your functor.</p> 
   <h3><a id="user-content-fixpoint-types" class="anchor" href="https://github.com/slamdata/matryoshka#fixpoint-types" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

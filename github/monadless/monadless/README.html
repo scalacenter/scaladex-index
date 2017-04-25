@@ -1,0 +1,349 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://raw.githubusercontent.com/monadless/monadless/master/monadless.png" target="_blank"><img src="https://raw.githubusercontent.com/monadless/monadless/master/monadless.png" alt="monadless" style="max-width:100%;"></a></p> 
+  <p>Syntactic sugar for monad composition (or: "async/await" generalized)</p> 
+  <p><a href="https://travis-ci.org/monadless/monadless" target="_blank"><img src="https://camo.githubusercontent.com/714a893e8f698e56d96980843dc19274eb288125/68747470733a2f2f7472617669732d63692e6f72672f6d6f6e61646c6573732f6d6f6e61646c6573732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/monadless/monadless.svg?branch=master" style="max-width:100%;"></a> <a href="https://www.codacy.com/app/fwbrasil/monadless" target="_blank"><img src="https://camo.githubusercontent.com/727bdf4ff3f06e3517241225b9917865a609ecad/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f67726164652f6561343036383932383631373433336638323735353334616633333531313532" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/grade/ea4068928617433f8275534af3351152" style="max-width:100%;"></a> <a href="https://gitter.im/monadless/monadless?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/9b52186233ef85483f5c65b95243444e9392be66/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6769747465722d6a6f696e253230636861742d677265656e2e737667" alt="Join the chat at https://gitter.im/monadless/monadless" data-canonical-src="https://img.shields.io/badge/gitter-join%20chat-green.svg" style="max-width:100%;"></a>-<a href="https://www.versioneye.com/user/projects/58f1b1915c12c800161e64d1" target="_blank"><img src="https://camo.githubusercontent.com/25008ac2174bec3ddd34470155f42ef990f4abc6/68747470733a2f2f7777772e76657273696f6e6579652e636f6d2f757365722f70726f6a656374732f3538663162313931356331326338303031363165363464312f62616467652e7376673f7374796c653d666c6174" alt="Dependency Status" data-canonical-src="https://www.versioneye.com/user/projects/58f1b1915c12c800161e64d1/badge.svg?style=flat" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/io.monadless/monadless_2.11" target="_blank"><img src="https://camo.githubusercontent.com/f806d6001e37bd8be02296bcf488b5addcf86f97/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f696f2e6d6f6e61646c6573732f6d6f6e61646c6573735f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/io.monadless/monadless_2.11/badge.svg" style="max-width:100%;"></a> <a href="https://www.javadoc.io/doc/io.monadless/monadless-core_2.11" target="_blank"><img src="https://camo.githubusercontent.com/c2e5b74b4a74ccf4dcf7589d08223b5391ca385d/68747470733a2f2f7777772e6a617661646f632e696f2f62616467652f696f2e6d6f6e61646c6573732f6d6f6e61646c6573735f322e31312e737667" alt="Javadocs" data-canonical-src="https://www.javadoc.io/badge/io.monadless/monadless_2.11.svg" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-problem" class="anchor" href="https://github.com/monadless/monadless#problem" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Problem</h2> 
+  <p>Dealing with monad compositions involves considerable syntax noise. For instance, this code using the <code>Future</code> monad:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>callServiceA().flatMap { a <span class="pl-k">=&gt;</span>
+  callServiceB(a).flatMap { b <span class="pl-k">=&gt;</span>
+    callServiceC(b).map { c <span class="pl-k">=&gt;</span>
+      (a, c)
+    }
+  }
+}</pre>
+  </div> 
+  <p>would be much easier to follow using synchronous operations, without a monad:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> callServiceA()
+  <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> callServiceB(a)
+  <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> callServiceC(b)
+  (a, c)</pre>
+  </div> 
+  <p>This issue affects the usability of any monadic interface (Future, Option, Try, etc.). As an alternative, Scala provides for-comprehensions to reduce the noise:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">for</span> {
+    a <span class="pl-k">&lt;</span><span class="pl-k">-</span> callServiceA()
+    b <span class="pl-k">&lt;</span><span class="pl-k">-</span> callServiceB(a)
+    c <span class="pl-k">&lt;</span><span class="pl-k">-</span> callServiceC(b)
+  } <span class="pl-k">yield</span> {
+    (a, c)
+  }</pre>
+  </div> 
+  <p>They are useful to express sequential compositions and make it easy to access the results of each for-comprehension step from the following ones, but they don't provide syntax sugar for Scala constructs other than assignment (<code>&lt;-</code>, <code>=</code>) and mapping (<code>yield</code>).</p> 
+  <h2><a id="user-content-solution" class="anchor" href="https://github.com/monadless/monadless#solution" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Solution</h2> 
+  <p>Most mainstream languages have support for asynchronous programming using the async/await idiom or are implementing it (e.g. F#, C#/VB, Javascript, Python, Swift). Although useful, async/await is usually tied to a particular monad that represents asynchronous computations (<code>Task</code>, <code>Future</code>, etc.).</p> 
+  <p>This library implements a solution similar to async/await but generalized to any monad type. This generalization is a major factor considering that some codebases use other monads like <code>Task</code> in addition to <code>Future</code> for asynchronous computations.</p> 
+  <p>Given a monad <code>M</code>, the generalization uses the concept of lifting regular values to a monad (<code>T =&gt; M[T]</code>) and unlifting values from a monad instance (<code>M[T] =&gt; T</code>). Example usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> unlift(callServiceA())
+  <span class="pl-k">val</span> <span class="pl-en">b</span> <span class="pl-k">=</span> unlift(callServiceB(a))
+  <span class="pl-k">val</span> <span class="pl-en">c</span> <span class="pl-k">=</span> unlift(callServiceC(b))
+  (a, c)
+}</pre>
+  </div> 
+  <p>Note that <code>lift</code> corresponds to <code>async</code> and <code>unlift</code> to <code>await</code>.</p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/monadless/monadless#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting started</h2> 
+  <p>The <code>lift</code> and <code>unlift</code> methods are provided by an instance of <code>io.monadless.Monadless</code>. The library is generic and can be used with any monad type, but sub-modules with pre-defined <code>Monadless</code> instances are provided for convenience:</p> 
+  <h3><a id="user-content-monadless-stdlib" class="anchor" href="https://github.com/monadless/monadless#monadless-stdlib" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>monadless-stdlib</code></h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-stdlib" % "0.0.12"
+</code></pre> 
+  <p>Imports:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for `scala.concurrent.Future`</span>
+<span class="pl-k">import</span> <span class="pl-v">io.monadless.stdlib.MonadlessFuture.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> for `scala.Option`</span>
+<span class="pl-c"><span class="pl-c">//</span> note: doesn't support `try`/`catch`/`finally`</span>
+<span class="pl-k">import</span> <span class="pl-v">io.monadless.stdlib.MonadlessOption.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> for `scala.util.Try`</span>
+<span class="pl-k">import</span> <span class="pl-v">io.monadless.stdlib.MonadlessTry.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <h3><a id="user-content-monadless-monix" class="anchor" href="https://github.com/monadless/monadless#monadless-monix" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>monadless-monix</code></h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-monix" % "0.0.12"
+</code></pre> 
+  <p>Usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for `monix.eval.Task`</span>
+<span class="pl-k">import</span> <span class="pl-v">io.monadless.monix.MonadlessTask.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <h3><a id="user-content-monadless-cats" class="anchor" href="https://github.com/monadless/monadless#monadless-cats" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>monadless-cats</code></h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-cats" % "0.0.12"
+</code></pre> 
+  <p>Usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for `cats.Applicative`</span>
+<span class="pl-c"><span class="pl-c">//</span> note: doesn't support `try`/`catch`/`finally`</span>
+<span class="pl-k">val</span> <span class="pl-en">myApplicativeMonadless</span> <span class="pl-k">=</span> io.monadless.cats.<span class="pl-en">MonadlessApplicative</span>[<span class="pl-en">MyApplicative</span>]()
+<span class="pl-k">import</span> <span class="pl-v">myApplicativeMonadless.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> for `cats.Monad`</span>
+<span class="pl-c"><span class="pl-c">//</span> note: doesn't support `try`/`catch`/`finally`</span>
+<span class="pl-k">val</span> <span class="pl-en">myMonadMonadless</span> <span class="pl-k">=</span> io.monadless.cats.<span class="pl-en">MonadlessMonad</span>[<span class="pl-en">MyMonad</span>]()
+<span class="pl-k">import</span> <span class="pl-v">myMonadMonadless.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <h3><a id="user-content-monadless-algebird" class="anchor" href="https://github.com/monadless/monadless#monadless-algebird" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>monadless-algebird</code></h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-algebird" % "0.0.12"
+</code></pre> 
+  <p>Usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for `com.twitter.algebird.Applicative`</span>
+<span class="pl-c"><span class="pl-c">//</span> note: doesn't support `try`/`catch`/`finally`</span>
+<span class="pl-k">val</span> <span class="pl-en">myApplicativeMonadless</span> <span class="pl-k">=</span> io.monadless.algebird.<span class="pl-en">MonadlessApplicative</span>[<span class="pl-en">MyApplicative</span>]()
+<span class="pl-k">import</span> <span class="pl-v">myApplicativeMonadless.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> for `com.twitter.algebird.Monad`</span>
+<span class="pl-c"><span class="pl-c">//</span> note: doesn't support `try`/`catch`/`finally`</span>
+<span class="pl-k">val</span> <span class="pl-en">myMonadMonadless</span> <span class="pl-k">=</span> io.monadless.algebird.<span class="pl-en">MonadlessMonad</span>[<span class="pl-en">MyMonad</span>]()
+<span class="pl-k">import</span> <span class="pl-v">monadless.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <h3><a id="user-content-twitter-monads" class="anchor" href="https://github.com/monadless/monadless#twitter-monads" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Twitter monads</h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-core" % "0.0.12"
+</code></pre> 
+  <p>The default method resolution uses the naming conventions adopted by Twitter, so it's possible to use the default <code>Monadless</code> for them:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">futureMonadless</span> <span class="pl-k">=</span> io.monadless.<span class="pl-en">Monadless</span>[com.twitter.util.<span class="pl-en">Future</span>]()
+<span class="pl-k">import</span> <span class="pl-v">futureMonadless.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">tryMonadless</span> <span class="pl-k">=</span> io.monadless.<span class="pl-en">Monadless</span>[com.twitter.util.<span class="pl-en">Try</span>]()
+<span class="pl-k">import</span> <span class="pl-v">tryMonadless</span></pre>
+  </div> 
+  <h3><a id="user-content-other-monads" class="anchor" href="https://github.com/monadless/monadless#other-monads" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Other monads</h3> 
+  <p>SBT configuration:</p> 
+  <pre><code>libraryDependencies += "io.monadless" %% "monadless-core" % "0.0.12"
+</code></pre> 
+  <p>See <a href="https://github.com/monadless/monadless#how-does-it-work" target="_blank">"How does it work?"</a> for information on how to define a <code>Monadless</code> instance for other monads.</p> 
+  <h2><a id="user-content-supported-constructs" class="anchor" href="https://github.com/monadless/monadless#supported-constructs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Supported constructs</h2> 
+  <p><code>val</code>s:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">val</span> <span class="pl-en">i</span> <span class="pl-k">=</span> unlift(a)
+  i <span class="pl-k">+</span> <span class="pl-c1">1</span>
+}</pre>
+  </div> 
+  <p>nested blocks of code:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">val</span> <span class="pl-en">i</span> <span class="pl-k">=</span> {
+     <span class="pl-k">val</span> <span class="pl-en">j</span> <span class="pl-k">=</span> unlift(a)
+     j <span class="pl-k">*</span> <span class="pl-c1">3</span>
+  }
+  i <span class="pl-k">+</span> <span class="pl-c1">1</span>
+}</pre>
+  </div> 
+  <p><code>val</code> pattern matching:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">val</span> (i, j) <span class="pl-k">=</span> (unlift(a), unlift(b))
+}</pre>
+  </div> 
+  <p><code>if</code> conditions:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">if</span>(unlift(a) <span class="pl-k">==</span> <span class="pl-c1">1</span>) unlift(c)
+  <span class="pl-k">else</span> <span class="pl-c1">0</span>
+}</pre>
+  </div> 
+  <p><code>boolean</code> operations (including short-circuiting):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  unlift(a) <span class="pl-k">==</span> <span class="pl-c1">1</span> <span class="pl-k">||</span> (unlift(b) <span class="pl-k">==</span> <span class="pl-c1">2</span> <span class="pl-k">&amp;&amp;</span> unlift(c) <span class="pl-k">==</span> <span class="pl-c1">3</span>)
+}</pre>
+  </div> 
+  <p><code>def</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">def</span> <span class="pl-en">m</span>(<span class="pl-v">j</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> unlift(a) <span class="pl-k">+</span> j
+  m(unlift(b))
+}</pre>
+  </div> 
+  <p>recursive <code>def</code>s:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">def</span> <span class="pl-en">m</span>(<span class="pl-v">j</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> <span class="pl-k">if</span>(j <span class="pl-k">==</span> <span class="pl-c1">0</span>) unlift(a) <span class="pl-k">else</span> m(j <span class="pl-k">-</span> <span class="pl-c1">1</span>)
+  m(<span class="pl-c1">10</span>)
+}</pre>
+  </div> 
+  <p><code>trait</code>s, <code>class</code>es, and <code>object</code>s:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">trait</span> <span class="pl-en">A</span> {
+    <span class="pl-k">def</span> <span class="pl-en">i</span> <span class="pl-k">=</span> unlift(a)
+  }
+  <span class="pl-k">class</span> <span class="pl-en">B</span> <span class="pl-k">extends</span> <span class="pl-e">A</span> {
+    <span class="pl-k">def</span> <span class="pl-en">j</span> <span class="pl-k">=</span> i <span class="pl-k">+</span> <span class="pl-c1">1</span>
+  }
+  <span class="pl-k">object</span> <span class="pl-en">C</span> {
+    <span class="pl-k">val</span> <span class="pl-en">k</span> <span class="pl-k">=</span> unlift(c)
+  }
+  (<span class="pl-k">new</span> <span class="pl-en">B).j</span> <span class="pl-k">+</span> <span class="pl-en">C</span>.k
+}</pre>
+  </div> 
+  <p>pattern matching:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  unlift(a) <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-c1">1</span> <span class="pl-k">=&gt;</span> unlift(b)
+    <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> unlift(c)
+  }
+}</pre>
+  </div> 
+  <p><code>try</code>/<code>catch</code>/<code>finally</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">try</span> unlift(a)
+  <span class="pl-k">catch</span> {
+    <span class="pl-k">case</span> e <span class="pl-k">=&gt;</span> unlift(b)
+  } <span class="pl-k">finally</span> {
+    println(<span class="pl-s"><span class="pl-pds">"</span>done<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p><code>while</code> loops:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>lift {
+  <span class="pl-k">var</span> <span class="pl-en">i</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>
+  <span class="pl-k">while</span>(i <span class="pl-k">&lt;</span> <span class="pl-c1">10</span>)
+    i <span class="pl-k">+</span><span class="pl-k">=</span> unlift(a)
+}</pre>
+  </div> 
+  <p>The <a href="https://github.com/monadless/monadless/blob/master/monadless-core/src/test/scala/io/monadless/UnsupportedSpec.scala" target="_blank"><code>UnsupportedSpec</code></a> lists the constructs that are known to be unsupported. Please report if you find a construct that can't be translated and is not classified by the spec class.</p> 
+  <h2><a id="user-content-how-does-it-work" class="anchor" href="https://github.com/monadless/monadless#how-does-it-work" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How does it work?</h2> 
+  <p>The <code>unlift</code> method is only a marker that indicates that the <code>lift</code> macro transformation needs to treat a value as monad instance. For example, it never blocks threads using <code>Await.result</code> if it's dealing with a <code>Future</code>.</p> 
+  <p>The code generated by the macro uses an approach similar to for-comprehensions, resolving at compile time the methods that are required for the composition and not requiring a particular monad interface. We call these "ghost" methods: they aren't defined by an interface and only need to be source-compatible with the generated macro tree. To elucidate, let's take <code>map</code> as an example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> Option `map` signature</span>
+<span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">B</span>]
+
+<span class="pl-c"><span class="pl-c">//</span> Future `map` signature</span>
+<span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ec</span>: <span class="pl-en">ExecutionContext</span>)</pre>
+  </div> 
+  <p><code>Future</code> and <code>Option</code> are supported by for-comprehensions and <code>lift</code> even though they don't share the same method signature since <code>Future</code> requires an <code>ExecutionContext</code>. They are only required to be source-compatible with the transformed tree. Example <code>lift</code> transformation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">a</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+<span class="pl-c"><span class="pl-c">//</span> this transformation</span>
+lift {
+  unlift(a) <span class="pl-k">+</span> <span class="pl-c1">1</span>
+}
+
+<span class="pl-c"><span class="pl-c">//</span> generates the tree</span>
+a.map(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>)
+
+<span class="pl-c"><span class="pl-c">//</span> that triggers scala's implicit resolution after the</span>
+<span class="pl-c"><span class="pl-c">//</span> macro transformation and becomes:</span>
+a.map(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>)(theExecutionContext)</pre>
+  </div> 
+  <p>For-comprehensions use only two "ghost" methods: <code>map</code> and <code>flatMap</code>. To support more Scala constructs, Monadless requires additional methods. This is the definition of the "ghost" interface that Monadless expects:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>] {
+  
+  <span class="pl-c"><span class="pl-c">//</span> Applies the map function</span>
+  <span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>]
+
+  <span class="pl-c"><span class="pl-c">//</span> Applies `f` and then flattens the result</span>
+  <span class="pl-k">def</span> <span class="pl-en">flatMap</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>]
+  
+  <span class="pl-c"><span class="pl-c">//</span> Recovers from a failure if the partial function </span>
+  <span class="pl-c"><span class="pl-c">//</span> is defined for the failure. Used to translate `catch` clauses.</span>
+  <span class="pl-k">def</span> <span class="pl-en">rescue</span>(<span class="pl-v">pf</span>: <span class="pl-en">PartialFunction</span>[<span class="pl-en">Throwable</span>, <span class="pl-en">M</span>[<span class="pl-en">A</span>]])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>]
+
+  <span class="pl-c"><span class="pl-c">//</span> Executes `f` regarless of the outcome (success/failure).</span>
+  <span class="pl-c"><span class="pl-c">//</span> Used to translate `finally` clauses.</span>
+  <span class="pl-k">def</span> <span class="pl-en">ensure</span>(<span class="pl-v">f</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>]
+}
+
+<span class="pl-k">object</span> <span class="pl-en">M</span> {
+
+  <span class="pl-c"><span class="pl-c">//</span> Creates a monad instance with the result of `f`</span>
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-v">f</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>]
+
+  <span class="pl-c"><span class="pl-c">//</span> Transforms multiple monad instances into one.</span>
+  <span class="pl-k">def</span> <span class="pl-en">collect</span>[<span class="pl-en">A</span>](<span class="pl-v">l</span>: <span class="pl-en">List</span>[<span class="pl-en">M</span>[<span class="pl-en">A</span>]])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]
+}
+</pre>
+  </div> 
+  <p>As an alternative to using the monad type methods directly since not all existing monads implement them, Monadless allows the user to define them separately:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">CustomMonadless</span> <span class="pl-k">extends</span> <span class="pl-e">Monadless</span>[<span class="pl-en">M</span>] {
+
+  <span class="pl-c"><span class="pl-c">//</span> these are also "ghost" methods</span>
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>[<span class="pl-en">A</span>](<span class="pl-v">f</span>: <span class="pl-k">=&gt;</span> <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">collect</span>[<span class="pl-en">A</span>](<span class="pl-v">l</span>: <span class="pl-en">List</span>[<span class="pl-en">M</span>[<span class="pl-en">A</span>]])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">m</span>: <span class="pl-en">M</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">flatMap</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>](<span class="pl-v">m</span>: <span class="pl-en">M</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+  <span class="pl-k">def</span> <span class="pl-en">rescue</span>[<span class="pl-en">A</span>](<span class="pl-v">m</span>: <span class="pl-en">M</span>[<span class="pl-en">A</span>])(<span class="pl-v">pf</span>: <span class="pl-en">PartialFunction</span>[<span class="pl-en">Throwable</span>, <span class="pl-en">M</span>[<span class="pl-en">A</span>]])<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">??</span>
+  <span class="pl-k">def</span> <span class="pl-en">ensure</span>[<span class="pl-en">A</span>](<span class="pl-v">m</span>: <span class="pl-en">M</span>[<span class="pl-en">A</span>])(<span class="pl-v">f</span>: <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">M</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+}</pre>
+  </div> 
+  <p>The methods defined by the <code>Monadless</code> instance have precedence over the ones specified by the monad instance and its companion object</p> 
+  <h2><a id="user-content-related-projects" class="anchor" href="https://github.com/monadless/monadless#related-projects" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Related projects</h2> 
+  <ul> 
+   <li><a href="https://github.com/scala/async" target="_blank">scala-async</a> (for scala <code>Future</code>s)</li> 
+   <li><a href="https://github.com/pelotom/effectful" target="_blank">effectful</a> (for scalaz <code>Monad</code>s)</li> 
+   <li><a href="https://github.com/ThoughtWorksInc/each" target="_blank">each</a> (also for scalaz <code>Monad</code>s)</li> 
+  </ul> 
+  <h2><a id="user-content-code-of-conduct" class="anchor" href="https://github.com/monadless/monadless#code-of-conduct" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Code of Conduct</h2> 
+  <p>Please note that this project is released with a Contributor Code of Conduct. By participating in this project, you agree to abide by its terms. See <a href="https://github.com/monadless/monadless/blob/master/CODE_OF_CONDUCT.md" target="_blank">CODE_OF_CONDUCT.md</a> for details.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/monadless/monadless#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>See the <a href="https://github.com/monadless/monadless/blob/master/LICENSE.txt" target="_blank">LICENSE</a> file for details.</p> 
+  <h2><a id="user-content-maintainers" class="anchor" href="https://github.com/monadless/monadless#maintainers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maintainers</h2> 
+  <ul> 
+   <li>@fwbrasil</li> 
+   <li>@sameerparekh</li> 
+  </ul> 
+ </article>
+</div>

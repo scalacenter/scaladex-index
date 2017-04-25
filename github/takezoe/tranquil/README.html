@@ -1,0 +1,112 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-tranquil" class="anchor" href="https://github.com/takezoe/tranquil#tranquil" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Tranquil</h1> 
+  <p>Tranquil is a experiment of type-safe SQL builder for Scala.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.takezoe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>tranquil<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>At first, ready table definitions like following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.takezoe.tranquil.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">userId</span>: <span class="pl-k">String</span>, <span class="pl-v">userName</span>: <span class="pl-k">String</span>, <span class="pl-v">companyId</span>: <span class="pl-en">Option</span>[<span class="pl-k">Int</span>])
+
+<span class="pl-k">class</span> <span class="pl-en">Users</span>(<span class="pl-k">val</span> <span class="pl-en">alias</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>]) <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">User</span>] {
+  <span class="pl-k">val</span> <span class="pl-en">tableName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>USERS<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">userId</span>    <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>USER_ID<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">userName</span>  <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>USER_NAME<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">companyId</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">NullableColumn</span>[<span class="pl-k">Int</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">columns</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(userId, userName, companyId)
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">toModel</span>(<span class="pl-v">rs</span>: <span class="pl-en">ResultSet</span>)<span class="pl-k">:</span> <span class="pl-en">User</span> <span class="pl-k">=</span> {
+    <span class="pl-en">User</span>(userId.get(rs), userName.get(rs), companyId.getOpt(rs))
+  }
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Users</span> {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">users</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Users</span>(<span class="pl-c1">None</span>)
+    <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Users</span>](users)
+  }
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">alias</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">users</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Users</span>(<span class="pl-en">Some</span>(alias))
+    <span class="pl-k">new</span> <span class="pl-en">Query</span>[<span class="pl-en">Users</span>, <span class="pl-en">Users</span>, <span class="pl-en">User</span>](users, users, users.toModel _)
+  }
+}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Company</span>(<span class="pl-v">companyId</span>: <span class="pl-k">Int</span>, <span class="pl-v">companyName</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">class</span> <span class="pl-en">Companies</span>(<span class="pl-k">val</span> <span class="pl-en">alias</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>]) <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">Company</span>] {
+  <span class="pl-k">val</span> <span class="pl-en">tableName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>COMPANIES<span class="pl-pds">"</span></span>
+  <span class="pl-k">val</span> <span class="pl-en">companyId</span>   <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">Int</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">companyName</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_NAME<span class="pl-pds">"</span></span>)
+  <span class="pl-k">val</span> <span class="pl-en">columns</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(companyId, companyName)
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">toModel</span>(<span class="pl-v">rs</span>: <span class="pl-en">ResultSet</span>)<span class="pl-k">:</span> <span class="pl-en">Company</span> <span class="pl-k">=</span> {
+    <span class="pl-en">Company</span>(companyId.get(rs), companyName.get(rs))
+  }
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Companies</span> {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">companies</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Companies</span>(<span class="pl-c1">None</span>)
+    <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Companies</span>](companies)
+  }
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">alias</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">companies</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Companies</span>(<span class="pl-en">Some</span>(alias))
+    <span class="pl-k">new</span> <span class="pl-en">Query</span>[<span class="pl-en">Companies</span>, <span class="pl-en">Companies</span>, <span class="pl-en">Company</span>](companies, companies, companies.toModel _)
+  }
+}</pre>
+  </div> 
+  <p>Then you can assemble SQL using type-safe DSL.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">conn</span><span class="pl-k">:</span> java.sql.<span class="pl-en">Connection</span> <span class="pl-k">=</span> ...
+
+<span class="pl-c"><span class="pl-c">//</span> SELECT</span>
+<span class="pl-k">val</span> <span class="pl-en">users</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">User</span>, <span class="pl-en">Option</span>[<span class="pl-en">Company</span>])] <span class="pl-k">=</span>
+  <span class="pl-en">Users</span>(<span class="pl-s"><span class="pl-pds">"</span>u<span class="pl-pds">"</span></span>)
+    .leftJoin(<span class="pl-en">Companies</span>(<span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span>)){ <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.companyId eq c.companyId }
+    .filter { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>) <span class="pl-k">||</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoen<span class="pl-pds">"</span></span>) }
+    .sortBy { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.userId asc }
+    .list(conn)</pre>
+  </div> 
+  <p>Generated SQL is:</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">SELECT</span>
+  <span class="pl-c1">u</span>.<span class="pl-c1">USER_ID</span>      <span class="pl-k">AS</span> u_USER_ID,
+  <span class="pl-c1">u</span>.<span class="pl-c1">USER_NAME</span>    <span class="pl-k">AS</span> u_USER_NAME,
+  <span class="pl-c1">u</span>.<span class="pl-c1">COMPANY_ID</span>   <span class="pl-k">AS</span> u_COMPANY_ID,
+  <span class="pl-c1">c</span>.<span class="pl-c1">COMPANY_ID</span>   <span class="pl-k">AS</span> c_COMPANY_ID,
+  <span class="pl-c1">c</span>.<span class="pl-c1">COMPANY_NAME</span> <span class="pl-k">AS</span> c_COMPANY_NAME
+<span class="pl-k">FROM</span> USERS u
+<span class="pl-k">LEFT JOIN</span> COMPANIES c <span class="pl-k">ON</span> <span class="pl-c1">u</span>.<span class="pl-c1">COMPANY_ID</span> <span class="pl-k">=</span> <span class="pl-c1">c</span>.<span class="pl-c1">COMPANY_ID</span>
+<span class="pl-k">WHERE</span> (<span class="pl-c1">u</span>.<span class="pl-c1">USER_ID</span> <span class="pl-k">=</span> ? <span class="pl-k">OR</span> <span class="pl-c1">u</span>.<span class="pl-c1">USER_ID</span> <span class="pl-k">=</span> ?)
+<span class="pl-k">ORDER BY</span> <span class="pl-c1">u</span>.<span class="pl-c1">USER_ID</span> <span class="pl-k">ASC</span></pre>
+  </div> 
+  <p>Also you can assemble insert, update and delete SQl in the same way.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> INSERT</span>
+<span class="pl-en">Users</span>()
+  .insert { u <span class="pl-k">=&gt;</span> 
+    (u.userId <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>) <span class="pl-k">~</span> 
+    (u.userName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>)
+  }
+  .execute(conn)
+
+<span class="pl-c"><span class="pl-c">//</span> UPDATE</span>
+<span class="pl-en">Users</span>()
+  .update(_.userName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>N. Takezoe<span class="pl-pds">"</span></span>)
+  .filter(_.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>)
+  .execute(conn)
+
+<span class="pl-c"><span class="pl-c">//</span> DELETE</span>
+<span class="pl-en">Users</span>()
+  .delete()
+  .filter(_.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>)
+  .execute(conn)</pre>
+  </div> 
+ </article>
+</div>

@@ -44,28 +44,46 @@
    <pre>./sbt <span class="pl-c1">test</span></pre>
   </div> 
   <p>Note: please note that we are not using here a system wide sbt, but our own copy of it (under ./sbt). This is primarily done for determinism. In order to have a reproducible build, the helper script needs to be part of the repo.</p> 
-  <p>Running the full test suite can be done in two ways:</p> 
-  <h5><a id="user-content-testing-option-1-prerequisite-docker" class="anchor" href="https://github.com/quasar-analytics/quasar#testing-option-1-prerequisite-docker" aria-hidden="true" target="_blank">
+  <p>Running the full test suite can be done using docker containers for various backends:</p> 
+  <h5><a id="user-content-full-testing-prerequisite-docker-and-docker-compose" class="anchor" href="https://github.com/quasar-analytics/quasar#full-testing-prerequisite-docker-and-docker-compose" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Testing option 1 (prerequisite: docker)</h5> 
-  <p>A docker container running mongodb operates for the duration of the test run.</p> 
-  <div class="highlight highlight-source-shell">
-   <pre>./bin/full-it-tests.sh</pre>
-  </div> 
-  <h5><a id="user-content-testing-option-2" class="anchor" href="https://github.com/quasar-analytics/quasar#testing-option-2" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Testing option 2</h5> 
-  <p>In order to run the integration tests for a given backend, you will need to provide a URL to it. For instance, in the case of MongoDB, If you have a hosted MongoDB instance handy, then you can simply point to it, or else you probably want to install MongoDB locally and point Quasar to that one. Installing MongoDB locally is probably a good idea as it will allow you to run the integration tests offline as well as make the tests run as fast as possible.</p> 
-  <p>In order to install MongoDB locally you can either use something like Homebrew (on OS X) or simply go to the MongoDB website and follow the instructions that can be found there.</p> 
-  <p>Once we have a MongoDB instance handy, we need to configure the integration tests in order to inform Quasar about where to find the backends to test.</p> 
-  <p>Simply copy <code>it/testing.conf.example</code> to <code>it/testing.conf</code> and change the values. For example:</p> 
-  <pre><code>mongodb_3_2="mongodb://&lt;mongoURL&gt;"
-mongodb_3_0="mongodb://&lt;mongoURL&gt;"
-mongodb_2_6="mongodb://&lt;mongoURL&gt;"
+    </svg></a>Full Testing (prerequisite: docker and docker-compose)</h5> 
+  <p>In order to run integration tests for various backends the <code>docker/scripts</code> are provided to easily create dockerized backend data stores.</p> 
+  <p>Of particular interest are the following two scripts:</p> 
+  <ol> 
+   <li><code>docker/scripts/setupContainers</code></li> 
+   <li><code>docker/scripts/assembleTestingConf</code></li> 
+  </ol> 
+  <p>Quasar supports the following datastores:</p> 
+  <pre><code>quasar_mongodb_2_6
+quasar_mongodb_3_0
+quasar_mongodb_read_only
+quasar_mongodb_3_2
+quasar_mongodb_3_4
+quasar_metastore
+quasar_postgresql
+quasar_marklogic_xml
+quasar_marklogic_json
+quasar_couchbase
 </code></pre> 
-  <p>where is the url at which one can find a Mongo database. For example would probably look something like <code>localhost:27017</code> for a local installation. This means the integration tests will be run against both MongoDB versions 2.6, 3.0, and 3.2. Alternatively, you can choose to install only one of these and run the integration tests against only that one database. Simply omit a version in order to avoid testing against it. On the integration server, the tests are run against all supported filesystems.</p> 
+  <p>Knowing which backend datastores are supported you can create and configure docker containers using <code>setupContainers</code>. For example if you wanted to run integration tests with mongo, postgresql, marklogic, and couchbsase you would use:</p> 
+  <pre><code>./setupContainers -u quasar_metastore,quasar_mongodb_3_0,quasar_postgresql,quasar_marklogic_xml,quasar_couchbase
+</code></pre> 
+  <p>Note: <code>quasar_metastore</code> is always needed to run integration tests.</p> 
+  <p>This command will pull docker images, create containers running the specified backends, and configure them appropriately for Quasar testing.</p> 
+  <p>Once backends are ready we need to configure the integrations tests in order to inform Quasar about where to find the backends to test. This information is conveyed to Quasar using the file <code>it/testing.conf</code>. Using the <code>assembleTestingConf</code> script you can generate a <code>testing.conf</code> file based on the currently running containerizd backends using the following command:</p> 
+  <pre><code>./assembleTestingConf -a
+</code></pre> 
+  <p>After running this command your <code>testing.conf</code> file should look similar to this:</p> 
+  <pre><code>&gt; cat it/testing.conf
+postgresql_metastore="{\"host\":\"192.168.99.101\",\"port\":5432,\"database\":\"metastore\",\"userName\":\"postgres\",\"password\":\"\"}"
+couchbase="couchbase://192.168.99.101?username=Administrator&amp;password=password&amp;socketConnectTimeoutSeconds=15"
+marklogic_xml="xcc://marklogic:marklogic@192.168.99.101:8000/Documents?format=xml"
+postgresql="jdbc:postgresql://192.168.99.101:5433/quasar-test?user=postgres&amp;password=postgres"
+mongodb_3_0="mongodb://192.168.99.101:27019"
+</code></pre> 
+  <p>IP's will vary depending on your docker environment. In addition the scripts assume you have docker and docker-compose installed. You can find information about installing docker <a href="https://www.docker.com/products/docker-toolbox" target="_blank">here</a>.</p> 
   <h4><a id="user-content-repl-jar" class="anchor" href="https://github.com/quasar-analytics/quasar#repl-jar" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -79,6 +97,11 @@ mongodb_2_6="mongodb://&lt;mongoURL&gt;"
   <div class="highlight highlight-source-shell">
    <pre>java -jar [<span class="pl-k">&lt;</span>path to jar<span class="pl-k">&gt;</span>] [-c <span class="pl-k">&lt;</span>config file<span class="pl-k">&gt;</span>]</pre>
   </div> 
+  <p>As a command-line REPL user, to work with a fully functioning REPL you will need the metadata store and a mount point. See <a href="https://github.com/quasar-analytics/quasar#full-testing-prerequisite-docker-and-docker-compose" target="_blank">here</a> for instructions on creating the metadata store backend using docker. To add a mount you can start the web server mentioned <a href="https://github.com/quasar-analytics/quasar#web-jar" target="_blank">below</a> and issue a <code>curl</code> command like:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>curl -v -X PUT http://localhost:8080/mount/fs/cb/ -d <span class="pl-s"><span class="pl-pds">'</span>{ "couchbase": { "connectionUri":"couchbase://192.168.99.100?username=Administrator&amp;password=password" } }<span class="pl-pds">'</span></span> </pre>
+  </div> 
+  <p>You can find examples of <code>connectionUri</code> values <a href="https://github.com/quasar-analytics/quasar#database-mounts" target="_blank">here</a>.</p> 
   <h4><a id="user-content-web-jar" class="anchor" href="https://github.com/quasar-analytics/quasar#web-jar" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -92,49 +115,72 @@ mongodb_2_6="mongodb://&lt;mongoURL&gt;"
   <div class="highlight highlight-source-shell">
    <pre>java -jar [<span class="pl-k">&lt;</span>path to jar<span class="pl-k">&gt;</span>] [-c <span class="pl-k">&lt;</span>config file<span class="pl-k">&gt;</span>]</pre>
   </div> 
+  <p>Web jar users, will also need the metadata store. See <a href="https://github.com/quasar-analytics/quasar#full-testing-prerequisite-docker-and-docker-compose" target="_blank">here</a> for getting up and running with one using docker.</p> 
   <h3><a id="user-content-configure" class="anchor" href="https://github.com/quasar-analytics/quasar#configure" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Configure</h3> 
-  <p>The various JARs can be configured by using a command-line argument to indicate the location of a JSON configuration file. If no config file is specified, it is assumed to be <code>quasar-config.json</code>, from a standard location in the user's home directory.</p> 
+  <p>The various REPL JARs can be configured by using a command-line argument to indicate the location of a JSON configuration file. If no config file is specified, it is assumed to be <code>quasar-config.json</code>, from a standard location in the user's home directory.</p> 
   <p>The JSON configuration file must have the following format:</p> 
   <div class="highlight highlight-source-json">
    <pre>{
   <span class="pl-s"><span class="pl-pds">"</span>server<span class="pl-pds">"</span></span>: {
     <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>: <span class="pl-c1">8080</span>
   },
-
-  <span class="pl-s"><span class="pl-pds">"</span>mountings<span class="pl-pds">"</span></span>: {
-    <span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>: {
-      <span class="pl-s"><span class="pl-pds">"</span>mongodb<span class="pl-pds">"</span></span>: {
-        <span class="pl-s"><span class="pl-pds">"</span>connectionUri<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>mongodb://&lt;user&gt;:&lt;pass&gt;@&lt;host&gt;:&lt;port&gt;/&lt;dbname&gt;<span class="pl-pds">"</span></span>
-      }
+  <span class="pl-s"><span class="pl-pds">"</span>metastore<span class="pl-pds">"</span></span>: {
+    <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span>: {
+      <span class="pl-ii">&lt;metastore_config&gt;</span>
     }
   }
 }</pre>
   </div> 
-  <p>One or more mountings may be included, and each must have a unique path (above, <code>/</code>), which determines where in the filesystem the database(s) contained by the mounting will appear.</p> 
-  <h4><a id="user-content-database-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#database-mounts" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-metadata-store" class="anchor" href="https://github.com/quasar-analytics/quasar#metadata-store" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Database mounts</h4> 
-  <p>If the mount's key is "mongodb", then the <code>connectionUri</code> is a standard <a href="http://docs.mongodb.org/manual/reference/connection-string/" target="_blank">MongoDB connection string</a>. Only the primary host is required to be present, however in most cases a database name should be specified as well. Additional hosts and options may be included as specified in the linked documentation.</p> 
-  <p>For example, say a MongoDB instance is running on the default port on the same machine as Quasar, and contains databases <code>test</code> and <code>students</code>, the <code>students</code> database contains a collection <code>cs101</code>, and the configuration looks like this:</p> 
+    </svg></a>Metadata Store</h4> 
+  <p>Configuration for the metadata store consists of providing connection information for a supported database. Currently the <a href="http://www.h2database.com/" target="_blank">H2</a> and <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a> databases are supported.</p> 
+  <p>To easily get up and running with a PostgreSQL metastore backend using docker see <a href="https://github.com/quasar-analytics/quasar#Full" target="_blank">Full Testing</a> section.</p> 
+  <p>If no metastore configuration is specified, the default configuration will use an H2 database located in the default quasar configuration directory for your operating system.</p> 
+  <p>An example H2 configuration would look something like</p> 
   <div class="highlight highlight-source-json">
-   <pre>  <span class="pl-s"><span class="pl-pds">"</span>mountings<span class="pl-pds">"</span></span>: {
-    <span class="pl-s"><span class="pl-pds">"</span>/local/<span class="pl-pds">"</span></span>: {
-      <span class="pl-s"><span class="pl-pds">"</span>mongodb<span class="pl-pds">"</span></span>: {
-        <span class="pl-s"><span class="pl-pds">"</span>connectionUri<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>mongodb://localhost/test<span class="pl-pds">"</span></span>
-      }
-    }
-  }</pre>
+   <pre><span class="pl-s"><span class="pl-pds">"</span>h2<span class="pl-pds">"</span></span>: {
+  <span class="pl-s"><span class="pl-pds">"</span>file<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;path/to/database/file&gt;<span class="pl-pds">"</span></span>
+}</pre>
   </div> 
-  <p>Then the filesystem will contain the paths <code>/local/test/</code> and <code>/local/students/cs101</code>, among others.</p> 
-  <p>A database can be mounted at any directory path, but database mount paths must not be nested inside each other.</p> 
-  <h5><a id="user-content-mongodb" class="anchor" href="https://github.com/quasar-analytics/quasar#mongodb" aria-hidden="true" target="_blank">
+  <p>A PostgreSQL configuration looks something like</p> 
+  <div class="highlight highlight-source-json">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>postgresql<span class="pl-pds">"</span></span>: {
+  <span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;hostname&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;port&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;database name&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>userName<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;database user&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;password for database user&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>parameters<span class="pl-pds">"</span></span>: <span class="pl-ii">&lt;an</span> <span class="pl-ii">optional</span> <span class="pl-ii">JSON</span> <span class="pl-ii">object</span> <span class="pl-ii">of</span> <span class="pl-ii">parameter</span> <span class="pl-ii">key:value</span> <span class="pl-ii">pairs&gt;</span>
+}</pre>
+  </div> 
+  <p>The contents of the optional <code>parameters</code> object correspond to the various driver configuration parameters available for PostgreSQL. One example for a value of the <code>parameters</code> object may be a <code>loglevel</code>:</p> 
+  <div class="highlight highlight-source-json">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>parameters<span class="pl-pds">"</span></span>: {
+  <span class="pl-s"><span class="pl-pds">"</span>loglevel<span class="pl-pds">"</span></span>: <span class="pl-c1">1</span>
+}</pre>
+  </div> 
+  <h4><a id="user-content-initializing-and-updating-schema" class="anchor" href="https://github.com/quasar-analytics/quasar#initializing-and-updating-schema" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>MongoDB</h5> 
+    </svg></a>Initializing and updating Schema</h4> 
+  <p>Before the server can be started, the metadata store schema must be initialized. To do so utilize the "initUpdateMetaStore" command with a web or repl quasar jar.</p> 
+  <p>If mounts are already defined in the config file, initialization will migrate those to the metadata store.</p> 
+  <h3><a id="user-content-database-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#database-mounts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Database mounts</h3> 
+  <p>If the mount's key is "mongodb", then the <code>connectionUri</code> is a standard <a href="http://docs.mongodb.org/manual/reference/connection-string/" target="_blank">MongoDB connection string</a>. Only the primary host is required to be present, however in most cases a database name should be specified as well. Additional hosts and options may be included as specified in the linked documentation.</p> 
+  <p>For example, say a MongoDB instance is running on the default port on the same machine as Quasar, and contains databases <code>test</code> and <code>students</code>, the <code>students</code> database contains a collection <code>cs101</code>, and the <code>connectionUri</code> is <code>mongodb://localhost/test</code>. Then the filesystem will contain the paths <code>/local/test/</code> and <code>/local/students/cs101</code>, among others.</p> 
+  <p>A database can be mounted at any directory path, but database mount paths must not be nested inside each other.</p> 
+  <h4><a id="user-content-mongodb" class="anchor" href="https://github.com/quasar-analytics/quasar#mongodb" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MongoDB</h4> 
   <p>To connect to MongoDB using TLS/SSL, specify <code>?ssl=true</code> in the connection string, and also provide the following via system properties when launching either JAR (i.e. <code>java -Djavax.net.ssl.trustStore=/home/quasar/ssl/certs.ts</code>):</p> 
   <ul> 
    <li><code>javax.net.ssl.trustStore</code>: path specifying a file containing the certificate chain for verifying the server.</li> 
@@ -144,10 +190,10 @@ mongodb_2_6="mongodb://&lt;mongoURL&gt;"
    <li><code>javax.net.debug</code>: (optional) use <code>all</code> for very verbose but sometimes helpful output.</li> 
    <li><code>invalidHostNameAllowed</code>: (optional) use <code>true</code> to disable host name checking, which is less secure but may be needed in test environments using self-signed certificates.</li> 
   </ul> 
-  <h5><a id="user-content-couchbase" class="anchor" href="https://github.com/quasar-analytics/quasar#couchbase" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-couchbase" class="anchor" href="https://github.com/quasar-analytics/quasar#couchbase" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Couchbase</h5> 
+    </svg></a>Couchbase</h4> 
   <p>To connect to Couchbase use the following <code>connectionUri</code> format:</p> 
   <p><code>couchbase://&lt;host&gt;[:&lt;port&gt;]?username=&lt;username&gt;&amp;password=&lt;password&gt;[&amp;queryTimeoutSeconds=&lt;seconds&gt;]</code></p> 
   <p>Prerequisites</p> 
@@ -165,17 +211,17 @@ mongodb_2_6="mongodb://&lt;mongoURL&gt;"
    <li>Join unimplemented — future support planned</li> 
    <li><a href="https://github.com/quasar-analytics/quasar/issues?q=is%3Aissue+is%3Aopen+label%3ACouchbase" target="_blank">Open issues</a></li> 
   </ul> 
-  <h5><a id="user-content-hdfs-using-apache-spark" class="anchor" href="https://github.com/quasar-analytics/quasar#hdfs-using-apache-spark" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-hdfs-using-apache-spark" class="anchor" href="https://github.com/quasar-analytics/quasar#hdfs-using-apache-spark" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>HDFS using Apache Spark</h5> 
+    </svg></a>HDFS using Apache Spark</h4> 
   <p>To connect to HDFS using Apache Spark use the following <code>connectionUri</code> format:</p> 
   <p><code>spark://&lt;spark_host&gt;:&lt;spark_port&gt;|hdfs://&lt;hdfs_host&gt;:&lt;hdfs_port&gt;|&lt;root_path&gt;</code></p> 
   <p>e.g "spark://spark_master:7077|hdfs://primary_node:9000|/hadoop/users/"</p> 
-  <h5><a id="user-content-marklogic" class="anchor" href="https://github.com/quasar-analytics/quasar#marklogic" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-marklogic" class="anchor" href="https://github.com/quasar-analytics/quasar#marklogic" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>MarkLogic</h5> 
+    </svg></a>MarkLogic</h4> 
   <p>To connect to MarkLogic, specify an <a href="https://docs.marklogic.com/guide/xcc/concepts#id_55196" target="_blank">XCC URL</a> with a <code>format</code> query parameter and an optional root directory as the <code>connectionUri</code>:</p> 
   <p><code>xcc://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;[/root/dir/path]?format=[json|xml]</code></p> 
   <p>the mount will query either JSON or XML documents based on the value of the <code>format</code> parameter. For backwards-compatibility, if the <code>format</code> parameter is omitted then XML is assumed.</p> 
@@ -206,22 +252,12 @@ mongodb_2_6="mongodb://&lt;mongoURL&gt;"
      <li>Text content of elements containing mixed text and element children or attributes will be available at the <code>_text</code> key.</li> 
     </ul> </li> 
   </ul> 
-  <h4><a id="user-content-view-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#view-mounts" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-view-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#view-mounts" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>View mounts</h4> 
+    </svg></a>View mounts</h3> 
   <p>If the mount's key is "view" then the mount represents a "virtual" file, defined by a SQL² query. When the file's contents are read or referred to, the query is executed to generate the current result on-demand. A view can be used to create dynamic data that combines analysis and formatting of existing files without creating temporary results that need to be manually regenerated when sources are updated.</p> 
-  <p>For example, given the above MongoDB mount, an additional view could be defined in this way:</p> 
-  <div class="highlight highlight-source-json">
-   <pre>  <span class="pl-s"><span class="pl-pds">"</span>mountings<span class="pl-pds">"</span></span>: {
-    <span class="pl-ii">...,</span>
-    <span class="pl-s"><span class="pl-pds">"</span>/simpleZips<span class="pl-pds">"</span></span>: {
-      <span class="pl-s"><span class="pl-pds">"</span>view<span class="pl-pds">"</span></span>: {
-        <span class="pl-s"><span class="pl-pds">"</span>connectionUri<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>sql2:///?q=select%20_id%20as%20zip%2C%20city%2C%20state%20from%20%60%2Flocal%2Ftest%2Fzips%60%20where%20pop%20%3C%20%3Acutoff&amp;var.cutoff=1000<span class="pl-pds">"</span></span>
-      }
-    }
-  }</pre>
-  </div> 
+  <p>For example, given the above MongoDB mount, an additional view could be defined with a <code>connectionUri</code> of <code>sql2:///?q=select%20_id%20as%20zip%2C%20city%2C%20state%20from%20%60%2Flocal%2Ftest%2Fzips%60%20where%20pop%20%3C%20%3Acutoff&amp;var.cutoff=1000</code></p> 
   <p>A view can be mounted at any file path. If a view's path is nested inside the path of a database mount, it will appear alongside the other files in the database. A view will "shadow" any actual file that would otherwise be mapped to the same path. Any attempt to write data to a view will result in an error.</p> 
   <h4><a id="user-content-build-quasar-for-apache-spark" class="anchor" href="https://github.com/quasar-analytics/quasar#build-quasar-for-apache-spark" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -504,6 +540,11 @@ Retrieves metadata about the files, directories, and mounts which are children o
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>DELETE /server/port</h3> 
   <p>Removes any configured port, reverting to the default (20223) and restarting, as with <code>PUT</code>.</p> 
+  <h3><a id="user-content-get-invokefspath" class="anchor" href="https://github.com/quasar-analytics/quasar#get-invokefspath" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GET /invoke/fs/[path]</h3> 
+  <p>Where <code>path</code> is a file path. Invokes the function represented by the file path with the parameters supplied in the query string.</p> 
   <h2><a id="user-content-error-responses" class="anchor" href="https://github.com/quasar-analytics/quasar#error-responses" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
