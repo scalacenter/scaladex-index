@@ -1,0 +1,77 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-finatra-swagger" class="anchor" href="https://github.com/jakehschwartz/finatra-swagger#finatra-swagger" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>finatra-swagger</h1> 
+  <p><a href="https://gitter.im/finatra-swagger/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/0f356315eab08e3b187507f4ccae1caeb8cd4395/68747470733a2f2f6261646765732e6769747465722e696d2f66696e617472612d737761676765722f4c6f6262792e737667" alt="Join the chat at https://gitter.im/finatra-swagger/Lobby" data-canonical-src="https://badges.gitter.im/finatra-swagger/Lobby.svg" style="max-width:100%;"></a> <a href="https://travis-ci.org/jakehschwartz/finatra-swagger" target="_blank"><img src="https://camo.githubusercontent.com/ba64ba5b88673c15b2fb78774a3f98b9f14bb462/68747470733a2f2f7472617669732d63692e6f72672f6a616b6568736368776172747a2f66696e617472612d737761676765722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/jakehschwartz/finatra-swagger.svg?branch=master" style="max-width:100%;"></a> <a href="https://www.codacy.com/app/jakehschwartz54/finatra-swagger?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jakehschwartz/finatra-swagger&amp;utm_campaign=Badge_Grade" target="_blank"><img src="https://camo.githubusercontent.com/27665fef351491a0f1f7fe1f2795183528a81470/68747470733a2f2f6170692e636f646163792e636f6d2f70726f6a6563742f62616467652f47726164652f3032663561313530633834323437316362383431356236353130656430616236" alt="Codacy Badge" data-canonical-src="https://api.codacy.com/project/badge/Grade/02f5a150c842471cb8415b6510ed0ab6" style="max-width:100%;"></a></p> 
+  <p>Add <a href="http://swagger.io/swagger-ui/" target="_blank">Swagger UI</a> support to <a href="https://github.com/twitter/finatra" target="_blank">Finatra</a> web framework.</p> 
+  <p>Currently only supports Scala 2.12 with Finatra 2.9.</p> 
+  <p>For older versions, see the original repository by <a href="https://github.com/xiaodongw/swagger-finatra" target="_blank">xiaodongw</a></p> 
+  <h2><a id="user-content-getting-started" class="anchor" href="https://github.com/jakehschwartz/finatra-swagger#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting started</h2> 
+  <p>The major and minor version of the library matches the Finatra major and minor version:</p> 
+  <pre><code>libraryDependencies += "com.jakehschwartz" %% "finatra-swagger" % "2.9.0"
+</code></pre> 
+  <p>First, create a subclass of a SwaggerModule</p> 
+  <pre><code>object SampleSwaggerModule extends SwaggerModule {
+
+  @Singleton
+  @Provides
+  def swagger: Swagger = {
+    val swagger = new Swagger()
+
+    val info = new Info()
+      .description("The Student / Course management API, this is a sample for swagger document generation")
+      .version("1.0.1")
+      .title("Student / Course Management API")
+
+    swagger
+      .info(info)
+      .addSecurityDefinition("sampleBasic", {
+        val d = new BasicAuthDefinition()
+        d.setType("basic")
+        d
+      })
+
+    swagger
+  }
+}
+</code></pre> 
+  <p>Then add the module to the list of modules in the Server. Don't forget to include the DocsController in the router!</p> 
+  <pre><code>object SampleApp extends HttpServer {
+  override protected def modules = Seq(SampleSwaggerModule)
+
+  override def configureHttp(router: HttpRouter) {
+    router
+      .add[DocsController]
+      ...
+  } 
+}
+</code></pre> 
+  <p>Lastly, configure the endpoints using the <code>SwaggerRouteDSL</code></p> 
+  <pre><code>class SampleController@Inject()(s: Swagger) extends SwaggerController {
+  implicit protected val swagger = s
+
+  getWithDoc("/students/:id") { o =&gt;
+    o.summary("Read the detail information about the student")
+      .tag("Student")
+      .routeParam[String]("id", "the student id")
+      .responseWith[Student](200, "the student details")
+      .responseWith(404, "the student is not found")
+  } { request =&gt;
+    ...
+  }
+</code></pre> 
+  <p>To see the Swagger UI, use the <code>/docs</code> endpoint. This can be overridden using the Finatra <a href="https://twitter.github.io/finatra/user-guide/getting-started/flags.html" target="_blank">flag</a> "swagger.docs.endpoint"</p> 
+  <p>To see the model that is JSON document that is generated, use <code>/swagger.json</code>.</p> 
+  <h2><a id="user-content-features" class="anchor" href="https://github.com/jakehschwartz/finatra-swagger#features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features</h2> 
+  <p>TODO</p> 
+  <p>To see these in action, check out the <a href="https://github.com/jakehschwartz/finatra-swagger/blob/master/examples" target="_blank">examples</a> directory</p> 
+ </article>
+</div>

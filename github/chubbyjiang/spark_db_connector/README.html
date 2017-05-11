@@ -7,7 +7,7 @@
   <p>隐藏处理各种数据库的连接细节，使用Scala API在Spark中简易地处理数据库连接的读写操作。</p> 
   <p>相关测试环境信息:</p> 
   <ul> 
-   <li>Scala 2.11.8</li> 
+   <li>Scala 2.11.8/2.10.5</li> 
    <li>Spark 1.6.0</li> 
    <li>HBase 0.98.4</li> 
    <li>Jdbc Driver 5.1.35</li> 
@@ -18,6 +18,14 @@
    <li>MySQL</li> 
   </ul> 
   <p>添加Maven引用:</p> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;info.xiaohei.www&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;spark-database-connector_2.11&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;1.0.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <p>Scala 2.10版本使用:</p> 
   <div class="highlight highlight-text-xml">
    <pre>&lt;<span class="pl-ent">dependency</span>&gt;
     &lt;<span class="pl-ent">groupId</span>&gt;info.xiaohei.www&lt;/<span class="pl-ent">groupId</span>&gt;
@@ -123,6 +131,26 @@ dataList.toHBase(<span class="pl-s"><span class="pl-pds">"</span>mytable<span cl
       .save()</pre>
   </div> 
   <p>使用该方式时，集合中的每个数据都会被put一次，但是关闭了自动刷写，所以只有当缓冲区满了之后才会批量向HBase写入</p> 
+  <h4><a id="user-content-写入时为rowkey添加salt前缀" class="anchor" href="https://github.com/chubbyjiang/spark_db_connector#写入时为rowkey添加salt前缀" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>写入时为Rowkey添加salt前缀</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre>rdd.toHBase(<span class="pl-s"><span class="pl-pds">"</span>mytable<span class="pl-pds">"</span></span>)
+      .insert(<span class="pl-s"><span class="pl-pds">"</span>col1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>otherColumnFamily:col2<span class="pl-pds">"</span></span>)
+      .inColumnFamily(<span class="pl-s"><span class="pl-pds">"</span>defaultColumnFamily<span class="pl-pds">"</span></span>)
+      <span class="pl-c"><span class="pl-c">//</span>添加salt</span>
+      .withSalt(saltArray)
+      .save()</pre>
+  </div> 
+  <p>saltArray是一个字符串数组,简单的例如0-9的字符串表示,由使用者自己定义</p> 
+  <p>使用withSalt函数之后,在写入HBase时会为rowkey添加一个saltArray中的随机串,<strong>注意:为了更好的支持HBase部分键扫描(rowkey左对齐),数组中的所有元素长度都应该相等</strong></p> 
+  <p>取随机串的方式有两种:</p> 
+  <ul> 
+   <li>1.计算当前的rowkey的hashCode的16进制表示并对saltArray的长度取余数,得到saltArray中的一个随机串作为salt前缀添加到rowkey</li> 
+   <li>2.使用随机数生成器获得不超过saltArray长度的数字作为下标取数组中的值</li> 
+  </ul> 
+  <p>当前使用的是第一种方式</p> 
   <h3><a id="user-content-读取hbase数据" class="anchor" href="https://github.com/chubbyjiang/spark_db_connector#读取hbase数据" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -137,7 +165,10 @@ dataList.toHBase(<span class="pl-s"><span class="pl-pds">"</span>mytable<span cl
       .select(<span class="pl-s"><span class="pl-pds">"</span>col1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>col2<span class="pl-pds">"</span></span>)
       .inColumnFamily(<span class="pl-s"><span class="pl-pds">"</span>columnFamily<span class="pl-pds">"</span></span>)
       .withStartRow(<span class="pl-s"><span class="pl-pds">"</span>startRow<span class="pl-pds">"</span></span>)
-      .withEndRow(<span class="pl-s"><span class="pl-pds">"</span>endRow<span class="pl-pds">"</span></span>)</pre>
+      .withEndRow(<span class="pl-s"><span class="pl-pds">"</span>endRow<span class="pl-pds">"</span></span>)
+      <span class="pl-c"><span class="pl-c">//</span>当rowkey中有随机的salt前缀时,将salt数组传入即可自动解析</span>
+      <span class="pl-c"><span class="pl-c">//</span>得到的rowkey将会是原始的,不带salt前缀的</span>
+      .withSalt(saltArray)</pre>
   </div> 
   <p>(1)使用sc的fromHBase函数传入要读取数据的表名，该函数需要指定读取数据的类型信息<br> (2)select函数传入要读取的各个列名<br> (3)inColumnFamily函数传入这些列所在的列族名<br> (4)withStartRow和withEndRow将设置rowkey的扫描范围，可选操作 (5)之后就可以在hbaseRdd上执行Spark RDD的各种算子操作</p> 
   <p>上面的例子中，fromHBase的泛型类型为三元组，但是select中只读取了两列值，因此，该三元组中第一个元素将是rowkey的值，其他元素按照列的顺序依次类推</p> 

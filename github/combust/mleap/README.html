@@ -29,12 +29,13 @@
   <ol> 
    <li>Core execution engine implemented in Scala</li> 
    <li><a href="http://spark.apache.org/" target="_blank">Spark</a>, PySpark and Scikit-Learn support</li> 
-   <li>Export a model with Scikit-learn or Spark and execute it on the MLeap engine anywhere in the JVM</li> 
+   <li>Export a model with Scikit-learn or Spark and execute it using the MLeap Runtime (without dependencies on the Spark Context, or sklearn/numpy/pandas/etc)</li> 
    <li>Choose from 3 portable serialization formats (JSON, Protobuf, and Mixed)</li> 
    <li>Implement your own custom data types and transformers for use with MLeap data frames and transformer pipelines</li> 
-   <li>extensive test coverage with full parity tests for Spark and MLeap pipelines</li> 
-   <li>optional Spark transformer extension to extend Spark's default transformer offerings</li> 
+   <li>Extensive test coverage with full parity tests for Spark and MLeap pipelines</li> 
+   <li>Optional Spark transformer extension to extend Spark's default transformer offerings</li> 
   </ol> 
+  <p><a href="https://github.com/combust/mleap/blob/master/assets/images/single-runtime.jpg" target="_blank"><img src="https://github.com/combust/mleap/raw/master/assets/images/single-runtime.jpg" alt="Unified Runtime" style="max-width:100%;"></a></p> 
   <h2><a id="user-content-requirements" class="anchor" href="https://github.com/combust/mleap#requirements" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -155,16 +156,16 @@
 <span class="pl-c"><span class="pl-c">#</span> Load scikit-learn transformers and models</span>
 <span class="pl-k">from</span> sklearn.preprocessing <span class="pl-k">import</span> LabelEncoder, Binarizer
 
-<span class="pl-c"><span class="pl-c">#</span> Define the Label Encoder (minit method adds a unique `name` to the transformer as well as explicit input/output features)</span>
+<span class="pl-c"><span class="pl-c">#</span> Define the Label Encoder (mlinit method adds a unique `name` to the transformer as well as explicit input/output features)</span>
 label_encoder_tf <span class="pl-k">=</span> LabelEncoder()
-label_encoder_tf.minit(<span class="pl-v">input_features</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>col_a<span class="pl-pds">'</span></span>, <span class="pl-v">output_features</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>col_a_label_le<span class="pl-pds">'</span></span>)
+label_encoder_tf.mlinit(<span class="pl-v">input_features</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>col_a<span class="pl-pds">'</span></span>, <span class="pl-v">output_features</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>col_a_label_le<span class="pl-pds">'</span></span>)
 
 <span class="pl-c"><span class="pl-c">#</span> Convert output of Label Encoder to Data Frame instead of 1d-array</span>
 n_dim_array_to_df_tf <span class="pl-k">=</span> NDArrayToDataFrame(label_encoder_tf.output_features)
 
 <span class="pl-c"><span class="pl-c">#</span> Define our binarizer</span>
 binarizer <span class="pl-k">=</span> Binarizer(<span class="pl-c1">0.5</span>)
-binarizer.minit(<span class="pl-v">input_features</span><span class="pl-k">=</span>n_dim_array_to_df_tf.output_features, <span class="pl-v">output_features</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">{}</span>_binarized<span class="pl-pds">"</span></span>.format(n_dim_array_to_df_tf.output_features))
+binarizer.mlinit(<span class="pl-v">input_features</span><span class="pl-k">=</span>n_dim_array_to_df_tf.output_features, <span class="pl-v">output_features</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">{}</span>_binarized<span class="pl-pds">"</span></span>.format(n_dim_array_to_df_tf.output_features))
 
 data <span class="pl-k">=</span> pd.DataFrame([<span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>c<span class="pl-pds">'</span></span>], <span class="pl-v">columns</span><span class="pl-k">=</span>[<span class="pl-s"><span class="pl-pds">'</span>col_a<span class="pl-pds">'</span></span>])
 
@@ -176,7 +177,7 @@ steps <span class="pl-k">=</span> [
 ]
 
 pipeline <span class="pl-k">=</span> Pipeline(steps)
-pipeline.minit()
+pipeline.mlinit()
 
 <span class="pl-c"><span class="pl-c">#</span> Fit the pipeline</span>
 pipeline.fit(data)

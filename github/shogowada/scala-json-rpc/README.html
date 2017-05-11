@@ -28,13 +28,13 @@
     </svg></a>Shared between server and client</h3> 
   <p>Using scala-json-rpc, your server and client can communicate over statically typed interfaces like below:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">trait</span> <span class="pl-en">LoggerApi</span> {
+   <pre><span class="pl-k">trait</span> <span class="pl-en">LoggerAPI</span> {
   <span class="pl-k">def</span> <span class="pl-en">log</span>(<span class="pl-v">message</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span>
 }
 
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Foo</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>)
 
-<span class="pl-k">trait</span> <span class="pl-en">FooRepositoryApi</span> {
+<span class="pl-k">trait</span> <span class="pl-en">FooRepositoryAPI</span> {
   <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>]
   <span class="pl-k">def</span> <span class="pl-en">remove</span>(<span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>]
   <span class="pl-k">def</span> <span class="pl-en">getAll</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Set</span>[<span class="pl-en">Foo</span>]]
@@ -45,11 +45,11 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Server</h3> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">class</span> <span class="pl-en">LoggerApiImpl</span> <span class="pl-k">extends</span> <span class="pl-e">LoggerApi</span> {
+   <pre><span class="pl-k">class</span> <span class="pl-en">LoggerAPIImpl</span> <span class="pl-k">extends</span> <span class="pl-e">LoggerAPI</span> {
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">log</span>(<span class="pl-v">message</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> println(message)
 }
 
-<span class="pl-k">class</span> <span class="pl-en">FooRepositoryApiImpl</span> <span class="pl-k">extends</span> <span class="pl-e">FooRepositoryApi</span> {
+<span class="pl-k">class</span> <span class="pl-en">FooRepositoryAPIImpl</span> <span class="pl-k">extends</span> <span class="pl-e">FooRepositoryAPI</span> {
   <span class="pl-k">var</span> <span class="pl-en">foos</span><span class="pl-k">:</span> <span class="pl-en">Set</span>[<span class="pl-en">Foo</span>] <span class="pl-k">=</span> <span class="pl-en">Set</span>()
 
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">add</span>(<span class="pl-v">foo</span>: <span class="pl-en">Foo</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-k">synchronized</span> {
@@ -62,19 +62,19 @@
     <span class="pl-en">Future</span>() <span class="pl-c"><span class="pl-c">//</span> Acknowledge</span>
   }
 
-  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">getAll</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Set</span>[<span class="pl-en">Foo</span>]] <span class="pl-k">=</span> {
-    <span class="pl-en">Future</span>(foos)
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">getAll</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Set</span>[<span class="pl-en">Foo</span>]] <span class="pl-k">=</span> <span class="pl-en">Future</span> {
+    foos
   }
 }
 
 <span class="pl-k">val</span> <span class="pl-en">jsonSerializer</span> <span class="pl-k">=</span> <span class="pl-c"><span class="pl-c">//</span> ...</span>
-<span class="pl-k">val</span> <span class="pl-en">server</span> <span class="pl-k">=</span> jsonRpcServer(jsonSerializer)
-server.bindApi[<span class="pl-en">LoggerApi</span>](<span class="pl-k">new</span> <span class="pl-en">LoggerApiImpl)</span>
-server.bindApi[<span class="pl-en">FooRepositoryApi</span>](<span class="pl-k">new</span> <span class="pl-en">FooRepositoryApiImpl)</span>
+<span class="pl-k">val</span> <span class="pl-en">server</span> <span class="pl-k">=</span> <span class="pl-en">JSONRPCServer</span>(jsonSerializer)
+server.bindAPI[<span class="pl-en">LoggerAPI</span>](<span class="pl-k">new</span> <span class="pl-en">LoggerAPIImpl)</span>
+server.bindAPI[<span class="pl-en">FooRepositoryAPI</span>](<span class="pl-k">new</span> <span class="pl-en">FooRepositoryAPIImpl)</span>
 
-<span class="pl-k">def</span> <span class="pl-en">onRequestJsonReceived</span>(<span class="pl-v">requestJson</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
-  server.receive(requestJson).onComplete {
-    <span class="pl-k">case</span> <span class="pl-en">Success</span>(<span class="pl-en">Some</span>(<span class="pl-v">responseJson</span>: <span class="pl-k">String</span>)) <span class="pl-k">=&gt;</span> sendResponseJsonToClient(responseJson)
+<span class="pl-k">def</span> <span class="pl-en">onRequestJSONReceived</span>(<span class="pl-v">requestJSON</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+  server.receive(requestJSON).onComplete {
+    <span class="pl-k">case</span> <span class="pl-en">Success</span>(<span class="pl-en">Some</span>(<span class="pl-v">responseJSON</span>: <span class="pl-k">String</span>)) <span class="pl-k">=&gt;</span> sendResponseJSONToClient(responseJSON)
     <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
   }
 }</pre>
@@ -86,25 +86,25 @@ server.bindApi[<span class="pl-en">FooRepositoryApi</span>](<span class="pl-k">n
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">jsonSerializer</span> <span class="pl-k">=</span> <span class="pl-c"><span class="pl-c">//</span> ...</span>
 <span class="pl-k">val</span> <span class="pl-en">jsonSender</span> <span class="pl-k">=</span> <span class="pl-c"><span class="pl-c">//</span> ...</span>
-<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">JsonRpcClient</span>(jsonSerializer, jsonSender)
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">JSONRPCClient</span>(jsonSerializer, jsonSender)
 
-<span class="pl-k">val</span> <span class="pl-en">loggerApi</span> <span class="pl-k">=</span> client.createApi[<span class="pl-en">LoggerApi</span>]
-<span class="pl-k">val</span> <span class="pl-en">fooRepositoryApi</span> <span class="pl-k">=</span> client.createApi[<span class="pl-en">FooRepositoryApi</span>]
+<span class="pl-k">val</span> <span class="pl-en">loggerAPI</span> <span class="pl-k">=</span> client.createAPI[<span class="pl-en">LoggerAPI</span>]
+<span class="pl-k">val</span> <span class="pl-en">fooRepositoryAPI</span> <span class="pl-k">=</span> client.createAPI[<span class="pl-en">FooRepositoryAPI</span>]
 
-loggerApi.log(<span class="pl-s"><span class="pl-pds">"</span>Hello, World!<span class="pl-pds">"</span></span>)
+loggerAPI.log(<span class="pl-s"><span class="pl-pds">"</span>Hello, World!<span class="pl-pds">"</span></span>)
 
-fooRepositoryApi.add(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>))
-fooRepositoryApi.add(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>B<span class="pl-pds">"</span></span>))
+fooRepositoryAPI.add(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>))
+fooRepositoryAPI.add(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>B<span class="pl-pds">"</span></span>))
 
-fooRepositoryApi.remove(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>))
+fooRepositoryAPI.remove(<span class="pl-en">Foo</span>(<span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>))
 
-fooRepositoryApi.getAll().onComplete {
+fooRepositoryAPI.getAll().onComplete {
   <span class="pl-k">case</span> <span class="pl-en">Success</span>(<span class="pl-v">foos</span>: <span class="pl-en">Set</span>[<span class="pl-en">Foo</span>]) <span class="pl-k">=&gt;</span> println(s<span class="pl-s"><span class="pl-pds">"</span>Received all the foos: $foos<span class="pl-pds">"</span></span>)
   <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
 }
 
-<span class="pl-k">def</span> <span class="pl-en">onResponseJsonReceived</span>(<span class="pl-v">responseJson</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
-  client.receive(responseJson)
+<span class="pl-k">def</span> <span class="pl-en">onResponseJSONReceived</span>(<span class="pl-v">responseJSON</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+  client.receive(responseJSON)
 }</pre>
   </div> 
   <h2><a id="user-content-dependency" class="anchor" href="https://github.com/shogowada/scala-json-rpc#dependency" aria-hidden="true" target="_blank">
@@ -123,15 +123,15 @@ fooRepositoryApi.getAll().onComplete {
    <tbody> 
     <tr> 
      <td>JVM</td> 
-     <td><code>"io.github.shogowada" %% "scala-json-rpc" % "0.6.0"</code></td> 
+     <td><code>"io.github.shogowada" %% "scala-json-rpc" % "0.9.0"</code></td> 
      <td>2.12</td> 
      <td></td> 
     </tr> 
     <tr> 
      <td>JS</td> 
-     <td><code>"io.github.shogowada" %%% "scala-json-rpc" % "0.6.0"</code></td> 
+     <td><code>"io.github.shogowada" %%% "scala-json-rpc" % "0.9.0"</code></td> 
      <td>2.12</td> 
-     <td>0.6.14+</td> 
+     <td>0.6.15+</td> 
     </tr>
    </tbody>
   </table> 

@@ -13,7 +13,7 @@
     </svg></a>Getting Started</h2> 
   <p>To get started, you can add <code>play-ahc-ws-standalone</code> as a dependency in SBT:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.typesafe.play<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-ahc-ws-standalone<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M5<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.typesafe.play<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-ahc-ws-standalone<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M7<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>This adds the standalone version of Play WS, backed by AsyncHttpClient. This library contains both the Scala and Java APIs, under <code>play.api.libs.ws</code> and <code>play.libs.ws</code>.</p> 
   <h2><a id="user-content-shading" class="anchor" href="https://github.com/playframework/play-ws#shading" aria-hidden="true" target="_blank">
@@ -132,6 +132,34 @@
     }
 }</pre>
   </div> 
+  <h2><a id="user-content-caching" class="anchor" href="https://github.com/playframework/play-ws#caching" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caching</h2> 
+  <p>Play WS implements <a href="https://tools.ietf.org/html/rfc7234" target="_blank">HTTP Caching</a> through CachingAsyncHttpClient, AhcHTTPCache and <a href="https://github.com/playframework/cachecontrol" target="_blank">CacheControl</a>, a minimal HTTP cache management library in Scala.</p> 
+  <p>To create a standalone AHC client that uses caching, pass in an instance of AhcHttpCache with a cache adapter to the underlying implementation. For example, to use Caffeine as the underlying cache, you could use the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">CaffeineHttpCache</span> <span class="pl-k">extends</span> <span class="pl-e">Cache</span> {
+     <span class="pl-k">val</span> <span class="pl-en">underlying</span> <span class="pl-k">=</span> <span class="pl-en">Caffeine</span>.newBuilder()
+       .ticker(<span class="pl-en">Ticker</span>.systemTicker())
+       .expireAfterWrite(<span class="pl-c1">365</span>, <span class="pl-en">TimeUnit</span>.<span class="pl-en">DAYS</span>)
+       .build[<span class="pl-en">EffectiveURIKey</span>, <span class="pl-en">ResponseEntry</span>]()
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">remove</span>(<span class="pl-v">key</span>: <span class="pl-en">EffectiveURIKey</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> underlying.invalidate(key)
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">put</span>(<span class="pl-v">key</span>: <span class="pl-en">EffectiveURIKey</span>, <span class="pl-v">entry</span>: <span class="pl-en">ResponseEntry</span>)<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> underlying.put(key, entry)
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">get</span>(<span class="pl-v">key</span>: <span class="pl-en">EffectiveURIKey</span>)<span class="pl-k">:</span> <span class="pl-en">ResponseEntry</span> <span class="pl-k">=</span> underlying.getIfPresent(key)
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">close</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> underlying.cleanUp()
+}
+<span class="pl-k">val</span> <span class="pl-en">cache</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CaffeineHttpCache</span>()
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">StandaloneAhcWSClient</span>(httpCache <span class="pl-k">=</span> <span class="pl-en">AhcHttpCache</span>(cache))   </pre>
+  </div> 
+  <p>There are a number of guides that help with putting together Cache-Control headers:</p> 
+  <ul> 
+   <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank">Mozilla's Guide to HTTP caching</a></li> 
+   <li><a href="https://www.mnot.net/cache_docs/" target="_blank">Mark Nottingham's Guide to Caching</a></li> 
+   <li><a href="https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching" target="_blank">HTTP Caching</a></li> 
+   <li><a href="http://odino.org/rest-better-http-cache/" target="_blank">REST Easy: HTTP Cache</a></li> 
+  </ul> 
   <h2><a id="user-content-releasing" class="anchor" href="https://github.com/playframework/play-ws#releasing" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -146,7 +174,7 @@ git clone git@github.com:playframework/play-ws.git</pre>
   <p>and from there you can release:</p> 
   <div class="highlight highlight-source-shell">
    <pre><span class="pl-c1">cd</span> play-ws
-sbt release</pre>
+./release</pre>
   </div> 
   <p>The script will walk you through integration tests and publishing.</p> 
   <h2><a id="user-content-license" class="anchor" href="https://github.com/playframework/play-ws#license" aria-hidden="true" target="_blank">

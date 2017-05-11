@@ -8,7 +8,7 @@
   <p>Tiny DOM binding library for Scala.js</p> 
   <p>Main Objectives: friendly syntax for frontend developers (XHTML) and fast compilation speeds (no macros).</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-html<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.1<span class="pl-pds">"</span></span></pre>
+   <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-html<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.2<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>The core value propagation library is also available separately for both platforms as <code>monadic-rx</code>. Integration with <a href="https://github.com/typelevel/cats" target="_blank">cats</a> is optionally available as <code>monadic-rx-cats</code>.</p> 
   <p>This library is inspired by <a href="https://github.com/ThoughtWorksInc/Binding.scala" target="_blank">Binding.scala</a> and <a href="https://github.com/lihaoyi/scala.rx" target="_blank">Scala.rx</a> which both relies on macros to obtain type-safety and hide monadic context from users.</p> 
@@ -47,7 +47,7 @@
 <span class="pl-k">val</span> <span class="pl-en">div</span> <span class="pl-k">=</span> dom.document.createElement(<span class="pl-s"><span class="pl-pds">"</span>div<span class="pl-pds">"</span></span>)
 mount(div, component)</pre>
   </div> 
-  <p>For more examples, see our <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/tests/src/test/scala/mhtml/HtmlTests.scala" target="_blank">test suite</a>, <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/example/src/main/scala/mhtml" target="_blank">examples</a> (<a href="https://olivierblanvillain.github.io/monadic-html/examples/" target="_blank">live here</a>) and the <a href="https://github.com/olafurpg/mhtml-todo/" target="_blank">TodoMVC implementation</a>.</p> 
+  <p>For more examples, see our <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-html/src/test/scala/mhtml/HtmlTests.scala" target="_blank">test suite</a>, <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/examples/src/main/scala/mhtml/examples" target="_blank">examples</a> (<a href="https://olivierblanvillain.github.io/monadic-html/examples/" target="_blank">live here</a>) and the <a href="https://github.com/olafurpg/mhtml-todo/" target="_blank">TodoMVC implementation</a>.</p> 
   <h2><a id="user-content-design" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#design" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -129,7 +129,7 @@ mount(div, component)</pre>
     </svg></a>FRP-ish APIs</h2> 
   <p>This section presents the <code>Rx</code> API in its entirety. Let's start with the referentially transparent methods:</p> 
   <ul> 
-   <li> <p><code>def map[B](f: A =&gt; B): Rx[B]</code></p> <p>Apply a function to ecah elements of this <code>Rx</code>.</p> 
+   <li> <p><code>def map[B](f: A =&gt; B): Rx[B]</code></p> <p>Apply a function to each elements of this <code>Rx</code>.</p> 
     <div class="highlight highlight-source-scala">
      <pre><span class="pl-k">val</span> <span class="pl-en">numbers</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-k">Int</span>]
 <span class="pl-k">val</span> <span class="pl-en">doubles</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> numbers.map(<span class="pl-c1">2</span>.<span class="pl-k">*</span>)
@@ -188,17 +188,25 @@ mount(div, component)</pre>
 <span class="pl-c"><span class="pl-c">//</span> sp =&gt;   1   3   3   4 ...</span></pre>
     </div> </li> 
   </ul> 
-  <p>In order to observe content of <code>Rx</code> value, we expose two methods in an <code>impure</code> object:</p> 
+  <p>In order to observe content of <code>Rx</code> value we expose a <code>.impure.foreach</code> method:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">trait</span> <span class="pl-en">Rx</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] {
   ...
-  <span class="pl-k">object</span> <span class="pl-en">impure</span> {
-    <span class="pl-k">def</span> <span class="pl-en">foreach</span>(<span class="pl-v">effect</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">Cancelable</span>
-    <span class="pl-k">def</span> <span class="pl-en">value</span><span class="pl-k">:</span> <span class="pl-en">A</span>
-  }
+  <span class="pl-k">val</span> <span class="pl-en">impure</span><span class="pl-k">:</span> <span class="pl-en">RxImpureOps</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-en">RxImpureOps</span>[<span class="pl-en">A</span>](<span class="pl-c1">this</span>)
+}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">RxImpureOps</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-c1">self</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">A</span>]) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span> {
+<span class="pl-c">  <span class="pl-c">/**</span></span>
+<span class="pl-c">   * Applies the side effecting function `f` to each element of this `Rx`.</span>
+<span class="pl-c">   * Returns an `Cancelable` which can be used to cancel the subscription.</span>
+<span class="pl-c">   * Omitting to canceling subscription can lead to memory leaks.</span>
+<span class="pl-c">   *</span>
+<span class="pl-c">   * If you use this in your code, you are probably doing in wrong.</span>
+<span class="pl-c">   <span class="pl-c">*/</span></span>
+  <span class="pl-k">def</span> <span class="pl-en">foreach</span>(<span class="pl-v">effect</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Unit</span>)<span class="pl-k">:</span> <span class="pl-en">Cancelable</span> <span class="pl-k">=</span> <span class="pl-en">Rx</span>.run(<span class="pl-c1">self</span>)(effect)
 }</pre>
   </div> 
-  <p>These methods can be usefull for testing and debuging, but should ideally be avoided in application code. The <code>foreach</code> is particularly dangerous since omitting to cancel subscriptions opens the door to memory leaks. But I have good news, you don't have to use these! You should be able to do everything you need using the functional, referentially transparent APIs.</p> 
+  <p>This method can be useful for testing and debugging, but should ideally be avoided in application code. Omitting to cancel subscriptions opens the door to memory leaks. But I have good news, you don't have to use these! You should be able to do everything you need using the functional, referentially transparent APIs.</p> 
   <h2><a id="user-content-faq" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#faq" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -207,7 +215,7 @@ mount(div, component)</pre>
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Does the compiler catch HTML typos?</h4> 
-  <p>No, only invalid XML literals will be rejected at compile time. However, we do provide <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/src/main/scala/mhtml/settings.scala" target="_blank">configurable settings</a> to emit runtime warnings about unknown elements, attributes, entity references and event handlers. For example, the following piece of XML compiles fine:</p> 
+  <p>No, only invalid XML literals will be rejected at compile time. However, we do provide <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-html/src/main/scala/mhtml/settings.scala" target="_blank">configurable settings</a> to emit runtime warnings about unknown elements, attributes, entity references and event handlers. For example, the following piece of XML compiles fine:</p> 
   <div class="highlight highlight-source-scala">
    <pre>&lt;<span class="pl-ent">captain</span> <span class="pl-e">yolo</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> <span class="pl-e">onClick</span>={ () <span class="pl-k">=&gt;</span> println(<span class="pl-s"><span class="pl-pds">"</span>Oh yeah!<span class="pl-pds">"</span></span>) }&gt;&lt;/<span class="pl-ent">captain</span>&gt;</pre>
   </div> 
@@ -216,7 +224,7 @@ mount(div, component)</pre>
 [mhtml] Warning: Unknown attribute yolo. Did you mean cols instead?
 [mhtml] Warning: Unknown element captain. Did you mean caption instead?
 </code></pre> 
-  <p><code>MountSettings.default</code> emit warnings only when compiled to with <code>fastOptJS</code>, and becomes silent (and faster) whe compiled with <code>fullOptJS</code>.</p> 
+  <p><code>MountSettings.default</code> emit warnings only when compiled to with <code>fastOptJS</code>, and becomes silent (and faster) when compiled with <code>fullOptJS</code>.</p> 
   <h4><a id="user-content-can-i-insert-any-values-into-xml-literals" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#can-i-insert-any-values-into-xml-literals" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -297,18 +305,86 @@ dom.document.getElementsByTagName(<span class="pl-s"><span class="pl-pds">"</spa
   </div> 
   <p><a href="http://typelevel.org/cats/typeclasses/traverse.html" target="_blank">Long answer:</a></p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-rx-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.1<span class="pl-pds">"</span></span></pre>
+   <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-rx-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.2<span class="pl-pds">"</span></span></pre>
   </div> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">cats.implicits.</span><span class="pl-v">_, </span><span class="pl-v">mhtml.implicits.cats.</span><span class="pl-v">_</span></pre>
   </div> 
+  <h4><a id="user-content-whats-the-difference-between-impureforeacheffect-and-mapeffect" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#whats-the-difference-between-impureforeacheffect-and-mapeffect" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What's the difference between impure.foreach(effect) and map(effect)?</h4> 
+  <p><code>.impure.foreach</code> should really be used with care (read: don't use it). It returns a <code>Cancelable</code> that you can freely ignore to leak memory. Contrarily, <code>map(effect)</code> is always memory safe and side effect free! Calling <code>map</code> actually just piles up a <code>Map</code> node on top of a <code>Rx</code>. Side effects will only happen "at the end of the world", with the <code>mount</code> method (it uses <code>.impure.foreach</code> internally). You can observe things piling up by printing a <code>Rx</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">rx1</span> <span class="pl-k">=</span> <span class="pl-en">Var</span>(<span class="pl-c1">1</span>)
+<span class="pl-k">val</span> <span class="pl-en">rx2</span> <span class="pl-k">=</span> <span class="pl-en">Var</span>(<span class="pl-c1">2</span>)
+<span class="pl-k">val</span> <span class="pl-en">rx3</span> <span class="pl-k">=</span>
+  rx1
+    .map(identity)
+    .merge(
+      rx2
+        .map(identity)
+        .dropIf(_ <span class="pl-k">=&gt;</span> <span class="pl-c1">false</span>)(<span class="pl-c1">0</span>)
+    )
+println(rx3)
+<span class="pl-c"><span class="pl-c">//</span> Merge(</span>
+<span class="pl-c"><span class="pl-c">//</span>   Map(Var(1), &lt;function1&gt;),</span>
+<span class="pl-c"><span class="pl-c">//</span>   Collect(</span>
+<span class="pl-c"><span class="pl-c">//</span>     Map(Var(2), &lt;function1&gt;), &lt;function1&gt;, 0)</span>
+<span class="pl-c"><span class="pl-c">//</span> )</span></pre>
+  </div> 
+  <p>So nothing is happening here really, the code above is just a description of an execution graph. It's only when calling <code>.impure.foreach</code> that everything comes to life. In the implementation of <code>foreach</code> everything has been carefully assembled (and tested) to avoid any memory leak.</p> 
+  <h4><a id="user-content-how-do-you-implement-the-redux-flux-outwatchstore-pattern" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#how-do-you-implement-the-redux-flux-outwatchstore-pattern" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How do you implement the {redux, flux, outwatch}.Store pattern?</h4> 
+  <p>The "Store" pattern can be implemented with <code>foldp</code>, you can see this in action in the mario example. Here is a sketch of how things can be formulated using Flux vocabulary:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> Data type for the entire application state:</span>
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">State</span>
+...
+
+<span class="pl-c"><span class="pl-c">//</span> Data type for events coming from the outside world:</span>
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Action</span>
+...
+
+<span class="pl-c"><span class="pl-c">//</span> A single State =&gt; Html function for the entire page:</span>
+<span class="pl-k">def</span> <span class="pl-en">view</span>(<span class="pl-v">state</span>: <span class="pl-en">Rx</span>[<span class="pl-en">State</span>])<span class="pl-k">:</span> xml.<span class="pl-en">Node</span> <span class="pl-k">=</span>
+  ...
+
+<span class="pl-c"><span class="pl-c">//</span> Probably implemented with Var, but we can look at them as Rx. Note that the</span>
+<span class="pl-c"><span class="pl-c">//</span> type can easily me made more precise by using &lt;: Action instead:</span>
+<span class="pl-k">val</span> <span class="pl-en">action1_clicks</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">Action</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">action2_inputs</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">Action</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">action3_AJAX</span><span class="pl-k">:</span>   <span class="pl-en">Rx</span>[<span class="pl-en">Action</span>] <span class="pl-k">=</span> ...
+<span class="pl-k">val</span> <span class="pl-en">action4_timer</span><span class="pl-k">:</span>  <span class="pl-en">Rx</span>[<span class="pl-en">TimeAction</span>] <span class="pl-k">=</span> ...
+
+<span class="pl-c"><span class="pl-c">//</span> Let's merges all actions together:</span>
+<span class="pl-k">val</span> <span class="pl-en">allActions</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">Action</span>] <span class="pl-k">=</span>
+  action1_clicks merge
+  action2_inputs merge
+  action3_AJAX   merge
+  action4_timer
+
+<span class="pl-c"><span class="pl-c">//</span> Compute the new state given an action and a previous state:</span>
+<span class="pl-c"><span class="pl-c">//</span> (I'm really not convinced by the name)</span>
+<span class="pl-k">def</span> <span class="pl-en">reducer</span>(<span class="pl-v">previousState</span>: <span class="pl-en">State</span>, <span class="pl-v">action</span>: <span class="pl-en">Action</span>)<span class="pl-k">:</span> <span class="pl-en">State</span> <span class="pl-k">=</span> ...
+
+<span class="pl-c"><span class="pl-c">//</span> The application State, probably initialize that from local store / DB</span>
+<span class="pl-c"><span class="pl-c">//</span> updates could also be save on every update.</span>
+<span class="pl-k">val</span> <span class="pl-en">store</span><span class="pl-k">:</span> <span class="pl-en">Rx</span>[<span class="pl-en">State</span>] <span class="pl-k">=</span> allActions.foldp(<span class="pl-en">State</span>.empty)(reducer)
+
+<span class="pl-c"><span class="pl-c">//</span> Tie everything together:</span>
+mount(root, view(store))</pre>
+  </div> 
+  <p>If you're really into <em>globally mutable state</em>™, you can also give up on purity and type safety by making allActions a <code>Var[Action]</code> and calling <code>:=</code> all around your code.</p> 
   <h2><a id="user-content-further-reading" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#further-reading" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Further reading</h2> 
   <p><a href="http://staltz.com/unidirectional-user-interface-architectures.html" target="_blank"><em>Unidirectional User Interface Architectures</em></a> by André Staltz</p> 
   <p>This blog post presents several existing solution to handle mutable state in user interfaces. It explains the core ideas behind Flux, Redux, Elm &amp; others, and presents a new approach, <em>nested dialogues</em>, which is similar to what you would write in <code>monadic-html</code>.</p> 
-  <p><a href="https://www.youtube.com/watch?v=Agu6jipKfYw" target="_blank"><em>Controlling Time and Space: understanding the many formulations of FRP</em></a> by Evan Czaplicki (author of <a href="https://github.com/olivierblanvillain/monadic-html/blob/master/elm-lang.org" target="_blank">Elm</a>)</p> 
+  <p><a href="https://www.youtube.com/watch?v=Agu6jipKfYw" target="_blank"><em>Controlling Time and Space: understanding the many formulations of FRP</em></a> by Evan Czaplicki (author of <a href="http://elm-lang.org" target="_blank">Elm</a>)</p> 
   <p>This presentation gives an overview of various formulations of FRP. The talked is focused on how different systems deal with the <code>flatMap</code> operator. When combined with a <code>fold</code> operator, <code>flatMap</code> is problematic: it either leaks memory or break referential transparency. Elm solution is to simply avoid the <code>flatMap</code> operator altogether (programs can exclusively be written in applicative style).</p> 
   <p><a href="https://blogs.janestreet.com/breaking-down-frp/" target="_blank"><em>Breaking down FRP</em></a> by Yaron Minsky</p> 
   <p>Blog post discussing various formulations of reactive programs. The author makes a distinction between Applicative FRP, Monadic FRP, impure Monadic FRP and Self-Adjusting Computations. The takeaway is that history-sensitivity and dynamism are competing goals: each implementations make a different trade offs.</p> 

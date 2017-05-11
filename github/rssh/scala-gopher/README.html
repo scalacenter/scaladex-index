@@ -10,8 +10,8 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Dependences:</h3> 
   <ul> 
-   <li>scala 2.12.1 or 2.11.8</li> 
-   <li>akka 2.4.14 +</li> 
+   <li>scala 2.12.x or 2.11.x</li> 
+   <li>akka 2.5.0 +</li> 
    <li>scala-async 0.9.6</li> 
   </ul> 
   <h4><a id="user-content-download" class="anchor" href="https://github.com/rssh/scala-gopher#download" aria-hidden="true" target="_blank">
@@ -151,10 +151,10 @@
    <li><code>channel.awrite(x)</code> will write <code>x</code> and return to us <code>Future[Unit]</code> which will be executed after x will send</li> 
    <li><code>channel.aread</code> will return future to the value, which will be read.</li> 
   </ul> 
-  <p>Also, channels can be closed. After this attempt to write will cause throwing 'ClosedChannelException.' Reading will be still possible up to 'last written value', after this attempt to read will cause the same exception.</p> 
-  <p>Note, closing channels is not mandatory; unreachable channels are garbage-collected regardless of they are closed or not.</p> 
+  <p>Also, channels can be closed. After this attempt to write will cause throwing 'ClosedChannelException.' Reading will be still possible up to 'last written value', after this attempt to read will cause the same exception. Also, each channel provides <code>done</code> input for firing close events.</p> 
+  <p>Note, closing channels are not mandatory; unreachable channels are garbage-collected regardless of they are closed or not.</p> 
   <p>Channels can be buffered and unbuffered. In a unbuffered channel, write return control to the caller after another side actually will start processing; buffered channel force provider to wait only if internal channel buffer is full.</p> 
-  <p>Also, you can use only <code>Input</code> or <code>Output</code> interfaces, where appropriative read/write operations are defined. For <code>Input</code>, exists usual collection functions, like <code>map</code>, <code>zip</code>, <code>takeN</code>, <code>fold</code> ... etc. Scala Iterable can be represented as <code>channels.Input</code> via method <code>gopherApi.iterableInput</code>. Also, we can use Scala futures as channels, which produce one value and then closes. For obtaining such input use <code>gopherApi.futureInput</code>.</p> 
+  <p>Also, you can use only <code>Input</code> or <code>Output</code> interfaces, where an appropriative read/write operations are defined. For <code>Input</code>, exists usual collection functions, like <code>map</code>, <code>zip</code>, <code>takeN</code>, <code>fold</code> ... etc. Scala Iterable can be represented as <code>channels.Input</code> via method <code>gopherApi.iterableInput</code>. Also, we can use Scala futures as channels, which produce one value and then closes. For obtaining such input use <code>gopherApi.futureInput</code>.</p> 
   <p><code>|</code> (i.e. or) operator used for merged inputs, i.e. <code>(x|y).read</code> will read a value from channel x or y when one will be available.</p> 
   <p>For each input and output you can create a facility with tracked timeout, i.e. if <code>in</code> is input, then</p> 
   <div class="highlight highlight-source-scala">
@@ -190,14 +190,14 @@
    <li><code>v:Type if (v==write(ch,expr))</code> (for writing <code>expr</code> into channel).</li> 
    <li><code>_</code> - for 'idle' action.</li> 
   </ul> 
-  <p>For endless loop inside <code>go</code> we can use the shortcut with syntax of partial function:</p> 
+  <p>For endless loop inside <code>go</code> we can use the shortcut with the syntax of partial function:</p> 
   <div class="highlight highlight-source-scala">
    <pre>     gopherApi.select.forever{ 
          <span class="pl-k">case</span> i<span class="pl-k">:</span>channelA.read <span class="pl-k">=&gt;</span> ... <span class="pl-k">do</span><span class="pl-k">-</span>something<span class="pl-k">-</span>with<span class="pl-k">-</span>i
          <span class="pl-k">case</span> ch<span class="pl-k">:</span>channelB.read ... <span class="pl-k">do</span><span class="pl-k">-</span>something<span class="pl-k">-</span>with<span class="pl-k">-</span>b
      }</pre>
   </div> 
-  <p>Inside case actions, we can use blocking read/writes and await operations. Call of doExit in the implicit instance of <code>FlowTermination[T]</code> (for a forever loop this is <code>FlowTermination[Unit]</code>) can be used for exiting from the loop. <code>select.exit</code> and <code>select.shutdown</code> macroses can be used as shortcuts.</p> 
+  <p>Inside case actions, we can use blocking read/writes and await operations. Call of doExit in the implicit instance of <code>FlowTermination[T]</code> (for a forever loop this is <code>FlowTermination[Unit]</code>) can be used for exiting from the loop; <code>select.exit</code> and <code>select.shutdown</code> macroses are shortcuts for this.</p> 
   <p>Example:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">channel</span> <span class="pl-k">=</span> gopherApi.makeChannel[<span class="pl-k">Int</span>](<span class="pl-c1">100</span>)
@@ -228,7 +228,7 @@
    }
 }</pre>
   </div> 
-  <p>More than one variables in state can be modelled with partial function case syntax:</p> 
+  <p>More than one variables in state can be modeled with partial function case syntax:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">fib</span> <span class="pl-k">=</span> select.afold((<span class="pl-c1">0</span>,<span class="pl-c1">1</span>)) { <span class="pl-k">case</span> ((x,y), s) <span class="pl-k">=&gt;</span>
     s <span class="pl-k">match</span> {
@@ -237,7 +237,7 @@
     }
 }</pre>
   </div> 
-  <p>Also, we can use 'map over select' to represent results of handling of different events as input side of channel:</p> 
+  <p>Also, we can use 'map over select' to represent results of handling of different events as input side of a channel:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">multiplexed</span> <span class="pl-k">=</span> select amap {
    <span class="pl-k">case</span> x<span class="pl-k">:</span>ch1.read <span class="pl-k">=&gt;</span> (s1,x)
@@ -283,13 +283,26 @@
                       <span class="pl-k">case</span> y<span class="pl-k">:</span>ch2.read <span class="pl-k">=&gt;</span> (s2,y)
                     }</pre>
   </div> 
+  <h2><a id="user-content-done-signals" class="anchor" href="https://github.com/rssh/scala-gopher#done-signals" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Done signals.</h2> 
+  <p>Sometimes it is useful to receive a message when some <code>Input</code> becomes closed. Such inputs are named 'CloseableInputs' and provides a way to receive close notification in selector using <code>done</code> pseudo-type.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> select.foreach{
+   <span class="pl-k">case</span> x<span class="pl-k">:</span>ch.read <span class="pl-k">=&gt;</span> <span class="pl-en">Console</span>.println(s<span class="pl-s"><span class="pl-pds">"</span>received: ${x}<span class="pl-pds">"</span></span>)
+   <span class="pl-k">case</span> _<span class="pl-k">:</span>ch.done <span class="pl-k">=&gt;</span> <span class="pl-en">Console</span>.println(s<span class="pl-s"><span class="pl-pds">"</span>done<span class="pl-pds">"</span></span>)
+                     select.exit(())
+ }</pre>
+  </div> 
+  <p>Note, that you must exit from current flow in <code>done</code> handler, otherwise <code>done</code> signals will be intensively generated in a loop.</p> 
   <h2><a id="user-content-effectedinputoutputchannel" class="anchor" href="https://github.com/rssh/scala-gopher#effectedinputoutputchannel" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Effected{Input,Output,Channel}</h2> 
   <p>One useful programming pattern, often used in CSP-style programming: have a channel from wich we read (or to where we write) as a part of a state. In Go language, this is usually modelled as a mutable variable, changed inside the same select statement, where one is read/written.</p> 
-  <p>In scala-gopher, we have the ability to use a technique of 'EffectedChannel', which can be seen as an entity, which holds channel, can be used in read/write and can be changed only via effect (operation, which accepts previous state and return next).</p> 
-  <p>Let's look on example:</p> 
+  <p>In scala-gopher, we have the ability to use a technique of 'EffectedChannel', which can be seen as an entity, which holds channel, can be used in read/write and can be changed only via effect (operation, which accepts the previous state and returns the next).</p> 
+  <p>Let's look at the example:</p> 
   <div class="highlight highlight-source-scala">
    <pre> <span class="pl-k">def</span> <span class="pl-en">generate</span>(n<span class="pl-k">:</span><span class="pl-k">Int</span>, quit<span class="pl-k">:</span><span class="pl-en">Promise</span>[<span class="pl-k">Boolean</span>])<span class="pl-k">:</span><span class="pl-en">Channel</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span>
   {
@@ -314,7 +327,7 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Transputers</h2> 
-  <p>The logic of data transformation between channels can be encapsulated in special <code>Transputer</code> concept. (Word 'transputer' was chosen as a reminder about INMOS processor, for which one of the first CSP languages, Occam, was developed). You can view on transputer as representation of restartable process that consists from:</p> 
+  <p>The logic of data transformation between channels can be encapsulated in special <code>Transputer</code> concept. (Word 'transputer' was chosen as a reminder about INMOS processor, for which one of the first CSP languages, Occam, was developed). You can view on transputer as a representation of a restartable process that consists from:</p> 
   <ul> 
    <li>Set of named input and output ports.</li> 
    <li>Logic for propagating information from the input to the output ports.</li> 
@@ -322,11 +335,11 @@
    <li>Logic of error recovering.</li> 
   </ul> 
   <p>I.e. we saw that Transputer is similar to Actor with the following difference: When Actor provides reaction to incoming messages from the mailbox and sending signals to other actors, Transputers provide processing of incoming messages from input ports and sending outcoming messages to output ports. When operations inside Actor must not be blocked, operations inside Transputer can wait.</p> 
-  <p>Transformers are build hierarchically with help of 3 operations:</p> 
+  <p>Transformers are build hierarchically with the help of 3 operations:</p> 
   <ul> 
    <li>select (logic is execution of a select statement )</li> 
    <li>parallel combination (logic is parallel execution of parts)</li> 
-   <li>replication (logic is parallel execution of a set of identical transformers.)</li> 
+   <li>replication (logic is a parallel execution of a set of identical transformers.)</li> 
   </ul> 
   <h3><a id="user-content-select-transputer" class="anchor" href="https://github.com/rssh/scala-gopher#select-transputer" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -372,7 +385,7 @@ bingo.out.connect(out)
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Error recovery</h4> 
-  <p>On an exception from a loop statement, transputer will be restarted with ports, connected to the same channels. Such behaviour is default; we can configure one by setting recovery policy:</p> 
+  <p>On an exception from a loop statement, transputer will be restarted with ports, connected to the same channels. Such behavior is the default; we can configure one by setting recovery policy:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">t</span> <span class="pl-k">=</span> makeTransputer[<span class="pl-en">MyType</span>].recover {
            <span class="pl-k">case</span> <span class="pl-v">ex</span>: <span class="pl-en">MyException</span> <span class="pl-k">=&gt;</span> <span class="pl-en">SupervisorStrategy</span>.<span class="pl-en">Escalate</span>
@@ -398,18 +411,18 @@ par.start()</pre>
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Replication</h3> 
-  <p>Replicated transputer is a set of identical transputers t_{i}, running in parallel. It cam be created with <code>gopherApi.replicate</code> call. Next code fragment:</p> 
+  <p>Replicated transputer is a set of identical transputers t_{i}, running in parallel. It can be created with <code>gopherApi.replicate</code> call. Next code fragment:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">r</span> <span class="pl-k">=</span> gopherApi.replicate[<span class="pl-en">MyTransputer</span>](<span class="pl-c1">10</span>)</pre>
   </div> 
-  <p>will produce ten copies of MyTransputer (<code>r</code> will be a container transputer for them). Ports of all replicated internal transputers will be shared with ports of the container. (I.e. if we will write something to input port then it will be read by one of the replicas; if one of the replicas will write something to out port, this will be visible in out port of container.)</p> 
+  <p>will produce ten copies of MyTransputer (<code>r</code> will be a container transputer for them). Ports of all replicated internal transputers will be shared with ports of the container. (I.e. if we will write something to input port then it will be read by one of the replicas; if one of the replicas will write something to out port, this will be visible in out port of the container.)</p> 
   <p>Mapping from a container to replica port can be changed from sharing to other approaches, like duplicating or distributing, via applying port transformations.</p> 
   <p>For example, next code fragment:</p> 
   <div class="highlight highlight-source-scala">
    <pre>r.inA.duplicate()
  .inB.distribute( _.hashCode )</pre>
   </div> 
-  <p>will set port <code>inA</code> be duplicated in replicas (i.e. message, send to container port <code>inA</code> will be received by each instance) and messages from <code>inB</code> will be distributed by hashcode: i.e. messages with the same hashcode will be directed to the same replica. Such behaviour is useful when we keep in replicated transputer some state information about messages.</p> 
+  <p>will set port <code>inA</code> be duplicated in replicas (i.e. message, send to container port <code>inA</code> will be received by each instance) and messages from <code>inB</code> will be distributed by hashcode: i.e. messages with the same hashcode will be directed to the same replica. Such behavior is useful when we keep in replicated transputer some state information about messages.</p> 
   <p>Stopping and recovering of replicated transformer is the same as in <code>par</code> (i.e. stopping/failing of one instance will cause stopping/failing of container)</p> 
   <p>Also note, that we can receive a sequence of replicated instances with the help of <code>ReplicateTransformer.replicated</code> method.</p> 
   <h2><a id="user-content-unsugared-interfaces" class="anchor" href="https://github.com/rssh/scala-gopher#unsugared-interfaces" aria-hidden="true" target="_blank">

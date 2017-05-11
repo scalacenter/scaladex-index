@@ -12,16 +12,16 @@
   <p>This project provides a number of libraries to facilitate <a href="http://typesafe.com/products/conductr" target="_blank">ConductR</a>'s status service and its service lookup service. Note that usage of the libraries in your code is entirely benign when used outside of the context of ConductR i.e. you will find that your applications and services will continue to function normally when used without ConductR. We have also designed the libraries to be a convenience to ConductR's REST and environment variable based APIs, and to have a very low impact on your code.</p> 
   <p>Add one of the following libraries to your project.</p> 
   <ul> 
-   <li><code>"com.typesafe.conductr" % "conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" % "java-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "scala-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "akka23-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "akka24-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "play23-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "play24-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "play25-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "lagom1-java-conductr-bundle-lib" % "1.6.0"</code></li> 
-   <li><code>"com.typesafe.conductr" %% "lagom1-scala-conductr-bundle-lib" % "1.6.0"</code></li> 
+   <li><code>"com.typesafe.conductr" % "conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" % "java-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "scala-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "akka23-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "akka24-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "play23-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "play24-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "play25-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "lagom1-java-conductr-bundle-lib" % "1.9.0"</code></li> 
+   <li><code>"com.typesafe.conductr" %% "lagom1-scala-conductr-bundle-lib" % "1.9.0"</code></li> 
   </ul> 
   <p>Note that the examples here use the following import to conveniently build the JDK <code>URI</code> and <code>URL</code> types.</p> 
   <div class="highlight highlight-source-scala">
@@ -230,10 +230,13 @@
   <p>In order for an application or service to take advantage of this guarantee provided by ConductR, the following call is required to obtain configuration that will be used when establishing your actor system:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.typesafe.conductr.bundlelib.akka.</span><span class="pl-v">Env</span>
+<span class="pl-k">import</span> <span class="pl-v">com.typesafe.conductr.lib.akka.</span><span class="pl-v">ConnectionContext</span>
 
-<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">Env</span>.asConfig
-<span class="pl-k">val</span> <span class="pl-en">systemName</span> <span class="pl-k">=</span> sys.env.getOrElse(<span class="pl-s"><span class="pl-pds">"</span>BUNDLE_SYSTEM<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>MyApp1<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">app1</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(systemName, config.withFallback(<span class="pl-en">ConfigFactory</span>.load()))</pre>
+...
+
+<span class="pl-k">val</span> <span class="pl-en">systemName</span> <span class="pl-k">=</span> <span class="pl-en">Env</span>.mkSystemName(<span class="pl-s"><span class="pl-pds">"</span>MyApp1<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">Env</span>.asConfig(systemName)
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(systemName, config.withFallback(<span class="pl-en">ConfigFactory</span>.load()))</pre>
   </div> 
   <p>Clusters will then be formed correctly. The above call looks for an endpoint named <code>akka-remote</code> by default. Therefore if you must declare the Akka remoting port as seed. The following endpoint declaration within a <code>build.sbt</code> shows how:</p> 
   <div class="highlight highlight-source-scala">
@@ -277,11 +280,12 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">MyCustomApplicationLoader</span> <span class="pl-k">extends</span> <span class="pl-e">ApplicationLoader</span> {
   <span class="pl-k">def</span> <span class="pl-en">load</span>(<span class="pl-v">context</span>: <span class="pl-en">ApplicationLoader</span>.<span class="pl-en">Context</span>)<span class="pl-k">:</span> <span class="pl-en">Application</span> <span class="pl-k">=</span> {
-    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig)
+    <span class="pl-k">val</span> <span class="pl-en">systemName</span> <span class="pl-k">=</span> <span class="pl-en">AkkaEnv</span>.mkSystemName(<span class="pl-s"><span class="pl-pds">"</span>application<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig(systemName)) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig(systemName))
     <span class="pl-k">val</span> <span class="pl-en">newConfig</span> <span class="pl-k">=</span> context.initialConfiguration <span class="pl-k">++</span> conductRConfig
     <span class="pl-k">val</span> <span class="pl-en">newContext</span> <span class="pl-k">=</span> context.copy(initialConfiguration <span class="pl-k">=</span> newConfig)
     <span class="pl-k">val</span> <span class="pl-en">prodEnv</span> <span class="pl-k">=</span> <span class="pl-en">Environment</span>.simple(mode <span class="pl-k">=</span> <span class="pl-en">Mode</span>.<span class="pl-en">Prod</span>)
-    (<span class="pl-k">new</span> <span class="pl-en">GuiceApplicationLoader</span>(<span class="pl-k">new</span> <span class="pl-en">GuiceApplicationBuilder</span>(environment <span class="pl-k">=</span> prodEnv))).load(newContext)
+    <span class="pl-k">new</span> <span class="pl-en">GuiceApplicationLoader</span>(<span class="pl-en">GuiceApplicationBuilder</span>(environment <span class="pl-k">=</span> prodEnv)).load(newContext)
   }
 }</pre>
   </div> 
@@ -340,7 +344,8 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">MyCustomApplicationLoader</span> <span class="pl-k">extends</span> <span class="pl-e">ApplicationLoader</span> {
   <span class="pl-k">def</span> <span class="pl-en">load</span>(<span class="pl-v">context</span>: <span class="pl-en">ApplicationLoader</span>.<span class="pl-en">Context</span>)<span class="pl-k">:</span> <span class="pl-en">Application</span> <span class="pl-k">=</span> {
-    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig)
+    <span class="pl-k">val</span> <span class="pl-en">systemName</span> <span class="pl-k">=</span> <span class="pl-en">AkkaEnv</span>.mkSystemName(<span class="pl-s"><span class="pl-pds">"</span>application<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig(systemName)) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig(systemName))
     <span class="pl-k">val</span> <span class="pl-en">newConfig</span> <span class="pl-k">=</span> context.initialConfiguration <span class="pl-k">++</span> conductRConfig
     <span class="pl-k">val</span> <span class="pl-en">newContext</span> <span class="pl-k">=</span> context.copy(initialConfiguration <span class="pl-k">=</span> newConfig)
     <span class="pl-k">val</span> <span class="pl-en">prodEnv</span> <span class="pl-k">=</span> <span class="pl-en">Environment</span>.simple(mode <span class="pl-k">=</span> <span class="pl-en">Mode</span>.<span class="pl-en">Prod</span>)
@@ -380,11 +385,12 @@
 
 <span class="pl-k">class</span> <span class="pl-en">MyCustomApplicationLoader</span> <span class="pl-k">extends</span> <span class="pl-e">ApplicationLoader</span> {
   <span class="pl-k">def</span> <span class="pl-en">load</span>(<span class="pl-v">context</span>: <span class="pl-en">ApplicationLoader</span>.<span class="pl-en">Context</span>)<span class="pl-k">:</span> <span class="pl-en">Application</span> <span class="pl-k">=</span> {
-    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig)
+    <span class="pl-k">val</span> <span class="pl-en">systemName</span> <span class="pl-k">=</span> <span class="pl-en">AkkaEnv</span>.mkSystemName(<span class="pl-s"><span class="pl-pds">"</span>application<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">conductRConfig</span> <span class="pl-k">=</span> <span class="pl-en">Configuration</span>(<span class="pl-en">AkkaEnv</span>.asConfig(systemName)) <span class="pl-k">++</span> <span class="pl-en">Configuration</span>(<span class="pl-en">PlayEnv</span>.asConfig(systemName))
     <span class="pl-k">val</span> <span class="pl-en">newConfig</span> <span class="pl-k">=</span> context.initialConfiguration <span class="pl-k">++</span> conductRConfig
     <span class="pl-k">val</span> <span class="pl-en">newContext</span> <span class="pl-k">=</span> context.copy(initialConfiguration <span class="pl-k">=</span> newConfig)
     <span class="pl-k">val</span> <span class="pl-en">prodEnv</span> <span class="pl-k">=</span> <span class="pl-en">Environment</span>.simple(mode <span class="pl-k">=</span> <span class="pl-en">Mode</span>.<span class="pl-en">Prod</span>)
-    (<span class="pl-k">new</span> <span class="pl-en">GuiceApplicationLoader</span>(<span class="pl-k">new</span> <span class="pl-en">GuiceApplicationBuilder</span>(environment <span class="pl-k">=</span> prodEnv))).load(newContext)
+    <span class="pl-k">new</span> <span class="pl-en">GuiceApplicationLoader</span>(<span class="pl-en">GuiceApplicationBuilder</span>(environment <span class="pl-k">=</span> prodEnv)).load(newContext)
   }
 }</pre>
   </div> 
