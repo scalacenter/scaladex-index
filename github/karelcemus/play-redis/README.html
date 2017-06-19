@@ -29,7 +29,7 @@
    <pre><span class="pl-c"><span class="pl-c">//</span> enable Play cache API (based on your Play version) and optionally exclude EhCache implementation</span>
 libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> play.sbt.<span class="pl-en">PlayImport</span>.cache exclude(<span class="pl-s"><span class="pl-pds">"</span>net.sf.ehcache<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>ehcache-core<span class="pl-pds">"</span></span>)
 <span class="pl-c"><span class="pl-c">//</span> include play-redis library</span>
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.karelcemus<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-redis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.0<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.karelcemus<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>play-redis<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.1<span class="pl-pds">"</span></span></pre>
   </div> 
   <h3><a id="user-content-using-with-guice" class="anchor" href="https://github.com/karelcemus/play-redis#using-with-guice" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -312,7 +312,7 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
      <td>play.cache.redis.timeout</td> 
      <td align="right">Duration</td> 
      <td align="right"><code>1s</code></td> 
-     <td>connection timeout</td> 
+     <td>conversion timeout applied by <code>SyncAPI</code> to convert <code>Future[T]</code> to <code>T</code></td> 
     </tr> 
     <tr> 
      <td>play.cache.redis.dispatcher</td> 
@@ -346,6 +346,12 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
     </tr>
    </tbody>
   </table> 
+  <h3><a id="user-content-timeout" class="anchor" href="https://github.com/karelcemus/play-redis#timeout" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Timeout</h3> 
+  <p>The <code>play-redis</code> is designed fully asynchronously and there is no timeout applied by this library itself. However, there are other timeouts you might be interested in. First, when you use <code>SyncAPI</code> instead of <code>AsyncAPI</code>, the <code>Future[T]</code> has to converted into <code>T</code>. It uses <a href="https://www.scala-lang.org/api/current/scala/concurrent/Await$.html#result%5BT%5D(awaitable:scala.concurrent.Awaitable%5BT%5D,atMost:scala.concurrent.duration.Duration):T" target="_blank"><code>Await.result</code></a> from standard Scala library, which requires a timeout definition. This is the <code>play.cache.redis.timeout</code>. It is the invocation of the whole request into cache including the communication to Redis, data serialization, and invocation <code>orElse</code> parts. If you don't want any timeout and your application logic cannot never timeout, just set it to something really high.</p> 
+  <p>The other timeouts you might be interested in are related to the communication to Redis, e.g., connection timeout and receive timeout. These are provided directly by the underlying connector and <code>play-redis</code> doesn't affect them. For more details, see the <a href="https://github.com/scredis/scredis/blob/master/src/main/resources/reference.conf#L27" target="_blank"><code>Scredis</code> configuration</a>.</p> 
   <h3><a id="user-content-recovery-policy" class="anchor" href="https://github.com/karelcemus/play-redis#recovery-policy" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -401,7 +407,7 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
    <tbody> 
     <tr> 
      <td>2.5.x</td> 
-     <td align="right">1.4.0</td> 
+     <td align="right">1.4.1</td> 
     </tr> 
     <tr> 
      <td>2.4.x</td> 
@@ -417,6 +423,14 @@ play.modules.enabled += "play.api.cache.redis.RedisCacheModule"
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Changelog</h2> 
+  <h3><a id="user-content-link-141" class="anchor" href="https://github.com/karelcemus/play-redis#link-141" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a href="https://github.com/KarelCemus/play-redis/tree/1.4.1" target="_blank">
+    <g-emoji alias="link" fallback-src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f517.png" ios-version="6.0">
+     🔗
+    </g-emoji> 1.4.1</a></h3> 
+  <p>Fixed minor issues <a href="https://github.com/KarelCemus/play-redis/issues/83" target="_blank">#83</a> and <a href="https://github.com/KarelCemus/play-redis/issues/85" target="_blank">#85</a>.</p> 
   <h3><a id="user-content-link-140" class="anchor" href="https://github.com/karelcemus/play-redis#link-140" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

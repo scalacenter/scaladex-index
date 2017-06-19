@@ -5,6 +5,9 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Sparklint</h1> 
   <p>The missing Spark Performance Debugger that can be drag and dropped into your spark application!</p> 
+  <blockquote> 
+   <p>Featured in Spark Summit 2016 EU: <a href="https://spark-summit.org/eu-2016/events/sparklint-a-tool-for-monitoring-identifying-and-tuning-inefficient-spark-jobs-across-your-cluster/" target="_blank">Introduction</a> | <a href="https://www.slideshare.net/SparkSummit/spark-summit-eu-talk-by-simon-whitear" target="_blank">Slides</a> | <a href="https://www.youtube.com/watch?v=reGerTzcvoA" target="_blank">Video</a><br> Upcoming related talk at Spark Summit 2017 SF: <a href="https://spark-summit.org/2017/events/continuous-application-with-fair-scheduler/" target="_blank">Introduction</a> | [Slides] | [Video]</p> 
+  </blockquote> 
   <h3><a id="user-content-mission" class="anchor" href="https://github.com/groupon/sparklint#mission" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -14,9 +17,9 @@
     <ul> 
      <li>Vital application life time stats like idle time, average vcore usage, distribution of locality</li> 
      <li>View task allocation by executor</li> 
-     <li>VCore usage graphs</li> 
+     <li>VCore usage graphs by FAIR scheduler group</li> 
+     <li>VCore usage graphs by task locality</li> 
      <li>(WIP) Find rdds that can benefit from persisting</li> 
-     <li>(WIP) View task execution stats by locality</li> 
     </ul> </li> 
    <li>Help you find out where the bottle neck are 
     <ul> 
@@ -40,7 +43,7 @@
   <p>SparklintListener is an implementation of <a href="https://spark.apache.org/docs/1.5.2/api/java/org/apache/spark/SparkFirehoseListener.html" target="_blank">SparkFirehoseListener</a> that listen to spark event log while the application is running. To enable it, you can try one of the following:</p> 
   <ol> 
    <li>Upload packaged jar to your cluster, include jar in classpath directly</li> 
-   <li>Use <code>--packages</code> command to inject dependency during job submission if we have a precompiled jar, like <code>--conf spark.extraListeners=com.groupon.sparklint.SparklintListener --packages com.groupon.sparklint:sparklint-spark161_2.10:1.0.4</code></li> 
+   <li>Use <code>--packages</code> command to inject dependency during job submission if we have a precompiled jar, like <code>--conf spark.extraListeners=com.groupon.sparklint.SparklintListener --packages com.groupon.sparklint:sparklint-spark201_2.11:1.0.7</code></li> 
    <li>Add dependency directly in your pom, repackage your application, then during job submission, use <code>--conf spark.extraListeners=com.groupon.sparklint.SparklintListener</code></li> 
   </ol> 
   <p>Finally, find out your spark application's driver node address, open a browser and visit port 23763 (our default port) of the driver node.</p> 
@@ -49,12 +52,12 @@
   </blockquote> 
   <pre><code>&lt;dependency&gt;
     &lt;groupId&gt;com.groupon.sparklint&lt;/groupId&gt;
-    &lt;artifactId&gt;sparklint-spark161_2.10&lt;/artifactId&gt;
-    &lt;version&gt;1.0.5&lt;/version&gt;
+    &lt;artifactId&gt;sparklint-spark201_2.11&lt;/artifactId&gt;
+    &lt;version&gt;1.0.7&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre> 
   <p>for build.sbt</p> 
-  <pre><code>libraryDependencies += "com.groupon.sparklint" %% "sparklint-spark161" % "1.0.5"
+  <pre><code>libraryDependencies += "com.groupon.sparklint" %% "sparklint-spark201" % "1.0.7"
 </code></pre> 
   <h5><a id="user-content-server-mode-run-on-local-machine" class="anchor" href="https://github.com/groupon/sparklint#server-mode-run-on-local-machine" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -124,8 +127,26 @@
      <li>Release version will be tagged as the version number</li> 
     </ul> </li> 
    <li>Publish existing docker image <code>dockerPublish</code></li> 
-   <li>Build and publish docker image at the same time <code>dockerBuildAndPublish</code></li> 
+   <li>Build and publish docker image at the same time <code>dockerBuildAndPush</code></li> 
    <li>The command to release everything: <code>sparklintRelease</code></li> 
+  </ul> 
+  <h3><a id="user-content-change-log" class="anchor" href="https://github.com/groupon/sparklint#change-log" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Change log</h3> 
+  <h5><a id="user-content-107" class="anchor" href="https://github.com/groupon/sparklint#107" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>1.0.7</h5> 
+  <ul> 
+   <li>Supports updating graphs using web socket, less likely a refresh will be needed now.</li> 
+  </ul> 
+  <h5><a id="user-content-106" class="anchor" href="https://github.com/groupon/sparklint#106" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>1.0.6</h5> 
+  <ul> 
+   <li>Supports breaking down core usage by FAIR scheduler pool</li> 
   </ul> 
  </article>
 </div>

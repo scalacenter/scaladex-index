@@ -12,7 +12,7 @@
     </svg></a>Setup</h2> 
   <p>Scarango is published to Sonatype OSS and Maven Central currently supporting Scala and Scala.js (core only) on 2.11 and 2.12.</p> 
   <p>Configuring the driver in SBT requires:</p> 
-  <pre><code>libraryDependencies += "com.outr" %% "scarango-driver" % "0.4.0"
+  <pre><code>libraryDependencies += "com.outr" %% "scarango-driver" % "0.5.2"
 </code></pre> 
   <h2><a id="user-content-dependencies" class="anchor" href="https://github.com/outr/arangodb-scala#dependencies" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -102,6 +102,27 @@
   <pre><code>val response: Future[QueryResponse[Fruit]] = Database.fruit.cursor(query)
 </code></pre> 
   <p>The <code>QueryResponse</code> object has several useful pieces of information, but for our immediate needs calling <code>result</code> on it will give us a <code>List[Fruit]</code> of the results of the query.</p> 
+  <h3><a id="user-content-real-time--streaming-changes" class="anchor" href="https://github.com/outr/arangodb-scala#real-time--streaming-changes" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Real-time / Streaming Changes</h3> 
+  <p>Scarango adds support for real-time events from the database to be handled. This was inspired by <a href="https://github.com/baslr/arangochair" target="_blank">https://github.com/baslr/arangochair</a>.</p> 
+  <p>Simply start the monitor:</p> 
+  <pre><code>Database.realTime.start()
+</code></pre> 
+  <p>Then you can listen to upserts and deletes on any collection:</p> 
+  <pre><code>Database.fruit.triggers.upsert.attach { f =&gt;
+    println(s"Fruit was upserted: $f")
+}
+Database.fruit.triggers.deletion.attach { f =&gt;
+    println(s"Fruit was deleted: $f")
+}
+</code></pre> 
+  <p>Finally, you can listen to the raw stream of events if you'd rather do something more generic:</p> 
+  <pre><code>Database.realTime.events.attach { logEvent =&gt;
+    println(s"Real-time event: $logEvent")
+}
+</code></pre> 
   <h3><a id="user-content-further-reading" class="anchor" href="https://github.com/outr/arangodb-scala#further-reading" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -127,13 +148,19 @@
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> DSL for creating AQL queries</li> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Versioned Document functionality (replace and delete creates duplicate in another collection instead of updating)</li> 
    <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Seamless Re-Authentication support for token timeout</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Proper support for differentiating <code>null</code> and exclusion of values</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Better support for <code>_key</code>, <code>_id</code>, and <code>_rev</code> as references and in case classes</li> 
   </ul> 
-  <h3><a id="user-content-features-for-050-in-progress" class="anchor" href="https://github.com/outr/arangodb-scala#features-for-050-in-progress" aria-hidden="true" target="_blank">
+  <h3><a id="user-content-features-for-050-released-20170516" class="anchor" href="https://github.com/outr/arangodb-scala#features-for-050-released-20170516" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Features for 0.5.0 (In-Progress)</h3> 
+    </svg></a>Features for 0.5.0 (Released 2017.05.16)</h3> 
   <ul class="contains-task-list"> 
-   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> Real-time change detection (<a href="https://docs.arangodb.com/3.1/HTTP/Replications/ReplicationLogger.html" target="_blank">https://docs.arangodb.com/3.1/HTTP/Replications/ReplicationLogger.html</a>)</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Create Credentials support for better authentication paradigm</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Support for Replication Logger (<a href="https://docs.arangodb.com/3.1/HTTP/Replications/ReplicationLogger.html" target="_blank">https://docs.arangodb.com/3.1/HTTP/Replications/ReplicationLogger.html</a>)</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Real-time change detection (upsert and deletion directly from the database) aka Triggers</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> <code>AbstractCollection.modify</code> feature to modify a document by supplying an original and modified case class only updating with the changes</li> 
+   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" checked disabled> Diff support for <code>modify</code> that properly handles null</li> 
   </ul> 
   <h3><a id="user-content-features-for-040-released-20170510" class="anchor" href="https://github.com/outr/arangodb-scala#features-for-040-released-20170510" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

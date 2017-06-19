@@ -1,0 +1,105 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-caustic" class="anchor" href="https://github.com/ashwin153/schema#caustic" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Caustic</h1> 
+  <p><a href="https://travis-ci.org/ashwin153/caustic" target="_blank"><img src="https://camo.githubusercontent.com/5508f264615de2a624e1da2ebb0c0e0488e7696b/68747470733a2f2f7472617669732d63692e6f72672f61736877696e3135332f636175737469632e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/ashwin153/caustic.svg?branch=master" style="max-width:100%;"></a> <a href="https://github.com/ashwin153/schema/blob/master" target="_blank"><img src="https://camo.githubusercontent.com/34d98ac263d61c7adc92168f18c5a6ee44a53b1f/68747470733a2f2f696d672e736869656c64732e696f2f6d6176656e2d63656e7472616c2f762f636f6d2e6d61646176616e2f636175737469632d72756e74696d655f322e31322e737667" alt="Maven Central" data-canonical-src="https://img.shields.io/maven-central/v/com.madavan/caustic-runtime_2.12.svg" style="max-width:100%;"></a></p> 
+  <p>Caustic is a Scala DSL for expressing and <a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank">optimistically executing</a> database transactions. It is intended to serve as a replacement for SQL, which has reigned as the language of choice for codifying database interactions for the past 43 years. As a motivating example, let's write the same transaction in MySQL and Caustic. Both transactions atomically increment a counter <code>x</code>; however, unlike MySQL, Caustic does not require an explicit table definition and runs on <em>any</em> <a href="https://en.wikipedia.org/wiki/Key-value_database" target="_blank">transactional key-value store</a> (including MySQL).</p> 
+  <div class="highlight highlight-source-sql">
+   <pre><span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> `<span class="pl-en">counters</span>` (
+  <span class="pl-s"><span class="pl-pds">`</span>key<span class="pl-pds">`</span></span> <span class="pl-k">varchar</span>(<span class="pl-c1">250</span>) <span class="pl-k">NOT NULL</span>,
+  <span class="pl-s"><span class="pl-pds">`</span>value<span class="pl-pds">`</span></span> <span class="pl-k">BIGINT</span>,
+  <span class="pl-k">PRIMARY KEY</span> (<span class="pl-s"><span class="pl-pds">`</span>key<span class="pl-pds">`</span></span>)
+)
+
+<span class="pl-k">START TRANSACTION</span>;
+<span class="pl-k">INSERT INTO</span> <span class="pl-s"><span class="pl-pds">`</span>counters<span class="pl-pds">`</span></span> (<span class="pl-s"><span class="pl-pds">`</span>key<span class="pl-pds">`</span></span>, <span class="pl-s"><span class="pl-pds">`</span>value<span class="pl-pds">`</span></span>) <span class="pl-k">VALUES</span> (<span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>) 
+<span class="pl-k">ON</span> DUPLICATE KEY <span class="pl-k">UPDATE</span> <span class="pl-s"><span class="pl-pds">`</span>value<span class="pl-pds">`</span></span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span>value<span class="pl-pds">`</span></span> <span class="pl-k">+</span> <span class="pl-c1">1</span>
+<span class="pl-k">COMMIT</span>;</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre>db.execute { <span class="pl-k">implicit</span> ctx <span class="pl-k">=&gt;</span>
+  <span class="pl-k">val</span> <span class="pl-en">counter</span> <span class="pl-k">=</span> <span class="pl-en">Select</span>(<span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>)
+  <span class="pl-en">If</span> (<span class="pl-k">!</span>counter.exists) {
+    counter.value <span class="pl-k">=</span> <span class="pl-c1">1</span>
+  } <span class="pl-en">Else</span> {
+    counter.value <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-c1">1</span>
+  }
+}</pre>
+  </div> 
+  <h1><a id="user-content-requirements" class="anchor" href="https://github.com/ashwin153/schema#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h1> 
+  <ul> 
+   <li>Scala 2.12</li> 
+   <li>Java 1.8</li> 
+   <li>Python 2.7</li> 
+   <li>PostgreSQL 9.5</li> 
+   <li>MySQL 5.0</li> 
+  </ul> 
+  <h1><a id="user-content-build" class="anchor" href="https://github.com/ashwin153/schema#build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Build</h1> 
+  <p>Artifacts are published to the <a href="https://oss.sonatype.org/index.html#nexus-search;quick%7Ecom.madavan" target="_blank">Sonatype OSS Repository Hosting Service</a> and synced to <a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.madavan%22" target="_blank">Maven Central</a>. Snapshots of the <code>master</code> branch are built using <a href="https://travis-ci.org/ashwin153/caustic" target="_blank">Travis CI</a>.</p> 
+  <h2><a id="user-content-pants" class="anchor" href="https://github.com/ashwin153/schema#pants" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Pants</h2> 
+  <div class="highlight highlight-source-python">
+   <pre>jar_library(<span class="pl-v">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>caustic<span class="pl-pds">'</span></span>, <span class="pl-v">jars</span><span class="pl-k">=</span>[
+    jar(<span class="pl-v">org</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>com.madavan<span class="pl-pds">'</span></span>, <span class="pl-v">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>caustic-runtime_2.12<span class="pl-pds">'</span></span>, <span class="pl-v">rev</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>1.0.0<span class="pl-pds">'</span></span>),
+    jar(<span class="pl-v">org</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>com.madavan<span class="pl-pds">'</span></span>, <span class="pl-v">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>caustic-postgres_2.12<span class="pl-pds">'</span></span>, <span class="pl-v">rev</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>1.0.0<span class="pl-pds">'</span></span>),
+    jar(<span class="pl-v">org</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>com.madavan<span class="pl-pds">'</span></span>, <span class="pl-v">name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>caustic-mysql_2.12<span class="pl-pds">'</span></span>, <span class="pl-v">rev</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>1.0.0<span class="pl-pds">'</span></span>),
+])</pre>
+  </div> 
+  <h2><a id="user-content-sbt" class="anchor" href="https://github.com/ashwin153/schema#sbt" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre>scalaVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>2.12.1<span class="pl-pds">"</span></span>
+
+resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>releases<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>snapshots<span class="pl-pds">"</span></span>)
+)
+
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>com.madavan<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>caustic-runtime<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>com.madavan<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>caustic-mysql<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>com.madavan<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>caustic-postgres<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <h2><a id="user-content-maven" class="anchor" href="https://github.com/ashwin153/schema#maven" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Maven</h2> 
+  <div class="highlight highlight-text-xml">
+   <pre>&lt;<span class="pl-ent">dependency</span>&gt;
+  &lt;<span class="pl-ent">groupId</span>&gt;com.madavan&lt;/<span class="pl-ent">groupId</span>&gt;
+  &lt;<span class="pl-ent">artifactId</span>&gt;caustic-runtime_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;1.0.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;
+
+&lt;<span class="pl-ent">dependency</span>&gt;
+  &lt;<span class="pl-ent">groupId</span>&gt;com.madavan&lt;/<span class="pl-ent">groupId</span>&gt;
+  &lt;<span class="pl-ent">artifactId</span>&gt;caustic-mysql_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;1.0.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;
+
+&lt;<span class="pl-ent">dependency</span>&gt;
+  &lt;<span class="pl-ent">groupId</span>&gt;com.madavan&lt;/<span class="pl-ent">groupId</span>&gt;
+  &lt;<span class="pl-ent">artifactId</span>&gt;caustic-postgres_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
+  &lt;<span class="pl-ent">version</span>&gt;1.0.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre>
+  </div> 
+  <h1><a id="user-content-documentation" class="anchor" href="https://github.com/ashwin153/schema#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h1> 
+  <p>Refer to the <a href="https://github.com/ashwin153/caustic/wiki/User-Guide" target="_blank">User Guide</a> to learn about how to use the system, and the <a href="https://github.com/ashwin153/caustic/wiki/Home" target="_blank">Wiki</a> for more information.</p> 
+ </article>
+</div>

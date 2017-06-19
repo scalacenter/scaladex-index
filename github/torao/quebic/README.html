@@ -1,0 +1,129 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-quebic---simple-journaling-queue-library" class="anchor" href="https://github.com/torao/quebic#quebic---simple-journaling-queue-library" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quebic - Simple Journaling Queue Library</h1> 
+  <p><strong>Quebic</strong> is a simple and small journaling queue library based on local filesystem for Scala 2.12. It is aimed for using this in pipeline data processing especially machine learning or ETL. Quebic supports 1:1 queue operation for multi-thread or multi-process environment.</p> 
+  <p>Once a data is pushed into queue, it will be able to read at the next time even if the process goes down. In addition, the last pushed data remains in queue and it can refer anytime even if the queue is empty. This allows your application's process to determine where it should resume from. You can also use this queue files as intermediate data store for the next data processing step.</p> 
+  <p>This library is implemented with a double-stacking queue using only two files. Therefore, there may be little severe impact of file lock as far as you use this as 1:1.</p> 
+  <h2><a id="user-content-features" class="anchor" href="https://github.com/torao/quebic#features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features</h2> 
+  <ul> 
+   <li>Persistent queue that can stop and restart processing.</li> 
+   <li>Process large amounts of data that exceed JavaVM heap.</li> 
+   <li>Remember the latest push data to determine restart position.</li> 
+   <li>Compression option for efficient storing large JSON or vector.</li> 
+   <li>Data type verification with simple schema.</li> 
+   <li>Simple two-files data store.</li> 
+   <li>1:1 lock-based parallel push and pop.</li> 
+  </ul> 
+  <h2><a id="user-content-how-to-use" class="anchor" href="https://github.com/torao/quebic#how-to-use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to Use</h2> 
+  <p>Currently Quebic is designed for Scala 2.12. You may setup it to your project from the <a href="https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22quebic_2.12%22" target="_blank">Maven Central Repository</a> by <code>sbt</code>, <code>mvn</code>, <code>gradle</code> and so on.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>at.hazm<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>quebic_2.12<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.+<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>When you wish to use Quebic in your project, first you should determine the data type (specified by <code>T</code>) that you want to push to queue.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">MyItem</span>(id<span class="pl-k">:</span><span class="pl-k">Int</span>, text<span class="pl-k">:</span><span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>Second, you should define schema as <code>Schema</code> according to your data type and implement converter between type <code>MyItem</code> and <code>Struct</code>. The <code>DataType</code> sequence in schema must be same as <code>Struct</code> values.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">at.hazm.quebic.</span>{<span class="pl-v">DataType</span>, <span class="pl-v">Schema</span>, <span class="pl-v">Struct</span>}
+
+<span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">MyItem2Struct</span> <span class="pl-k">extends</span> <span class="pl-e">Queue.Value2Struct</span>[<span class="pl-en">MyItem</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">schema</span><span class="pl-k">:</span><span class="pl-en">Schema</span> <span class="pl-k">=</span> <span class="pl-en">Schema</span>(<span class="pl-en">DataType</span>.<span class="pl-en">INTEGER</span>, <span class="pl-en">DataType</span>.<span class="pl-en">TEXT</span>)
+
+  <span class="pl-k">def</span> <span class="pl-en">from</span>(data<span class="pl-k">:</span><span class="pl-en">MyItem</span>)<span class="pl-k">:</span><span class="pl-en">Struct</span> <span class="pl-k">=</span> <span class="pl-en">Struct</span>(<span class="pl-en">Struct</span>.<span class="pl-en">INTEGER</span>(data.id), <span class="pl-en">Struct</span>.<span class="pl-en">TEXT</span>(data.text))
+
+  <span class="pl-k">def</span> <span class="pl-en">to</span>(struct<span class="pl-k">:</span><span class="pl-en">Struct</span>)<span class="pl-k">:</span><span class="pl-en">MyItem</span> <span class="pl-k">=</span> struct <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Struct</span>(<span class="pl-en">Struct</span>.<span class="pl-en">INTEGER</span>(id), <span class="pl-en">Struct</span>.<span class="pl-en">TEXT</span>(text)) <span class="pl-k">=&gt;</span> <span class="pl-en">MyItem</span>(id.toInt, text)
+  }
+}</pre>
+  </div> 
+  <p><code>DataType</code> supports simple <code>INTEGER</code>, <code>REAL</code>, <code>TEXT</code>, <code>BINARY</code> and <code>TENSOR</code> five types.</p> 
+  <p>Note that the typical container type, such as <code>list</code> or <code>map</code> are not supported. If you wish to use such complex type, you may use JSON or XML string as <code>TEXT</code>, or object serialization as <code>BINARY</code> instead of default types.</p> 
+  <p>And final, you will create queue and publisher or subscriber.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.io.</span><span class="pl-v">File</span>
+<span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Timer</span>
+<span class="pl-k">import</span> <span class="pl-v">at.hazm.quebic.</span>{<span class="pl-v">Codec</span>, <span class="pl-v">Queue</span>}
+
+<span class="pl-k">val</span> <span class="pl-en">timer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Timer</span>(<span class="pl-s"><span class="pl-pds">"</span>ScheduledMigrationThread<span class="pl-pds">"</span></span>)   <span class="pl-c"><span class="pl-c">//</span> scheduled migration thread</span>
+<span class="pl-k">val</span> <span class="pl-en">file</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>my-queue.qbc<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">capacity</span> <span class="pl-k">=</span> <span class="pl-c1">64</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span>
+<span class="pl-k">val</span> <span class="pl-en">queue</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Queue</span>(file, capacity, <span class="pl-en">MyItem2Struct</span>, timer)
+
+<span class="pl-k">val</span> <span class="pl-en">pub</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">queue.Publisher</span>(<span class="pl-en">Codec</span>.<span class="pl-en">PLAIN</span>)
+pub.push(<span class="pl-en">MyItem</span>(<span class="pl-c1">0</span>, <span class="pl-s"><span class="pl-pds">"</span>hello, world<span class="pl-pds">"</span></span>))
+
+<span class="pl-k">val</span> <span class="pl-en">sub</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">queue.Subscriber</span>()
+<span class="pl-k">val</span> <span class="pl-en">myItem</span> <span class="pl-k">=</span> sub.pop()
+
+<span class="pl-c"><span class="pl-c">//</span> When your program going to finish.</span>
+queue.close()
+timer.cancel()
+
+<span class="pl-c"><span class="pl-c">//</span> If you wish to delete all queue-related files.</span>
+<span class="pl-c"><span class="pl-c">//</span> queue.dispose()</span></pre>
+  </div> 
+  <h3><a id="user-content-reference-score-of-performance" class="anchor" href="https://github.com/torao/quebic#reference-score-of-performance" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reference Score of Performance</h3> 
+  <p>Followings are the score of push and pop operation on DELL OptiPlex 7050 with Windows 10, Core i7-7700 3.6GHz CPU, 16GB memory, NTFS on HDD (not SSD).</p> 
+  <p>In single thread, push - migration - pop sequential operation for 1kB binary item:</p> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th align="left">Operation</th> 
+     <th align="right">Call</th> 
+     <th align="right">Time</th> 
+     <th align="right">Time/Call</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td align="left">PUSH</td> 
+     <td align="right">2,781</td> 
+     <td align="right">10,002ms</td> 
+     <td align="right">3.597ms</td> 
+    </tr> 
+    <tr> 
+     <td align="left">POP</td> 
+     <td align="right">2,781</td> 
+     <td align="right">6,114ms</td> 
+     <td align="right">2.198ms</td> 
+    </tr> 
+    <tr> 
+     <td align="left">MIGRATION</td> 
+     <td align="right">2,782</td> 
+     <td align="right">52ms</td> 
+     <td align="right">0.019ms</td> 
+    </tr>
+   </tbody>
+  </table> 
+  <h2><a id="user-content-internal-implementation" class="anchor" href="https://github.com/torao/quebic#internal-implementation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Internal Implementation</h2> 
+  <h3><a id="user-content-double-stack-queue" class="anchor" href="https://github.com/torao/quebic#double-stack-queue" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>double-stack queue</h3> 
+  <p>Quebic is based on double-stack queue.</p> 
+  <p><a href="https://github.com/torao/quebic/blob/master/torao/quebic/blob/doc/double-stack_queue.png" target="_blank"><img src="https://github.com/torao/quebic/raw/master/torao/quebic/raw/doc/double-stack_queue.png" alt="double-stack queue" style="max-width:100%;"></a></p> 
+  <p>When one client pushes an element to the queue, it will be pushed into stack-1 that works as journal. After that, if stack-2 is empty when the other client pops from the queue, the queue first pops all elements from stack-1 and pushes them to stack-2. So the queue behaves as FIFO.</p> 
+  <h3><a id="user-content-reliability" class="anchor" href="https://github.com/torao/quebic#reliability" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>reliability</h3> 
+  <p>The basic behaviour of Quebic is the same as the primitive transaction. It always rewrites the link pointer to the data entity after writing it. Therefore, if the system goes down while writing data entity, useless space will remain in the file but existing data is not damaged. However, unfortunately the system goes down while updating several bytes in the 8 bytes link pointer, the sequence of enqueued data in the file may be destroyed. It is able to detect such "broken link pointer" situation because the data header linked by pointer begins with fixed magic number.</p> 
+  <p>This is very rarely situation (in fact I have never encountered) but you should not store the persistent data entities but intermediate one that can be rebuilt by rerun in this queue.</p> 
+ </article>
+</div>

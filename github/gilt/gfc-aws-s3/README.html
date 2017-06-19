@@ -1,0 +1,149 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-gfc-aws-s3" class="anchor" href="https://github.com/gilt/gfc-aws-s3#gfc-aws-s3" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>gfc-aws-s3</h1> 
+  <p><a href="https://travis-ci.com/gilt/gfc-aws-s3" target="_blank"><img src="https://camo.githubusercontent.com/cacba8f3126fc38843af185bd936d337fff556c2/68747470733a2f2f7472617669732d63692e636f6d2f67696c742f6766632d6177732d73332e7376673f746f6b656e3d474d484a6e7a526b4d6d715773627a7545576757266272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.com/gilt/gfc-aws-s3.svg?token=GMHJnzRkMmqWsbzuEWgW&amp;branch=master" style="max-width:100%;"></a></p> 
+  <p>Tools for streaming data to and from S3</p> 
+  <h2><a id="user-content-akka" class="anchor" href="https://github.com/gilt/gfc-aws-s3#akka" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Akka</h2> 
+  <p>The library provides tools to integrate akka-streams with Amazon S3 storage service.</p> 
+  <p>The library contains akka-stream Sources and Sinks to Stream data from and to S3.</p> 
+  <h3><a id="user-content-sinks" class="anchor" href="https://github.com/gilt/gfc-aws-s3#sinks" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sinks</h3> 
+  <p>Allows uploading data to S3 in a streaming manner. The underlying implementation uses <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/llJavaUploadFile.html" target="_blank">S3 Multipart upload API</a>. Due to the API requirements the size of the part could not be less than 5Mb. You are to provide the size of the chunk on Source creation, the internals will automatically slice the incoming data into the chunks of the given size and upload those chunks to S3.</p> 
+  <p>To create the source:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.gilt.gfc.s3.akka.S3MultipartUploaderSink.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">bucketName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-bucket<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">fileKey</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-file<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">s3Client</span> <span class="pl-k">=</span> <span class="pl-en">AmazonS3ClientBuilder</span>.standard()
+  .withRegion(<span class="pl-s"><span class="pl-pds">"</span>us-east-1<span class="pl-pds">"</span></span>)
+  .build
+<span class="pl-k">val</span> <span class="pl-en">chunkSize</span> <span class="pl-k">=</span> <span class="pl-c1">6</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span> <span class="pl-c"><span class="pl-c">//</span> 6 Megabytes</span>
+
+<span class="pl-k">val</span> <span class="pl-en">sink</span> <span class="pl-k">=</span> <span class="pl-en">Sink</span>.s3MultipartUpload(s3Client, bucketName, fileKey, chunkSize)</pre>
+  </div> 
+  <p>The sink could also be created in different style manner:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.gilt.gfc.s3.akka.</span><span class="pl-v">S3MultipartUploaderSink</span>
+
+<span class="pl-k">val</span> <span class="pl-en">sink</span> <span class="pl-k">=</span> <span class="pl-en">S3MultipartUploaderSink</span>(s3Client, bucketName, fileKey, chunkSize)</pre>
+  </div> 
+  <p>The materialized value of the sink is the total length of the uploaded file in case of successful uploads.</p> 
+  <p>Please, bear in mind, that incomplete uploads eat S3 space (meaning cost you some money) but are not shown in AWS S3 UI. Probably the best idea is to configure S3 so that it will delete parts of the incomplete uploads automatically after given amount of time (<a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html" target="_blank">docs</a>)</p> 
+  <h3><a id="user-content-sources" class="anchor" href="https://github.com/gilt/gfc-aws-s3#sources" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Sources</h3> 
+  <p>Allows accessing S3 objects as a stream source in two different manners - by parts and by chunks. The difference is subtle but important:</p> 
+  <ol> 
+   <li>accessing by parts means that you know or assume that the file was uploaded using S3 multipart API. If the was not uploaded using multipart API it would be downloaded in a single chunk. This will not eat memory, as the source does real streaming, and allows to control the buffer size for download, but could lead to some problems with very large files, as S3 tends to drop long-lasting connections sometimes.</li> 
+  </ol> 
+  <p>To do that, use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.gilt.gfc.s3.akka.S3DownloaderSource.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">bucketName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-bucket<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">fileKey</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-file<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">s3Client</span> <span class="pl-k">=</span> <span class="pl-en">AmazonS3ClientBuilder</span>.standard()
+  .withRegion(<span class="pl-s"><span class="pl-pds">"</span>us-east-1<span class="pl-pds">"</span></span>)
+  .build
+<span class="pl-k">val</span> <span class="pl-en">memoryBufferSize</span> <span class="pl-k">=</span> <span class="pl-c1">128</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span> <span class="pl-c"><span class="pl-c">//</span> 128 Kb buffer</span>
+
+<span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>.s3MultipartDownload(s3Client, bucketName, fileKey, memoryBufferSize)</pre>
+  </div> 
+  <ol start="2"> 
+   <li>accessing by chunks means that you provide a size of the part to download, and the source will ultimately use <code>Range</code> header to access file in "seek-and-read" manner. This approach could be used with any S3 object, regardless of whether it was uploaded using multipart API or not. The size of the chunk will affect the number of the requests sent to S3.</li> 
+  </ol> 
+  <p>To do that use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.gilt.gfc.s3.akka.S3DownloaderSource.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">bucketName</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-bucket<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">fileKey</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>test-file<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">s3Client</span> <span class="pl-k">=</span> <span class="pl-en">AmazonS3ClientBuilder</span>.standard()
+  .withRegion(<span class="pl-s"><span class="pl-pds">"</span>us-east-1<span class="pl-pds">"</span></span>)
+  .build
+<span class="pl-k">val</span> <span class="pl-en">chunkSize</span> <span class="pl-k">=</span> <span class="pl-c1">1024</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span>       <span class="pl-c"><span class="pl-c">//</span> 1 Mb chunks to request from S3</span>
+<span class="pl-k">val</span> <span class="pl-en">memoryBufferSize</span> <span class="pl-k">=</span> <span class="pl-c1">128</span> <span class="pl-k">*</span> <span class="pl-c1">1024</span> <span class="pl-c"><span class="pl-c">//</span> 128 Kb buffer</span>
+
+<span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>.s3ChunkedDownload(s3Client, bucketName, fileKey, chunkSize, memoryBufferSize)</pre>
+  </div> 
+  <p>The pieces of code above will crease a Source[ByteString], where each ByteString represents a part of the file.</p> 
+  <h2><a id="user-content-s3-http" class="anchor" href="https://github.com/gilt/gfc-aws-s3#s3-http" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>S3-http</h2> 
+  <p>This is a tiny service to expose s3 buckets from the account as HTTP resources, the url format is:</p> 
+  <pre><code>/&lt;bucketname&gt;/&lt;filePrefix&gt;
+</code></pre> 
+  <p>The buckets exposed are specified in the configuration file, so you could specify the prefix to use in the url, and the corresponding S3 bucket. On receiving GET request on this URL the service will look in the corresponding bucket for a file with the given prefix. If there is more then one file with the given prefix it will return the most recently updated one. The service populates the following headers:</p> 
+  <ul> 
+   <li>Last-Modified</li> 
+   <li>Content-Disposition (sets "inline", with "filename" attribute equals to the full filename of the returned file)</li> 
+   <li>Content-Type</li> 
+  </ul> 
+  <p>If the client tries to request a file from the bucket not listed in the configuration, the service will respond with 404 (Not found) error</p> 
+  <p>The files are streamed from the S3 allowing service to expose big files without any significant memory requirements.</p> 
+  <p>The service is intended to be a read-only exposure. PUT, POST, DELETE operations are not supported at the moment.</p> 
+  <h3><a id="user-content-configuration" class="anchor" href="https://github.com/gilt/gfc-aws-s3#configuration" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration</h3> 
+  <p>The general configurations parameters:</p> 
+  <ul> 
+   <li>port - which TCP port to listen to</li> 
+   <li>host - which TCP host/IP address to bind to</li> 
+   <li>chunk_size - size in kBytes of the block on downstreaming</li> 
+  </ul> 
+  <p>Example:</p> 
+  <pre lang="hocon"><code>port = 8080
+hostA = "localhost"
+chunk_size = 1024 #kBytes
+</code></pre> 
+  <p>To expose files in the bucket you need to specify exposed_buckets configuration like this:</p> 
+  <pre lang="hocon"><code>exposed_buckets = [
+  {
+    uri = "test1",
+    bucket = "test-bucket1"
+  }, {
+    uri = "test2",
+    bucket = "test-bucket2"
+  }
+]
+</code></pre> 
+  <p>Every item in that collection should define 2 properties:</p> 
+  <ul> 
+   <li>uri defines the first part of the request uri that will be used to access this bucket</li> 
+   <li>bucket defines the S3 bucket to access on receiving the request with the specified uri</li> 
+  </ul> 
+  <h3><a id="user-content-docker-image" class="anchor" href="https://github.com/gilt/gfc-aws-s3#docker-image" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Docker image</h3> 
+  <p>To build a local docker image just issue</p> 
+  <pre><code>sbt s3http/docker:publishLocal
+</code></pre> 
+  <p>This project uses sbt-native-packager plugin which allows building images easily</p> 
+  <h3><a id="user-content-testing" class="anchor" href="https://github.com/gilt/gfc-aws-s3#testing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Testing</h3> 
+  <p>Testing requires access to S3. Use .aws/credentials or supply <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> when running <code>sbt test</code></p> 
+  <h2><a id="user-content-copyright-and-license" class="anchor" href="https://github.com/gilt/gfc-aws-s3#copyright-and-license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright and license</h2> 
+  <p>Copyright 2017 Gilt Groupe, Hudson Bay Company</p> 
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
+  <p><a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p> 
+ </article>
+</div>

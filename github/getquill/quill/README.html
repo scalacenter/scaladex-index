@@ -223,20 +223,20 @@ ctx.run(query[<span class="pl-en">Person</span>])
   <p>Note that default naming behavior uses the name of the nested case class properties. It's possible to override this default behavior using a custom <code>schema</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Contact</span>(<span class="pl-v">phone</span>: <span class="pl-k">String</span>, <span class="pl-v">address</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Embedded</span>
-<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">homeContact</span>: <span class="pl-en">Contact</span>, <span class="pl-v">workContact</span>: <span class="pl-en">Contact</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">homeContact</span>: <span class="pl-en">Contact</span>, <span class="pl-v">workContact</span>: <span class="pl-en">Option</span>[<span class="pl-en">Contact</span>])
 
 <span class="pl-k">val</span> <span class="pl-en">q</span> <span class="pl-k">=</span> quote {
   querySchema[<span class="pl-en">Person</span>](
     <span class="pl-s"><span class="pl-pds">"</span>Person<span class="pl-pds">"</span></span>,
-    _.homeContact.phone   <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>homePhone<span class="pl-pds">"</span></span>,
-    _.homeContact.address <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>homeAdress<span class="pl-pds">"</span></span>,
-    _.workContact.phone   <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>workPhone<span class="pl-pds">"</span></span>,
-    _.workContact.address <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>workAdress<span class="pl-pds">"</span></span>
+    _.homeContact.phone          <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>homePhone<span class="pl-pds">"</span></span>,
+    _.homeContact.address        <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>homeAddress<span class="pl-pds">"</span></span>,
+    _.workContact.map(_.phone)   <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>workPhone<span class="pl-pds">"</span></span>,
+    _.workContact.map(_.address) <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>workAddress<span class="pl-pds">"</span></span>
   )
 }
 
 ctx.run(q)
-<span class="pl-c"><span class="pl-c">//</span> SELECT x.id, x.name, x.homePhone, x.homeAdress, x.workPhone, x.workAdress FROM Person x</span></pre>
+<span class="pl-c"><span class="pl-c">//</span> SELECT x.id, x.name, x.homePhone, x.homeAddress, x.workPhone, x.workAddress FROM Person x</span></pre>
   </div> 
   <h2><a id="user-content-queries" class="anchor" href="https://github.com/getquill/quill#queries" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -615,6 +615,21 @@ ctx.run(q)
 ctx.run(q)
 <span class="pl-c"><span class="pl-c">//</span> SELECT p.id, p.name, p.age FROM Person p WHERE p.name like '%John%'</span></pre>
   </div> 
+  <h2><a id="user-content-sql-specific-encoding" class="anchor" href="https://github.com/getquill/quill#sql-specific-encoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SQL-specific encoding</h2> 
+  <p><strong>Arrays</strong></p> 
+  <p>Quill provides SQL Arrays support. In Scala we represent them as any collection that implements <code>Seq</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Date</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Book</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>, <span class="pl-v">notes</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>], <span class="pl-v">pages</span>: <span class="pl-en">Vector</span>[<span class="pl-k">Int</span>], <span class="pl-v">history</span>: <span class="pl-en">Seq</span>[<span class="pl-en">Date</span>])
+
+ctx.run(query[<span class="pl-en">Book</span>])
+<span class="pl-c"><span class="pl-c">//</span> SELECT x.id, x.notes, x.pages, x.history FROM Book x</span></pre>
+  </div> 
+  <p>Note that not all drivers/databases provides such feature hence only <code>PostgresJdbcContext</code> and <code>PostgresAsyncContext</code> support SQL Arrays.</p> 
   <h2><a id="user-content-cassandra-specific-operations" class="anchor" href="https://github.com/getquill/quill#cassandra-specific-operations" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -723,6 +738,20 @@ ctx.run(q2)
 }
 ctx.run(q)
 <span class="pl-c"><span class="pl-c">//</span> DELETE p.age FROM Person</span></pre>
+  </div> 
+  <h2><a id="user-content-cassandra-specific-encoding" class="anchor" href="https://github.com/getquill/quill#cassandra-specific-encoding" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cassandra-specific encoding</h2> 
+  <p><strong>Collections</strong></p> 
+  <p>Quill provides List, Set and Map encoding:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">Date</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Book</span>(<span class="pl-v">id</span>: <span class="pl-k">Int</span>, <span class="pl-v">notes</span>: <span class="pl-en">Set</span>[<span class="pl-k">String</span>], <span class="pl-v">pages</span>: <span class="pl-en">List</span>[<span class="pl-k">Int</span>], <span class="pl-v">history</span>: <span class="pl-en">Map</span>[<span class="pl-en">Date</span>, <span class="pl-k">Boolean</span>])
+
+ctx.run(query[<span class="pl-en">Book</span>])
+<span class="pl-c"><span class="pl-c">//</span> SELECT id, notes, pages, history FROM Book</span></pre>
   </div> 
   <h2><a id="user-content-dynamic-queries" class="anchor" href="https://github.com/getquill/quill#dynamic-queries" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -833,6 +862,7 @@ ctx.run(rawQuery(<span class="pl-c1">1</span>))
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">encodeUUID</span> <span class="pl-k">=</span> <span class="pl-en">MappedEncoding</span>[<span class="pl-en">UUID</span>, <span class="pl-k">String</span>](_.toString)
 <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">decodeUUID</span> <span class="pl-k">=</span> <span class="pl-en">MappedEncoding</span>[<span class="pl-k">String</span>, <span class="pl-en">UUID</span>](<span class="pl-en">UUID</span>.fromString(_))</pre>
   </div> 
+  <p>Note that can it be also used to provide mapping for element types of collection (SQL Arrays or Cassandra Collections).</p> 
   <h2><a id="user-content-raw-encoding" class="anchor" href="https://github.com/getquill/quill#raw-encoding" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -851,6 +881,11 @@ ctx.run(rawQuery(<span class="pl-c1">1</span>))
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">uuidEncoder</span><span class="pl-k">:</span> <span class="pl-en">Encoder</span>[<span class="pl-en">UUID</span>] <span class="pl-k">=</span>
     encoder(java.sql.<span class="pl-en">Types</span>.<span class="pl-en">OTHER</span>, (index, value, row) <span class="pl-k">=&gt;</span>
         row.setObject(index, value, java.sql.<span class="pl-en">Types</span>.<span class="pl-en">OTHER</span>)) <span class="pl-c"><span class="pl-c">//</span> database-specific implementation</span>
+
+  <span class="pl-c"><span class="pl-c">//</span> Only for postgres</span>
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">arrayUUIDEncoder</span>[<span class="pl-en">Col</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">UUID</span>]]<span class="pl-k">:</span> <span class="pl-en">Encoder</span>[<span class="pl-en">Col</span>] <span class="pl-k">=</span> arrayRawEncoder[<span class="pl-en">UUID</span>, <span class="pl-en">Col</span>](<span class="pl-s"><span class="pl-pds">"</span>uuid<span class="pl-pds">"</span></span>)
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">arrayUUIDDecoder</span>[<span class="pl-en">Col</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">UUID</span>]](<span class="pl-k">implicit</span> <span class="pl-v">bf</span>: <span class="pl-en">CBF</span>[<span class="pl-en">UUID</span>, <span class="pl-en">Col</span>])<span class="pl-k">:</span> <span class="pl-en">Decoder</span>[<span class="pl-en">Col</span>] <span class="pl-k">=</span>
+    arrayRawDecoder[<span class="pl-en">UUID</span>, <span class="pl-en">Col</span>]
 }</pre>
   </div> 
   <h2><a id="user-content-anyval" class="anchor" href="https://github.com/getquill/quill#anyval" aria-hidden="true" target="_blank">
@@ -1077,7 +1112,7 @@ case class MyDao(c: MyContext, schema: MySchema) {
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.38",
-  "io.getquill" %% "quill-jdbc" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-jdbc" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1098,7 +1133,7 @@ ctx.connectionTimeout=30000
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.4.1208",
-  "io.getquill" %% "quill-jdbc" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-jdbc" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1118,7 +1153,7 @@ ctx.connectionTimeout=30000
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
   "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
-  "io.getquill" %% "quill-jdbc" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-jdbc" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1133,7 +1168,7 @@ ctx.jdbcUrl=jdbc:sqlite:/path/to/db/file.db
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
   "com.h2database" % "h2" % "1.4.192",
-  "io.getquill" %% "quill-jdbc" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-jdbc" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1178,7 +1213,7 @@ ctx.transaction { implicit ec =&gt;
   <p><strong>MySQL Async</strong></p> 
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
-  "io.getquill" %% "quill-async-mysql" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-async-mysql" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1201,7 +1236,7 @@ ctx.sslrootcert=./path/to/cert/file # optional, required for sslmode=verify-ca o
   <p><strong>Postgres Async</strong></p> 
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
-  "io.getquill" %% "quill-async-postgres" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-async-postgres" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1235,7 +1270,7 @@ ctx.sslrootcert=./path/to/cert/file # optional, required for sslmode=verify-ca o
   <p>The body of <code>transaction</code> can contain calls to other methods and multiple <code>run</code> calls, since the transaction is automatically propagated through the <code>Local</code> value.</p> 
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
-  "io.getquill" %% "quill-finagle-mysql" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-finagle-mysql" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1267,7 +1302,7 @@ ctx.pool.maxWaiters=2147483647
   <p>The body of <code>transaction</code> can contain calls to other methods and multiple <code>run</code> calls, since the transaction is automatically propagated through the <code>Local</code> value.</p> 
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
-  "io.getquill" %% "quill-finagle-postgres" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-finagle-postgres" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p>context definition</p> 
@@ -1291,7 +1326,7 @@ ctx.binaryParams=false
     </svg></a>Cassandra Contexts</h2> 
   <p>sbt dependencies</p> 
   <pre><code>libraryDependencies ++= Seq(
-  "io.getquill" %% "quill-cassandra" % "1.1.2-SNAPSHOT"
+  "io.getquill" %% "quill-cassandra" % "1.2.2-SNAPSHOT"
 )
 </code></pre> 
   <p><strong>synchronous context</strong></p> 
@@ -1382,6 +1417,7 @@ ctx.session.addressTranslator=com.datastax.driver.core.policies.IdentityTranslat
    <li>@fwbrasil</li> 
    <li>@gustavoamigo</li> 
    <li>@jilen</li> 
+   <li>@mentegy</li> 
    <li>@mxl</li> 
   </ul> 
   <p>Former maintainers:</p> 

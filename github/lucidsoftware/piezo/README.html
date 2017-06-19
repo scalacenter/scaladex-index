@@ -22,24 +22,22 @@
    <li>Modify the included <a href="https://github.com/lucidsoftware/piezo/blob/master/worker/src/main/resources/quartz.properties" target="_blank">sample quartz.properties</a> to point to your database (see <a href="http://quartz-scheduler.org/documentation/quartz-2.2.x/configuration/" target="_blank">Quartz scheduler library config file</a>).</li> 
    <li>Run Piezo as specified in <a href="https://github.com/lucidsoftware/piezo#running" target="_blank">Running</a>.</li> 
   </ol> 
-  <p>###Building You must have <a href="http://www.scala-sbt.org/" target="_blank">sbt</a> version 0.13.0 or higher to build the worker project.</p> 
-  <p>To compile the project run</p> 
-  <p><code>make compile</code>.</p> 
-  <p>To package the project into a jar run</p> 
-  <p><code>make package</code>.</p> 
-  <p>To collect all dependencies into a single folder (target/staged) run</p> 
-  <p><code>make stage</code></p> 
+  <p>###Building You must have <a href="http://www.scala-sbt.org/" target="_blank">sbt</a> 0.13.</p> 
+  <p><code>sbt worker/compile</code> compiles sources.</p> 
+  <p><code>sbt worker/packageBin</code> creates a JAR.</p> 
   <p>###Configuration ####JVM properties</p> 
   <ul> 
    <li><code>org.quartz.properties</code> - <a href="http://quartz-scheduler.org/documentation/quartz-2.2.x/configuration/" target="_blank">Quartz scheduler library config file</a></li> 
-   <li><code>logback.configurationFile</code> - <a href="http://logback.qos.ch/manual/configuration.html" target="_blank">Logback config file</a></li> 
    <li><code>pidfile.path</code> - path to file where PID should be written on startup</li> 
   </ul> 
-  <p>###Running The project includes a sample script for running a worker process. It depends on <code>make stage</code> having been run. It launches with the <a href="https://github.com/lucidsoftware/piezo/blob/master/worker/src/main/resources/quartz.properties" target="_blank">sample worker quartz.properties file</a> included in the project.</p> 
-  <pre><code>./worker/src/main/resources/run.sh
-</code></pre> 
-  <p>Here also is a sample java command for running a single worker instance:</p> 
-  <pre><code>java -Dlogback.configurationFile=&lt;path to logback config&gt; -Dorg.quartz.properties=&lt;path to quartz properties&gt; -Dpidfile.path=&lt;path to pid file&gt; -Dnetworkaddress.cache.ttl=10 -Dnetworkaddress.cache.negative.ttl=10 -cp &lt;path to jars&gt; com.lucidchart.piezo.Worker
+  <p>###Running</p> 
+  <p>When developing</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt worker/run</pre>
+  </div> 
+  <p>This uses the quartz.properties file at the repo root and runs a heatbeat job.</p> 
+  <p>To use to run jobs add <code>com.lucidchart:piezo-worker:&lt;version&gt;</code> as a dependency to your project, and then run the com.lucidchart.piezo.Worker class. For example,</p> 
+  <pre><code>java  -Dorg.quartz.properties=&lt;path to quartz properties&gt; -Dpidfile.path=&lt;path to pid file&gt; -cp &lt;classpath&gt; com.lucidchart.piezo.Worker
 </code></pre> 
   <p>###Stats Worker reports statistics to a <a href="https://github.com/etsy/statsd/" target="_blank">StatsD</a> server if available.</p> 
   <p>It also stores historical job execution data in a pair of database tables defined in <a href="https://github.com/lucidsoftware/piezo/blob/master/worker/src/main/resources/create_history_tables.sql" target="_blank">create_history_tables.sql</a>. These tables should be added to the same datasource as the standard quartz tables.</p> 
@@ -49,11 +47,8 @@
   <ol> 
    <li>Follow the steps for the Worker <a href="https://github.com/lucidsoftware/piezo#setup" target="_blank">Setup</a> above.</li> 
   </ol> 
-  <p>###Building You must have <a href="http://www.playframework.com/" target="_blank">play</a> version 2.3 or higher to build the admin project.</p> 
-  <p>To compile the project run</p> 
-  <p><code>sbt compile</code>.</p> 
-  <p>To collect all dependencies into a single folder (target/staged) run</p> 
-  <p><code>make stage</code></p> 
+  <p>###<a name="user-content-adminBuilding" target="_blank" href="">Building</a> You must have <a href="http://www.scala-sbt.org/" target="_blank">sbt</a> 0.13.</p> 
+  <p><code>sbt admin/debian:packageBin</code> creates a .deb that includes all library dependencies, and installs piezo-admin as an Upstart service running as <code>piezo-admin</code>.</p> 
   <p>###Configuration ####JVM properties</p> 
   <ul> 
    <li><code>org.quartz.properties</code> - <a href="http://quartz-scheduler.org/documentation/quartz-2.2.x/configuration/" target="_blank">Quartz scheduler library config file</a></li> 
@@ -61,13 +56,34 @@
    <li><code>pidfile.path</code> - path to file where PID should be written on startup</li> 
    <li><code>http.port[s]</code> - <a href="http://www.playframework.com/documentation/2.1.1/ProductionConfiguration" target="_blank">Play Framework production configuration</a></li> 
   </ul> 
-  <p>####org.quartz.properties The <a href="https://github.com/lucidsoftware/piezo/blob/master/admin/conf/quartz.properties" target="_blank">sample admin quartz.properties file</a> includes the following property which needs to be included in the configured properties file that the admin is run with. <code>org.quartz.scheduler.classLoadHelper.class: com.lucidchart.piezo.GeneratorClassLoader</code></p> 
-  <p>###Running The project includes a sample script for running a worker process. It depends on <code>make stage</code> having been run. It launches with the <a href="https://github.com/lucidsoftware/piezo/blob/master/admin/conf/quartz.properties" target="_blank">sample admin quartz.properties file</a> included in the project.</p> 
-  <pre><code>./admin/bin/run.sh
+  <p>####org.quartz.properties</p> 
+  <p>The properties file must have <code>org.quartz.scheduler.classLoadHelper.class: com.lucidchart.piezo.GeneratorClassLoader</code>.</p> 
+  <p>###Running</p> 
+  <p>When developing,</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt admin/run</pre>
+  </div> 
+  <p>Then go to <a href="http://localhost:8001/" target="_blank">http://localhost:8001/</a> to view the admin.</p> 
+  <p>###Debian install</p> 
+  <p>Piezo admin can be installed as a service from a .deb (see <a href="https://github.com/lucidsoftware/piezo#adminBuilding" target="_blank">Building</a>).</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 379CE192D401AB61
+<span class="pl-c"><span class="pl-c">#</span> Upstart service</span>
+<span class="pl-c1">echo</span> <span class="pl-s"><span class="pl-pds">'</span>deb http://dl.bintray.com/lucidsoftware/apt/ trusty main<span class="pl-pds">'</span></span> <span class="pl-k">&gt;</span> /etc/apt/sources.list.d/lucidsoftware.list
+<span class="pl-c"><span class="pl-c">#</span> Systemd service</span>
+<span class="pl-c1">echo</span> <span class="pl-s"><span class="pl-pds">'</span>deb http://dl.bintray.com/lucidsoftware/apt/ xenial main<span class="pl-pds">'</span></span> <span class="pl-k">&gt;</span> /etc/apt/sources.list.d/lucidsoftware.list
+
+apt-get update
+apt-get install piezo-admin</pre>
+  </div> 
+  <p>By default, it will use /etc/piezo-admin/quartz.properties. Adjust runtime options using /etc/piezo-admin/application.ini:</p> 
+  <pre><code># -J for for Java options
+-J-Xmx1g
+# -D for system propertis
+-Dorg.quartz.properties=path/to/quartz.properties
+# -jvm-debug to enable JVM debugging
+-jvm-debug 5005
 </code></pre> 
-  <p>After running the above script, go to <a href="http://localhost:8001/" target="_blank">http://localhost:8001/</a> to view the admin tool.</p> 
-  <p>Here also is a sample java command for running a single admin instance:</p> 
-  <pre><code>java -Dlogback.configurationFile=&lt;path to logback config&gt; -Dorg.quartz.properties=&lt;path to quartz properties&gt; -Dpidfile.path=&lt;path to pid file&gt; -Dnetworkaddress.cache.ttl=10 -Dnetworkaddress.cache.negative.ttl=10 -Dhttp.port=&lt;port&gt; -cp &lt;path to jars&gt; play.core.server.NettyServer
-</code></pre> 
+  <p>For deploying to non-Debian platforms, run <code>sbt admin/universal:packageBin</code>. This produces a zip of JARs and scripts in admin/target/universal</p> 
  </article>
 </div>

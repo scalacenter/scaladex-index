@@ -585,6 +585,50 @@ cd h2o-3
    <li>Add the new Hadoop version to <code>HADOOP_VERSIONS</code> in <code>make-dist.sh</code></li> 
    <li>Add the new Hadoop version to the list in <code>h2o-dist/buildinfo.json</code></li> 
   </ol> 
+  <h3><a id="user-content-secure-user-impersonation" class="anchor" href="https://github.com/h2oai/h2o-dev#secure-user-impersonation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Secure user impersonation</h3> 
+  <p>Hadoop supports <a href="https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/Superusers.html" target="_blank">secure user impersonation</a> through its Java API. A kerberos-authenticated user can be allowed to proxy any username that meets specified criteria entered in the NameNode's core-site.xml file. This impersonation only applies to interactions with the Hadoop API or the APIs of Hadoop-related services that support it (this is not the same as switching to that user on the machine of origin).</p> 
+  <p>Setting up secure user impersonation (for h2o):</p> 
+  <ol> 
+   <li>Create or find an id to use as proxy which has limited-to-no access to HDFS or related services; the proxy user need only be used to impersonate a user</li> 
+   <li>(Required if not using h2odriver) If you are not using the driver (e.g. you wrote your own code against h2o's API using Hadoop), make the necessary code changes to impersonate users (see <a href="http://hadoop.apache.org/docs/r2.8.0/api/org/apache/hadoop/security/UserGroupInformation.html" target="_blank">org.apache.hadoop.security.UserGroupInformation</a>)</li> 
+   <li>In either of Ambari/Cloudera Manager or directly on the NameNode's core-site.xml file, add 2/3 properties for the user we wish to use as a proxy (replace with the simple user name - not the fully-qualified principal name). 
+    <ul> 
+     <li><code>hadoop.proxyuser.&lt;proxyusername&gt;.hosts</code>: the hosts the proxy user is allowed to perform impersonated actions on behalf of a valid user from</li> 
+     <li><code>hadoop.proxyuser.&lt;proxyusername&gt;.groups</code>: the groups an impersonated user must belong to for impersonation to work with that proxy user</li> 
+     <li><code>hadoop.proxyuser.&lt;proxyusername&gt;.users</code>: the users a proxy user is allowed to impersonate</li> 
+     <li>Example: <code>&lt;property&gt; &lt;name&gt;hadoop.proxyuser.myproxyuser.hosts&lt;/name&gt; &lt;value&gt;host1,host2&lt;/value&gt; &lt;/property&gt; &lt;property&gt; &lt;name&gt;hadoop.proxyuser.myproxyuser.groups&lt;/name&gt; &lt;value&gt;group1,group2&lt;/value&gt; &lt;/property&gt; &lt;property&gt; &lt;name&gt;hadoop.proxyuser.myproxyuser.users&lt;/name&gt; &lt;value&gt;user1,user2&lt;/value&gt; &lt;/property&gt;</code></li> 
+    </ul> </li> 
+   <li>Restart core services such as HDFS &amp; YARN for the changes to take effect</li> 
+  </ol> 
+  <p>Impersonated HDFS actions can be viewed in the hdfs audit log ('auth:PROXY' should appear in the <code>ugi=</code> field in entries where this is applicable). YARN similarly should show 'auth:PROXY' somewhere in the Resource Manager UI.</p> 
+  <p>To use secure impersonation with h2o's Hadoop driver:</p> 
+  <p><em>Before this is attempted, see Risks with impersonation, below</em></p> 
+  <p>When using the h2odriver (e.g. when running with <code>hadoop jar ...</code>), specify <code>-principal &lt;proxy user kerberos principal&gt;</code>, <code>-keytab &lt;proxy user keytab path&gt;</code>, and <code>-run_as_user &lt;hadoop username to impersonate&gt;</code>, in addition to any other arguments needed. If the configuration was successful, the proxy user will log in and impersonate the <code>-run_as_user</code> as long as that user is allowed by either the users or groups configuration property (configured above); this is enforced by HDFS &amp; YARN, not h2o's code. The driver effectively sets its security context as the impersonated user so all supported Hadoop actions will be performed as that user (e.g. YARN, HDFS APIs support securely impersonated users, but others may not).</p> 
+  <h4><a id="user-content-precautions-to-take-when-leveraging-secure-impersonation" class="anchor" href="https://github.com/h2oai/h2o-dev#precautions-to-take-when-leveraging-secure-impersonation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Precautions to take when leveraging secure impersonation</h4> 
+  <ul> 
+   <li>The target use case for secure impersonation is applications or services that pre-authenticate a user and then use (in this case) the h2odriver on behalf of that user. H2O's Steam is a perfect example: auth user in web app over SSL, impersonate that user when creating the h2o YARN container.</li> 
+   <li>The proxy user should have limited permissions in the Hadoop cluster; this means no permissions to access data or make API calls. In this way, if it's compromised it would only have the power to impersonate a specific subset of the users in the cluster and only from specific machines.</li> 
+   <li>Use the <code>hadoop.proxyuser.&lt;proxyusername&gt;.hosts</code> property whenever possible or practical.</li> 
+   <li>Don't give the proxyusername's password or keytab to any user you don't want to impersonate another user (this is generally <em>any</em> user). The point of impersonation is not to allow users to impersonate each other. See the first bullet for the typical use case.</li> 
+   <li>Limit user logon to the machine the proxying is occurring from whenever practical.</li> 
+   <li>Make sure the keytab used to login the proxy user is properly secured and that users can't login as that id (via <code>su</code>, for instance)</li> 
+   <li>Never set hadoop.proxyuser..{users,groups} to '*' or 'hdfs', 'yarn', etc. Allowing any user to impersonate hdfs, yarn, or any other important user/group should be done with extreme caution and <em>strongly</em> analyzed before it's allowed.</li> 
+  </ul> 
+  <h4><a id="user-content-risks-with-secure-impersonation" class="anchor" href="https://github.com/h2oai/h2o-dev#risks-with-secure-impersonation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Risks with secure impersonation</h4> 
+  <ul> 
+   <li>The id performing the impersonation can be compromised like any other user id.</li> 
+   <li>Setting any <code>hadoop.proxyuser.&lt;proxyusername&gt;.{hosts,groups,users}</code> property to '*' can greatly increase exposure to security risk.</li> 
+   <li>When users aren't authenticated before being used with the driver (e.g. like Steam does via a secure web app/API), auditability of the process/system is difficult.</li> 
+  </ul> 
   <h3><a id="user-content-debugging-hdfs" class="anchor" href="https://github.com/h2oai/h2o-dev#debugging-hdfs" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
