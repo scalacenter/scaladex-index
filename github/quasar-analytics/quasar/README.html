@@ -233,24 +233,27 @@ mongodb_3_0="mongodb://192.168.99.101:27019"
    <li>Namespaces used in queries must be defined on the server.</li> 
    <li>Loading schema definitions into the server, while not required, will improve sorting and other operations on types other than <code>xs:string</code>. Otherwise, non-string fields may require casting in queries using <a href="http://docs.slamdata.com/en/v4.0/sql-squared-reference.html#section-11-data-type-conversion" target="_blank">SQL² conversion functions</a>.</li> 
   </ul> 
-  <p><a href="https://github.com/quasar-analytics/quasar/issues?utf8=%E2%9C%93&amp;q=is%3Aissue%20is%3Aopen%20label%3AMarkLogic" target="_blank">Known Limitations</a></p> 
+  <p><a href="https://github.com/quasar-analytics/quasar/issues?q=is%3Aissue+is%3Aopen+marklogic+label%3A%22topic%3A+MarkLogic%22" target="_blank">Known Limitations</a></p> 
   <ul> 
-   <li>Field aliases when working with XML must currently be valid <a href="https://www.w3.org/TR/xml-names/#NT-QName" target="_blank">XML QNames</a> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
-   <li>"Default" numeric field names are prefixed with an underscore ("_") when working with XML in order to make them valid QNames. For example, <code>select count((1, 2, 3, 4))</code> will result in <code>{"_1": 4}</code> (<a href="https://github.com/quasar-analytics/quasar/issues/1642" target="_blank">#1642</a>).</li> 
    <li>It is not possible to query both JSON and XML documents from a single mount, a separate mount with the appropriate <code>format</code> value must be created for each type of document.</li> 
    <li>Index usage is currently poor, so performance may degrade on large directories and/or complex queries and joins. This should improve as optimizations are applied both to the MarkLogic connector and the <code>QScript</code> compiler.</li> 
   </ul> 
   <p>Quasar's data model is JSON-ish and thus there is a bit of translation required when applying it to XML. The current mapping aims to be intuitive while still taking advantage of the XDM as much as possible. Take note of the following:</p> 
   <ul> 
-   <li>Projecting a field will result in the child element(s) having the given name. If more than one element matches, the result will be an array.</li> 
-   <li>As the children of an element form a sequence, they may be treated both as a mapping from element names to values and as an array of values. That is to say, given a document like <code>&lt;foo&gt;&lt;bar&gt;1&lt;/bar&gt;&lt;baz&gt;2&lt;/baz&gt;&lt;/foo&gt;</code>, <code>foo.bar</code> and <code>foo[0]</code> both refer to <code>&lt;bar&gt;1&lt;/bar&gt;</code>.</li> 
-   <li>XML document results are currently serialized to JSON with an emphasis on producting idiomatic JSON: 
+   <li> <p>Projecting a field will result in the child element(s) having the given name. If more than one element matches, the result will be an array.</p> </li> 
+   <li> <p>As the children of an element form a sequence, they may be treated both as a mapping from element names to values and as an array of values. That is to say, given a document like <code>&lt;foo&gt;&lt;bar&gt;1&lt;/bar&gt;&lt;baz&gt;2&lt;/baz&gt;&lt;/foo&gt;</code>, <code>foo.bar</code> and <code>foo[0]</code> both refer to <code>&lt;bar&gt;1&lt;/bar&gt;</code>.</p> </li> 
+   <li> <p>XML document results are currently serialized to JSON with an emphasis on producting idiomatic JSON:</p> 
     <ul> 
      <li>An element is serialized to a singleton object with the element name as the only key and an object representing the children as its value. The child object will contain an entry for each child element with repeated elements collected into an array.</li> 
      <li>An element without attributes containing only text content will be serialized as a singleton object with the element name as the only key and the text content as its value.</li> 
      <li>Element attributes are serialized to an object at the <code>_xml.attributes</code> key.</li> 
      <li>Text content of elements containing mixed text and element children or attributes will be available at the <code>_xml.text</code> key.</li> 
     </ul> </li> 
+   <li> <p>Fields that are not valid <a href="https://www.w3.org/TR/xml-names/#NT-QName" target="_blank">XML QNames</a> are encoded as <code>&lt;ejson:key&gt;</code> elements with a <code>ejson:key-id</code> attribute including the field's original name. For instance, the query <code>SELECT TO_STRING(city), TO_STRING(state) FROM zips</code> yields elements with numeric field names. Numeric names are not valid QNames and will be encoded as follows:</p> 
+    <div class="highlight highlight-text-xml">
+     <pre>&lt;<span class="pl-ent">ejson</span><span class="pl-ent">:</span><span class="pl-ent">key</span> <span class="pl-e">ejson</span><span class="pl-e">:</span><span class="pl-e">key-id</span>=<span class="pl-s"><span class="pl-pds">"</span>0<span class="pl-pds">"</span></span> <span class="pl-e">ejson</span><span class="pl-e">:</span><span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>&gt;GILMAN CITY&lt;/<span class="pl-ent">ejson</span><span class="pl-ent">:</span><span class="pl-ent">key</span>&gt;
+&lt;<span class="pl-ent">ejson</span><span class="pl-ent">:</span><span class="pl-ent">key</span> <span class="pl-e">ejson</span><span class="pl-e">:</span><span class="pl-e">key-id</span>=<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> <span class="pl-e">ejson</span><span class="pl-e">:</span><span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span>&gt;MO&lt;/<span class="pl-ent">ejson</span><span class="pl-ent">:</span><span class="pl-ent">key</span>&gt;</pre>
+    </div> </li> 
   </ul> 
   <h3><a id="user-content-view-mounts" class="anchor" href="https://github.com/quasar-analytics/quasar#view-mounts" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
