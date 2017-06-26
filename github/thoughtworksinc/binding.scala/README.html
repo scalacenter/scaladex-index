@@ -210,11 +210,11 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacro
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Precise data-binding</h3> 
-  <p>ReactJS requires users provide a <code>render</code> function for each component. The <code>render</code> function should map <code>props</code> and <code>state</code> to a ReactJS's virtual DOM, then ReactJS framework creates a DOM with the same structure as the virtual DOM.</p> 
-  <p>When <code>state</code> changes, ReactJS framework invokes <code>render</code> function to get a new virtual DOM. Unfortunately, ReactJS framework does not precisely know what the <code>state</code> changing is. ReactJS framework has to compare the new virtual DOM and the original virtual DOM, and guesses the changeset between the two virtual DOM, then apply the guessed changeset to the real DOM as well.</p> 
-  <p>For example, after you prepended a table row, say, <code>&lt;tr&gt;</code>, into an existing <code>&lt;tbody&gt;</code> in a <code>&lt;table&gt;</code>, ReactJS may think you changed the content of the every existing <code>&lt;tr&gt;</code>s of the <code>&lt;tbody&gt;</code>, and appended another <code>&lt;tr&gt;</code> at the tail of the <code>&lt;tbody&gt;</code>.</p> 
-  <p>The reason is that the <code>render</code> function for ReactJS does not describe the relationship between <code>state</code> and DOM. Instead, it describes the process to create a virtual DOM. As a result, the <code>render</code> function does not provide any information about the purpose of the <code>state</code> changing, although a data-binding framework should need the information.</p> 
-  <p>Unlike ReactJS, a Binding.scala <code>@dom</code> method is NOT a regular function. It is a template that describes the relationship between data source and the DOM. When partial of the data source changed, the Binding.scala framework understands the exact partial DOM corresponding to the partial data. Then, Binding.scala only re-evaluates partial of the <code>@dom</code> method to update the partial DOM.</p> 
+  <p>ReactJS requires users to provide a <code>render</code> function for each component. The <code>render</code> function should map <code>props</code> and <code>state</code> to a ReactJS's virtual DOM, then ReactJS framework creates a DOM with the same structure as the virtual DOM.</p> 
+  <p>When <code>state</code> changes, ReactJS framework invokes <code>render</code> function to get a new virtual DOM. Unfortunately, ReactJS framework does not precisely know what the <code>state</code> changing is. ReactJS framework has to compare the new virtual DOM and the original virtual DOM, and guess the changeset between the two virtual DOM, then apply the guessed changeset to the real DOM as well.</p> 
+  <p>For example, after you prepend a table row <code>&lt;tr&gt;</code> into an existing <code>&lt;tbody&gt;</code> in a <code>&lt;table&gt;</code>, ReactJS may think you also changed the content of every existing <code>&lt;tr&gt;</code> of the <code>&lt;tbody&gt;</code>.</p> 
+  <p>The reason for this is that the <code>render</code> function for ReactJS does not describe the relationship between <code>state</code> and DOM. Instead, it describes the process to create a virtual DOM. As a result, the <code>render</code> function does not provide any information about the purpose of the <code>state</code> changing, although a data-binding framework should need the information.</p> 
+  <p>Unlike ReactJS, a Binding.scala <code>@dom</code> method is NOT a regular function. It is a template that describes the relationship between data source and the DOM. When part of the data source changes, Binding.scala knows about the exact corresponding partial DOM affected by the change, thus only re-evaluating that part of the <code>@dom</code> method to reflect the change in the DOM.</p> 
   <p>With the help of the ability of precise data-binding provided by Binding.scala, you can get rid of concepts for hinting ReactJS's guessing algorithm, like <code>key</code> attribute, <code>shouldComponentUpdate</code> method, <code>componentDidUpdate</code> method or <code>componentWillUpdate</code> method.</p> 
   <h3><a id="user-content-composability" class="anchor" href="https://github.com/thoughtworksinc/binding.scala#composability" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -278,7 +278,7 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacro
   <p>For example, <a href="https://github.com/MetaStack-pl/MetaRx/issues/45" target="_blank">MetaRx</a> provides a <code>dispose</code> method to unregister the listeners created when building data-binding expressions. The users of MetaRx have the responsibility to call <code>dispose</code> method for every <code>map</code> and <code>flatMap</code> call after the expression changes, otherwise MetaRx leaks memory. Unfortunately, manually <code>dispose</code>ing everything is too hard to be right for complicated binding expressions.</p> 
   <p>Another reactive web framework <a href="https://github.com/widok/widok/issues/29" target="_blank">Widok</a> did not provide any mechanism to manage lifecycle of of data-binding expressions. As a result, it simply always leaks memory.</p> 
   <p>In Binding.scala, unlike MetaRx or Widok, all data-binding expressions are pure functional, with no side-effects. Binding.scala does not register any listeners when users create individual expressions, thus users do not need to manually unregister listeners for a single expression like MetaRx.</p> 
-  <p>Instead, Binding.scala create all internal listeners together, when the user calls <code>dom.render</code> or <code>Binding.watch</code> on the root expression. Note that <code>dom.render</code> or <code>Binding.watch</code> manages listeners on all upstream expressions, not only the direct listeners of the root expression.</p> 
+  <p>Instead, Binding.scala creates all internal listeners together, when the user calls <code>dom.render</code> or <code>Binding.watch</code> on the root expression. Note that <code>dom.render</code> or <code>Binding.watch</code> manages listeners on all upstream expressions, not only the direct listeners of the root expression.</p> 
   <p>In brief, Binding.scala separates functionality in two kinds:</p> 
   <ul> 
    <li>User-defined <code>@dom</code> methods, which produce pure functional expressions with no side-effects.</li> 
@@ -299,9 +299,9 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacro
   &lt;/<span class="pl-ent">div</span>&gt;
 }</pre>
   </div> 
-  <p>Regardless the similar syntax of HTML literal between Binding.scala and ReactJS, Binding.scala create real DOM instead of ReactJS's virtual DOM.</p> 
-  <p>In the above example, <code>&lt;div&gt;...&lt;/div&gt;</code> create a DOM element with the type of <code>org.scalajs.dom.html.Div</code>. Then, the magic <code>@dom</code> let the method wrap the result as a <code>Binding</code>.</p> 
-  <p>You can even assign the <code>Div</code> to a local variable and invoke native DOM method on the variable:</p> 
+  <p>Despite the similar syntax of HTML literal between Binding.scala and ReactJS, Binding.scala creates real DOM instead of ReactJS's virtual DOM.</p> 
+  <p>In the above example, <code>&lt;div&gt;...&lt;/div&gt;</code> creates a DOM element with the type of <code>org.scalajs.dom.html.Div</code>. Then, the magic <code>@dom</code> lets the method wrap the result as a <code>Binding</code>.</p> 
+  <p>You can even assign the <code>Div</code> to a local variable and invoke native DOM methods on the variable:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">@</span>dom
 <span class="pl-k">def</span> <span class="pl-en">notificationBox</span>(<span class="pl-v">message</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Binding</span>[<span class="pl-en">Div</span>] <span class="pl-k">=</span> {
@@ -316,7 +316,7 @@ addCompilerPlugin(<span class="pl-s"><span class="pl-pds">"</span>org.scalamacro
   result
 }</pre>
   </div> 
-  <p><code>scrollIntoView</code> method will be invoked when the <code>Div</code> is created. If you invoked another method that does not defined in <code>Div</code>, the Scala compiler will report an compile-time error instead of bringing the failure to run-time, because Scala is a statically typed language and the Scala compiler understand the type of <code>Div</code>.</p> 
+  <p><code>scrollIntoView</code> method will be invoked when the <code>Div</code> is created. If you invoke another method not defined in <code>Div</code>, the Scala compiler will report a compile-time error instead of bringing the failure to run-time, because Scala is a statically typed language and the Scala compiler understands the type of <code>Div</code>.</p> 
   <p>You may also notice <code>class</code> and <code>title</code>. They are DOM properties or HTML attributes on <code>Div</code>. They are type-checked by Scala compiler as well.</p> 
   <p>For example, given the following <code>typo</code> method:</p> 
   <div class="highlight highlight-source-scala">
@@ -335,7 +335,7 @@ typo.scala:24: value typoMethod is not a member of org.scalajs.dom.html.Div
         myDiv.typoMethod()
               ^
 </code></pre> 
-  <p>With the help of static type system, <code>@dom</code> methods can be much robuster than ReactJS components.</p> 
+  <p>With the help of the static type system, <code>@dom</code> methods can be much more robust than ReactJS components.</p> 
   <p>You can find a complete list of supported properties and methods on <a href="http://www.scala-js.org/api/scalajs-dom/0.8/org/scalajs/dom/raw/HTMLElement.html" target="_blank">scaladoc of scalajs-dom</a> or <a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement" target="_blank">MDN</a></p> 
   <h4><a id="user-content-custom-attributes" class="anchor" href="https://github.com/thoughtworksinc/binding.scala#custom-attributes" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
