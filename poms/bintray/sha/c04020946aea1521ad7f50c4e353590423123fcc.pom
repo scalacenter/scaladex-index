@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-provider-spring_2.11</artifactId>
+  <version>3.4.0</version>
+  <name>pact-jvm-provider-spring_2.11</name>
+  <description># Pact Spring/JUnit runner
+
+## Overview
+Library provides ability to play contract tests against a provider using Spring &amp; JUnit.
+This library is based on and references the JUnit package, so see [junit provider support](pact-jvm-provider-junit) for more details regarding configuration using JUnit.
+
+Supports:
+
+- Standard ways to load pacts from folders and broker
+
+- Easy way to change assertion strategy
+
+- Spring Test MockMVC Controllers and ControllerAdvice using MockMvc standalonesetup.
+
+- MockMvc debugger output
+
+- Multiple @State runs to test a particular Provider State multiple times
+
+- **au.com.dius.pact.provider.junit.State** custom annotation - before each interaction that requires a state change,
+all methods annotated by `@State` with appropriate the state listed will be invoked.
+
+## Example of MockMvc test
+
+```java
+    @RunWith(RestPactRunner.class) // Custom pact runner, child of PactRunner which runs only REST tests
+    @Provider("myAwesomeService") // Set up name of tested provider
+    @PactFolder("pacts") // Point where to find pacts (See also section Pacts source in documentation)
+    public class ContractTest {
+        //Create an instance of your controller.  We cannot autowire this as we're not using (and don't want to use)  a Spring test runner.
+        @InjectMocks
+        private AwesomeController awesomeController = new AwesomeController();
+
+        //Mock your service logic class.  We'll use this to create scenarios for respective provider states.
+        @Mock
+        private AwesomeBusinessLogic awesomeBusinessLogic;
+
+        //Create an instance of your controller advice (if you have one).  This will be passed to the MockMvcTarget constructor to be wired up with MockMvc.
+        @InjectMocks
+        private AwesomeControllerAdvice awesomeControllerAdvice = new AwesomeControllerAdvice();
+
+        //Create a new instance of the MockMvcTarget and annotate it as the TestTarget for PactRunner
+        @TestTarget
+        public final MockMvcTarget target = new MockMvcTarget();
+
+        @Before //Method will be run before each test of interaction
+        public void before() {
+            //initialize your mocks using your mocking framework
+            MockitoAnnotations.initMocks(this);
+
+            //configure the MockMvcTarget with your controller and controller advice
+            target.setControllers(awesomeController);
+            target.setControllerAdvice(awesomeControllerAdvice);
+        }
+
+        @State("default", "no-data") // Method will be run before testing interactions that require "default" or "no-data" state
+        public void toDefaultState() {
+            target.setRunTimes(3);  //let's loop through this state a few times for a 3 data variants
+            when(awesomeBusinessLogic.getById(any(UUID.class)))
+                .thenReturn(myTestHelper.generateRandomReturnData(UUID.randomUUID(), ExampleEnum.ONE))
+                .thenReturn(myTestHelper.generateRandomReturnData(UUID.randomUUID(), ExampleEnum.TWO))
+                .thenReturn(myTestHelper.generateRandomReturnData(UUID.randomUUID(), ExampleEnum.THREE));
+        }
+
+        @State("error-case")
+        public void SingleUploadExistsState_Success() {
+            target.setRunTimes(1); //tell the runner to only loop one time for this state
+            
+            //you might want to throw exceptions to be picked off by your controller advice
+            when(awesomeBusinessLogic.getById(any(UUID.class)))
+                .then(i -> { throw new NotCoolException(i.getArgumentAt(0, UUID.class).toString()); });
+        }
+    }
+```
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+    <developer>
+      <id>kenbot</id>
+      <name>Ken Scambler</name>
+      <email>ken.scambler@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jre8</artifactId>
+      <version>1.1.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-reflect</artifactId>
+      <version>1.1.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.21</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.4.7</version>
+      <classifier>indy</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.11.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>2.11.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging_2.11</artifactId>
+      <version>3.4.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-provider-junit_2.11</artifactId>
+      <version>3.4.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <version>1.4.2.RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>4.2.0.RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>4.2.0.RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-core_2.11</artifactId>
+      <version>3.8.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-junit_2.11</artifactId>
+      <version>3.8.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.10.19</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>1.1-groovy-2.4-rc-4</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>org.codehaus.groovy</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version>3.2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
