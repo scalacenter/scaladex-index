@@ -18,14 +18,15 @@
     </svg></a><a id="user-content-about" target="_blank" href=""></a>About the library</h3> 
   <p>FS2 is a streaming I/O library. The design goals are compositionality, expressiveness, resource safety, and speed. Here's a simple example of its use:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">fs2.</span>{<span class="pl-v">io</span>, <span class="pl-v">text</span>, <span class="pl-v">Task</span>}
+   <pre><span class="pl-k">import</span> <span class="pl-v">cats.effect.</span>{<span class="pl-v">IO</span>, <span class="pl-v">Sync</span>}
+<span class="pl-k">import</span> <span class="pl-v">fs2.</span>{<span class="pl-v">io</span>, <span class="pl-v">text</span>}
 <span class="pl-k">import</span> <span class="pl-v">java.nio.file.</span><span class="pl-v">Paths</span>
 
 <span class="pl-k">def</span> <span class="pl-en">fahrenheitToCelsius</span>(<span class="pl-v">f</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span> <span class="pl-k">=</span>
   (f <span class="pl-k">-</span> <span class="pl-c1">32.0</span>) <span class="pl-k">*</span> (<span class="pl-c1">5.0</span><span class="pl-k">/</span><span class="pl-c1">9.0</span>)
 
-<span class="pl-k">val</span> <span class="pl-en">converter</span><span class="pl-k">:</span> <span class="pl-en">Task</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span>
-  io.file.readAll[<span class="pl-en">Task</span>](<span class="pl-en">Paths</span>.get(<span class="pl-s"><span class="pl-pds">"</span>testdata/fahrenheit.txt<span class="pl-pds">"</span></span>), <span class="pl-c1">4096</span>)
+<span class="pl-k">def</span> <span class="pl-en">converter</span>[<span class="pl-en">F</span>[_]](<span class="pl-k">implicit</span> <span class="pl-en">F</span><span class="pl-k">:</span> <span class="pl-en">Sync</span>[<span class="pl-en">F</span>])<span class="pl-k">:</span> <span class="pl-en">F</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span>
+  io.file.readAll[<span class="pl-en">F</span>](<span class="pl-en">Paths</span>.get(<span class="pl-s"><span class="pl-pds">"</span>testdata/fahrenheit.txt<span class="pl-pds">"</span></span>), <span class="pl-c1">4096</span>)
     .through(text.utf8Decode)
     .through(text.lines)
     .filter(s <span class="pl-k">=&gt;</span> <span class="pl-k">!</span>s.trim.isEmpty <span class="pl-k">&amp;&amp;</span> <span class="pl-k">!</span>s.startsWith(<span class="pl-s"><span class="pl-pds">"</span>//<span class="pl-pds">"</span></span>))
@@ -36,9 +37,10 @@
     .run
 
 <span class="pl-c"><span class="pl-c">//</span> at the end of the universe...</span>
-<span class="pl-k">val</span> <span class="pl-en">u</span><span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> converter.unsafeRun()</pre>
+<span class="pl-k">val</span> <span class="pl-en">u</span><span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> converter[<span class="pl-en">IO</span>].unsafeRunSync()</pre>
   </div> 
-  <p>This will construct a <code>Task</code>, <code>converter</code>, which reads lines incrementally from <code>testdata/fahrenheit.txt</code>, skipping blanklines and commented lines. It then parses temperatures in degrees Fahrenheit, converts these to Celsius, UTF-8 encodes the output, and writes incrementally to <code>testdata/celsius.txt</code>, using constant memory. The input and output files will be closed upon normal termination or if exceptions occur.</p> 
+  <p>This will construct a <code>F[Unit]</code>, <code>converter</code>, which reads lines incrementally from <code>testdata/fahrenheit.txt</code>, skipping blanklines and commented lines. It then parses temperatures in degrees Fahrenheit, converts these to Celsius, UTF-8 encodes the output, and writes incrementally to <code>testdata/celsius.txt</code>, using constant memory. The input and output files will be closed upon normal termination or if exceptions occur.</p> 
+  <p>At the end it's saying that the effect <code>F</code> will be of type <code>cats.effect.IO</code> and then it's possible to invoke <code>unsafeRunSync()</code>. You can choose a different effect type or your own as long as it implements <code>cats.effect.Sync</code> for this case. In some other cases the constraints might require to implement interfaces like <code>cats.effect.MonadError[?, Throwable]</code>, <code>cats.effect.Async</code> and / or <code>cats.effect.Effect</code>.</p> 
   <p>The library supports a number of other interesting use cases:</p> 
   <ul> 
    <li><em>Zipping and merging of streams:</em> A streaming computation may read from multiple sources in a streaming fashion, zipping or merging their elements using an arbitrary <code>Tee</code>. In general, clients have a great deal of flexibility in what sort of topologies they can define--source, sink, and effectful channels are all first-class concepts in the library.</li> 
@@ -82,11 +84,13 @@ libraryDependencies += "co.fs2" %%% "fs2-core" % "0.9.6"
   <p>If you have a project you'd like to include in this list, either open a PR or let us know in <a href="https://gitter.im/functional-streams-for-scala/fs2" target="_blank">the gitter channel</a> and we'll add a link to it here.</p> 
   <ul> 
    <li><a href="https://github.com/tpolecat/doobie" target="_blank">doobie</a>: Pure functional JDBC built on fs2.</li> 
-   <li><a href="https://github.com/Spinoco/fs2-http" target="_blank">fs2-http</a>: Http server and client library implemented in fs2</li> 
+   <li><a href="https://github.com/Spinoco/fs2-http" target="_blank">fs2-http</a>: Http server and client library implemented in fs2.</li> 
    <li><a href="http://http4s.org/" target="_blank">http4s</a>: Minimal, idiomatic Scala interface for HTTP services using fs2.</li> 
+   <li><a href="https://github.com/Spinoco/fs2-kafka" target="_blank">fs2-kafka</a>: Simple client for Apache Kafka.</li> 
+   <li><a href="https://github.com/gvolpe/fs2-rabbit" target="_blank">fs2-rabbit</a>: Stream-based client for RabbitMQ built on top of Fs2.</li> 
    <li><a href="https://github.com/scodec/scodec-stream" target="_blank">scodec-stream</a>: A library for streaming binary decoding and encoding, built using fs2 and <a href="https://github.com/scodec/scodec" target="_blank">scodec</a>.</li> 
    <li><a href="https://github.com/krasserm/streamz" target="_blank">streamz</a>: A library that supports the conversion of <a href="http://doc.akka.io/docs/akka/2.4/scala/stream/index.html" target="_blank">Akka Stream</a> <code>Source</code>s, <code>Flow</code>s and <code>Sink</code>s to and from FS2 <code>Stream</code>s, <code>Pipe</code>s and <code>Sink</code>s, respectively. It also supports the usage of <a href="http://camel.apache.org/" target="_blank">Apache Camel</a> endpoints in FS2 <code>Stream</code>s and Akka Stream <code>Source</code>s, <code>Flow</code>s and <code>SubFlow</code>s.</li> 
-   <li><a href="https://github.com/Spinoco/fs2-zk" target="_blank">fs2-zk</a>: Simple Apache Zookeeper bindings for fs2</li> 
+   <li><a href="https://github.com/Spinoco/fs2-zk" target="_blank">fs2-zk</a>: Simple Apache Zookeeper bindings for fs2.</li> 
    <li><a href="https://github.com/zainab-ali/fs2-reactive-streams" target="_blank">fs2-reactive-streams</a>: A reactive streams implementation for fs2.</li> 
   </ul> 
   <h3><a id="user-content-related-projects" class="anchor" href="https://github.com/functional-streams-for-scala/fs2#related-projects" aria-hidden="true" target="_blank">
