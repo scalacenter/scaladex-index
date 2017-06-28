@@ -26,7 +26,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>How to use</h3> 
   <ul> 
-   <li>In your <code>build.sbt</code> file add the following dependency: <code>"net.manub" %% "scalatest-embedded-kafka" % "0.13.1" % "test"</code></li> 
+   <li>In your <code>build.sbt</code> file add the following dependency: <code>"net.manub" %% "scalatest-embedded-kafka" % "0.14.0" % "test"</code></li> 
    <li>Have your <code>Spec</code> extend the <code>EmbeddedKafka</code> trait.</li> 
    <li>Enclose the code that needs a running instance of Kafka within the <code>withRunningKafka</code> closure.</li> 
   </ul> 
@@ -81,6 +81,22 @@
 
 }</pre>
   </div> 
+  <p>If you want to run ZooKeeper and Kafka on arbitrary available ports, you can use the <code>withRunningKafkaOnFoundPort</code> method. This is useful to make tests more reliable, especially when running tests in parallel or on machines where other tests or services may be running with port numbers you can't control.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">MySpec</span> <span class="pl-k">extends</span> <span class="pl-e">WordSpec</span> <span class="pl-k">with</span> <span class="pl-e">EmbeddedKafka</span> {
+
+<span class="pl-s"><span class="pl-pds">"</span>runs with embedded kafka on arbitrary available ports<span class="pl-pds">"</span></span> should {
+
+    <span class="pl-k">val</span> <span class="pl-en">userDefinedConfig</span> <span class="pl-k">=</span> <span class="pl-en">EmbeddedKafkaConfig</span>(kafkaPort <span class="pl-k">=</span> <span class="pl-c1">0</span>, zooKeeperPort <span class="pl-k">=</span> <span class="pl-c1">0</span>)
+
+    withRunningKafkaOnFoundPort(userDefinedConfig) { <span class="pl-k">implicit</span> actualConfig <span class="pl-k">=&gt;</span>
+      <span class="pl-c"><span class="pl-c">//</span> now a kafka broker is listening on actualConfig.kafkaPort</span>
+      publishStringMessageToKafka(<span class="pl-s"><span class="pl-pds">"</span>topic<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>message<span class="pl-pds">"</span></span>)
+      consumeFirstStringMessageFrom(<span class="pl-s"><span class="pl-pds">"</span>topic<span class="pl-pds">"</span></span>) shouldBe <span class="pl-s"><span class="pl-pds">"</span>message<span class="pl-pds">"</span></span>
+    }
+
+}</pre>
+  </div> 
   <p>The same implicit <code>EmbeddedKafkaConfig</code> is used to define custom consumer or producer properties</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">class</span> <span class="pl-en">MySpec</span> <span class="pl-k">extends</span> <span class="pl-e">WordSpec</span> <span class="pl-k">with</span> <span class="pl-e">EmbeddedKafka</span> {
@@ -103,7 +119,7 @@
 
 }</pre>
   </div> 
-  <p>This works for both <code>withRunningKafka</code> and <code>EmbeddedKafka.start()</code></p> 
+  <p>This works for <code>withRunningKafka</code>, <code>withRunningKafkaOnFoundPort</code>, and <code>EmbeddedKafka.start()</code></p> 
   <p>Also, it is now possible to provide custom properties to the broker while starting Kafka. <code>EmbeddedKafkaConfig</code> has a <code>customBrokerProperties</code> field which can be used to provide extra properties contained in a <code>Map[String, String]</code>. Those properties will be added to the broker configuration, be careful some properties are set by the library itself and in case of conflict the <code>customBrokerProperties</code> values will take precedence. Please look at the source code to see what these properties are.</p> 
   <h3><a id="user-content-utility-methods" class="anchor" href="https://github.com/manub/scalatest-embedded-kafka#utility-methods" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

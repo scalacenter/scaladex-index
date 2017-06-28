@@ -12,14 +12,13 @@
     </svg></a>Configuration</h2> 
   <p>Add the TradeCloud kafka extension dependency in the build.sbt, like:</p> 
   <pre><code>libraryDependencies ++= Seq(
-    "nl.tradecloud" %% "kafka-akka-extension" % "0.22"
+    "nl.tradecloud" %% "kafka-akka-extension" % "0.25"
 )
 </code></pre> 
   <p>Enable the Kafka extension in the application.conf file, like:</p> 
-  <pre><code>akka.extensions = ["nl.tradecloud.kafka.KafkaExtension"]
-
+  <pre><code>
 tradecloud.kafka {
-  bootstrapServers = "localhost:9092"
+  brokers = "localhost:9092"
   topicPrefix = ""
 }
 </code></pre> 
@@ -63,7 +62,10 @@ override def receive: Receive = {
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Subscribe Stream</h3> 
-  <pre><code>class SubscribingActor(kafkaConfig: KafkaConfig) extends Actor with ActorLogging with KafkaConsumer {
+  <pre><code>class SomeActor() extends Actor with ActorLogging {
+  import context.dispatcher
+
+  implicit val materializer: Materializer = ActorMaterializer()
 
   def receive: Receive = Actor.emptyBehavior
 
@@ -71,23 +73,23 @@ override def receive: Receive = {
     group = "some_subscriber_group",
     topics = Set("some_topic")
   )
-
-  initConsumer(kafkaConfig, subscribe)
-    .mapAsync(1) { msg: KafkaConsumer.KafkaMessage =&gt;
-      log.debug("Dispatching msg={}, max timeout={}", msg, subscribe.acknowledgeTimeout)
-
-      
-      // do something here
-    }
-    .map {
-      // do some other stuff
-    }
-    .mapAsync(1) { msg =&gt;
-      log.info("Committing offset, offset={}", msg.record.offset())
-      msg.committableOffset.commitScaladsl()
-    }
-    .to(Sink.ignore)
-    .run()
+  
+  new KafkaSubscriber(subscribe, context.system).atLeastOnce(
+    Flow[KafkaMessage]
+      .map { wrapper =&gt; // extract request
+        wrapper.msg match {
+          case req: SomePublishedMsg =&gt;
+          case req: SomeOtherPublishedMsg =&gt;
+          case ...
+        }
+      }
+      .map {
+        // do some other stuff
+      }
+      .map {
+        Done
+      }
+  )
   
 }
 
@@ -96,7 +98,16 @@ override def receive: Receive = {
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Publish</h3> 
-  <pre><code>mediator ! Publish("some_topic", SomeMsgToKafka("Hello World"))
+  <pre><code>// promise is completed when publish is added to Kafka
+val completed = Promise[Done]()
+
+mediator ! Publish(
+  topic = "some_topic",
+  msg = SomeMsgToKafka("Hello World"),
+  completed = completed
+)
+
+
 </code></pre> 
   <h3><a id="user-content-serialization" class="anchor" href="https://github.com/tradecloud/kafka-akka-extension#serialization" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
