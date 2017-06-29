@@ -89,12 +89,58 @@ user2.validate.toFieldErrMapping
   <p>Octopus is currently available for Scala 2.12 and Scala.js.</p> 
   <p>To get started with SBT, add following line to your <code>build.sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Or if you are using Scala.js:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
+  <h3><a id="user-content-asynchronous-validators" class="anchor" href="https://github.com/krzemin/octopus#asynchronous-validators" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Asynchronous validators</h3> 
+  <p>Sometimes validation rules are more complex in sense that they can't be decided locally by only looking at object value, but they require some external context like querying service or database. Therefore, Octopus has support for asynchronous predicates, that instead of <code>T =&gt; Boolean</code>, are defined in terms of <code>T =&gt; Future[Boolean]</code>. The same as with normal validation predicates, full derivation is also supported for asynchronous validators. Look at the example below to get better insight:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">EmailService</span> {
+  <span class="pl-k">def</span> <span class="pl-en">isEmailTaken</span>(<span class="pl-v">email</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Boolean</span>]
+  <span class="pl-k">def</span> <span class="pl-en">doesDomainExists</span>(<span class="pl-v">email</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">Boolean</span>]
+}
+
+<span class="pl-k">class</span> <span class="pl-en">AsyncValidators</span>(<span class="pl-v">emailService</span>: <span class="pl-en">EmailService</span>) {
+
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">emailAsyncValidator</span><span class="pl-k">:</span> <span class="pl-en">AsyncValidator</span>[<span class="pl-en">Email</span>] <span class="pl-k">=</span>
+    <span class="pl-en">Validator</span>
+      .derived[<span class="pl-en">Email</span>] <span class="pl-c"><span class="pl-c">//</span> (1)</span>
+      .async.ruleVC(emailService.isEmailTaken, <span class="pl-s"><span class="pl-pds">"</span>email is already taken by someone else<span class="pl-pds">"</span></span>) <span class="pl-c"><span class="pl-c">//</span> (2)</span>
+      .async.rule(_.address, emailService.doesDomainExists, <span class="pl-s"><span class="pl-pds">"</span>domain does not exists<span class="pl-pds">"</span></span>) <span class="pl-c"><span class="pl-c">//</span> (3)</span>
+}
+
+<span class="pl-k">val</span> <span class="pl-en">asyncValidators</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AsyncValidators</span>(...)
+
+<span class="pl-k">import</span> <span class="pl-v">asyncValidators.</span><span class="pl-v">_ </span><span class="pl-c"><span class="pl-c">//</span> (4)</span>
+
+<span class="pl-en">Email</span>(<span class="pl-s"><span class="pl-pds">"</span>abc@xyz.qux<span class="pl-pds">"</span></span>).isValidAsync <span class="pl-c"><span class="pl-c">//</span> Success(false): Future[Boolean]</span>
+<span class="pl-en">Email</span>(<span class="pl-s"><span class="pl-pds">"</span>abc@xyzqux<span class="pl-pds">"</span></span>).validateAsync
+  .map(_.toFieldErrMapping)
+  <span class="pl-c"><span class="pl-c">//</span> Success(List(("", "must contain . after @"), ("", "domain does not exists"))): Future[List[(String, String)]</span>
+
+
+<span class="pl-k">val</span> <span class="pl-en">user1</span> <span class="pl-k">=</span> <span class="pl-en">User</span>(
+  <span class="pl-en">UserId</span>(<span class="pl-c1">1</span>),
+  <span class="pl-en">Email</span>(<span class="pl-s"><span class="pl-pds">"</span>taken@example.com<span class="pl-pds">"</span></span>),
+  <span class="pl-en">Address</span>(<span class="pl-s"><span class="pl-pds">"</span>Love Street<span class="pl-pds">"</span></span>, <span class="pl-en">PostalCode</span>(<span class="pl-s"><span class="pl-pds">"</span>12345<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>Los Angeles<span class="pl-pds">"</span></span>)
+)
+
+user1.validateAsync
+  .map(_.toFieldErrMapping) <span class="pl-c"><span class="pl-c">//</span> Success(List("email", "email is already taken by someone else")): Future[List[(String, String)]</span></pre>
+  </div> 
+  <p>Comments:</p> 
+  <ul> 
+   <li>(1) we are requesting to derive usual validator for <code>Email</code> type</li> 
+   <li>(2) by prepending rule with <code>async</code> keyword we can define validator rule with asynchronous predicate that lifts our validator to <code>AsyncValidator[Email]</code></li> 
+   <li>(3) we are adding next asynchronous validation rule</li> 
+   <li>(4) we are importing instances for asynchronous validators into current scope so that later we can use <code>.isValidAsync</code>/<code>.validateAsync</code> extension methods.</li> 
+  </ul> 
   <h3><a id="user-content-integration-with-cats--scalaz" class="anchor" href="https://github.com/krzemin/octopus#integration-with-cats--scalaz" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -106,7 +152,7 @@ user2.validate.toFieldErrMapping
     </svg></a>Cats</h4> 
   <p>If you want to integrate with Cats, simply add following line to <code>build.sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>Having this dependency on classpath, you can use</p> 
   <div class="highlight highlight-source-scala">
@@ -124,17 +170,9 @@ user2.validate.toValidatedNel <span class="pl-c"><span class="pl-c">//</span> : 
     </svg></a>Scalaz</h4> 
   <p>Alternatively, if you want similar integration with Scalaz, add following line to <code>build.sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus-scalaz<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.krzemin<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>octopus-scalaz<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>See <a href="https://github.com/krzemin/octopus/blob/master/octopusScalaz/src/test/scala/octopus/scalaz/ScalazIntegrationSpec.scala" target="_blank">integration test suite</a> for reference.</p> 
-  <h2><a id="user-content-todo" class="anchor" href="https://github.com/krzemin/octopus#todo" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>TODO</h2> 
-  <p>Things to implement/consider:</p> 
-  <ul class="contains-task-list"> 
-   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled> asynchronous validations</li> 
-  </ul> 
   <h2><a id="user-content-faq" class="anchor" href="https://github.com/krzemin/octopus#faq" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -161,7 +199,7 @@ user2.validate.toValidatedNel <span class="pl-c"><span class="pl-c">//</span> : 
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>License</h2> 
-  <p>Copyright 2016 Piotr Krzemiński</p> 
+  <p>Copyright 2016-2017 Piotr Krzemiński</p> 
   <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p> 
   <pre><code>http://www.apache.org/licenses/LICENSE-2.0
 </code></pre> 
