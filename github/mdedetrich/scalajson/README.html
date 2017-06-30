@@ -12,11 +12,11 @@
     </svg></a>Usage</h2> 
   <p>Built for Scala 2.10.x, 2.11.x and 2.12.x</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-s"><span class="pl-pds">"</span>org.scala-lang.platform<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajson<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M1<span class="pl-pds">"</span></span></pre>
+   <pre><span class="pl-s"><span class="pl-pds">"</span>org.scala-lang.platform<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajson<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M2<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>If you are using Scala.js, you need to do</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-s"><span class="pl-pds">"</span>org.scala-lang.platform<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajson<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M1<span class="pl-pds">"</span></span></pre>
+   <pre><span class="pl-s"><span class="pl-pds">"</span>org.scala-lang.platform<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>scalajson<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.0.0-M2<span class="pl-pds">"</span></span></pre>
   </div> 
   <h2><a id="user-content-standard-ast" class="anchor" href="https://github.com/mdedetrich/scalajson#standard-ast" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -87,20 +87,6 @@
   <p>There are some peculiarities when converting between the two AST's. When converting a <code>scalajson.ast.unsafe.JNumber</code> to a <code>scalajson.ast.JNumber</code>, it is possible for this to fail at runtime (since the internal representation of <code>scalajson.ast.unsafe.JNumber</code> is a <code>String</code> and it doesn't have a runtime check). It is up to the caller on how to handle this error (and when), a runtime check is deliberately avoided on our end for performance reasons.</p> 
   <p>Converting from a <code>scalajson.ast.JObject</code> to a <code>scalajson.ast.unsafe.JObject</code> will produce an <code>scalajson.ast.unsafe.JObject</code> with an undefined ordering for its internal <code>Array</code>/<code>js.Array</code> representation. This is because a <code>Map</code> has no predefined ordering. If you wish to provide ordering, you will either need to write your own custom conversion to handle this case. Duplicate keys will also be removed for the same reason in an undefined manner.</p> 
   <p>Do note that according to the JSON spec, whether to order keys for a <code>JObject</code> is not specified. Also note that <code>Map</code> disregards ordering for equality, however <code>Array</code>/<code>js.Array</code> equality takes ordering into account.</p> 
-  <h2><a id="user-content-tot-conversion" class="anchor" href="https://github.com/mdedetrich/scalajson#tot-conversion" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>.to[T] Conversion</h2> 
-  <p>Both <code>scalajson.ast.JNumber</code> and <code>scalajson.ast.unsafe.JNumber</code> provide conversions using a <code>.to[T]</code> method. These methods provide a default fast implementations for converting between different number types (as well as stuff like <code>Char[Array]</code>). You can provide your own implementations of a <code>.to[T]</code> conversion by creating an <code>implicit val</code> that implements a <code>scalajson.ast.JNumberConverter</code>, i.e.</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">scalajson.ast.</span><span class="pl-v">JNumberConverter</span>
-
-
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">myNumberConverter</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">JNumberConverter</span>[<span class="pl-en">SomeNumberType</span>]{
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">SomeNumberType</span> <span class="pl-k">=</span> <span class="pl-k">???</span>
-}</pre>
-  </div> 
-  <p>Then you just need to provide this implementation in scope for usage</p> 
   <h2><a id="user-content-scalajs" class="anchor" href="https://github.com/mdedetrich/scalajson#scalajs" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
