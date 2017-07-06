@@ -1,0 +1,137 @@
+<div class="announce instapaper_body MD" data-path="Readme.MD" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/kondaurov-json/json_schema" target="_blank"><img src="https://camo.githubusercontent.com/0997aa6c3f5f73bed844755126f7867914ed9222/68747470733a2f2f7472617669732d63692e6f72672f6b6f6e646175726f762d6a736f6e2f6a736f6e5f736368656d612e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/kondaurov-json/json_schema.svg?branch=master" style="max-width:100%;"></a> <a href="https://coveralls.io/github/kondaurov-json/json_schema?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/4da3be057463d9b687c419db90ff7942b0b4c22f/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f6769746875622f6b6f6e646175726f762d6a736f6e2f6a736f6e5f736368656d612f62616467652e7376673f6272616e63683d6d6173746572" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/github/kondaurov-json/json_schema/badge.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/kondaurov-json/json_schema#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>We have raw json:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>modelName<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>c3po<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>500<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>is_working<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>yes<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>previous_price<span class="pl-pds">"</span></span>: <span class="pl-c1">250</span>
+}</pre>
+  </div> 
+  <p>We have case class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Robot</span>(
+    <span class="pl-v">model</span>: <span class="pl-k">String</span>,
+    <span class="pl-v">price</span>: <span class="pl-k">Int</span>,
+    <span class="pl-v">isWorking</span>: <span class="pl-k">Boolean</span>,
+    <span class="pl-v">previousPrice</span>: <span class="pl-en">Option</span>[<span class="pl-k">Int</span>]
+)</pre>
+  </div> 
+  <p>We want to cast input json as an instance of Robot</p> 
+  <p>There are few ways to do this:</p> 
+  <ol> 
+   <li>You can create reads that are created by play_json library. You just need to create companion object with implicit reads.</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">play.api.libs.json.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Robot</span> {
+ <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">reads</span><span class="pl-k">:</span> <span class="pl-en">Reads</span>[<span class="pl-en">Robot</span>] <span class="pl-k">=</span> <span class="pl-en">Json</span>.reads[<span class="pl-en">Robot</span>]
+}</pre>
+  </div> 
+  <p>This reads won't work with our raw json because</p> 
+  <ul> 
+   <li>there's no model, isWorking, previousPrice fields.</li> 
+   <li>"500" isn't a number but string</li> 
+  </ul> 
+  <ol start="2"> 
+   <li>You can create create reads with custom reads:</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre> <span class="pl-k">import</span> <span class="pl-v">play.api.libs.json.</span><span class="pl-v">_</span>
+ <span class="pl-k">import</span> <span class="pl-v">play.api.libs.functional.syntax.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Robot</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">reads</span> <span class="pl-k">=</span> (
+    (__ \ <span class="pl-s"><span class="pl-pds">"</span>model<span class="pl-pds">"</span></span>).read[<span class="pl-k">String</span>] <span class="pl-k">~</span>
+    (__ \ <span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span>).read[<span class="pl-k">String</span>].map(_.toInt) <span class="pl-k">~</span>
+    (__ \ <span class="pl-s"><span class="pl-pds">"</span>is_working<span class="pl-pds">"</span></span>).read[<span class="pl-k">String</span>].map(s <span class="pl-k">=&gt;</span> s.equalsIgnoreCase(<span class="pl-s"><span class="pl-pds">"</span>yes<span class="pl-pds">"</span></span>)) <span class="pl-k">~</span>
+    (__ \ <span class="pl-s"><span class="pl-pds">"</span>previous_price<span class="pl-pds">"</span></span>).readNullable[<span class="pl-k">String</span>]
+  )(<span class="pl-en">Robot</span>.apply _)
+}</pre>
+  </div> 
+  <p>This is too much boilerplate code... Moreover you might get runtime exception if price field can't be cast to Int</p> 
+  <ol start="3"> 
+   <li>You can create json schema, validate json over it and cast it to Robot. But this wont work with our raw json either because of problems described in 1</li> 
+  </ol> 
+  <h2><a id="user-content-json_schema" class="anchor" href="https://github.com/kondaurov-json/json_schema#json_schema" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>json_schema</h2> 
+  <p><strong>Here json schema comes in play:</strong></p> 
+  <p>You can describe json schema like that:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.kondaurovdev.json_schema.types.Api.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kondaurovdev.json_schema.Implicits.</span><span class="pl-v">_</span>
+
+
+<span class="pl-k">object</span> <span class="pl-en">Robot</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">schema</span><span class="pl-k">:</span> iSchemaWrapper <span class="pl-k">=</span> objVal(
+    prop(<span class="pl-s"><span class="pl-pds">"</span>model<span class="pl-pds">"</span></span>, strVal()),
+    prop(<span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span>, numVal()),
+    prop(<span class="pl-s"><span class="pl-pds">"</span>is_working<span class="pl-pds">"</span></span>, boolVal(), <span class="pl-s"><span class="pl-pds">"</span>isWorking<span class="pl-pds">"</span></span>),
+    prop(<span class="pl-s"><span class="pl-pds">"</span>previous_price<span class="pl-pds">"</span></span>, numVal(), <span class="pl-s"><span class="pl-pds">"</span>previousPrice<span class="pl-pds">"</span></span>, required <span class="pl-k">=</span> <span class="pl-c1">false</span>)
+  )
+  
+  <span class="pl-k">val</span> <span class="pl-en">reads</span> <span class="pl-k">=</span> schema.getReadsBySchema(<span class="pl-en">Json</span>.reads[<span class="pl-en">Robot</span>])
+
+}</pre>
+  </div> 
+  <p>Or you can describe your schemas in file and provide it via application config</p> 
+  <p>application.conf</p> 
+  <pre lang="hocon"><code>json_schema {
+  provider {
+    fromDir {
+      dir = ${HOME}/json_schemas
+    }
+  }
+}
+</code></pre> 
+  <p>${HOME}/json_schemas/app.yaml</p> 
+  <div class="highlight highlight-source-yaml">
+   <pre><span class="pl-ent">public</span>:
+ <span class="pl-ent">obj</span>:
+  <span class="pl-ent">props</span>:
+    - <span class="pl-s">{ path: model, type: str }</span>
+    - <span class="pl-s">{ path: price, type: number }</span>
+    - <span class="pl-s">{ path: is_working, alias: isWorking }</span>
+    - <span class="pl-s">{ path: previous_price, alias: previousPrice }</span></pre>
+  </div> 
+  <p>Now we can get rid of big schema in our application and use link to it</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Robot</span> {
+
+<span class="pl-k">import</span> <span class="pl-v">com.github.kondaurovdev.json_schema.types.Api.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kondaurovdev.json_schema.types.</span><span class="pl-v">SchemaPath</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.kondaurovdev.json_schema.Implicits.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Robot</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">schema</span><span class="pl-k">:</span> iSchemaWrapper <span class="pl-k">=</span> <span class="pl-en">SchemaPath</span>(<span class="pl-s"><span class="pl-pds">"</span>app<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>robot<span class="pl-pds">"</span></span>, ns <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>public<span class="pl-pds">"</span></span>))
+  
+  <span class="pl-k">val</span> <span class="pl-en">reads</span> <span class="pl-k">=</span> schema.getReadsBySchema(<span class="pl-en">Json</span>.reads[<span class="pl-en">Robot</span>])
+
+}
+
+}</pre>
+  </div> 
+  <h2><a id="user-content-some-thoughts" class="anchor" href="https://github.com/kondaurov-json/json_schema#some-thoughts" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Some thoughts</h2> 
+  <p>There is a json schema specification (<a href="http://json-schema.org/" target="_blank">http://json-schema.org/</a>)</p> 
+  <p>Purpose of json schema is validate json over schema. It can only <strong>validate</strong> This means:</p> 
+  <ul> 
+   <li>you can't specify default values for fields</li> 
+   <li>you can't cast values (for eg. "123" is string and you cast it to number )</li> 
+  </ul> 
+  <p>So i want a little bit more: validate and transform json while validating. Get pure json from schema</p> 
+ </article>
+</div>
