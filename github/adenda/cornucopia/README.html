@@ -4,53 +4,54 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Cornucopia</h1> 
-  <p>A microservice and library for auto-sharding Redis Cluster. Implemented on Akka Streams, with Salad wrapping the Java 8 Lettuce API for Redis.</p> 
+  <p>Cornucopia is a controller for Redis cluster that performs auto-sharding when adding and removing Redis cluster nodes.</p> 
   <p>This project is originally a fork from <a href="https://github.com/kliewkliew/cornucopia" target="_blank"><code>kliewkliew/cornucopia</code></a>.</p> 
   <h2><a id="user-content-operations" class="anchor" href="https://github.com/adenda/cornucopia#operations" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Operations</h2> 
-  <p>The following keys for Kafka messages correspond to operations to be performed in Cornucopia.</p> 
+  <p>The following keys for task messages correspond to operations to be performed in Cornucopia.</p> 
   <h3><a id="user-content-add-or-remove-a-node" class="anchor" href="https://github.com/adenda/cornucopia#add-or-remove-a-node" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Add or Remove a Node</h3> 
   <ul> 
-   <li><code>+master</code></li> 
-   <li><code>+slave</code></li> 
-   <li><code>-slave</code></li> 
+   <li><code>+master</code>: Add Master node</li> 
+   <li><code>+slave</code>: Add Slave node</li> 
+   <li><code>-master</code>: Remove Master node</li> 
+   <li><code>-slave</code>: Remove Slave node</li> 
   </ul> 
-  <p>The value contained in the message is the URI (must be resolvable at the microservice) of the node to operate on. See <a href="https://github.com/mp911de/lettuce/wiki/Redis-URI-and-connection-details" target="_blank">Redis URI and connection details</a>.</p> 
+  <p>The value contained in the message is the URI of the node to operate on. See <a href="https://github.com/mp911de/lettuce/wiki/Redis-URI-and-connection-details" target="_blank">Redis URI and connection details</a>. When adding a node to the cluster, the URI value indicates the Redis cluster node to be added to the cluster. When removing a node from the cluster, the URI value indicates the cluster node to be removed. If the cluster node to be removed is not of the node type (master or slave) indicated in the task message, then the cluster node is converted into that node type by performing a manual failover. Cornucopia does not support removing a slave node from the cluster if the URI value in the task message hosts a master node that is not replicated by a slave node. Technically this is a limitation. That said, it could be considered a best practice to have all master nodes replicated by a slave at any given time in the cluster.</p> 
+  <p>Adding or removing a master node will automatically trigger a cluster reshard event.</p> 
+  <p>New slave nodes will initially be assigned to the master with the least slaves. Beyond that, Redis Cluster itself has the ability to migrate slaves to other masters based on the cluster configuration.</p> 
+  <p>Note that Redis cluster will automatically assign or reassign nodes between master or slave roles, or migrate slaves between masters or do failover. You may see errors due to Redis doing reassignment when the cluster is small. For example, when testing with only two nodes, after adding the second node as a master, the first node can become a slave. If you then try to remove the second node, there will be no masters left. The behaviour is more predictable as more nodes are added to the cluster. It is generally advisable to maintain a cluster with at least three master nodes at all times.</p> 
   <h4><a id="user-content-using-cornucopia-as-a-microservice" class="anchor" href="https://github.com/adenda/cornucopia#using-cornucopia-as-a-microservice" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Using Cornucopia as a microservice</h4> 
   <p>Cornucopia can be run as a stand-alone microservice. The interface to this microservice is a HTTP Rest interface.</p> 
-  <p>For example, assuming that the micro service is running on http port 9001 on localhost (which is the default). To add a new master node to the cluster on localhost:7006, run the following command:</p> 
+  <p>For example, assume that the micro service is running on HTTP port 9001 on localhost (which is the default). To add a new master node to the cluster on 172.10.0.5:7006, run the following command:</p> 
   <pre><code>curl -X POST \
-  http://localhost:9001/task \
+  http://localhost:9001/task2 \
   -H 'content-type: application/json' \
-  -d '{
-	"operation": "+master",
-	"redisNodeIp": "redis://localhost:7006"
-}'
+  -d '{ "operation": "+master", "redisNodeIp": "redis://172.10.0.5:7006" }'
 </code></pre> 
-  <h4><a id="user-content-using-cornucopia-as-a-library-in-your-appliation" class="anchor" href="https://github.com/adenda/cornucopia#using-cornucopia-as-a-library-in-your-appliation" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-using-cornucopia-as-a-library-in-your-application" class="anchor" href="https://github.com/adenda/cornucopia#using-cornucopia-as-a-library-in-your-application" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Using Cornucopia as a library in your appliation</h4> 
-  <p>Include Cornucopia in your <code>build.sbt</code> file: <code>"com.adendamedia" %% "cornucopia" % "0.5.0"</code>. Control messages are sent to Cornucopia using an ActorRef that must be imported.</p> 
-  <pre><code>import com.adendamedia.cornucopia.Library
-import com.adendamedia.cornucopia.actors.CornucopiaSource.Task
-</code></pre> 
-  <p>Then, for example, from within your own AKKA actor you can send a message to Cornucopia:</p> 
-  <pre><code>val cornucopiaRef = Library.ref    
-cornucopiaRef ! Task("+master", "redis://localhost:7006")
-</code></pre> 
-  <p>Adding a master node will automatically trigger a <code>*reshard</code> event. Currently, removing a master node is not supported, but should be supported in the next release.</p> 
-  <p>New slave nodes will initially be assigned to the master with the least slaves. Beyond that, Redis Cluster itself has the ability to migrate slaves to other masters based on the cluster configuration.</p> 
-  <p>Note that Redis cluster will automatically assign or reassign nodes between master or slave roles, or migrate slaves between masters or do failover. You may see errors due to Redis doing reassignment when the cluster is small. For example, when testing with only two nodes, after adding the second node as a master, the first node can become a slave. If you then try to remove the second node, there will be no masters left. The behaviour is more predictable as more nodes are added to the cluster.</p> 
-  <p>There may be multiple node ids (dead nodes that were not previously removed) assigned to one URI and Redis only returns one at a time so you may have remove the same URI multiple times to remove the correct node id.</p> 
+    </svg></a>Using Cornucopia as a library in your application</h4> 
+  <p>Include Cornucopia in your <code>build.sbt</code> file: <code>"com.adendamedia" %% "cornucopia" % "0.6.0"</code>. Control messages are sent to Cornucopia using an ActorRef that must be imported.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.adendamedia.cornucopia.</span><span class="pl-v">Library</span>
+<span class="pl-k">import</span> <span class="pl-v">com.adendamedia.cornucopia.actors.Gatekeeper.</span>{<span class="pl-v">Task</span>, <span class="pl-v">TaskAccepted</span>, <span class="pl-v">TaskDenied</span>}</pre>
+  </div> 
+  <p>From within your own AKKA actor you can send a message to Cornucopia. Note that the library requires an implicit Actor System. This actor system can be reused from within your own application.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>()
+<span class="pl-k">val</span> <span class="pl-en">library</span><span class="pl-k">:</span> com.adendamedia.cornucopia.<span class="pl-en">Library</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Library</span>
+<span class="pl-k">val</span> <span class="pl-en">cornucopiaRef</span> <span class="pl-k">=</span> library.ref    
+cornucopiaRef <span class="pl-k">!</span> <span class="pl-en">Task</span>(<span class="pl-s"><span class="pl-pds">"</span>+master<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>redis://localhost:7006<span class="pl-pds">"</span></span>)</pre>
+  </div> 
   <h2><a id="user-content-application-configuration" class="anchor" href="https://github.com/adenda/cornucopia#application-configuration" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -68,14 +69,6 @@ cornucopiaRef ! Task("+master", "redis://localhost:7006")
    </thead> 
    <tbody> 
     <tr> 
-     <td align="left"><code>cornucopia.refresh.timeout</code></td> 
-     <td align="left">Time (seconds) to wait for cluster topology changes to propagate (default: 5 seconds).</td> 
-    </tr> 
-    <tr> 
-     <td align="left"><code>cornucopia.batch.period</code></td> 
-     <td align="left">Time (seconds) to wait for batches to accumulate before executing a job (default: 5 seconds).</td> 
-    </tr> 
-    <tr> 
      <td align="left"><code>cornucopia.http.host</code></td> 
      <td align="left">The hostname where the Cornucopia microservice is run (default: localhost).</td> 
     </tr> 
@@ -84,16 +77,8 @@ cornucopiaRef ! Task("+master", "redis://localhost:7006")
      <td align="left">The port on which the Cornucopia microservice is run (default: 9001).</td> 
     </tr> 
     <tr> 
-     <td align="left"><code>cornucopia.reshard.interval</code></td> 
-     <td align="left">Mininum time (seconds) to wait between reshard events (default: 60 seconds).</td> 
-    </tr> 
-    <tr> 
-     <td align="left"><code>cornucopia.reshard.timeout</code></td> 
-     <td align="left">The maximum upper time limit (seconds) that the cluster must be resharded within without the resharding failing (default: 300 seconds).</td> 
-    </tr> 
-    <tr> 
-     <td align="left"><code>cornucopia.migrate.slot.timeout</code></td> 
-     <td align="left">The maximum upper time limit (seconds) that a slot must be migrated from one node to another during resharding without slot migration failing. (default: 60 seconds)</td> 
+     <td align="left"><code>cornucopia.migrate.slots.workers</code></td> 
+     <td align="left">The number of workers to run migrate slot commands during cluster resharding. This setting effectively rate limits the number of asynchronous migrate slots jobs that can be running at any given time. (default: 5)</td> 
     </tr>
    </tbody>
   </table> 
@@ -115,15 +100,9 @@ cornucopiaRef ! Task("+master", "redis://localhost:7006")
     </tr> 
     <tr> 
      <td align="left"><code>redis.cluster.seed.server.port</code></td> 
-     <td align="left">Initial node-port from which the full cluster topology will be derived (default: 6379).</td> 
+     <td align="left">Initial node-port from which the full cluster topology will be derived (default: 7000).</td> 
     </tr>
    </tbody>
   </table> 
-  <h2><a id="user-content-auto-scaling" class="anchor" href="https://github.com/adenda/cornucopia#auto-scaling" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Auto-Scaling</h2> 
-  <p>High memory utilization will require more master nodes. High master CPU utilization (writes) will require more master nodes. High slave CPU utilization (reads) will require more slave nodes.</p> 
-  <p>Determination of scaling requirements is outside the scope of this project. A Kubernetes project will be available to instantiate and request initialization for node types based on cluster utilization.</p> 
  </article>
 </div>

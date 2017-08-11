@@ -5,49 +5,5 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Scala 2.x Compiler Plugin for The Sireum Language (Slang)</h1> 
   <p>This plugin provides syntactic program transformations to allow compiling Slang programs using the latest Scala 2.x standard compiler.</p> 
-  <p>The following program transformations are applied (in order) right after the scalac parsing phase if the <code>.scala</code> file's first line (without whitespace) contains <code>#Sireum</code> in a comment (or if the first import is <code>org.sireum._</code> or <code>org.sireum.logika._</code> for <code>.sc</code> and <code>.logika</code> files):</p> 
-  <ul> 
-   <li> <p><code>s"..."</code> ⟹ <code>s"..."</code></p> <p>(preserved as is, i.e., unaffected by other transformations below)</p> </li> 
-   <li> <p><code>up( ... ) = &lt;exp&gt;</code> ⟹ <code>up( ... ) = &lt;exp2&gt;</code></p> <p>where <code>&lt;exp2&gt;</code> is <em>transform</em>(<code>&lt;exp&gt;</code>)</p> <p>(<code>up( ... )</code> is preserved as is)</p> </li> 
-   <li> <p><code>pat( ... ) = &lt;exp&gt;</code> ⟹ <code>pat( ... ) = &lt;exp2&gt;</code></p> <p>where <code>&lt;exp2&gt;</code> is <em>transform</em>(<code>&lt;exp&gt;</code>)</p> <p>(<code>pat( ... )</code> is preserved as is)</p> </li> 
-   <li> <p><code>def ... = l"""..."""</code> ⟹ <code>def ...</code></p> <p>if in a trait</p> </li> 
-   <li> <p><code>def ... = l""" ... """</code> ⟹ <code>def ... = lDef""" ... """</code></p> <p>if not in a trait</p> </li> 
-   <li> <p><code>l""" ... """"</code> ⟹ <code>lUnit""" ... """"</code></p> </li> 
-   <li> <p><code>&lt;lit&gt;: Int</code> ⟹ <code>z"&lt;N&gt;"</code></p> <p>where <code>&lt;N&gt;</code> is <code>&lt;lit&gt;.toString</code></p> </li> 
-   <li> <p><code>&lt;lit&gt;: Long</code> ⟹ <code>z"&lt;N&gt;"</code></p> <p>where <code>&lt;N&gt;</code> is <code>&lt;lit&gt;.toString</code></p> </li> 
-   <li> <p><code>case &lt;pat&gt; if &lt;exp&gt; =&gt; &lt;body&gt;</code> ⟹ <code>case &lt;pat&gt; if &lt;exp2&gt; =&gt; &lt;body2&gt;</code></p> <p>where:</p> 
-    <ul> 
-     <li> <p><code>&lt;exp2&gt;</code> is <em>transform</em>(<code>&lt;exp&gt;</code>)</p> </li> 
-     <li> <p><code>&lt;body2&gt;</code> is <em>transform</em>(<code>&lt;body&gt;</code>)</p> </li> 
-    </ul> <p>(<code>&lt;pat&gt;</code> is preserved as is)</p> </li> 
-   <li> <p><code>&lt;exp&gt;(&lt;arg&gt;, ..., &lt;arg&gt;)</code> ⟹ <code>&lt;exp&gt;(&lt;arg2&gt;, ..., &lt;arg2&gt;)</code></p> <p>where each <code>&lt;arg2&gt;</code> is:</p> 
-    <ul> 
-     <li> <p><em>transform</em>(<code>&lt;arg&gt;</code>)</p> <p>if <code>&lt;arg&gt;</code> is a literal or a function (<code>... =&gt; ...</code>)</p> </li> 
-     <li> <p><code>&lt;id&gt; =</code> <code>_assign (</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> <p>if <code>&lt;arg&gt;</code> is <code>&lt;id&gt; = &lt;exp&gt;</code></p> </li> 
-     <li> <p><code>_assign(</code> <em>transform</em>(<code>&lt;arg&gt;</code>) <code>)</code></p> <p>otherwise</p> </li> 
-    </ul> </li> 
-   <li> <p><code>&lt;lhs&gt; = &lt;exp&gt;</code> ⟹ <code>&lt;lhs&gt; = &lt;exp2&gt;</code></p> <p>where <code>&lt;exp2&gt;</code> is <code>_assign(</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> </li> 
-   <li> <p><code>&lt;exp&gt;(&lt;arg&gt;, ..., &lt;arg&gt;) = &lt;rhs&gt;</code> ⟹ <code>&lt;exp2&gt;(&lt;arg2&gt;, ..., &lt;arg2&gt;) = &lt;rhs2&gt;</code></p> <p>where:</p> 
-    <ul> 
-     <li> <p><code>&lt;exp2&gt;</code> is <em>transform</em>(<code>&lt;exp&gt;</code>)</p> </li> 
-     <li> <p>each <code>&lt;arg2&gt;</code> is <em>transform</em>(<code>&lt;arg&gt;</code>)</p> </li> 
-     <li> <p><code>&lt;rhs2&gt;</code> is <code>_assign(</code> <em>transform</em>(<code>&lt;rhs&gt;</code>) <code>)</code></p> </li> 
-    </ul> </li> 
-   <li> <p><code>(&lt;exp&gt;, ..., &lt;exp&gt;)</code> ⟹ <code>(&lt;exp2&gt;, ..., &lt;exp2&gt;)</code></p> <p>where each <code>&lt;exp2&gt;</code> is <code>_assign(</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> </li> 
-   <li> <p><code>val &lt;pat&gt;: &lt;type&gt; = &lt;exp&gt;</code> ⟹ <code>val &lt;pat&gt;: &lt;type&gt; = &lt;exp2&gt;</code></p> <p>where <code>&lt;exp2&gt;</code> is <code>_assign(</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> <p>(<code>&lt;pat&gt;</code> is preserved as is)</p> </li> 
-   <li> <p><code>var &lt;pat&gt;: &lt;type&gt; = &lt;exp&gt;</code> ⟹ <code>val &lt;pat&gt;: &lt;type&gt; = &lt;exp2&gt;</code></p> <p>where <code>&lt;exp2&gt;</code> is <code>_assign(</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> <p>(<code>&lt;pat&gt;</code> is preserved as is)</p> </li> 
-  </ul> 
-  <p>Where <em>assign</em>(<code>&lt;exp&gt;</code>) is defined as:</p> 
-  <ul> 
-   <li> <p><em>transform</em>(<code>&lt;exp&gt;</code>)</p> <p>if <code>&lt;exp&gt;</code> is a literal or a function</p> </li> 
-   <li> <p><code>_assign(</code> <em>transform</em>(<code>&lt;exp&gt;</code>) <code>)</code></p> <p>otherwise</p> </li> 
-  </ul> 
-  <h1><a id="user-content-to-do" class="anchor" href="https://github.com/sireum/v3-scalac-plugin#to-do" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>To Do</h1> 
-  <ul> 
-   <li>customize precedence for Slang unicode operators</li> 
-  </ul> 
  </article>
 </div>

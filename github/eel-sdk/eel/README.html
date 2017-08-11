@@ -58,25 +58,25 @@
    <li>A dataset is essentially a Hive table - the upcoming <em>EEL 1.2</em> release you will be able to create Hive tables from the CLI - at the moment it’s possible generate the Hive DDL with EEL API using <em>io.eels.component.hive.HiveDDL$#showDDL</em>.</li> 
    <li>For writing directly to <strong>AVRO</strong> or <strong>Parquet</strong> storage formats you must provide an <strong>AVRO</strong> schema – EEL dynamically infers a schema from the underlying source, for example a JDBC Query or CSV headers.</li> 
    <li>Support for ingesting from storage formats (other than <strong>AVRO</strong> and <strong>Parquet</strong>) is be achieved by <em>transforming</em> each record/row with another module named <strong>Kite Morphlines</strong> - it uses another intermediate record format and is another <strong>API</strong> to learn.</li> 
-   <li>EEL supports transformations using regular Scala functions by invoking the <em>map</em> method on the Source’s underlying <em>Frame</em>, e.g. <em>source.toFrame.map(f: (Row) =&gt; Row)</em> – the <em>map</em> function returns a new row object.</li> 
+   <li>EEL supports transformations using regular Scala functions by invoking the <em>map</em> method on the Source’s underlying <em>DataStream</em>, e.g. <em>source.toDataStream.map(f: (Row) =&gt; Row)</em> – the <em>map</em> function returns a new row object.</li> 
    <li>Kite has direct support for <em>HBase</em> but EEL doesn’t – will do with the upcoming <em>EEL 1.2</em> release</li> 
    <li>Kite currently <strong>doesn’t</strong> support Kudo – EEL does.</li> 
    <li>Kite stores additional metadata on disk (<strong>HDFS</strong>) to be deemed a valid Kite dataset – if you externally change the Schema outside of Kite, i.e. through <em>DDL</em> then it can cause a dataset to be <em>out-of-synch</em> and potentially <em>malfunction</em> - EEL functions normally in this scenario as there is no additional metadata required.</li> 
-   <li>Kite handles Hive partitioning by specifying a partition strategies – there are a few <em>out-of-the-box</em> strategies derived from the current payload – with <strong>EEL</strong> this works auto-magically by virture of providing the same column on the source row, alternatively you can add a partition key column with <strong>addField</strong> on the fly on the source’s frame or use <strong>map</strong> transformation function.</li> 
+   <li>Kite handles Hive partitioning by specifying a partition strategies – there are a few <em>out-of-the-box</em> strategies derived from the current payload – with <strong>EEL</strong> this works auto-magically by virture of providing the same column on the source row, alternatively you can add a partition key column with <strong>addField</strong> on the fly on the source’s DataStream or use <strong>map</strong> transformation function.</li> 
   </ul> 
   <h2><a id="user-content-introduction-to-the-api" class="anchor" href="https://github.com/eel-sdk/eel#introduction-to-the-api" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Introduction to the API</h2> 
-  <p>The core data structure in Eel is the <code>Frame</code>. A frame consists of a <code>Schema</code>, and zero or more <code>Row</code>s which contain values for each field in the schema. A frame is conceptually similar to a table in a relational database, or a dataframe in Spark, or a dataset in Flink.</p> 
-  <p>Frames can be read from a <code>Source</code> such as hive tables, jdbc databases, or even programatically from Scala or Java collections. Frames can be written out to a <code>Sink</code> such as a hive table or parquet file.</p> 
+  <p>The core data structure in Eel is the <code>DataStream</code>. A DataStream consists of a <code>Schema</code>, and zero or more <code>Row</code>s which contain values for each field in the schema. A DataStream is conceptually similar to a table in a relational database, or a dataframe in Spark, or a dataset in Flink.</p> 
+  <p>DataStreams can be read from a <code>Source</code> such as hive tables, jdbc databases, or even programatically from Scala or Java collections. DataStreams can be written out to a <code>Sink</code> such as a hive table or parquet file.</p> 
   <p>The current set of sources and sinks include: <em>Apache Avro</em>, <em>Apache Parquet</em>, <em>Apache Orc</em>, <em>CSV</em>, <em>Kafka</em> (sink only), <em>HDFS</em>, <em>Kudu</em>, <em>JDBC</em>, <em>Hive</em>, <em>Json Files</em>.</p> 
-  <p>Once you have a reference to a frame, the frame can be manipulated in a similar way to regular Scala collections - many of the methods share the same name, such as <code>map</code>, <code>filter</code>, <code>take</code>, <code>drop</code>, etc. All operations on a frame are lazy - they will only be executed once an <em>action</em> takes place such as <code>collect</code>, <code>count</code>, or <code>save</code>.</p> 
+  <p>Once you have a reference to a DataStream, the DataStream can be manipulated in a similar way to regular Scala collections - many of the methods share the same name, such as <code>map</code>, <code>filter</code>, <code>take</code>, <code>drop</code>, etc. All operations on a DataStream are lazy - they will only be executed once an <em>action</em> takes place such as <code>collect</code>, <code>count</code>, or <code>save</code>.</p> 
   <p>For example, you could load data from a CSV file, drop rows that don't match a predicate, and then save the data back out to a Parquet file all in a couple of lines of code.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">CsvSource</span>(<span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>input.csv<span class="pl-pds">"</span></span>))
 <span class="pl-k">val</span> <span class="pl-en">sink</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSink</span>(<span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>output.pq<span class="pl-pds">"</span></span>))
-source.toFrame().filter(_.get(<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>) <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>London<span class="pl-pds">"</span></span>).save(sink)</pre>
+source.toDataStream().filter(_.get(<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>) <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>London<span class="pl-pds">"</span></span>).to(sink)</pre>
   </div> 
   <h3><a id="user-content-types-supported" class="anchor" href="https://github.com/eel-sdk/eel#types-supported" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -228,7 +228,7 @@ OK
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
     <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query)
       .withFetchSize(<span class="pl-c1">10</span>)
-      .toFrame
+      .toDataStream
       .withLowerCaseSchema
       <span class="pl-c"><span class="pl-c">//</span> Transformation - add title to row</span>
       .map { row <span class="pl-k">=&gt;</span> 
@@ -304,15 +304,15 @@ Found 1 items
    <pre>    <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>())
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
     <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
-      .toFrame()
-      .collect()
+      .toDataStream()
+      .collect
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <ol> 
    <li><em>hadoopFileSystem</em> is a <em>Hadoop File System</em> object scala implicit required by the HiveSource</li> 
    <li><em>hiveMetaStoreClient</em> is a <em>Hive metastore client</em> object scala implicit required by the HiveSource</li> 
    <li><em>HiveSource</em> specifies arguments for the Hive <em>database</em> and <em>table</em> respectively.</li> 
-   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>DataStream</strong>: <em>toDataStream().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
   </ol> 
   <p>Here are the results of the read:</p> 
   <pre><code>[name = Fred,age = 50,salary = 50000.99000,creation_time = 2017-01-24 13:40:50.664,title = Mr]
@@ -329,7 +329,7 @@ Found 1 items
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hiveMetaStoreClient</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">HiveMetaStoreClient</span>(<span class="pl-k">new</span> <span class="pl-en">HiveConf</span>())
     <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
       .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -354,7 +354,7 @@ Found 1 items
     <span class="pl-en">HiveSource</span>(<span class="pl-s"><span class="pl-pds">"</span>eel_test<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>person<span class="pl-pds">"</span></span>)
       .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
       .withPartitionConstraint(<span class="pl-en">PartitionConstraint</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>title<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mr<span class="pl-pds">"</span></span>))
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -377,7 +377,7 @@ Found 1 items
   <span class="pl-k">val</span> <span class="pl-en">parquetFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.parquet<span class="pl-pds">"</span></span>)
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>()) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
   <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
-    .toFrame.to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
+    .toDataStream.to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
   </div> 
   <ol> 
    <li>The <strong>JDBCSource</strong> takes a connection function and a SQL query - it will execute the SQL and derive the EEL schema from it - also notice the <strong>withFetchSize</strong> which caches the number of rows per fetch reducing the number RPC calls to the database server.</li> 
@@ -405,14 +405,14 @@ message row {
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
     <span class="pl-en">ParquetSource</span>(parquetFilePath)
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <ol> 
    <li><strong>parquetFilePath</strong> is the <strong>ParquetSource</strong> file path pointing to a <strong>HDFS</strong> path - alternatively this could be a local file path if you qualify it with the <em>file:</em> scheme</li> 
    <li><strong>hadoopConfiguration</strong> and <strong>hadoopFileSystem</strong> are scala implicits required by the <strong>ParquetSource</strong></li> 
-   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>DataStream</strong>: <em>toDataStream().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
    <li>Here are the results of the read:</li> 
   </ol> 
   <pre><code>[NAME = Fred,AGE = 50,SALARY = 50000.99000,CREATION_TIME = 2017-01-23 14:53:51.862]
@@ -431,7 +431,7 @@ message row {
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
     <span class="pl-en">ParquetSource</span>(parquetFilePath)
       .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -455,8 +455,8 @@ message row {
     <span class="pl-en">ParquetSource</span>(parquetFilePath)
       .withProjection(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>)
       .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
-      .toFrame()
-      .collect()
+      .toDataStream()
+      .collect
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <p>The above <strong>ParquetSource</strong> projection (<strong>withProjection</strong>) is equivalent to the SQL select:</p> 
@@ -480,7 +480,7 @@ message row {
     <span class="pl-k">val</span> <span class="pl-en">orcFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.orc<span class="pl-pds">"</span></span>)
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
     <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
-      .toFrame
+      .toDataStream
       .to(<span class="pl-en">OrcSink</span>(orcFilePath))</pre>
   </div> 
   <ol start="2"> 
@@ -490,7 +490,7 @@ message row {
    <pre>    <span class="pl-k">val</span> <span class="pl-en">orcFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.orc<span class="pl-pds">"</span></span>)
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
     <span class="pl-en">OrcSource</span>(orcFilePath)
-      .toFrame().collect().foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
+      .toDataStream.collect().foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <h2><a id="user-content-jdbcsource-to-kudosink" class="anchor" href="https://github.com/eel-sdk/eel#jdbcsource-to-kudosink" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -507,7 +507,7 @@ message row {
     <span class="pl-k">val</span> <span class="pl-en">avroFilePath</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span>.get(s<span class="pl-s"><span class="pl-pds">"</span>${sys.props(<span class="pl-pds">"</span></span>user.home<span class="pl-s"><span class="pl-pds">"</span>)}/person.avro<span class="pl-pds">"</span></span>)
     <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query)
       .withFetchSize(<span class="pl-c1">10</span>)
-      .toFrame
+      .toDataStream
       .replaceFieldType(<span class="pl-en">DecimalType</span>.<span class="pl-en">Wildcard</span>, <span class="pl-en">DoubleType</span>)
       .replaceFieldType(<span class="pl-en">TimestampMillisType</span>, <span class="pl-en">StringType</span>)
       .to(<span class="pl-en">AvroSink</span>(avroFilePath))</pre>
@@ -549,13 +549,13 @@ message row {
   <div class="highlight highlight-source-scala">
    <pre>    <span class="pl-k">val</span> <span class="pl-en">avroFilePath</span> <span class="pl-k">=</span> <span class="pl-en">Paths</span>.get(s<span class="pl-s"><span class="pl-pds">"</span>${sys.props(<span class="pl-pds">"</span></span>user.home<span class="pl-s"><span class="pl-pds">"</span>)}/person.avro<span class="pl-pds">"</span></span>)
     <span class="pl-en">AvroSource</span>(avroFilePath)
-      .toFrame()
-      .collect()
+      .toDataStream()
+      .collect
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <ol> 
    <li><strong>avroFilePath</strong> is the <strong>AvroSource</strong> file path pointing to a path on the local file system</li> 
-   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>frame</strong>: <em>toFrame().collect()</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
+   <li>To get the collection of rows you need to perform the action <strong>collect</strong> on the source's underlying <strong>DataStream</strong>: <em>toDataStream().collect</em>, then iterate over each row and print it out using <em>foreach(row =&gt; println(row))</em></li> 
    <li>Here are the results of the read:</li> 
   </ol> 
   <pre><code>[NAME = Fred,AGE = 50,SALARY = 50000.99,CREATION_TIME = 2017-01-24 16:13:07.524]
@@ -576,7 +576,7 @@ message row {
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(<span class="pl-k">new</span> <span class="pl-en">Configuration</span>()) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
     <span class="pl-en">JdbcSource</span>(() <span class="pl-k">=&gt;</span> dataSource.getConnection, query).withFetchSize(<span class="pl-c1">10</span>)
-      .toFrame
+      .toDataStream
       .to(<span class="pl-en">CsvSink</span>(csvFilePath))</pre>
   </div> 
   <ol start="2"> 
@@ -586,15 +586,15 @@ message row {
    <pre>    <span class="pl-k">val</span> <span class="pl-en">csvFilePath</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Path</span>(<span class="pl-s"><span class="pl-pds">"</span>hdfs://nameservice1/client/eel/person.csv<span class="pl-pds">"</span></span>)
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopConfiguration</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Configuration</span>()
     <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">hadoopFileSystem</span> <span class="pl-k">=</span> <span class="pl-en">FileSystem</span>.get(hadoopConfiguration) <span class="pl-c"><span class="pl-c">//</span> This is required</span>
-    <span class="pl-en">CsvSource</span>(csvFilePath).toFrame().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))
+    <span class="pl-en">CsvSource</span>(csvFilePath).toDataStream().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))
     <span class="pl-en">CsvSource</span>(csvFilePath)
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
   <p>Note by default the <strong>CsvSource</strong> converts all types to a string - the following code prints out the fields in the schema:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>    <span class="pl-en">CsvSource</span>(csvFilePath).toFrame().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))</pre>
+   <pre>    <span class="pl-en">CsvSource</span>(csvFilePath).toDataStream().schema.fields.foreach(f <span class="pl-k">=&gt;</span> println(f))</pre>
   </div> 
   <p>You can enforce the types on the <strong>CSVSource</strong> by supplying <em>SchemaInferrer</em>:</p> 
   <div class="highlight highlight-source-scala">
@@ -606,7 +606,7 @@ message row {
       <span class="pl-en">DataTypeRule</span>(<span class="pl-s"><span class="pl-pds">"</span>SALARY<span class="pl-pds">"</span></span>, <span class="pl-en">DecimalType</span>.<span class="pl-en">Wildcard</span>),
       <span class="pl-en">DataTypeRule</span>(<span class="pl-s"><span class="pl-pds">"</span>.*<span class="pl-cce">\\</span>_TIME<span class="pl-pds">"</span></span>, <span class="pl-en">TimeMillisType</span>))
     <span class="pl-en">CsvSource</span>(csvFilePath).withSchemaInferrer(schemaInferrer)
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -678,7 +678,7 @@ message row {
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Step 4: Write the rows using the ParquetSink</h4> 
   <div class="highlight highlight-source-scala">
-   <pre>    <span class="pl-en">Frame</span>.fromValues(schema, rows)
+   <pre>    <span class="pl-en">DataStream</span>.fromValues(schema, rows)
       .to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
   </div> 
   <p>If you have the <strong>parquet-tools</strong> installed on your system you can look at its native schema like so:</p> 
@@ -702,7 +702,7 @@ message row {
     </svg></a>Step 5: Read back the rows using the ParquetSource</h4> 
   <div class="highlight highlight-source-scala">
    <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -721,7 +721,7 @@ message row {
   <div class="highlight highlight-source-scala">
    <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
       .withPredicate(<span class="pl-en">Predicate</span>.or(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS.NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>), <span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>PERSON_DETAILS.NAME<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Gary<span class="pl-pds">"</span></span>)))
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -819,7 +819,7 @@ hive<span class="pl-k">&gt;</span></pre>
       <span class="pl-en">Vector</span>(<span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>Alice<span class="pl-pds">"</span></span>, <span class="pl-c1">50</span>, <span class="pl-en">BigDecimal</span>(<span class="pl-s"><span class="pl-pds">"</span>99999.98000<span class="pl-pds">"</span></span>), <span class="pl-k">new</span> <span class="pl-en">Timestamp</span>(<span class="pl-en">System</span>.currentTimeMillis())), <span class="pl-en">Vector</span>(<span class="pl-s"><span class="pl-pds">"</span>534<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>129<span class="pl-pds">"</span></span>))
     )
    <span class="pl-c"><span class="pl-c">//</span> Write the rows</span>
-    <span class="pl-en">Frame</span>.fromValues(schema, rows)
+    <span class="pl-en">DataStream</span>.fromValues(schema, rows)
       .to(<span class="pl-en">ParquetSink</span>(parquetFilePath))</pre>
   </div> 
   <p>If you have the <strong>parquet-tools</strong> installed on your system you can look at its native schema like so:</p> 
@@ -844,7 +844,7 @@ message row {
     </svg></a>Read back the rows via ParquetSource</h4> 
   <div class="highlight highlight-source-scala">
    <pre>    <span class="pl-en">ParquetSource</span>(parquetFilePath)
-      .toFrame()
+      .toDataStream()
       .collect()
       .foreach(row <span class="pl-k">=&gt;</span> println(row))</pre>
   </div> 
@@ -958,7 +958,7 @@ hive<span class="pl-k">&gt;</span></pre>
   <p>Parquet as a file format supports predicates, which are row level filter operations. Because parquet is a columnar store, row level filters can be extremely efficient. Whenever you are reading from parquet files - either directly or through hive - a row level filter will nearly always be faster than reading the data and filtering afterwards. This is because parquet is able to skip whole chunks of the file that do not match the predicate.</p> 
   <p>To use a predicate, simply add an instance of <code>Predicate</code> to the Parquet source class.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">frame</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSource</span>(path).withPredicate(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>westeros<span class="pl-pds">"</span></span>)).toFrame()</pre>
+   <pre><span class="pl-k">val</span> <span class="pl-en">ds</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSource</span>(path).withPredicate(<span class="pl-en">Predicate</span>.equals(<span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>westeros<span class="pl-pds">"</span></span>)).toDataStream()</pre>
   </div> 
   <p>Multiple predicates can be grouped together using <code>Predicate.or</code> and <code>Predicate.and</code>.</p> 
   <h4><a id="user-content-projections" class="anchor" href="https://github.com/eel-sdk/eel#projections" aria-hidden="true" target="_blank">
@@ -968,7 +968,7 @@ hive<span class="pl-k">&gt;</span></pre>
   <p>The parquet source also allows you to specify a projection which is a subset of the columns to return. Again, since parquet is columnar, if a column is not needed at all then the entire column can be skipped directly in the file making parquet extremely fast at this kind of operation.</p> 
   <p>To use a projection, simply use <code>withProjection</code> on the Parquet source with the fields to keep.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">frame</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSource</span>(path).withProjection(<span class="pl-s"><span class="pl-pds">"</span>amount<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>).toFrame()</pre>
+   <pre><span class="pl-k">val</span> <span class="pl-en">ds</span> <span class="pl-k">=</span> <span class="pl-en">ParquetSource</span>(path).withProjection(<span class="pl-s"><span class="pl-pds">"</span>amount<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>).toDataStream()</pre>
   </div> 
   <h2><a id="user-content-hive-source" class="anchor" href="https://github.com/eel-sdk/eel#hive-source" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -1003,8 +1003,8 @@ hive<span class="pl-k">&gt;</span></pre>
    </tbody>
   </table> 
   <p><strong>Example</strong></p> 
-  <p>Simple example of writing to a Hive database <code>frame.to(HiveSink("mydb", "mytable"))</code></p> 
-  <p>We can specify the number of concurrent writes, by using the ioThreads parameter <code>frame.to(HiveSink("mydb", "mytable").withIOThreads(4))</code></p> 
+  <p>Simple example of writing to a Hive database <code>ds.to(HiveSink("mydb", "mytable"))</code></p> 
+  <p>We can specify the number of concurrent writes, by using the ioThreads parameter <code>ds.to(HiveSink("mydb", "mytable").withIOThreads(4))</code></p> 
   <h2><a id="user-content-csv-source" class="anchor" href="https://github.com/eel-sdk/eel#csv-source" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
