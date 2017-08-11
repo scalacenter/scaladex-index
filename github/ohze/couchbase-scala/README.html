@@ -1,0 +1,85 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-couchbase-scala" class="anchor" href="https://github.com/ohze/couchbase-scala#couchbase-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>couchbase-scala</h1> 
+  <p><a href="https://travis-ci.org/giabao/couchbase-scala" target="_blank"><img src="https://camo.githubusercontent.com/6d42a7a8f940b191e8c596d41c3ee0061dd9571b/68747470733a2f2f7472617669732d63692e6f72672f67696162616f2f636f756368626173652d7363616c612e737667" alt="Build Status" data-canonical-src="https://travis-ci.org/giabao/couchbase-scala.svg" style="max-width:100%;"></a></p> 
+  <p>This is a library for accessing Couchbase in Scala.</p> 
+  <h2><a id="user-content-using" class="anchor" href="https://github.com/ohze/couchbase-scala#using" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Using</h2> 
+  <p>couchbase-scala is <a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sandinh%22%20couchbase-scala" target="_blank">published to maven center</a></p> 
+  <ol> 
+   <li>using <a href="https://github.com/typesafehub/config" target="_blank">typesafe config</a> file application.conf to config couchbase connection url, buckets, timeout,..</li> 
+  </ol> 
+  <pre><code># see class com.couchbase.client.java.env.DefaultCouchbaseEnvironment
+com.couchbase.timeout {
+  connect=10s
+}
+com.sandinh.couchbase {
+  connectionString = "couchbase://dev.sandinh.com"
+  buckets {
+    # syntax: bucketName.password=".."
+    # we will use CBCluster.openBucket(bucketName) to retrieve a ScalaBucket object
+    acc.password=""
+    # we can also use the following verbose syntax to customize the real bucket name when connect to couchbase server
+    bk1 {
+      name = fodi
+      password=""
+    }
+  }
+}
+</code></pre> 
+  <ol start="2"> 
+   <li>load the config, instantiate a CBCluster instance, then open a bucket</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">config</span> <span class="pl-k">=</span> <span class="pl-en">ConfigFactory</span>.load()
+<span class="pl-k">val</span> <span class="pl-en">cluster</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CBCluster</span>(config);
+<span class="pl-k">val</span> <span class="pl-en">accBucket</span> <span class="pl-k">=</span> cluster.openBucket(<span class="pl-s"><span class="pl-pds">"</span>acc<span class="pl-pds">"</span></span>);</pre>
+  </div> 
+  <p>Or, you can use DI (example google guice):</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">CBModule</span> <span class="pl-k">extends</span> <span class="pl-e">AbstractModule</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">configure</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> {
+    bind(<span class="pl-c1">classOf</span>[<span class="pl-en">Config</span>]).toInstance(<span class="pl-en">ConfigFactory</span>.load())
+  }
+}
+
+<span class="pl-k">class</span> <span class="pl-en">MyClient</span> <span class="pl-k">@</span><span class="pl-en">Inject</span>() (<span class="pl-v">cluster</span>: <span class="pl-en">CBCluster</span>) {
+  <span class="pl-k">val</span> <span class="pl-en">accBucket</span> <span class="pl-k">=</span> cluster.openBucket(<span class="pl-s"><span class="pl-pds">"</span>acc<span class="pl-pds">"</span></span>);
+}</pre>
+  </div> 
+  <ol start="3"> 
+   <li>access couchbase using ScalaBucket's api</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">s</span> <span class="pl-k">=</span> accBucket.get[<span class="pl-en">StringDocument</span>](<span class="pl-s"><span class="pl-pds">"</span>some_key<span class="pl-pds">"</span></span>).map(_.content)
+<span class="pl-k">val</span> <span class="pl-en">s</span> <span class="pl-k">=</span> accBucket.getT[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>some_key<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">s</span> <span class="pl-k">=</span> accBucket.getOrElseT(<span class="pl-s"><span class="pl-pds">"</span>some_key<span class="pl-pds">"</span></span>)(<span class="pl-s"><span class="pl-pds">"</span>default value<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span>see other methods (insert, replace, remove, touch, counter, append, unlock, getFromReplica, getAndLock,..)</span>
+<span class="pl-c"><span class="pl-c">//</span>from ScalaBucket class</span></pre>
+  </div> 
+  <ol start="4"> 
+   <li>you can use play-json to retrieve a JsValue directly</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Acc</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">gender</span>: <span class="pl-en">Option</span>[<span class="pl-k">Boolean</span>])
+<span class="pl-k">object</span> <span class="pl-en">Acc</span> { <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fmt</span> <span class="pl-k">=</span> <span class="pl-en">Json</span>.format[<span class="pl-en">Acc</span>] }
+<span class="pl-k">val</span> <span class="pl-en">name</span> <span class="pl-k">=</span> accBucket.getJsT[<span class="pl-en">Acc</span>](<span class="pl-s"><span class="pl-pds">"</span>some_key<span class="pl-pds">"</span></span>).map(_.name)</pre>
+  </div> 
+  <h2><a id="user-content-changelog" class="anchor" href="https://github.com/ohze/couchbase-scala#changelog" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelog</h2> 
+  <p>see <a href="https://github.com/ohze/couchbase-scala/blob/master/CHANGES.md" target="_blank">CHANGES.md</a></p> 
+  <h2><a id="user-content-licence" class="anchor" href="https://github.com/ohze/couchbase-scala#licence" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Licence</h2> 
+  <p>This software is licensed under the Apache 2 license: <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0</a></p> 
+  <p>Copyright 2014 Sân Đình (<a href="http://sandinh.com" target="_blank">http://sandinh.com</a>)</p> 
+ </article>
+</div>

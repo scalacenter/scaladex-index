@@ -1,0 +1,104 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-aerospike-scala-dsl" class="anchor" href="https://github.com/danymarialee/aerospike-scala#aerospike-scala-dsl" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>aerospike-scala-dsl</h1> 
+  <p>To start working with Aerospike using this DSL you have to add dependency sbt:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre><span class="pl-s"><span class="pl-pds">"</span>ru.tinkoff<span class="pl-pds">"</span></span> %% <span class="pl-s"><span class="pl-pds">"</span>aerospike-scala<span class="pl-pds">"</span></span> % <span class="pl-s"><span class="pl-pds">"</span>1.1.14<span class="pl-pds">"</span></span>,
+<span class="pl-s"><span class="pl-pds">"</span>com.aerospike<span class="pl-pds">"</span></span> % <span class="pl-s"><span class="pl-pds">"</span>aerospike-client<span class="pl-pds">"</span></span> % <span class="pl-s"><span class="pl-pds">"</span>3.3.1<span class="pl-pds">"</span></span>, // <span class="pl-k">in</span> <span class="pl-k">case</span> you don<span class="pl-s"><span class="pl-pds">'</span>t have it</span>
+<span class="pl-s">"ru.tinkoff" %% "aerospike-scala-example" % "1.1.14" // usage examples</span>
+<span class="pl-s">"ru.tinkoff" %% "aerospike-scala-proto" % "1.1.14" // protobuff serialization support</span></pre>
+  </div> 
+  <p>Since I'm using Aerospike Java Client (version 3.3.1, recomended on <a href="http://www.aerospike.com" target="_blank">www.aerospike.com</a>), you need to create com.aerospike.client.async.AsyncClient to pass it into <code>ru.tinkoff.aerospike.dsl.SpikeImpl</code> class. <code>SpikeImpl</code> has methods to operate with Aerospike for specified types of <code>Keys</code> and <code>Bins</code>, which is the most common case. Example for that object creation you can find in <code>ru.tinkoff.aerospikeexamples.example.AClient</code> (<code>sh "ru.tinkoff" % "aerospike-scala-example"</code>). Or just follow the <code>quickstart</code> instructions.</p> 
+  <p>#Protobuf Serialization is here! <a href="https://github.com/danymarialee/aerospike-scala/blob/master/cookbook/protobuf/ProtoBinWrapper.md" target="_blank">Check it out!</a></p> 
+  <h1><a id="user-content-quickstart" class="anchor" href="https://github.com/danymarialee/aerospike-scala#quickstart" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quickstart</h1> 
+  <p>Add this settings to application.conf file and specify your own host, port, namespace and setName:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>ru-tinkoff-aerospike-dsl {
+    keyWrapper-namespace = <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>
+    keyWrapper-setName = <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>
+    example-host = <span class="pl-s"><span class="pl-pds">"</span>somehost.com<span class="pl-pds">"</span></span> 
+    example-port = 3000
+}</pre>
+  </div> 
+  <p>after that call <code>ru.tinkoff.aerospikeexamples.example.AClient.client</code> in your service (or something where you need to communicate with Aerospike) and pass result of that call into <code>ru.tinkoff.aerospike.dsl.SpikeImpl</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+
+<span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">AClient</span>.client
+<span class="pl-k">val</span> <span class="pl-en">spike</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SpikeImpl</span>(client)</pre>
+  </div> 
+  <p>or you can call <code>AClient.spikeImpl</code>, which gives an example of <code>SpikeImpl</code> with host and port from <code>ru-tinkoff-aerospike-dsl</code> settings</p> 
+  <div class="highlight highlight-source-scala">
+   <pre> <span class="pl-k">val</span> <span class="pl-en">spike</span> <span class="pl-k">=</span> <span class="pl-en">AClient</span>.spikeImpl</pre>
+  </div> 
+  <p><strong>Note: don't forget to add host and port in application.conf, or you will get an exception from com.aerospike.client lib:</strong></p> 
+  <div class="highlight highlight-source-shell">
+   <pre>Exception <span class="pl-k">in</span> thread <span class="pl-s"><span class="pl-pds">"</span>main<span class="pl-pds">"</span></span> com.aerospike.client.AerospikeException<span class="pl-smi">$Connection</span>: Error Code 11: Failed to connect to host(s): 
+host 3000 Error Code 11: Invalid host: host 3000</pre>
+  </div> 
+  <p>For namespace and setName parameters add</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dbc</span> <span class="pl-k">=</span> <span class="pl-en">AClient</span>.dbc</pre>
+  </div> 
+  <p>Now you can use it like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">ru.tinkoff.aerospike.dsl.</span>{<span class="pl-v">CallKB</span>, <span class="pl-v">SpikeImpl</span>}
+<span class="pl-k">import</span> <span class="pl-v">ru.tinkoff.aerospikeexamples.example.</span><span class="pl-v">AClient</span>
+<span class="pl-k">import</span> <span class="pl-v">ru.tinkoff.aerospikescala.domain.</span><span class="pl-v">SingleBin</span>
+<span class="pl-k">import</span> <span class="pl-v">ru.tinkoff.aerospikemacro.converters.</span><span class="pl-v">_</span>
+
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Await</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">Duration</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+
+<span class="pl-k">object</span> <span class="pl-en">HelloAerospike</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">client</span> <span class="pl-k">=</span> <span class="pl-en">AClient</span>.client
+  <span class="pl-k">val</span> <span class="pl-en">spike</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SpikeImpl</span>(client)
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dbc</span> <span class="pl-k">=</span> <span class="pl-en">AClient</span>.dbc
+
+  <span class="pl-en">Await</span>.result(spike.callKB(<span class="pl-en">CallKB</span>.<span class="pl-en">Put</span>, <span class="pl-s"><span class="pl-pds">"</span>testKey<span class="pl-pds">"</span></span>, <span class="pl-en">SingleBin</span>(<span class="pl-s"><span class="pl-pds">"</span>helloName<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>helloValue<span class="pl-pds">"</span></span>)), <span class="pl-en">Duration</span>.<span class="pl-en">Inf</span>)
+}</pre>
+  </div> 
+  <p>This will <code>Put</code> string value "helloValue" with name "helloName" in Aerospike with <code>Key</code> "testKey". For that call will be generated converters, both to convert passed values into inner <code>com.aerospike.clients</code> values.</p> 
+  <div class="highlight highlight-source-js">
+   <pre>aql<span class="pl-k">&gt;</span> select <span class="pl-k">*</span> from <span class="pl-smi">test</span>.<span class="pl-smi">test</span>
+[
+  {
+    <span class="pl-s"><span class="pl-pds">"</span>helloName<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>helloValue<span class="pl-pds">"</span></span>
+  }
+]
+</pre>
+  </div> 
+  <p>All available methods you can see in <code>SpikeImpl</code> class by your self. For more information and usage examples <a href="https://github.com/danymarialee/aerospike-scala/blob/master/cookbook" target="_blank">cookbook</a>.</p> 
+  <h1><a id="user-content-dsl-schema-options" class="anchor" href="https://github.com/danymarialee/aerospike-scala#dsl-schema-options" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>DSL schema options</h1> 
+  <p>In <code>ru.tinkoff.aerospike.dsl.scheme</code> we have two traits:</p> 
+  <ul> 
+   <li>for work with one key type and different types of <code>Bins</code></li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Scheme</span>[<span class="pl-en">K</span>]</pre>
+  </div> 
+  <ul> 
+   <li>for work with one key type and one <code>Bin</code> type</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">KBScheme</span>[<span class="pl-en">K</span>, <span class="pl-en">B</span>]</pre>
+  </div> 
+  <p>If you want to work with one type of Key and different types of Bins - <a href="https://github.com/danymarialee/aerospike-scala/blob/master/cookbook/schemes/anyBinTypes.md" target="_blank">any Bin types</a> If you want to work with one type of Key and one type of Bins <a href="https://github.com/danymarialee/aerospike-scala/blob/master/cookbook/schemes/oneBinType.md" target="_blank">one Bin type</a></p> 
+  <h1><a id="user-content-application" class="anchor" href="https://github.com/danymarialee/aerospike-scala#application" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Application</h1> 
+  <p>Implemented for ASyncClient. Recommended to use with <code>Aerospike 3</code>.</p> 
+ </article>
+</div>
