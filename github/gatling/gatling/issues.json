@@ -1,0 +1,40 @@
+{
+  "data":{
+    "repository":{
+      "issues":{
+        "nodes":[
+          {
+            "number":2602,
+            "title":"Core: Provide a \"streaming\" CSV reader",
+            "bodyText":"There are cases where users are loading massive CSV files as feeders for their simulations.\nCurrently, as CSV feeders are loaded eagerly to avoid file IO during the simulation, users may require huge heaps so that the data can fit in memory.\nAn alternative could be to read CSV files in small batches, which would trade memory usage for some file IO when a new batch is read.",
+            "url":"https://github.com/gatling/gatling/issues/2602"
+          },
+          {
+            "number":2830,
+            "title":"Doc: How to debug scripts page in the documentation",
+            "bodyText":"I suggest creating a debugging page in the documentation. Extract the stuff about printing session  values and add logback stuff.",
+            "url":"https://github.com/gatling/gatling/issues/2830"
+          },
+          {
+            "number":2909,
+            "title":"Recorder: Support user provided keystore required for talking with the server",
+            "bodyText":"Not that complicated to implement:\n\nintroduce in SslClientContext the same kind of changes as in SslServerContext so it's no longer an object, but an instance that gets passed a configuration. The change is to pass KeyManagers instead of null. Such KeyManagers can be created this way.\nchange GUI and RecorderConfiguration",
+            "url":"https://github.com/gatling/gatling/issues/2909"
+          },
+          {
+            "number":2971,
+            "title":"Recorder: SslServerContext assumes the keyStore and KeyManager have the same password",
+            "bodyText":"In SslServerContext the keyStrore is initialized like so:\nlazy val keyStore = {\n      val ks = KeyStore.getInstance(keyStoreType.toString)\n      withCloseable(keyStoreInitStream) { ks.load(_, password) }\n      ks\n    }\nand the KeyManager is initialized like so\n // Set up key manager factory to use our key store\n      val kmf = KeyManagerFactory.getInstance(Algorithm)\n      kmf.init(keyStore, password)\nThe code assumes they both use the same password. In reality, if there are two different passwords needed the you will get the an exception:\njava.security.UnrecoverableKeyException: Cannot recover key",
+            "url":"https://github.com/gatling/gatling/issues/2971"
+          },
+          {
+            "number":3331,
+            "title":"Verbose INFO logging when warm up fails",
+            "bodyText":"Gatling version 2.2.4\nIf Gatling fails to warm up from the first time, it throws an exception, which is unnecessary (it could be handled).\nIt would be cleaner if Gatling reported:\n11:34:14.605 [INFO ] i.g.h.a.HttpEngine - Couldn't execute warm up request http://gatling.io after 1000 ms\n11:34:14.xxx [INFO ] i.g.h.a.HttpEngine - Warm up done\n\n11:34:14.605 [INFO ] i.g.h.a.HttpEngine - Couldn't execute warm up request http://gatling.io\njava.util.concurrent.TimeoutException: Request timeout to not-connected after 1000 ms\n\tat org.asynchttpclient.netty.timeout.TimeoutTimerTask.expire(TimeoutTimerTask.java:43)\n\tat org.asynchttpclient.netty.timeout.RequestTimeoutTimerTask.run(RequestTimeoutTimerTask.java:48)\n\tat io.netty.util.HashedWheelTimer$HashedWheelTimeout.expire(HashedWheelTimer.java:625)\n\tat io.netty.util.HashedWheelTimer$HashedWheelBucket.expireTimeouts(HashedWheelTimer.java:700)\n\tat io.netty.util.HashedWheelTimer$Worker.run(HashedWheelTimer.java:428)\n\tat java.lang.Thread.run(Thread.java:745)\nWrapped by: java.util.concurrent.ExecutionException: java.util.concurrent.TimeoutException: Request timeout to not-connected after 1000 ms\n\tat java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:357)\n\tat java.util.concurrent.CompletableFuture.get(CompletableFuture.java:1895)\n\tat org.asynchttpclient.netty.NettyResponseFuture.get(NettyResponseFuture.java:168)\n\tat io.gatling.http.ahc.HttpEngine.warmpUp(HttpEngine.scala:96)\n\tat io.gatling.http.protocol.HttpProtocol$$anon$1.io$gatling$http$protocol$HttpProtocol$$anon$1$$$anonfun$1(HttpProtocol.scala:62)\n\tat io.gatling.core.protocol.ProtocolComponentsRegistry.comps$1(Protocol.scala:67)\n\tat io.gatling.core.protocol.ProtocolComponentsRegistry.io$gatling$core$protocol$ProtocolComponentsRegistry$$$anonfun$4(Protocol.scala:69)\n\tat scala.collection.mutable.MapLike$class.getOrElseUpdate(MapLike.scala:194)\n\tat scala.collection.mutable.AbstractMap.getOrElseUpdate(Map.scala:80)\n\tat io.gatling.core.protocol.ProtocolComponentsRegistry.components(Protocol.scala:69)\n\tat io.gatling.http.action.HttpActionBuilder.lookUpHttpComponents(HttpActionBuilder.scala:25)\n\tat io.gatling.http.action.sync.HttpRequestActionBuilder.build(HttpRequestActionBuilder.scala:33)\n\tat io.gatling.core.structure.StructureBuilder$class.io$gatling$core$structure$StructureBuilder$class$$$anonfun$1(StructureBuilder.scala:34)\n\tat scala.collection.LinearSeqOptimized$class.foldLeft(LinearSeqOptimized.scala:124)\n\tat scala.collection.immutable.List.foldLeft(List.scala:84)\n\tat io.gatling.core.structure.StructureBuilder$class.build(StructureBuilder.scala:33)\n\tat io.gatling.core.structure.ScenarioBuilder.build(ScenarioBuilder.scala:38)\n\tat io.gatling.core.structure.PopulationBuilder.build(ScenarioBuilder.scala:98)\n\tat io.gatling.core.scenario.SimulationParams.io$gatling$core$scenario$SimulationParams$$$anonfun$15(Simulation.scala:188)\n\tat scala.collection.immutable.List.map(List.scala:273)\n\tat io.gatling.core.scenario.SimulationParams.scenarios(Simulation.scala:188)\n\tat io.gatling.app.Runner.run0(Runner.scala:95)\n\tat io.gatling.app.Runner.run(Runner.scala:64)\n\tat io.gatling.app.Gatling$.start(Gatling.scala:56)\n\tat io.gatling.app.Gatling$.fromMap(Gatling.scala:36)\n...\n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat com.intellij.rt.execution.application.AppMain.main(AppMain.java:144)\n11:34:14.605 [INFO ] i.g.h.a.HttpEngine - Warm up done",
+            "url":"https://github.com/gatling/gatling/issues/3331"
+          }
+        ]
+      }
+    }
+  }
+}

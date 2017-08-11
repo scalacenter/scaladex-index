@@ -1,0 +1,610 @@
+{
+  "data":{
+    "repository":{
+      "issues":{
+        "nodes":[
+          {
+            "number":96,
+            "title":"Use splitAfter in Websocket.scala",
+            "bodyText":"Issue by ktoso\nMonday Jan 04, 2016 at 20:10 GMT\nOriginally opened as akka/akka#19348\n\nAs commented there it should simplify the flows a bit:\n.splitWhen(_.isMessageEnd) // FIXME using splitAfter from #16885 would simplify protocol a lot\nspray/akka@6980a0b#diff-32111086a8e0b3bf2b812bda44d7c0a1R116",
+            "url":"https://github.com/akka/akka-http/issues/96"
+          },
+          {
+            "number":99,
+            "title":"Add `Uri::toRelative(base: Uri): Uri` method",
+            "bodyText":"Issue by bblfish\nFriday Jul 04, 2014 at 09:08 GMT\nOriginally opened as akka/akka#15495\n\nI reported this as Spray issue 818 as the move to akka was underway. So I'll add a reference here.\nCurrently one can make a Uri relative to the root.\n**\n   * Converts this URI into a relative URI by keeping the path, query and fragment, but dropping the scheme and authority.\n   */\n  def toRelative =\n    Uri(path = if (path.isEmpty) Uri.Path./ else path, query = query, fragment = fragment)\nIt would be useful to have the same functionality as  java.net.URI#relativize(URI) to allow easy relative URI creation.\nscala> import java.net.URI\nimport java.net.URI\n\nscala> val card = new URI(\"http://bblfish.net/people/henry/card#me\")\ncard: java.net.URI = http://bblfish.net/people/henry/card#me\n\nscala> val base1 = new URI(\"http://bblfish.net/people/\")\nbase1: java.net.URI = http://bblfish.net/people/\n\nscala> base1.relativize(card)\nres0: java.net.URI = henry/card#me\n\nscala> new URI(\"http://bblfish.net/people/henry/\").relativize(card)\nres1: java.net.URI = card#me\n\nscala> new URI(\"http://bblfish.net/people/henry/card\").relativize(card)\nres2: java.net.URI = #me\nIt is often very useful to serialise to relative uris when a base is known. So when one does a GET on\na URI such as http://bblfish.net/people/henry/card it is much easier to read the result when it says\n<> a foaf:PersonalProfileDocument;\n    foaf:primaryTopic <card> .\nrather than writing out all the Uris in full. Because a relative URI such as \"\" ( or <> and  in the above ) allows a human to immediatly understand that the document is speaking of itself. A full URI requires a human to do a full comparison.\nSo we need this a lot in serialisations. Having this feature would allow banana-rdf for example to move totally to akka-http, which would also make it easier then to write code that can compile with scala-js.\nAs a matter of interest I wonder if it would be possible to make type  distinctions between full and relative Uris. (Full Uris being a subclass of relative Uris perhaps). This would help make a large class of errors visible to the compiler, as explained in issue #41 of banana-rdf. Perhaps that should be for a different bug report?",
+            "url":"https://github.com/akka/akka-http/issues/99"
+          },
+          {
+            "number":102,
+            "title":"Add support for automatic pinging in WebSocket server implementation with configurable rate",
+            "bodyText":"Issue by fommil\nSunday Jul 12, 2015 at 11:01 GMT\nOriginally opened as akka/akka#17968\n\n@jrudolph I just realised there doesn't appear to be a way to specify the ping rate from the server to the client. This is not something that the application level code should be concerned with.\nIt's actually a really big pain in the wandoulabs implementation because even if the user's code uses proper backpressure, then protocol layer Ping/Pongs can still blow up the network stack and that means a lot more error handling is required a lot higher up the stack than desirable. I worked around this in smootoo/simple-spray-websockets@17ea453 (note that we forked wandoulabs, because it seems to be a zombie project)",
+            "url":"https://github.com/akka/akka-http/issues/102"
+          },
+          {
+            "number":107,
+            "title":"Server statistics in Akka HTTP",
+            "bodyText":"Issue by RichardBradley\nMonday Mar 30, 2015 at 10:44 GMT\nOriginally opened as akka/akka#17095\n\nSpray 1.3 had \"Server Statistics\" that reported on various connection-level stats that are difficult or inefficient to monitor in userland:\ncase class Stats(\n  uptime: FiniteDuration,\n  totalRequests: Long,\n  openRequests: Long,\n  maxOpenRequests: Long,\n  totalConnections: Long,\n  openConnections: Long,\n  maxOpenConnections: Long,\n  requestTimeouts: Long)\n\nPlease could we add something similar to Akka HTTP 1.0?",
+            "url":"https://github.com/akka/akka-http/issues/107"
+          },
+          {
+            "number":109,
+            "title":"Respect Content-Transfer-Encoding in BodyPartParser",
+            "bodyText":"Issue by kswmsw\nMonday Feb 23, 2015 at 17:15 GMT\nOriginally opened as akka/akka#16921\n\nakka.http.engine.parsing.BodyPartParser in akka-http-core-experimental 1.0-M3 ignores the Content-Transfer-Encoding header when parsing the entity. This means that currently if a client uploads a body part with Content-Transfer-Encoding quoted-printable or base64, the wrong data is passed to the application with no error or warning.\nInstead, Akka should respect this header, and use its value to decode the bytes of the incoming stream when constructing the bytes of the body part. The dataBytes of the parsed body part should be the decoded bytes of the body part, not the raw bytes of the multipart entity.\nThe relevant standards are RFC2046 section 5.1 and RFC2045 section 6. According to these, each part of a multipart entity may have a Content-Transfer-Encoding. If this has value quoted-printable or base64, then the content of the body part has been encoded with the named encoding. If it is 7bit, 8bit, binary, or omitted, then no encoding has been applied.\nApache Commons has Base64 and QuotedPrintableCodec which may be applicable in an implementation.",
+            "url":"https://github.com/akka/akka-http/issues/109"
+          },
+          {
+            "number":110,
+            "title":"document that HTTP route construction must not close over Actor state",
+            "bodyText":"Issue by rkuhn\nThursday Feb 12, 2015 at 20:01 GMT\nOriginally opened as akka/akka#16871\n\nThe pattern we show should be inspired by the Props recommendation: build the Route in a function within the companion object to make sure that nothing is pulled in accidentally, all captured values are explicit.",
+            "url":"https://github.com/akka/akka-http/issues/110"
+          },
+          {
+            "number":112,
+            "title":"Add support for OAuth authentication",
+            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:59 GMT\nOriginally opened as akka/akka#16857\n\nSee spray/spray#1007 and the previous unmerged PR spray/spray#372.\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/112"
+          },
+          {
+            "number":113,
+            "title":"High-level HTTP client support",
+            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:54 GMT\nOriginally opened as akka/akka#16856\n\nIt would be convenient if akka-http would provide common high-level HTTP functionality similar to what a browser supports in its backend. This is a collection of all the things that would belong into this category. This is a metaticket and each subfeature has its own ticket.\n\n connection pooling and configurable request queuing (provided by host-level API #15681)\n request-level API (#15906)\n automatic redirection (#15990)\n automatic retry attempts (#16852)\n try different IP addresses on retries (#16827)\n HTTP proxy support (for HTTP: #16853, for HTTPS: #16153)\n authentication data store (#16854)\n cookie store (#16855)\n response routing DSL (#15909)\n request building should be polished and documented (akka/akka#18550)\n optional: response decompression (akka/akka#16813)\n optional: Add support for OAuth authentication #16857",
+            "url":"https://github.com/akka/akka-http/issues/113"
+          },
+          {
+            "number":114,
+            "title":"Add cookie store for the HTTP client side",
+            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:53 GMT\nOriginally opened as akka/akka#16855\n\nIf configured, the store would automatically pick up cookies from responses and add them to requests. Also, it would make sure that the security rules about which cookies to apply in which situations would be applied.\nThis is part of the bigger initiative to support a high-level HTTP client interface as tracked as #16856.\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/114"
+          },
+          {
+            "number":118,
+            "title":"Akka HTTP: document / point to community / show CORS",
+            "bodyText":"Issue by ktoso\nTuesday Sep 22, 2015 at 15:26 GMT\nOriginally opened as akka/akka#18530\n\nPatrick Ting has provided a snippet here: https://gist.github.com/pcting/2e65c36f868c5cee7d6a\nSee discussions:\n\nhttps://groups.google.com/forum/#!searchin/akka-user/cors/akka-user/msJfSkHDCxA/foDrnQPBx2gJ\nhttps://groups.google.com/forum/#!searchin/akka-user/cors/akka-user/5RCZIJt7jHo/lII0dUJhuIsJ",
+            "url":"https://github.com/akka/akka-http/issues/118"
+          },
+          {
+            "number":136,
+            "title":"support Prefer header: http://www.ietf.org/rfc/rfc7240.txt",
+            "bodyText":"Issue by aappddeevv\nTuesday Dec 22, 2015 at 17:33 GMT\nOriginally opened as akka/akka#19263\n\nIt does not appear that akka-http has the Prefer header included.\nhttp://www.ietf.org/rfc/rfc7240.txt",
+            "url":"https://github.com/akka/akka-http/issues/136"
+          },
+          {
+            "number":137,
+            "title":"Sec-WebSocket-Protocol header is private[http]",
+            "bodyText":"Issue by analytically\nTuesday Dec 22, 2015 at 11:06 GMT\nOriginally opened as akka/akka#19258\n\nOverriding the default RejectionHandler is tricky for UnsupportedWebsocketSubprotocolRejection because Sec-WebSocket-Protocol is private.",
+            "url":"https://github.com/akka/akka-http/issues/137"
+          },
+          {
+            "number":139,
+            "title":"Make it possible to expose HTTP requests as Sink",
+            "bodyText":"Issue by drewhk\nThursday Dec 17, 2015 at 12:08 GMT\nOriginally opened as akka/akka#19218\n\nWhat is needed is roughly:\nval uploadSink = Flow[ByteString].lift.map(<put Source in HttpRequest>).via(http).to(Sink.ignore)\n\nWhere lift is the magic that makes Source[T] to Source[Source[T]].",
+            "url":"https://github.com/akka/akka-http/issues/139"
+          },
+          {
+            "number":141,
+            "title":"POST for uploading files not via `MultiPart.FormData`",
+            "bodyText":"Issue by hhimanshu\nFriday Dec 04, 2015 at 23:57 GMT\nOriginally opened as akka/akka#19093\n\nAs discussed in akka/akka#19092, it would be nice to have a directive that can be used to upload files.\nOpened ticket as discussed with @ktoso",
+            "url":"https://github.com/akka/akka-http/issues/141"
+          },
+          {
+            "number":143,
+            "title":"Http: Make PredefinedFromEntityUnmarshallers bail-out after certain nr of bytes read-in",
+            "bodyText":"Issue by ktoso\nThursday Dec 03, 2015 at 14:52 GMT\nOriginally opened as akka/akka#19080\n\nAs discussed in akka/akka#19042 (comment)\nWe are currently limiting the total number of bytes in a request body, however the same does not happen for individual Marshallers. This is most noticeably not nice when using FormFields or streaming Source[Element]. We should provide a config value to be provided implicitly after how many bytes such marshaller should bail out \u2013 we'd have \"per element\" limit and \"per entire request\" limit then.",
+            "url":"https://github.com/akka/akka-http/issues/143"
+          },
+          {
+            "number":145,
+            "title":"Application/octet-stream doesn't support compressing",
+            "bodyText":"Issue by vans239\nFriday Nov 27, 2015 at 16:10 GMT\nOriginally opened as akka/akka#19036\n\nI recently found that Media type application/octet-stream couldn't be gziped due uncompressible flag. What cause of such behavior? I didn't find any info in rfc. Thanks",
+            "url":"https://github.com/akka/akka-http/issues/145"
+          },
+          {
+            "number":148,
+            "title":"Akka HTTP RequestBuilding should have better configurable timeouts",
+            "bodyText":"Issue by zifeo\nFriday Jun 17, 2016 at 21:40 GMT\nOriginally opened as akka/akka#20798\n\nDefining a timeout for RequestBuilding is quite verbose as overloaded signatures do not provide all implicit variables, per se revolved to 1 second. This is especially an issue when having route (integration) tests depending on async computations.\nMissing signature : RequestBuilding.scala#L28\nComplete signature: RequestBuilding.scala#L43",
+            "url":"https://github.com/akka/akka-http/issues/148"
+          },
+          {
+            "number":155,
+            "title":"Add HTTP security headers ",
+            "bodyText":"Issue by pawelprazak\nMonday Apr 18, 2016 at 14:58 GMT\nOriginally opened as akka/akka#20357\n\nOWASP lists the most common security related headers:\n\nX-Frame-Options\nX-Content-Type-Options\nX-XSS-Protection\nContent-Security-Policy\nPublic-Key-Pins\nStrict-Transport-Security\n\nDo you plan to add them, or is it out of scope?\nIf I would to make a pull request, is this the right place to start:\n\nakka.http.scaladsl.model.headers\nakka.http.javadsl.model.headers\nakka.http.impl.model.parser",
+            "url":"https://github.com/akka/akka-http/issues/155"
+          },
+          {
+            "number":201,
+            "title":"Support REST API doc generation",
+            "bodyText":"Issue by guersam\nSaturday Dec 20, 2014 at 23:05 GMT\nOriginally opened as akka/akka#16591\n\nRelated ML thread: https://groups.google.com/forum/#!topic/akka-user/d18_smRGeoE\n\nHi,\nAlthough this topic has been discussed several times in spray-user list [1], I'd like to refresh this issue because I think it's an important feature for wider adoption as well as the mostly asked ones like WebSocket.\nSpray/akka-http's routing DSL is the best among the existing framework/libraries IMO, however, it's cascaded and mixed routing structure makes automated documentation and code generation somewhat difficult. Although there's already good looking spray-swagger, it's annotation based approach seems too verbose sometimes.\nA random thoughts for alternatives are:\n\nMacro based introspection which extracts routing structure from the DSL\nIntegration with the testkit (either way of doc <-> test code generation) instead of with routing code directly\n\nI know it isn't urgent now, just hoping to gather some wisdom to bring it to the next step for the long term goal.\nRegards,\nJisoo\n[1] https://groups.google.com/forum/#!searchin/spray-user/swagger\n[2] https://github.com/gettyimages/spray-swagger\n[3] http://www.scalatra.org/2.3/guides/swagger.html",
+            "url":"https://github.com/akka/akka-http/issues/201"
+          },
+          {
+            "number":205,
+            "title":"Akka HTTP, docs: show how to get collect some header (maybe cookies)",
+            "bodyText":"Issue by ktoso\nWednesday Sep 30, 2015 at 08:22 GMT\nOriginally opened as akka/akka#18604\n\nVia akka-user thread \"Akka Http Client - Unmarshal Cookies\".\nFor newcomers it's not clear how to \"get all cookies\" or other headers in a typesafe manner,\nsolution is to:\nFlow[HttpResponse].map(_.headers.collect { case `Set-Cookie`(x) ⇒ x})\n\nWe should have an example like this in client docs.",
+            "url":"https://github.com/akka/akka-http/issues/205"
+          },
+          {
+            "number":206,
+            "title":"Akka HTTP, docs: Explain toStrict in more detail",
+            "bodyText":"Issue by ktoso\nTuesday Sep 29, 2015 at 18:00 GMT\nOriginally opened as akka/akka#18599\n\nBased on gitter feedback, we mention toStrict a bit in the model's page, however people are looking for \"how do I get a string out\". We should answer that question AND explain why it may not be the best idea, then we can ease them into thinking about streaming.\n\nIs this (https://gist.github.com/hakuch/1cd0bdc051bf9d7e8e41) the easiest way to get the body of an HTTP response in a human-readable format? We are using the host-level client, so all responses should be strictly populated.\nIt seems awfully involved to convert the byte stream to a strict Stream. Surely there must be an easier way?\n*strict String\nktoso 19:54\nokey, here we go then 😄\n\nbeing host level does not mean that the response is immediatly available\nSink.head only takes the first chunk, if the content is very long that's not what you wanted - you want all the chunks together into the string\ntry to avoid Await, instead just .map{ data => } on the future\nthere's a helper 😄 wait...\n\n\nDocs would be more or less so:\n\nkoso 19:56\nyou want to make the entity \"strict\", read about the data model here: http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/scala/http/common/http-model.html#HttpEntity\nStreaming entity types (i.e. all but Strict) cannot be shared or serialized. To create a strict, sharable copy of an entity or message use HttpEntity.toStrict or HttpMessage.toStrict which returns a Future of the object with the body data collected into a ByteString.\nright, but the server may respond with the data in multiple chunks\nby using streaming, we win - we can process them as soon as parts arrive\nif you really want to strict it, see above quote\nit's a good question though, people will be asking this so I'll open a ticket and improve docs about the specific use case",
+            "url":"https://github.com/akka/akka-http/issues/206"
+          },
+          {
+            "number":207,
+            "title":"Add `max-requests-per-connection` config setting on the server side",
+            "bodyText":"Issue by jrudolph\nTuesday Feb 10, 2015 at 16:13 GMT\nOriginally opened as akka/akka#16837\n\nSimilar to what Apache provides with its MaxKeepAliveRequests setting.\nSee spray/spray#320\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/207"
+          },
+          {
+            "number":209,
+            "title":"Http, client: Provide high-level support for response decompression",
+            "bodyText":"Issue by jrudolph\nTuesday Feb 10, 2015 at 14:24 GMT\nOriginally opened as akka/akka#16813\n\nSee spray/spray#987\nIn spray, you could add a decode(...) clause to your pipeline to add support for a single decoder. As noted in the ticket it would make sense to provide also an automatic solution that tries all known decodes.\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/209"
+          },
+          {
+            "number":236,
+            "title":"Try several IP addresses for one host if one fails",
+            "bodyText":"Issue by jrudolph\nTuesday Feb 10, 2015 at 15:19 GMT\nOriginally opened as akka/akka#16827\n\nFrom spray/spray#746:\n\nThe easiest strategy would be to try all the available addresses in a round-robin fashion on failed connection attempts and probably make the strategy configurable.\n\nSee https://groups.google.com/d/msg/spray-user/d6XNRVfjGpo/Y3UURzz4mewJ\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/236"
+          },
+          {
+            "number":237,
+            "title":"Provide documentation about how to configure TLS for the client and server side",
+            "bodyText":"Issue by jrudolph\nTuesday Feb 10, 2015 at 15:39 GMT\nOriginally opened as akka/akka#16829\n\nIn spray we had only very sparse documentation about this topic and referred to the general SSL configuration of Java. It may make sense to provide proper documentation about this topic or at least provide working examples showing how to configure SSL in the most common situations.\n\nconfigure server certificates\nconfigure certain ciphers on the server and client side\nadd a custom CA certificate to the client side\ndisable certificate checking for testing purposes\n\n/cc @sirthias\nAlso see spray/spray#721.",
+            "url":"https://github.com/akka/akka-http/issues/237"
+          },
+          {
+            "number":240,
+            "title":"Add `reverseProxy` directive",
+            "bodyText":"Issue by jrudolph\nTuesday Feb 10, 2015 at 16:33 GMT\nOriginally opened as akka/akka#16844\n\nto enable simple proxying of single requests to an (internal) remote backend.\nThis has some security implications: What to do with cookies, authentication data, etc.? So, it may make sense to provide some safe-guards preventing people from simply relaying requests e.g. by requiring to whitelist potential targets in the configuration or something similar.\nSee the discussions in the original ticket spray/spray#145 and an existing PR spray/spray#764.\n/cc @sirthias",
+            "url":"https://github.com/akka/akka-http/issues/240"
+          },
+          {
+            "number":266,
+            "title":"Akka HTTP, docs: Add Route.seal example to Exception Handling docs",
+            "bodyText":"Issue by ktoso\nTuesday Sep 29, 2015 at 14:47 GMT\nOriginally opened as akka/akka#18596\n\nRoute.seal does impact how exceptions are dealt with, so it should also be mentioned in exception-handling.rst",
+            "url":"https://github.com/akka/akka-http/issues/266"
+          },
+          {
+            "number":268,
+            "title":"HttpEntity.toStrict should not collect unlimited amounts of data and piggy back on generic ByteString aggregation stage",
+            "bodyText":"Issue by jrudolph\nTuesday Sep 29, 2015 at 13:04 GMT\nOriginally opened as akka/akka#18592\n\nI.e. it should get another parameter with the maximum number of bytes it should aggregate before failing.",
+            "url":"https://github.com/akka/akka-http/issues/268"
+          },
+          {
+            "number":271,
+            "title":"How to cleanup after response in akka-http",
+            "bodyText":"Issue by adamretter\nSaturday Sep 26, 2015 at 22:10 GMT\nOriginally opened as akka/akka#18571\n\nI am using the routing DSL in Akka HTTP.\nI extract a file from a Multipart form upload request and write it to a temporary location on disk, I then process that file which creates a second temporary file.\nI return the second temporary file as my response to the user. However, once the response has been sent to the user, I would like to delete the two temporary files that I created.\nMy route contains something like this:\nencodeResponse {\n  complete(HttpResponse(OK, entity = HttpEntity(`application/pdf`, pdfResult.jfile: File)))\n}\n\nMy question is how do I know when the response has been fully sent to the client so that I can delete the temporary pdfResult file from disk?",
+            "url":"https://github.com/akka/akka-http/issues/271"
+          },
+          {
+            "number":272,
+            "title":"Akka HTTP, docs: Document the Spray's one-actor-per-request equivalent",
+            "bodyText":"Issue by ktoso\nSaturday Sep 26, 2015 at 13:47 GMT\nOriginally opened as akka/akka#18569\n\nIt's a fairly common pattern in Spray and was considered best-practice.\nWe should document what to do with this pattern when using Akka HTTP.\nUser feedback was:\n☝️ September 26, 2015 3:04 PM\n\nI couldn't get the pattern to work without refactoring significantly. Previously by BridgeActor (i.e. the per-request actor, could complete the request by calling req.requestor ! SomeSerializableClass however in Akka-Http there is no requestor and calling req.complete doesn't finish the request because it was initiated by an Ask which expects a response\nI have def myRouteDirective(): Route = ctx => { but I can't figure out in there how to do an Ask on an actor and get back to a Future[RouteResult]. i.e. my Ask returns a Future[MyThing] or Future[MyError], and I can't fugure out how to complete or fail with the ability to serialize my objects and specify the http response code",
+            "url":"https://github.com/akka/akka-http/issues/272"
+          },
+          {
+            "number":299,
+            "title":"failed: ConnectionPoolSpec",
+            "bodyText":"Issue by patriknw\nFriday Aug 19, 2016 at 09:37 GMT\nOriginally opened as akka/akka#21231\n\nhttps://jenkins.akka.io:8498/job/pr-validator-per-commit-jenkins/7117/consoleFull\n[info] - should never close hot connections when minConnections key is given and >0 (minConnections = 5) *** FAILED *** (3 seconds, 117 milliseconds)\n[info]   java.lang.AssertionError: assertion failed: timeout (3 seconds) during expectMsgClass waiting for class akka.stream.testkit.TestSubscriber$OnNext\n[info]   at scala.Predef$.assert(Predef.scala:170)\n[info]   at akka.testkit.TestKitBase$class.expectMsgClass_internal(TestKit.scala:435)\n[info]   at akka.testkit.TestKitBase$class.expectMsgType(TestKit.scala:408)\n[info]   at akka.testkit.TestKit.expectMsgType(TestKit.scala:737)\n[info]   at akka.stream.testkit.TestSubscriber$ManualProbe.expectNextN(StreamTestKit.scala:317)\n[info]   at akka.http.impl.engine.client.ConnectionPoolSpec$$anonfun$1$$anonfun$apply$mcV$sp$12$$anon$15.<init>(ConnectionPoolSpec.scala:267)\n[info]   at akka.http.impl.engine.client.ConnectionPoolSpec$$anonfun$1$$anonfun$apply$mcV$sp$12.apply$mcV$sp(ConnectionPoolSpec.scala:252)\n[info]   at akka.http.impl.engine.client.ConnectionPoolSpec$$anonfun$1$$anonfun$apply$mcV$sp$12.apply(ConnectionPoolSpec.scala:252)\n[info]   at akka.http.impl.engine.client.ConnectionPoolSpec$$anonfun$1$$anonfun$apply$mcV$sp$12.apply(ConnectionPoolSpec.scala:252)",
+            "url":"https://github.com/akka/akka-http/issues/299"
+          },
+          {
+            "number":358,
+            "title":"Receiving overlarge request should return 413 response instead of 500",
+            "bodyText":"Akka 2.4.10 is returning HTTP 500 instead of 413 when receiving an overlarge request (with chunked encoding):\n09:26:13,337 ERROR [a.a.ActorSystemImpl] akka.actor.ActorSystemImpl(document-core) - Outgoing request stream error\nEntityStreamSizeException: actual entity size (None) exceeded content length limit (52428800 bytes)! You can configure this by setting `akka.http.[server|client].parsing.max-content-length` or calling `HttpEntity.withSizeLimit` before materializing the dataBytes stream.\n    at akka.http.scaladsl.model.HttpEntity$Limitable$$anon$1.onPush(HttpEntity.scala:620)\n    at akka.stream.impl.fusing.GraphInterpreter.processPush(GraphInterpreter.scala:747)\n    at akka.stream.impl.fusing.GraphInterpreter.execute(GraphInterpreter.scala:649)\n    at akka.stream.impl.fusing.GraphInterpreterShell.runBatch(ActorGraphInterpreter.scala:471)\n    at akka.stream.impl.fusing.GraphInterpreterShell.receive(ActorGraphInterpreter.scala:423)\n    at akka.stream.impl.fusing.ActorGraphInterpreter.akka$stream$impl$fusing$ActorGraphInterpreter$$processEvent(ActorGraphInterpreter.scala:603)\n    at akka.stream.impl.fusing.ActorGraphInterpreter$$anonfun$receive$1.applyOrElse(ActorGraphInterpreter.scala:618)\n    at akka.actor.Actor$class.aroundReceive(Actor.scala:484)\n    at akka.stream.impl.fusing.ActorGraphInterpreter.aroundReceive(ActorGraphInterpreter.scala:529)\n    at akka.actor.ActorCell.receiveMessage(ActorCell.scala:526)\n    at akka.actor.ActorCell.invoke_aroundBody0(ActorCell.scala:495)\n    at akka.actor.ActorCell$AjcClosure1.run(ActorCell.scala:1)\n    at org.aspectj.runtime.reflect.JoinPointImpl.proceed(JoinPointImpl.java:149)\n    at akka.kamon.instrumentation.ActorMonitors$$anon$1$$anonfun$processMessage$1.apply(ActorMonitor.scala:59)\n    at kamon.trace.Tracer$.withContext(TracerModule.scala:58)\n    at akka.kamon.instrumentation.ActorMonitors$$anon$1.processMessage(ActorMonitor.scala:58)\n    at akka.kamon.instrumentation.ActorCellInstrumentation.aroundBehaviourInvoke(ActorInstrumentation.scala:44)\n    at akka.actor.ActorCell.invoke(ActorCell.scala:488)\n    at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:257)\n    at akka.dispatch.Mailbox.run(Mailbox.scala:224)\n    at akka.dispatch.Mailbox.exec(Mailbox.scala:234)\n    at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)\n    at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)\n    at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)\n    at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)\n09:26:13,338 ERROR [a.a.ActorSystemImpl] akka.actor.ActorSystemImpl(document-core) - Internal server error, sending 500 response\nakka.http.impl.util.One2OneBidiFlow$OutputTruncationException$: Inner stream finished before inputs completed. Outputs might have been truncated.\n\nEven though the code concluding _sending 500 response\" has an explicit block handling EntityStreamSizeException, what actually arrives there seems to be a weird-ass akka.http.impl.util.One2OneBidiFlow$OutputTruncationException$.",
+            "url":"https://github.com/akka/akka-http/issues/358"
+          },
+          {
+            "number":378,
+            "title":"Allow customize response that is generated in akka http when a request timeout is exceed ",
+            "bodyText":"Issue by matheuslima\nSaturday Oct 08, 2016 at 16:27 GMT\nOriginally opened as akka/akka#21638\n\nToday, the response generated looks like:\n    HttpResponse(StatusCodes.ServiceUnavailable, entity = \"The server was not able \" +\n      \"to produce a timely response to your request.\\r\\nPlease try again in a short while!\")\n\nI need add some headers to all responses generated from my server, but the directive respondWithHeaders seems not work with timed out responses, due the fact the default response is injected by akka http server.",
+            "url":"https://github.com/akka/akka-http/issues/378"
+          },
+          {
+            "number":418,
+            "title":"Content-Type header disappears with custom content type value",
+            "bodyText":"Issue by Vadi\nWednesday Oct 19, 2016 at 14:36 GMT\nOriginally opened as akka/akka#21702\n\nGiven I've a route like this --\npath(\"sid\" / IntNumber) { id =>\n    post { ctx =>\n      ctx.complete(ctx.request.headers.mkString(\",\"))\n    }\n}\n\nWhen I execute -\n> curl -H \"Content-Type: application/json\" -d'{}' -XPOST http://0.0.0.0:8080/sid/123\n\nIt returns -\nHost: 0.0.0.0:8080,User-Agent: curl/7.49.1,Accept: */*,Timeout-Access: <function1>%\n\nNotice that Content-Type header is not returned. However, check this request \u2014\ncurl -H \"Blah: Blue\" -H \"Content-Type: moon\" -d'{}' -XPOST http://0.0.0.0:8080/deployment/123\n\nThis one returns content-type: moon as expected.\nHost: 0.0.0.0:8080,User-Agent: curl/7.49.1,Accept: */*,Blah: Blue,content-type: moon,Timeout-Access: <function1>%\n\nNot sure what the issue is -- How content type value is disappearing when a valid value is sent out. I am using headerValueByName directive to implement a custom content type.",
+            "url":"https://github.com/akka/akka-http/issues/418"
+          },
+          {
+            "number":445,
+            "title":"Create API variants for websockets that accept Source or Sink",
+            "bodyText":"Many people want just one-directional communcation, so they have a Sink or Source, we should give them helper APIs to be able to use them without hassle.",
+            "url":"https://github.com/akka/akka-http/issues/445"
+          },
+          {
+            "number":450,
+            "title":"OutgoingConnectionBlueprint logs errors to wrong logger",
+            "bodyText":"akka-http/akka-http-core/src/main/scala/akka/http/impl/engine/client/OutgoingConnectionBlueprint.scala\n    \n    \n         Line 99\n      in\n      d0b7829\n    \n    \n    \n    \n\n        \n          \n                 val logger = b.add(MapError[ByteString] { case t ⇒ log.error(t, \"Outgoing request stream error\"); t }.named(\"errorLogger\")) \n        \n    \n  \n\n\nIt goes directly to akka.actor.ActorSystemImpl.ERROR, which is probably not what's intended.",
+            "url":"https://github.com/akka/akka-http/issues/450"
+          },
+          {
+            "number":514,
+            "title":"Special handling of Expect: 100-Continue may not be appropriate in a proxy",
+            "bodyText":"I'm using Akka HTTP (3.0.0-RC1) to create a reverse-http-proxy.  The special handling of Expect: 100-Continue looks like it's causing weirdness in this case.  In wireshark, here's what I see:\nProxy  -> RSP: 100 Continue -> Client\nClient -> REQ -> Proxy\nServer -> RSP: 100 Continue -> Proxy\nProxy  -> REQ -> Server\nServer -> 200 -> Proxy\nProxy  -> 200 -> Client\n\nIn the production logs (not in an attempt at a clean room reproduction) we see a number of these messages:\nSending an 2xx 'early' response before end of request was received...\n\nIt's not 100% clear that these are related to the special handling of 100, but they do seem to coincide a lot.\nIt feels like the special handling should be avoided when akka-http is operating as a proxy, leaving the handling logic up to the server to which we're proxying.",
+            "url":"https://github.com/akka/akka-http/issues/514"
+          },
+          {
+            "number":520,
+            "title":"Improve spray migration guide on marshallers",
+            "bodyText":"Feedback via twitter: https://twitter.com/oxbow_lakes/status/798106140483735552?s=03\nWriteup here: https://gist.github.com/oxbowlakes/117f0dbfe8eb05347fd25db9ca3c4cd3\nIt's about that we should explain the marshallers in more depth, imports and context.\nHelp on improving the guide would be very welcome!",
+            "url":"https://github.com/akka/akka-http/issues/520"
+          },
+          {
+            "number":525,
+            "title":"Document how to reply with 404 when Source completing request is empty",
+            "bodyText":"Normally empty source will be rendered as [] etc, which is valid.\nWe could document how to render 404 in that case",
+            "url":"https://github.com/akka/akka-http/issues/525"
+          },
+          {
+            "number":526,
+            "title":"Provide anyParams that was available in Spray",
+            "bodyText":"As documented in: http://spray.io/documentation/1.1.4/spray-routing/any-param-directives/anyParams/\nOriginal impl here: https://github.com/spray/spray/blob/b473d9e8ce503bafc72825914f46ae6be1588ce7/spray-routing/src/main/scala/spray/routing/directives/AnyParamDirectives.scala\nThis will require shapeless though - or a \"mini shapeless\" so we should think where / how to put it.\nWould be a very cool one to contribute by the community if someone wants to play around as type astronaut 😉",
+            "url":"https://github.com/akka/akka-http/issues/526"
+          },
+          {
+            "number":541,
+            "title":"formField fails if custom unmarshaller is in scope",
+            "bodyText":"formField directive fails if there is too generic unmarshaller in scope, that prevents FieldMagnet machinery to work.\nIt can happen quite a lot - for example when using akka-http-json4s or other generic unmarshaller.\nReproducer https://github.com/marekzebrowski/akka-http-form-field-bug\nIf it is not solvable, maybe a word of warning in documentation, or a guide how to write own unmarshaller would be helpful",
+            "url":"https://github.com/akka/akka-http/issues/541"
+          },
+          {
+            "number":546,
+            "title":"Fix scaladoc and javadoc references",
+            "bodyText":"There are several method and class references in the scaladoc which are unresolved and generate 97 warnings of the kind Could not find any member to link for \"XYZ\" when running sbt unidoc. It would be nice to fix the references to improve the scaladoc.\nThe warnings are likely also the reason why javadoc linting had to be disabled in #501. Once the above scaladoc errors have been resolved, the goal will be to get the following command to succeed after reverting #501:\nsbt -Dakka.genjavadoc.enabled=true genjavadoc:doc",
+            "url":"https://github.com/akka/akka-http/issues/546"
+          },
+          {
+            "number":559,
+            "title":"Wrong Marshalling when Entity is `Optional`",
+            "bodyText":"When completing a route with a Java Optional the output is not the one I would expect:\nExpected Behavior\n\nIf Optional[T] is empty: completed with an empty Entity\nIf Optional[T] is not empty: completed with proper marshalling of T\n\nActual Behavior\n\nIf Optional[T] is empty: completed with {\"present\": false}\nIf Optional[T] is not empty: completed with {\"present\": true}\n\nI have a gist where one can reproduce this: https://gist.github.com/jlprat/5e1c27ce4b912e0a3eb0ad56237246d7",
+            "url":"https://github.com/akka/akka-http/issues/559"
+          },
+          {
+            "number":577,
+            "title":"Improve Scaladoc package documentation",
+            "bodyText":"We will now link to the scaladsl package directly. We should have some documentation pointers there to guide people where to look further. Right now it is empty.",
+            "url":"https://github.com/akka/akka-http/issues/577"
+          },
+          {
+            "number":605,
+            "title":"Allow matching multiple query parameters in Java API",
+            "bodyText":"Currently, if there is a call with multiple query parameters, there are two ways to code it:\nNesting parameter directives:\nparameter(\"param1_name\",  param1 ->\n    parameter(\"param2_name\", param2 -> method(param1, param2))\n\n, which quickly gets of hand in terms of size and readability, or using parameterMap/parameterList and checking for their availability manually. One has an unfeasible amount of ceremony, and the other results in error-prone code. Some more concise API needs to be added.",
+            "url":"https://github.com/akka/akka-http/issues/605"
+          },
+          {
+            "number":622,
+            "title":"Document or provide adding \"response timeout\"",
+            "bodyText":"It's less trivial since it requires to drain the response entity anyway even if it came \"too late\".\nSimple impl would be:\npackage akka.http.scaladsl.client\n\nimport akka.actor.ActorSystem\nimport akka.http.scaladsl.Http\nimport akka.http.scaladsl.model._\nimport akka.stream.Materializer\n\nimport scala.concurrent.{Future, Promise}\nimport scala.concurrent.duration.FiniteDuration\nimport scala.util.{Failure, Success}\n\nfinal case class ResponseTimeoutException(request: HttpRequest, message: String) extends RuntimeException(message)\n\nfinal class FancyClientTimeouts(implicit system: ActorSystem, mat: Materializer) {\n  val http = Http(system)\n\n\n  def singleRequestWithTimeout(request: HttpRequest, responseTimeout: FiniteDuration): Future[HttpResponse] = {\n    val response = http.singleRequest(request)\n    val p = Promise[HttpResponse]()\n\n    // allocating failure here since this way the stacktrace will point to where this was called from:\n    val timeoutException = RequestTimeoutException(request, s\"Response did not arrive within $responseTimeout\")\n    \n    \n    // timeout exception\n    val timeoutCancellable = system.scheduler.scheduleOnce(responseTimeout, new Runnable {\n      override def run(): Unit = p.tryFailure(timeoutException)\n    })\n    \n    response.onComplete {\n      case Success(res) => \n        timeoutCancellable.cancel()\n        // we attempt to suceed the Future, not with 2 steps because of atomicity of the swap\n        try p.success(res) catch {\n          case _: Throwable =>\n            system.log.debug(\"Draining entity body for late response [{} {}], which was completed with timeout ({}) failure already.\", request.method, request.uri, responseTimeout)\n            res.discardEntityBytes() // we discard the databytes explicitly, to avoid stalling the connection\n            \n        }\n      case Failure(failed) => \n        timeoutCancellable.cancel()\n        p.tryFailure(failed)\n    }\n    \n    p.completeWith(response.map { res =>\n      timeoutCancellable.cancel()\n      res\n    })\n\n    p.future\n  }\n\n}",
+            "url":"https://github.com/akka/akka-http/issues/622"
+          },
+          {
+            "number":659,
+            "title":"Support for WebSocket Extensions",
+            "bodyText":"Continuation of akka/akka#18709\nWe currently do not support websocket extensions (i.e. registering \"an extension\" in the server, or requesting one in the client).\nCurrently we see no strong need to provide this functionality.\nIf you have a strong use case for it, please comment here",
+            "url":"https://github.com/akka/akka-http/issues/659"
+          },
+          {
+            "number":675,
+            "title":"Mention in migration guide that route result type changed from Unit to Future[RouteResult]",
+            "bodyText":"Feedback from Sid Feiner via akka-user\n\nAnd by the way, in the migration guide it doesn't mention that the Routing result type has gone from Unit to Future[RouteResult]. I think it'd help a lot of people if you'd mention it and even add a reference to the article written by Johan. It really helped a lot :)\n\nIn thread [akka-user] Completing request outside of main controller\nAlso, we should likely import @johanandren's post, it's very good: https://markatta.com/codemonkey/blog/2016/08/03/actor-per-request-with-akka-http/",
+            "url":"https://github.com/akka/akka-http/issues/675"
+          },
+          {
+            "number":687,
+            "title":"Relax user-agent parsing to fit reality",
+            "bodyText":"Hi! I get:\nIllegal request header: Illegal 'user-agent' header: Invalid input '/', expected OWS, 'EOI', tchar, product-or-comment or comment (line 1, column 184): Mozilla/5.0 (Linux; U; Android 5.0.2; en-us; Redmi Note 3 Build/LRX22G) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/53.0.2785.146 Mobile Safari/537.36 XiaoMi/MiuiBrowser/8.4.6\n\nSo, the parser is too strict to fit reality.",
+            "url":"https://github.com/akka/akka-http/issues/687"
+          },
+          {
+            "number":712,
+            "title":"List of directives (alphabetically) should be more prominent in TOC.",
+            "bodyText":"Some serious scrolling just to get to the directives list :-)",
+            "url":"https://github.com/akka/akka-http/issues/712"
+          },
+          {
+            "number":738,
+            "title":"Delete all instances of `Source.single` + `connectionPool` in documentation and the internet",
+            "bodyText":"For obvious reasons.",
+            "url":"https://github.com/akka/akka-http/issues/738"
+          },
+          {
+            "number":768,
+            "title":"UnexpectedConnectionClosureException cannot be catched since it's in private class",
+            "bodyText":"Akka HTTP version 10.0.1\nSomehow we have received a\nCaused by: akka.http.impl.engine.client.OutgoingConnectionBlueprint$UnexpectedConnectionClosureException: The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests\n\tat akka.http.impl.engine.client.OutgoingConnectionBlueprint$$anonfun$apply$2.apply(OutgoingConnectionBlueprint.scala:127)\n\tat akka.http.impl.engine.client.OutgoingConnectionBlueprint$$anonfun$apply$2.apply(OutgoingConnectionBlueprint.scala:127)\n\tat akka.http.impl.util.One2OneBidiFlow$One2OneBidi$$anon$1$$anon$4.onUpstreamFinish(One2OneBidiFlow.scala:95)\n\tat akka.stream.impl.fusing.GraphInterpreter.processEvent(GraphInterpreter.scala:732)\n\tat akka.stream.impl.fusing.GraphInterpreter.execute(GraphInterpreter.scala:616)\n\nBut we should beable to .recover the future right? So i thought so let's retry the request if that happens:\n.recoverWith {\n      // The http server closed the connection unexpectedly before delivering responses\n      case e: UnexpectedConnectionClosureException if retries > 0 =>\n        logger.warn(s\"Unexpected connection closure, retries left: $retries\", e)\n        //Retry the request with 1 less retry\n        executeRequest(request, retries - 1)\n\nBut i'm not allowed to get to the exception since it's inside a private class.\nError:(5, 37) object OutgoingConnectionBlueprint in package client cannot be accessed in package akka.http.impl.engine.client\nimport akka.http.impl.engine.client.OutgoingConnectionBlueprint.UnexpectedConnectionClosureException\n\nRequest: make sure that all exception that can be thrown outside to the system are part of the public API.",
+            "url":"https://github.com/akka/akka-http/issues/768"
+          },
+          {
+            "number":793,
+            "title":"Http().webSocketClientFlow with TLS/SSL doesn't complete with failure when it should",
+            "bodyText":"Hi guys,\nI filed a similar issue some months ago. It was akka/akka#21051, brilliantly resolved. Thank you for that!\nThis time, this issue has to do with TLS/SSL and maybe with whatever the TLSActor does together with the SSLConfig library. The following small application will make you immediately reproduce the issue:\nimport java.io._\nimport java.security._\nimport javax.net.ssl._\n\nimport akka.actor._\nimport akka.http.scaladsl._\nimport akka.http.scaladsl.model.ws._\nimport akka.stream._\nimport akka.stream.scaladsl._\n\nobject IssueReplicator extends App {\n  implicit val system = ActorSystem()\n  implicit val mat = ActorMaterializer()\n  implicit val ec = system.dispatcher\n\n  val outgoing =\n    Source.single(TextMessage(\"hello world!\"))\n\n  val https = {\n    val password = \"password\".toCharArray\n    val keyStore = KeyStore.getInstance(\"JKS\")\n    val inputStream = new FileInputStream(\"any-trust-store-you-like.jks\")\n    try keyStore.load(inputStream, password) finally inputStream.close()\n    val kmf = KeyManagerFactory.getInstance(\"SunX509\")\n    kmf.init(keyStore, password)\n    val tmf = TrustManagerFactory.getInstance(\"SunX509\")\n    tmf.init(keyStore)\n    val sslContext = SSLContext.getInstance(\"TLS\")\n    sslContext.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom)\n    ConnectionContext.https(sslContext)\n  }\n\n  val webSocketFlow = Http().webSocketClientFlow(\n    WebSocketRequest(\"wss://unknown:8433\"),\n    connectionContext = https\n  )\n\n  val incoming =\n    Sink.foreach[Message] {\n      case message: TextMessage.Strict =>\n        println(message.text)\n    }\n\n  // upgradeResponse is a Future[WebSocketUpgradeResponse]\n  // and it's expected to complete with success or failure ...\n  val (upgradeResponse, closed) =\n  outgoing\n    .viaMat(webSocketFlow)(Keep.right)\n    .toMat(incoming)(Keep.both)\n    .run()\n\n  // ... BUT ... it never completes in case of failures!\n  upgradeResponse.failed.foreach { ex =>\n    ex.printStackTrace()\n    System.exit(-1)\n  }\n}\nTrying to connect to \"wss://unknown:8443\" is just an easy way to reproduce the issue. Another way is trying to connect to some TLS/SSL WebSocket servers actually up and running but making the application load an empty trust-store.jks. In the former scenario the application is expected to fail because it cannot connect to something which doesn't exist. In the latter scenario, the application is also expected to fail but for different reasons (it won't be able to validate the certificate presented by the server)\nWhatever scenario you prefer to run, you'll notice that the upgradeResponse future never completes with failure when it should rather do it.",
+            "url":"https://github.com/akka/akka-http/issues/793"
+          },
+          {
+            "number":807,
+            "title":"Document consuming multipart entities",
+            "bodyText":"Not only for the server-side (i.e. for consuming file-uploads) but also for the client-side where servers may return multipart/byteranges or other multipart datastructures.\nInformation it should contain:\n\nhow to use Unmarshal(response / entity).to[Multipart.General]\nother subclasses of Multipart\nexplain stream-of-streams nature of Multipart.parts and Multipart.BodyPart.entity.dataBytes\nnote about head-of-line blocking: the data of a part needs to be read fully before a new part will be dispatched. Just filtering parts can deadlock a stream.",
+            "url":"https://github.com/akka/akka-http/issues/807"
+          },
+          {
+            "number":817,
+            "title":"Review documentation about discarding entity bytes for the server-side",
+            "bodyText":"As already documented, discarding response entity bytes is required on the client, otherwise, the connection will stall after some time. This is a somewhat significant problem because clients often don't expect (or aren't interested) in the response bodies of non-200 responses that often contain just informational messages. This cannot be solved automatically because akka-http cannot detect when user code has finished processing a response.\nOn the server-side, however, discarding request entity bytes should never be needed. It can usually considered a bug\n\neither, by the client of sending a request body, when none was expected\nor, on the server where a request body was not accidentally not consumed\n\nBoth situations are not common. Fortunately, it can be detected when a request entity was not read. The current behavior in those situations is to close the connection after the response was sent (which seems to be fine in such an uncommon situation).\nOptionally, we could provide another automatic solution where the request body is drained automatically. This is the topic of related ticket #183.",
+            "url":"https://github.com/akka/akka-http/issues/817"
+          },
+          {
+            "number":825,
+            "title":"Document content negotiation",
+            "bodyText":"We have nice support for content negotiation with multiple marshallers, but I cannot find any docs about it or any samples.",
+            "url":"https://github.com/akka/akka-http/issues/825"
+          },
+          {
+            "number":834,
+            "title":"Simplify Route#seal for Java and Scala API",
+            "bodyText":"Currently the overloaded seal method where one can provide a RejectionHandler and an ExceptionHandler for Route is not easy to use.\nIt is specially painful for the Java API where all parameters must be specified.\nThe API could be simplified as  part of those parameters are already accessible in the RequestContext.\nPlease provide a simplified API to seal a Route for both Java and Scala API.",
+            "url":"https://github.com/akka/akka-http/issues/834"
+          },
+          {
+            "number":857,
+            "title":"java cachedHostConnectionPool API could not setting pool by programming",
+            "bodyText":"In safety internal network environment,  some system using http and have host-level limitation.\nThere is lack API for setting HTTP host-level connection pool.\nThe exists create pool with settings API is only for HTTPS.\njavadsl/Http.scala\n  /**\n   * Same as [[cachedHostConnectionPool]] but with HTTPS encryption.\n   *\n   * The given [[ConnectionContext]] will be used for encryption on the connection.\n   */\n  def cachedHostConnectionPool[T](\n    to:       ConnectHttp,\n    settings: ConnectionPoolSettings,\n    log:      LoggingAdapter, materializer: Materializer): Flow[Pair[HttpRequest, T], Pair[Try[HttpResponse], T], HostConnectionPool] =\n    adaptTupleFlow(delegate.cachedHostConnectionPoolHttps[T](to.host, to.port, to.effectiveHttpsConnectionContext(defaultClientHttpsContext).asScala, settings.asScala, log)(materializer)\n      .mapMaterializedValue(_.toJava))\n\nt:http:core",
+            "url":"https://github.com/akka/akka-http/issues/857"
+          },
+          {
+            "number":868,
+            "title":"Accept LF as line ending in body part parser",
+            "bodyText":"Follow up to #106.",
+            "url":"https://github.com/akka/akka-http/issues/868"
+          },
+          {
+            "number":879,
+            "title":"Provide Segments path directive that matches 0 to n segments regardless of leading slashes",
+            "bodyText":"The existing Segments PathMatcher is mostly useful when trailing slashes are enforced everywhere. When no trailing slashes it is a bit more complicated right now to get a list of segments.\nThe implementation can be basically this:\ndef pathSegments: Directive1[List[String]] = (Slash ~ Segment).repeat(0, 128, PathMatchers.Neutral) ~ PathEnd // or PathEndOrSingleSlash?\nIt would allow to use\npathPrefix(\"tree\") {\n  pathSegments { segments =>\n    ...\n  }\n}\nwhich would match all of\n\n/tree\n/tree/abc\n/tree/abc/def\n\nbut not\n\n/tree/\n/tree/abc/\n\n/cc @lihaoyi",
+            "url":"https://github.com/akka/akka-http/issues/879"
+          },
+          {
+            "number":891,
+            "title":"Allow conversion from Java Route to Scala Route",
+            "bodyText":"There's a way to convert a Scala Route (akka.http.scaladsl.server.Route) to a Java Route (akka.http.javadsl.server.Route) by using the RouteAdapter (akka.http.javadsl.server.directives.RouteAdapter).\nAlthough there's no way to do it the other way around.\nThe Java Route already has the delegate method, but it's private[http] and it's marked as \"INTERNAL API\".\nShould we change this method's privacy or add this functionality in a different way?",
+            "url":"https://github.com/akka/akka-http/issues/891"
+          },
+          {
+            "number":895,
+            "title":"Clarify difference in docs between EntityStreamingSupport for any source and low-level Source[ByteString, Any]",
+            "bodyText":"As per the gitter discussion with @ktoso, it could be probably worth mentioning in the docs that EntityStreamingSupport is only needed to complete a route with a stream of \"discrete elements\" like for example json arrays or csv entries, while a low level byte stream could be simply sent back to the client doing something like:\ncomplete(HttpEntity(contentType, byteStringSource))",
+            "url":"https://github.com/akka/akka-http/issues/895"
+          },
+          {
+            "number":905,
+            "title":"Use simpler TLS entry point in HTTP/2 once 2.4.18 has been released.",
+            "bodyText":"Will be introduced for 2.4.18 in akka/akka#22377. Was already introduced for 2.5 in akka/akka#22351.",
+            "url":"https://github.com/akka/akka-http/issues/905"
+          },
+          {
+            "number":907,
+            "title":"Use new shutdown hooks in Akka 2.5 to prevent AbruptTerminationException in Http infrastructure",
+            "bodyText":"There are already some hook phases pre-allocated for exactly this purpose.\nAll active components should be shutdown in the hook:\n\nHttp().shutdownAllConnectionPools\nAlso introduce some infrastructure to track open server bindings and shut them down.",
+            "url":"https://github.com/akka/akka-http/issues/907"
+          },
+          {
+            "number":911,
+            "title":"Replace synthetic headers with request attributes",
+            "bodyText":"They are confusing in logs or when debugging and have to be manually filtered out when proxing reuqests.",
+            "url":"https://github.com/akka/akka-http/issues/911"
+          },
+          {
+            "number":920,
+            "title":"Make docs available in PDF form like Akka does",
+            "bodyText":"Having the docs in PDF form is very useful for many people. It would be great if we could get that.",
+            "url":"https://github.com/akka/akka-http/issues/920"
+          },
+          {
+            "number":927,
+            "title":"Java DSL methods on ws.Message should be hidden from Scala",
+            "bodyText":"The Scala DSL requires pattern matching to deal with TextMessage vs. BinaryMessage. Calling the content-assisted options leads to the Java side of things with mystifying error messages and lots of head scratching (e.g. folding over the stream with Scala 2.11 and being told that Function2 is expected where I am clearly supplying a 2-ary lambda expression).\nThe Java DSL methods are just misleading and should not show up on the Scala type. This can be achieved by making them private[akka], which translates to public for Java and is binary compatible.\nIt might be desirable to either document this better or add methods for the Scala DSL as well.",
+            "url":"https://github.com/akka/akka-http/issues/927"
+          },
+          {
+            "number":938,
+            "title":"cannot pull port (SubSinkInlet(SlotProcessor.ResponseSink)) twice",
+            "bodyText":"As reported here #516 (comment)\n[03/06/2017 09:31:09.870] [ServiceClusterSystem-akka.actor.default-dispatcher-129] [akka://ServiceClusterSystem/user/StreamSupervisor-4/flow-24-0-unknown-operation] Error in stage [akka.http.impl.engine.client.PoolSlot$SlotProcessor@362c674c]: requirement failed: cannot pull port (SubSinkInlet(SlotProcessor.ResponseSink)) twice\njava.lang.IllegalArgumentException: requirement failed: cannot pull port (SubSinkInlet(SlotProcessor.ResponseSink)) twice\n\tat scala.Predef$.require(Predef.scala:224)\n\tat akka.stream.stage.GraphStageLogic$SubSinkInlet.pull(GraphStage.scala:1011)\n\tat akka.http.impl.engine.client.PoolSlot$SlotProcessor$$anon$1$$anon$4.onPull(PoolSlot.scala:181)\n\tat akka.stream.impl.fusing.GraphInterpreter.processPull(GraphInterpreter.scala:754)\n\tat akka.stream.impl.fusing.GraphInterpreter.execute(GraphInterpreter.scala:660)\n\tat akka.stream.impl.fusing.GraphInterpreterShell.runBatch(ActorGraphInterpreter.scala:471)\n\tat akka.stream.impl.fusing.GraphInterpreterShell.receive(ActorGraphInterpreter.scala:414)\n\tat akka.stream.impl.fusing.ActorGraphInterpreter.akka$stream$impl$fusing$ActorGraphInterpreter$$processEvent(ActorGraphInterpreter.scala:603)\n\tat akka.stream.impl.fusing.ActorGraphInterpreter$$anonfun$receive$1.applyOrElse(ActorGraphInterpreter.scala:618)\n\tat akka.actor.Actor$class.aroundReceive(Actor.scala:497)\n\tat akka.stream.impl.fusing.ActorGraphInterpreter.aroundReceive(ActorGraphInterpreter.scala:529)\n\tat akka.actor.ActorCell.receiveMessage(ActorCell.scala:526)\n\tat akka.actor.ActorCell.invoke(ActorCell.scala:495)\n\tat akka.dispatch.Mailbox.processMailbox(Mailbox.scala:257)\n\tat akka.dispatch.Mailbox.run(Mailbox.scala:224)\n\tat akka.dispatch.Mailbox.exec(Mailbox.scala:234)\n\tat scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)\n\tat scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)\n\tat scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)\n\tat scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)",
+            "url":"https://github.com/akka/akka-http/issues/938"
+          },
+          {
+            "number":992,
+            "title":"Adapt Actor Examples to Akka 2.5",
+            "bodyText":"Once Akka 2.5 is released, please convert all existing usages of Akka Actors to the new API introduced in Akka 2.5.\nPlease add some note to hint readers that this is the new Actor API and offer some links to AbstractActor",
+            "url":"https://github.com/akka/akka-http/issues/992"
+          },
+          {
+            "number":995,
+            "title":"Allow to configure ClientTransport with application.conf",
+            "bodyText":"Right now it can only be done in code. The facility should allow to specify parameters, e.g. the upcoming HTTPS proxy transport needs a host and port configuration.",
+            "url":"https://github.com/akka/akka-http/issues/995"
+          },
+          {
+            "number":1009,
+            "title":"Configuration options could use clarification on dependencies between them.",
+            "bodyText":"Config options around sizing are a bit confusing right now.\nConsider setting up 2 Akka-Http services, A and B, where A makes requests to B for streaming data, say a 20MB file.\nWhich options would you set?\nAkka-Http Client on service A defaults to 4 connections, Akka-Http Server on service B defaults to serving 1024 connections.\nYou will run into a runtime error if testing with a 5MB file you will be surprised at runtime to find out that a 10MB file will not work due to Max-Content-Length.\nWhat settings will you need to make sure this does not fail with chunk size incorrect errors?  What if someone sets the chunk size different on each service?\nmax-content-length?\ndecode-max-bytes-per-chunk?\nmax-chunk-size?\nWhich of these are dependent upon which and will break if they are set to incompatible settings?\nDo they need to be set in:\nakka.http.client?\nakka.http.server?\nakka.http.pool?\nakka.http.pool.client?\nakka.http.parsing?\nakka.http.client.parsing?\nakka.http.host-connection-pool.client.parsing?\nIf you set one and miss another will the service fail at runtime due to incompatible sizes or will it adjust/re-chunk dynamically?\nIs there a best practice advice to verify all of these settings are correct and compatible?  For example always test with a file at least 2x the size of akka.http.foo.setting?",
+            "url":"https://github.com/akka/akka-http/issues/1009"
+          },
+          {
+            "number":1011,
+            "title":"Valid Content-Type header are eaten-up  by headerValueByName directive",
+            "bodyText":"It seems that HeaderValueByName, optinalHeaderValueByName and headerValueByType are not returning the content type if it is an valid one.\nI posted already something on the mailing list https://groups.google.com/forum/#!topic/akka-user/ZClckCsc8e4\nFor testing purpose I wrote a small server (to test my client)\nobject WebServer extends HttpApp { def route: Route = path(\"publishvalid\") { optionalHeaderValueByName(\"Content-Type\") { header => println(\"Content-Type is \"+header) post { complete(\"\") } } } }\nWhile doing this I observed that the directive optionalHeaderValueByName was never returning a valid value if the Content-Type I send was valid (I used postman for it).\nIf I used a customized Content-Type it works fine. Observed the same fore headerValueByName and HeaderContentType.\nThis seems like an bug for me, evenso it is mentioned here http://doc.akka.io/docs/akka-http/10.0.4/scala/http/common/http-model.html#http-model that the Content-Type is treated differntly.\nRegards\nWolfgang",
+            "url":"https://github.com/akka/akka-http/issues/1011"
+          },
+          {
+            "number":1015,
+            "title":"Akka HTTP configuration details exposed to client on EntityStreamSizeException",
+            "bodyText":"Hi,\nThe current implementation of the EntityStreamSizeException handling exposes a detailed message about which Akka settings to use (to allow bigger contents in requests) to the client, even though verbose-error-messages is set to off.\nI changed the Class to extend ExceptionWithErrorInfo to distinguish between a summary and a detailed message.\nThere is a check for the verbosity setting in HttpServerBluePrint:459 but it seems like it is never called and the ErrorInfo.formatPretty result is returned to the client (which may also just be the result of RuntimeException.getMessage as ExceptionWithErrorInfo extends RuntimeException).\nDo you have an idea why or what to change to only display the summary in that case?\nThe mentioned classes are in the akka-http-core module.\nYou can trigger it by setting akka.http.server.parsing.max-content-length to 1 and send some data with your request.\nI pushed my current changes to makubi/akka-http@546af4f.\nThanks in advance.",
+            "url":"https://github.com/akka/akka-http/issues/1015"
+          },
+          {
+            "number":1026,
+            "title":"Streams don't fail on WebSocket idle timeout on the server-side",
+            "bodyText":"Hi all,\nwhen upgrading from Akka HTTP 10.0.0 to 10.0.5 I noticed that in case of a server side idle timeout the WebSocket server implementation does not fail the server side streams anymore.\nBefore 10.0.1 the server side stream terminated with\n\ndownstream finished\nupstream failure Timeout Exception\n\nnow it seems to be\n\ndownstream finished\ndownstream finished\n\nbest take a look at the reproducer\nhttps://github.com/MichaelZinsmaier/akka-http-timeout-bug\nI think the 10.0.0 behavior is the better solution since server side code might want to react to a idle timeout in a specific way and propagating it with onError makes sense.\nBest Michael\nI also found this ticket but not sure if these issues are related\n#1012",
+            "url":"https://github.com/akka/akka-http/issues/1026"
+          },
+          {
+            "number":1040,
+            "title":"Websocket client closed immediately",
+            "bodyText":"I am trying to open a websocket to a local server I have with the exact same code as here (http://doc.akka.io/docs/akka-http/10.0.5/scala/http/client-side/websocket-support.html#client-side-websocket-support - section webSocketClientFlow), just replacing the url with a local url starting with wss as my server is configured as a HTTPS server.\nIf I look at the logs I just see:\n2017-04-19 15:14:10,923 [debug] - akka.stream.impl.io.InputStreamPublisher - No more bytes available to read (got `-1` from `read`)\n2017-04-19 15:14:11,185 [debug] - akka.io.TcpOutgoingConnection - Resolving localhost before connecting\n2017-04-19 15:14:11,188 [debug] - akka.io.SimpleDnsManager - Resolution request for localhost from Actor[akka://ClusterSystem/system/IO-TCP/selectors/$a/0#-317536067]\n2017-04-19 15:14:11,188 [debug] - akka.io.TcpOutgoingConnection - Attempting connection to [localhost/127.0.0.1:443]\n2017-04-19 15:14:11,189 [debug] - akka.io.TcpOutgoingConnection - Connection established to [localhost:443]\nclosed\n\nOn the server side, nothing is ever reached (I put some breakpoints with no success).\nIf I try to create the websocket with another client it works fine. It may be a SSL issue, but I have the same behavior with all SSL disabled (and the logs does not say anything else).\nAny idea ?\nLatest version (10.0.5) is used.",
+            "url":"https://github.com/akka/akka-http/issues/1040"
+          },
+          {
+            "number":1077,
+            "title":"Marshaller.withFixedContentType doesn't seem to work",
+            "bodyText":"When I create a ToEntityMarshaller for a type with Marshaller.withFixedContentType, as so:\n  case class SomeType2(content: String)\n\n  implicit val st2AsCsv: ToEntityMarshaller[SomeType2] =\n    Marshaller.withFixedContentType(ContentTypes.`text/csv(UTF-8)`)(_.content)\nthe response is still returning Content-Type: text/plain; charset=UTF-8. Using Marshaller.StringMarshaller.wrap works, though.\n  case class SomeType1(content: String)\n\n  implicit val st1AsCsv: ToEntityMarshaller[SomeType1] =\n    Marshaller.StringMarshaller.wrap(MediaTypes.`text/csv`)(_.content)\nHere's a minimal example to reproduce: https://gist.github.com/chadselph/9149bab77c7aebfcea24bc15c9b82495\nI've only tested this on 10.0.5, am I doing something wrong or is this a bug?",
+            "url":"https://github.com/akka/akka-http/issues/1077"
+          },
+          {
+            "number":1082,
+            "title":"Provide more hardening to prevent unexpected media ranges / media types",
+            "bodyText":"The media range specification is a bit unclear about how to deal with the special * character. In #1072, we observed a bug where different parts of akka-http interpreted it differently.\nThe most technical specification is the one in RFC 7231 is the one currently implemented:\n     media-type = type \"/\" subtype *( OWS \";\" OWS parameter )\n     type       = token\n     subtype    = token\n\nIn #1075 we change the Accept parser not to accept */xml as a valid media range any more. We should also restrict the type production not to allow * as valid input like this:\ndef `type`: Rule1[String] = rule {\n    '*' ~ failX[HNil, String :: HNil](\"'*' is not allowed as the main type of a media type or a media range (diverging from the grammar specified in RFC 7231 section-3.1.1.1) to prevent ambiguities with media ranges like '*/*'\") |\n      token\n  }\nand also add code to media range and media type that prevents that those ambiguous instances can be created in the first place. Things that need to be reviewed are acceptsAll and isWildcard.",
+            "url":"https://github.com/akka/akka-http/issues/1082"
+          },
+          {
+            "number":1083,
+            "title":"Revisit note regarding Marshaller.oneOf",
+            "bodyText":"In da84201 a note was added to scaladoc which might not be accurate any more after adding the resolution in #1019.",
+            "url":"https://github.com/akka/akka-http/issues/1083"
+          },
+          {
+            "number":1085,
+            "title":"Injected 503 response is not available to inner/outer routes.",
+            "bodyText":"Given route definition as follows:\n    addTraceHeaderIfMissing {\n      logHttpRequest {\n        logHttpResponse {\n          withRequestTimeoutResponse(handleTimeoutResponse) {\n            logHttpResponse {\n              Route.seal(routes)\n            }\n          }\n        }\n      }\n    }\n\nWhere logHttpResponse is implemented with mapResponse directive, both logHttpResponse calls  log 200 OK response if service timeout is reached.\nAny clues? Am I missing something? Many thanks!",
+            "url":"https://github.com/akka/akka-http/issues/1085"
+          },
+          {
+            "number":1136,
+            "title":"Replace confusing === with shouldEqual or similar in docs",
+            "bodyText":"There is sample code:\n \"return a MethodNotAllowed error for PUT requests to the root path\" in {\n      // tests:\n      Put() ~> Route.seal(smallRoute) ~> check {\n        status === StatusCodes.MethodNotAllowed\n        responseAs[String] shouldEqual \"HTTP method not allowed, supported methods: GET\"\n      }\n    }\nthe line status === StatusCodes.MethodNotAllowed actually does no check, but only returns boolean value, it is confusing and can lead to errors in tests and code.",
+            "url":"https://github.com/akka/akka-http/issues/1136"
+          },
+          {
+            "number":1167,
+            "title":"Access to websocket server materialized value",
+            "bodyText":"Websocket server methods do not allow accessing the materialized value of the flow it is given. They take a flow as argument and return the HTTP response to send back:\nHttpResponse response = WebSocket.handleWebSocketRequestWith(request, greeterFlow);\nThe server takes care of materializing the flow and ignores both values. This prevents users from getting them, which can be problematic. For example if the flow source is a queue, one needs to get its materialized value in order to push to the queue. A workaround is to setup a callback on mapMaterializedValue to send the queue to whoever is interested in it:\nSource.<Message>queue(5, OverflowStrategy.backpressure())\n    .mapMaterializedValue(sourceQueue -> { /* send queue to whoever is interested */; return sourceQueue; });\nBut this is a workaround rather than a clean solution, as mapMaterializedValue is meant to transform the materialized value rather than broadcast it. The client has methods that return this materialized value:\nPair<CompletionStage<WebSocketUpgradeResponse>, SourceQueueWithComplete<Message>> pair =\n        http.singleWebSocketRequest(WebSocketRequest.create(connect), flow, materializer);\nIt would be great if the server had methods for doing something similar. This might be tricky since contrary to the client, the server takes care of materializing the value after the response it sent.\n(mailing list pointer: Graph materialized value of websocket upgrade)",
+            "url":"https://github.com/akka/akka-http/issues/1167"
+          },
+          {
+            "number":1196,
+            "title":"Custom headers should be parsed to the custom types instead of `RawHeader`",
+            "bodyText":"Akka HTTP should allow registering custom headers so that a custom header can be rendered to the custom type instead of RawHeader.  Custom methods, mediatypes and status codes are allowed to be passed to ParserSettings.\nIt should be possible to read a custom header by request.header[ApiTokenHeader].  Please see below a reproducer.\nimport akka.actor.ActorSystem\nimport akka.http.scaladsl.Http\nimport akka.http.scaladsl.model.headers.{ModeledCustomHeader, ModeledCustomHeaderCompanion, `User-Agent`}\nimport akka.http.scaladsl.model.{HttpRequest, HttpResponse}\nimport akka.stream.ActorMaterializer\nimport akka.stream.scaladsl.Flow\nimport akka.testkit.TestKit\nimport org.scalatest.{AsyncFlatSpecLike, Matchers}\n\nimport scala.concurrent.duration._\nimport scala.util.Try\n\nclass CustomHeaderSpec extends TestKit(ActorSystem(\"CustomHeaderSpec\")) with AsyncFlatSpecLike with Matchers {\n\n  implicit val ac = ActorMaterializer()\n\n  val flow = Flow[HttpRequest].map { request =>\n    val userAgent = request.header[`User-Agent`].map(_.value).getOrElse(\"N/A\")\n    val apiKey = request.header[ApiTokenHeader].map(_.value).getOrElse(\"N/A\")\n    val apiKeyAsRaw =\n      request.headers\n        .collectFirst { case h if h.lowercaseName == ApiTokenHeader.lowercaseName => h.value }\n        .getOrElse(\"N/A\")\n\n    HttpResponse(entity = s\"User-Agent: $userAgent apiKey: $apiKey apiKeyAsRaw: $apiKeyAsRaw\")\n  }\n\n  val binding = Http().bindAndHandle(flow, \"localhost\", port = 0)\n\n  it should \"parse to custom header object\" in {\n\n    binding flatMap { b =>\n      Http()\n        .singleRequest(HttpRequest(uri = s\"http://localhost:${b.localAddress.getPort}/\")\n          .withHeaders(`User-Agent`(\"abc\"), ApiTokenHeader(\"myToken\")))\n    } flatMap { response =>\n      response.entity.toStrict(30 seconds)\n    } flatMap { e =>\n      e.data.utf8String shouldBe \"User-Agent: abc apiKey: myToken apiKeyAsRaw: myToken\"\n    }\n  }\n}\n\nfinal class ApiTokenHeader(token: String) extends ModeledCustomHeader[ApiTokenHeader] {\n  override def renderInRequests = true\n  override def renderInResponses = false\n  override val companion = ApiTokenHeader\n  override def value: String = token\n}\nobject ApiTokenHeader extends ModeledCustomHeaderCompanion[ApiTokenHeader] {\n  override val name = \"apiKey\"\n  override def parse(value: String) = Try(new ApiTokenHeader(value))\n}",
+            "url":"https://github.com/akka/akka-http/issues/1196"
+          },
+          {
+            "number":1210,
+            "title":"Provide Coordinated Shutdown for Akka HTTP",
+            "bodyText":"Make sure coordinated shutdown can be used in Akka HTTP, so pending requests can be processed before shutting the server down.\nThis idea originated as a comment from @raboof in #1207\n\nWould be cool if we had a nice way to \"drain\" (\"stop listening for new requests but finish in-flight ones and shut down\", with a timeout). Can we do that?\n\nFurther info: http://doc.akka.io/docs/akka/current/scala/actors.html#coordinated-shutdown\nGitter Message",
+            "url":"https://github.com/akka/akka-http/issues/1210"
+          },
+          {
+            "number":1216,
+            "title":"fileUpload directive does not discard the rest of request body",
+            "bodyText":"We use fileUpload(\"filename\") directive to handle request with one input file. Buggy client sent some additional fields (that we do not need) after that file and never got a response (his request was timed out).\nWe found that fileUpload(\"filename\") directive reads only one file from multipart request and does not discard the rest of input stream. If client sends some other fields after that file then he never gets a response.",
+            "url":"https://github.com/akka/akka-http/issues/1216"
+          },
+          {
+            "number":1219,
+            "title":"Large response entity is truncated over https with 'Connection: close' header",
+            "bodyText":"When a client sends Connection: close header and response entity is large, the entity gets truncated over https.  It is ok with http.  We see this behaviour only with larger entities.  Please see below reproducer:\nimport java.io.InputStream\nimport java.security.{KeyStore, SecureRandom}\nimport javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}\n\nimport akka.actor.ActorSystem\nimport akka.http.scaladsl.server.Route\nimport akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}\nimport akka.stream.ActorMaterializer\nimport akka.http.scaladsl.server.Directives._\n\nimport scala.util.Random\n\nobject HttpsWithLargeResponseEntity extends App {\n\n  implicit val system = ActorSystem()\n  implicit val mat = ActorMaterializer()\n  implicit val dispatcher = system.dispatcher\n\n  // Manual HTTPS configuration\n\n  val password: Array[Char] = \"changeit\".toCharArray // do not store passwords in code, read them from somewhere safe!\n\n  val ks: KeyStore = KeyStore.getInstance(\"JKS\")\n  val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(\"example.com.jks\")\n\n  require(keystore != null, \"Keystore required!\")\n  ks.load(keystore, password)\n\n  val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance(\"SunX509\")\n  keyManagerFactory.init(ks, password)\n\n  val tmf: TrustManagerFactory = TrustManagerFactory.getInstance(\"SunX509\")\n  tmf.init(ks)\n\n  val sslContext: SSLContext = SSLContext.getInstance(\"TLS\")\n  sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)\n  val https: HttpsConnectionContext = ConnectionContext.https(sslContext)\n\n  val routes: Route = get { complete(Random.nextString(1024 * 100)) }\n  Http().bindAndHandle(routes, \"127.0.0.1\", 8443, connectionContext = https)\n  Http().bindAndHandle(routes, \"127.0.0.1\", 8080)\n}\nWith the following commands, I see the entire entity is retrieved:\n\ncurl -kv https://localhost:8443/\ncurl -v http://localhost:8080/ -H 'Connection: close'\ncurl -v http://localhost:8080/\n\nHowever, when the Connection: close' header is sent and the protocol is https, the entity gets truncated:\n\ncurl -kv https://localhost:8443/ -H 'Connection: close'\n\ntransfer closed with 90231 bytes remaining to read\n* Curl_http_done: called premature == 1\n* Closing connection 0\ncurl: (18) transfer closed with 90231 bytes remaining to read",
+            "url":"https://github.com/akka/akka-http/issues/1219"
+          },
+          {
+            "number":1247,
+            "title":"Reusing the ToResponseMarshaller",
+            "bodyText":"I have a typical use case where I have an arbitrary resource, T and a corresponding endpoint GET /T. This maps to a method which returns a CompletionStage<Optional<T>> now I wasn't able to find any predefined routing directive that would let me return 200 OK if the optional contains the resource and 404 Not found if the resource was not found.\nI am thinking I might have to use the completeWithFuture that accepts a CompletionStage<HttpResponse> and that's fine except I also need to serialise the POJO into a JSON response and I wasn't able to find something akin to  the completeOK overload which accepts a value T and a Marshaller<T, ResponseEntity>. Ideally if I could find a function accepting T and Marshaller<T, ResponseEntity> and returning a HttpResponse.",
+            "url":"https://github.com/akka/akka-http/issues/1247"
+          },
+          {
+            "number":1255,
+            "title":"Try using sbt-header v2 for our copy headers",
+            "bodyText":"As people keep forgetting to add the headers, and @hseeberger claims the v2.0 is much stabler than the initial version (which we attempted to use, but failed back them).\nhttps://github.com/sbt/sbt-header (same for akka eventually, if we work it out here)",
+            "url":"https://github.com/akka/akka-http/issues/1255"
+          },
+          {
+            "number":1265,
+            "title":"HttpHeader.parse can only use default settings",
+            "bodyText":"Currently when using HttpHeader.parse manually there is no way to override the Settings, since they are private.\nActually Play is using it to encode response headers:\nhttps://github.com/playframework/playframework/blob/master/framework/src/play-akka-http-server/src/main/scala/play/core/server/akkahttp/AkkaModelConversion.scala#L276\nIt would be great if there was a public way on overriding them, even a typesafe Config object would be fine.",
+            "url":"https://github.com/akka/akka-http/issues/1265"
+          },
+          {
+            "number":1267,
+            "title":"Exception in failed CompletionStage is always wrapped in CompletionException",
+            "bodyText":"When using the completeOKWithFutureString or completeOKWithFuture directives from the javadsl, the exception in a failed CompletionStage is always wrapped in a CompletionException.\nThis is unfortunate, as you end up writing ExceptionHandlers like this:\n    ExceptionHandler exceptionHandler = ExceptionHandler.newBuilder()\n            .match(CompletionException.class, e -> {\n              if (e.getCause() instanceof IllegalStateException) return complete(StatusCodes.NOT_FOUND);\n              // Etc.\n              else return complete(StatusCodes.INTERNAL_SERVER_ERROR);\n            })\n            .build();\n\nThe CompletionException doesn't appear to contain any useful information (not in the stacktrace either), perhaps we should consider unwrapping it in akka-http - though that would be a breaking change. Perhaps we could deprecate completeOKWithFuture(String) and add completeOKWithCompletionStage(String) that unwraps, as that's the native terminology anyway?",
+            "url":"https://github.com/akka/akka-http/issues/1267"
+          },
+          {
+            "number":1271,
+            "title":"Provide Dilated Timeouts for Java Testkit",
+            "bodyText":"As discovered in #1238, Java Testkit can't benefit of the dilated tests.\nThe current timeout when using Scala Testkit is 1 second (dilated) while the Java one is just 3 seconds.\nIn order to let Java Testkit use dilated, the RouteTest should extend JavaTestKit (that is where the dilated method is defined).",
+            "url":"https://github.com/akka/akka-http/issues/1271"
+          },
+          {
+            "number":1273,
+            "title":"fileUpload & uploadedFile directives don't support multiple files upload",
+            "bodyText":"At the moment, the mentioned directives (fileUpload and uploadedFile) support only single file uploads, so sth like:\ncurl -v -F \"file1=@file1\" httpbin.org/post\n\n*   Trying 54.227.244.176...\n* Connected to httpbin.org (54.227.244.176) port 80 (#0)\n> POST /post HTTP/1.1\n> Host: httpbin.org\n> User-Agent: curl/7.47.0\n> Accept: */*\n> Content-Length: 206\n> Expect: 100-continue\n> Content-Type: multipart/form-data; boundary=------------------------5f9b54e9aa8d5aff\n> \n* Done waiting for 100-continue\n< HTTP/1.1 100 Continue\n< HTTP/1.1 200 OK\n< Connection: keep-alive\n< Server: meinheld/0.6.1\n< Date: Fri, 07 Jul 2017 18:53:28 GMT\n< Content-Type: application/json\n< Access-Control-Allow-Origin: *\n< Access-Control-Allow-Credentials: true\n< X-Powered-By: Flask\n< X-Processed-Time: 0.00159978866577\n< Content-Length: 463\n< Via: 1.1 vegur\n< \n{\n  \"args\": {}, \n  \"data\": \"\", \n  \"files\": {\n    \"file1\": \"Hello \\n\\n\"\n  }, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Connection\": \"close\", \n    \"Content-Length\": \"206\", \n    \"Content-Type\": \"multipart/form-data; boundary=------------------------5f9b54e9aa8d5aff\", \n    \"Expect\": \"100-continue\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"curl/7.47.0\"\n  }, \n  \"json\": null, \n  \"origin\": \"89.79.154.104\", \n  \"url\": \"http://httpbin.org/post\"\n}\n* Connection #0 to host httpbin.org left intact\n\nBut, the multi-file upload is not currently supported, so you cannot do sth like:\ncurl -v -F \"file1=@file1\" -F \"file2=@file2\" -F \"file3=@file3\" httpbin.org/post\n\n*   Trying 54.243.246.56...\n* Connected to httpbin.org (54.243.246.56) port 80 (#0)\n> POST /post HTTP/1.1\n> Host: httpbin.org\n> User-Agent: curl/7.47.0\n> Accept: */*\n> Content-Length: 519\n> Expect: 100-continue\n> Content-Type: multipart/form-data; boundary=------------------------8db1604fa6d38907\n> \n* Done waiting for 100-continue\n< HTTP/1.1 100 Continue\n< HTTP/1.1 200 OK\n< Connection: keep-alive\n< Server: meinheld/0.6.1\n< Date: Fri, 07 Jul 2017 18:57:26 GMT\n< Content-Type: application/json\n< Access-Control-Allow-Origin: *\n< Access-Control-Allow-Credentials: true\n< X-Powered-By: Flask\n< X-Processed-Time: 0.00107789039612\n< Content-Length: 510\n< Via: 1.1 vegur\n< \n{\n  \"args\": {}, \n  \"data\": \"\", \n  \"files\": {\n    \"file1\": \"Hello \\n\\n\", \n    \"file2\": \"World \\n\", \n    \"file3\": \"!\\n\"\n  }, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Connection\": \"close\", \n    \"Content-Length\": \"519\", \n    \"Content-Type\": \"multipart/form-data; boundary=------------------------8db1604fa6d38907\", \n    \"Expect\": \"100-continue\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"curl/7.47.0\"\n  }, \n  \"json\": null, \n  \"origin\": \"89.79.154.104\", \n  \"url\": \"http://httpbin.org/post\"\n}\n* Connection #0 to host httpbin.org left intact\n\nMy initial idea is to provide alternative directives, which would use the files map available in the request :\n  \"files\": {\n    \"file1\": \"Hello \\n\\n\", \n    \"file2\": \"World \\n\", \n    \"file3\": \"!\\n\"\n  }\n\nand which would provide means to operate on all files which were uploaded in a given http request.\nIs it a reasonable approach ? Do you see any issues with this approach ?",
+            "url":"https://github.com/akka/akka-http/issues/1273"
+          },
+          {
+            "number":1278,
+            "title":"Allow configuration of client infrastructure dispatcher",
+            "bodyText":"Stream parts of the pool run with the dispatcher defined in the passed Materializer. Actor parts of the pool, however, run with the dispatcher given to the PoolMasterActor. We should allow customizing the dispatcher used there.\nOriginal request on the ML: https://groups.google.com/d/topic/akka-user/E_PEnXSBM1I/discussion",
+            "url":"https://github.com/akka/akka-http/issues/1278"
+          },
+          {
+            "number":1290,
+            "title":"Consolidate java/scala content in akka-http",
+            "bodyText":"Like we are doing on akka/akka#23052  \"consolidate java/scala content\", let's consolidate the java and scala contents in akka-http, too.\nBelow is the procedure described by @raboof.\nThe process is as follows:\n\nMention in this issue which pages you're planning to merge\n\nEither the Akka maintainers or @richard-imaoka can update the list below\n\n\nCompare a file in docs/src/main/paradox/java/... with the same one under docs/src/main/paradox/scala/.... They should cover the same contents, but one is for Java and the other is for Scala. The 'compare files' feature of IntelliJ IDEA is a nice tool for this.\nUpdate the file in the scala folder to contain both the Scala and Java content. You may use:\n@scala and @java directives for inline text\n@@@ div { .group-scala } for blocks\ncode blocks become tabbed\nReplace the 'java' version of the page with a symlink:\n\nRemove the old version (git rm akka-docs/src/main/paradox/java/...)\nCreate a symlink (cd akka-docs/src/main/paradox/java; ln -s ../scala/... ...; cd -)\nAdd the symlink to git (git add akka-docs/src/main/paradox/java/...)\nTest your changes (sbt akka-docs/paradox, see CONTRIBUTING.md for details, check both the Java and Scala versions)\n\n\n\nYou could look at https://github.com/akka/akka/pull/23039/files as an example - it's probably best to contribute PR's on a page-per-page basis at least at first. Feel free to let us know if you have any questions/problems!",
+            "url":"https://github.com/akka/akka-http/issues/1290"
+          },
+          {
+            "number":1300,
+            "title":"HttpApp Simplify `startServer` overloaded methods",
+            "bodyText":"Currently we have quite some overloaded methods on startServer. Ideally these should be simplified and only a couple of them should be offered. Probably:\n\nstartServer(host, port)\nstartServer(host, port, system)\n\nFor any other type of customisation/configuration, a builder patter could be used. As an example:\nmyHttApp\n  .withSettings(...)\n  .withSystem(...)\n  .withRejectionHandler(...)\n  .at(host, port)\n  .startServer()",
+            "url":"https://github.com/akka/akka-http/issues/1300"
+          },
+          {
+            "number":1303,
+            "title":"Clarify directive complete reponse body rendering",
+            "bodyText":"Issue by matheuslima\nThursday Aug 11, 2016 at 00:18 GMT\nOriginally opened as akka/akka#21177\n\nActually, if we call complete passing only StatusCode as parameter, the reponse will have the StatusCode.toString as body. This is not documented. For example:\ncomplete(StatusCodes.OK)\n\nwill render a response with status code 200 and body \"OK\"",
+            "url":"https://github.com/akka/akka-http/issues/1303"
+          },
+          {
+            "number":1307,
+            "title":"Improve Java documentation to not refer to Scala code",
+            "bodyText":"As discussed in #1298 the Java documentation currently includes Scala code snippets when referring to how the Java DSL is defined. We should improve the Java documentation to not use any Scala code by either linking to the Javadoc for the actual definition, providing Java equivalent definitions or rephrasing the documentation to not mention how the API is defined.\nPlaces can be found with the following git grep:\n> git grep '@snip .*/javadsl/.*\\.scala'\ndocs/src/main/paradox/java/http/server-side-https-support.md:@@snip [ConnectionContext.scala](../../../../../../akka-http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-context-creation }\ndocs/src/main/paradox/java/http/server-side/websocket-support.md:@@snip [Message.scala](../../../../../../../akka-http-core/src/main/scala/akka/http/javadsl/model/ws/Message.scala) { #message-model }\ndocs/src/main/paradox/scala/http/client-side/client-https-support.md::  @@snip [ConnectionContext.scala](../../../../../../../akka-http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-context-creation }\ndocs/src/main/paradox/scala/http/client-side/client-transport.md::  @@snip [ClientTransport.scala](../../../../../../../akka-http-core/src/main/scala/akka/http/javadsl/ClientTransport.scala) { #client-transport-definition }",
+            "url":"https://github.com/akka/akka-http/issues/1307"
+          },
+          {
+            "number":1324,
+            "title":"WebSocket client sample ignores half closed",
+            "bodyText":"Issue by johanandren\nMonday Jul 11, 2016 at 13:11 GMT\nOriginally opened as akka/akka#20938\n\nIn #20440 we added docs to describe the behavior of websockets when one direction closes (there is also an open ticket about the actual behavior #19957) but there still is a sample which does not mention this and that users may likely see as the first example of websocket client logic:\nhttp://doc.akka.io/docs/akka/2.4.7/scala/http/client-side/websocket-support.html#websocketclientflow\nThis then makes them spend a week understanding why the socket is closed, we should mention/update the sample. (See for example: https://groups.google.com/d/topic/akka-user/18SExqFsZ5s/discussion )",
+            "url":"https://github.com/akka/akka-http/issues/1324"
+          },
+          {
+            "number":1325,
+            "title":"no examples of FromRequestUnmarshaller in docs or codebase",
+            "bodyText":"Issue by kornelc\nSaturday Jul 16, 2016 at 22:56 GMT\nOriginally opened as akka/akka#20972\n\nI'm trying to extract a case class with json4s from the entity (form submission) and realized that there are no examples anywhere on how to create these unmarshallers.  The doc just has 'implicit val orderUM: FromRequestUnmarshaller[Order] = ???' as an example which doesn't help much unless somebody is already familiar with unmarshallers, which I am not at this point. It would be great to include a case class unmarshalling example in the docs.",
+            "url":"https://github.com/akka/akka-http/issues/1325"
+          },
+          {
+            "number":1326,
+            "title":"separateOnSlashes should be documented that it doesn't handle open/end slashes",
+            "bodyText":"Issue by JustinPihony\nWednesday Jul 13, 2016 at 13:42 GMT\nOriginally opened as akka/akka#20950\n\nhttps://github.com/akka/akka/blob/29029be31d9198ed45c73efbc2d0212651882a94/akka-http/src/main/scala/akka/http/scaladsl/server/PathMatcher.scala#L313",
+            "url":"https://github.com/akka/akka-http/issues/1326"
+          },
+          {
+            "number":1342,
+            "title":"[Doc] Rename de-coding.md to encoding.md",
+            "bodyText":"After #1338 is merged, rename the doc page de-coding.md to encoding.md as the hyphenated name is not used at all on Akka HTTP code base.",
+            "url":"https://github.com/akka/akka-http/issues/1342"
+          }
+        ]
+      }
+    }
+  }
+}
