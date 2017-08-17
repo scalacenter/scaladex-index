@@ -12,8 +12,9 @@
     </svg></a>To use</h2> 
   <p>Add the following to your <code>build.sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.zainab-ali<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>fs2-reactive-streams<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.zainab-ali<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>fs2-reactive-streams<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.0<span class="pl-pds">"</span></span></pre>
   </div> 
+  <p>This is dependent on version <code>0.10.0-M5</code> of fs2.</p> 
   <h2><a id="user-content-tldr" class="anchor" href="https://github.com/zainab-ali/fs2-reactive-streams#tldr" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -34,7 +35,7 @@
 <span class="pl-c"><span class="pl-c">//</span> upstream: fs2.Stream[cats.effect.IO,Int] = Stream(..)</span>
 
 <span class="pl-k">val</span> <span class="pl-en">publisher</span> <span class="pl-k">=</span> upstream.toUnicastPublisher
-<span class="pl-c"><span class="pl-c">//</span> publisher: fs2.interop.reactivestreams.StreamUnicastPublisher[cats.effect.IO,Int] = fs2.interop.reactivestreams.StreamUnicastPublisher@78f74876</span>
+<span class="pl-c"><span class="pl-c">//</span> publisher: fs2.interop.reactivestreams.StreamUnicastPublisher[cats.effect.IO,Int] = fs2.interop.reactivestreams.StreamUnicastPublisher@1cc88af0</span>
 
 <span class="pl-k">val</span> <span class="pl-en">downstream</span> <span class="pl-k">=</span> publisher.toStream[<span class="pl-en">IO</span>]
 <span class="pl-c"><span class="pl-c">//</span> downstream: fs2.Stream[cats.effect.IO,Int] = Stream(..)</span>
@@ -81,10 +82,10 @@ publisher.toStream[<span class="pl-en">IO</span>]</pre>
   <p>To convert from an <code>Source</code> to a <code>Stream</code>:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>(<span class="pl-c1">1</span> to <span class="pl-c1">5</span>)
-<span class="pl-c"><span class="pl-c">//</span> source: akka.stream.scaladsl.Source[Int,akka.NotUsed] = Source(SourceShape(StatefulMapConcat.out(553763161)))</span>
+<span class="pl-c"><span class="pl-c">//</span> source: akka.stream.scaladsl.Source[Int,akka.NotUsed] = Source(SourceShape(StatefulMapConcat.out(1678724692)))</span>
 
 <span class="pl-k">val</span> <span class="pl-en">publisher</span> <span class="pl-k">=</span> source.runWith(<span class="pl-en">Sink</span>.asPublisher[<span class="pl-k">Int</span>](fanout <span class="pl-k">=</span> <span class="pl-c1">false</span>))
-<span class="pl-c"><span class="pl-c">//</span> publisher: org.reactivestreams.Publisher[Int] = VirtualProcessor(state = Publisher[StatefulMapConcat.out(553763161)])</span>
+<span class="pl-c"><span class="pl-c">//</span> publisher: org.reactivestreams.Publisher[Int] = VirtualProcessor(state = Publisher[StatefulMapConcat.out(1678724692)])</span>
 
 <span class="pl-k">val</span> <span class="pl-en">stream</span> <span class="pl-k">=</span> publisher.toStream[<span class="pl-en">IO</span>]
 <span class="pl-c"><span class="pl-c">//</span> stream: fs2.Stream[cats.effect.IO,Int] = Stream(..)</span>
@@ -98,11 +99,33 @@ stream.runLog.unsafeRunSync()
 <span class="pl-c"><span class="pl-c">//</span> stream: fs2.Stream[cats.effect.IO,Int] = Stream(..)</span>
 
 <span class="pl-k">val</span> <span class="pl-en">source</span> <span class="pl-k">=</span> <span class="pl-en">Source</span>.fromPublisher(stream.toUnicastPublisher)
-<span class="pl-c"><span class="pl-c">//</span> source: akka.stream.scaladsl.Source[Int,akka.NotUsed] = Source(SourceShape(PublisherSource.out(474607329)))</span>
+<span class="pl-c"><span class="pl-c">//</span> source: akka.stream.scaladsl.Source[Int,akka.NotUsed] = Source(SourceShape(PublisherSource.out(811767429)))</span>
 
 <span class="pl-en">IO</span>.fromFuture(<span class="pl-en">Eval</span>.always(source.runWith(<span class="pl-en">Sink</span>.seq[<span class="pl-k">Int</span>]))).unsafeRunSync()
 <span class="pl-c"><span class="pl-c">//</span> res6: scala.collection.immutable.Seq[Int] = Vector(1, 2, 3, 4, 5)</span></pre>
   </div> 
+  <h2><a id="user-content-version-compatability" class="anchor" href="https://github.com/zainab-ali/fs2-reactive-streams#version-compatability" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version Compatability</h2> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th align="center">fs2</th> 
+     <th align="center">fs2-reactive-streams</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td align="center">0.9.4</td> 
+     <td align="center">0.1.0</td> 
+    </tr> 
+    <tr> 
+     <td align="center">0.10.0-M2</td> 
+     <td align="center">0.2.0</td> 
+    </tr>
+   </tbody>
+  </table> 
   <h2><a id="user-content-licence" class="anchor" href="https://github.com/zainab-ali/fs2-reactive-streams#licence" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

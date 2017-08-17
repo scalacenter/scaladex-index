@@ -62,13 +62,12 @@ quasar_mongodb_read_only
 quasar_mongodb_3_2
 quasar_mongodb_3_4
 quasar_metastore
-quasar_postgresql
 quasar_marklogic_xml
 quasar_marklogic_json
 quasar_couchbase
 </code></pre> 
-  <p>Knowing which backend datastores are supported you can create and configure docker containers using <code>setupContainers</code>. For example if you wanted to run integration tests with mongo, postgresql, marklogic, and couchbase you would use:</p> 
-  <pre><code>./setupContainers -u quasar_metastore,quasar_mongodb_3_0,quasar_postgresql,quasar_marklogic_xml,quasar_couchbase
+  <p>Knowing which backend datastores are supported you can create and configure docker containers using <code>setupContainers</code>. For example if you wanted to run integration tests with mongo, marklogic, and couchbase you would use:</p> 
+  <pre><code>./setupContainers -u quasar_metastore,quasar_mongodb_3_0,quasar_marklogic_xml,quasar_couchbase
 </code></pre> 
   <p>Note: <code>quasar_metastore</code> is always needed to run integration tests.</p> 
   <p>This command will pull docker images, create containers running the specified backends, and configure them appropriately for Quasar testing.</p> 
@@ -80,7 +79,6 @@ quasar_couchbase
 postgresql_metastore="{\"host\":\"192.168.99.101\",\"port\":5432,\"database\":\"metastore\",\"userName\":\"postgres\",\"password\":\"\"}"
 couchbase="couchbase://192.168.99.101/beer-sample?password=&amp;docTypeKey=type&amp;socketConnectTimeoutSeconds=15"
 marklogic_xml="xcc://marklogic:marklogic@192.168.99.101:8000/Documents?format=xml"
-postgresql="jdbc:postgresql://192.168.99.101:5433/quasar-test?user=postgres&amp;password=postgres"
 mongodb_3_0="mongodb://192.168.99.101:27019"
 </code></pre> 
   <p>IP's will vary depending on your docker environment. In addition the scripts assume you have docker and docker-compose installed. You can find information about installing docker <a href="https://www.docker.com/products/docker-toolbox" target="_blank">here</a>.</p> 
@@ -186,14 +184,15 @@ mongodb_3_0="mongodb://192.168.99.101:27019"
   <p>An example H2 configuration would look something like</p> 
   <div class="highlight highlight-source-json">
    <pre><span class="pl-s"><span class="pl-pds">"</span>h2<span class="pl-pds">"</span></span>: {
-  <span class="pl-s"><span class="pl-pds">"</span>file<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;path/to/database/file&gt;<span class="pl-pds">"</span></span>
+  <span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>`database_url`<span class="pl-pds">"</span></span>
 }</pre>
   </div> 
+  <p>Where <code>database_url</code> can be any h2 url as described <a href="http://www.h2database.com/html/features.html#database_url" target="_blank">here</a>.</p> 
   <p>A PostgreSQL configuration looks something like</p> 
   <div class="highlight highlight-source-json">
    <pre><span class="pl-s"><span class="pl-pds">"</span>postgresql<span class="pl-pds">"</span></span>: {
-  <span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;hostname&gt;<span class="pl-pds">"</span></span>,
-  <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;port&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>: <span class="pl-c1">8087</span>,
   <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;database name&gt;<span class="pl-pds">"</span></span>,
   <span class="pl-s"><span class="pl-pds">"</span>userName<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;database user&gt;<span class="pl-pds">"</span></span>,
   <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>&lt;password for database user&gt;<span class="pl-pds">"</span></span>,
@@ -751,6 +750,15 @@ Query time: 0.1s
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>MOVE /mount/fs/[path]</h3> 
   <p>Moves a mount from one path to another. The new path must be provided in the <code>Destination</code> request header. This will return a 409 Conflict if a database mount is being moved above or below the path of an existing database mount. Mounts that are nested within the mount being moved (i.e. views) are moved along with it.</p> 
+  <h3><a id="user-content-get-serverinfo" class="anchor" href="https://github.com/quasar-analytics/quasar#get-serverinfo" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GET /server/info</h3> 
+  <p>Returns information about this server. Name and app version.</p> 
+  <p>Example response:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>Quasar<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>19.1.2<span class="pl-pds">"</span></span>}</pre>
+  </div> 
   <h3><a id="user-content-put-serverport" class="anchor" href="https://github.com/quasar-analytics/quasar#put-serverport" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -761,6 +769,38 @@ Query time: 0.1s
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>DELETE /server/port</h3> 
   <p>Removes any configured port, reverting to the default (20223) and restarting, as with <code>PUT</code>.</p> 
+  <h3><a id="user-content-get-metastore" class="anchor" href="https://github.com/quasar-analytics/quasar#get-metastore" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GET /metastore</h3> 
+  <p>Retrieve the connection information of the current metastore in use</p> 
+  <p>An example response:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>h2<span class="pl-pds">"</span></span>: {
+        <span class="pl-s"><span class="pl-pds">"</span>location<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>mem<span class="pl-pds">"</span></span>
+    }
+}
+</pre>
+  </div> 
+  <h3><a id="user-content-put-metastore" class="anchor" href="https://github.com/quasar-analytics/quasar#put-metastore" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>PUT /metastore</h3> 
+  <p>Attempts to change the metastore using the supplied connection information</p> 
+  <p>An optional <code>initialize</code> query parameter can be supplied so that Quasar automatically initializes the new metastore after a successful connection if it has not already been initialized. If this parameter is omitted and the new metastore has not been initialized, the request will fail with a message to the effect that the new metastore has not been initialized.</p> 
+  <p>An example request body:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>postgresql<span class="pl-pds">"</span></span>: {
+        <span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>: <span class="pl-c1">9876</span>,
+        <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>bob<span class="pl-pds">"</span></span>,
+        <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>123456<span class="pl-pds">"</span></span>
+    }
+}</pre>
+  </div> 
+  <p>Returns <code>200 OK</code> if the change was performed successfully otherwise returns a <code>400</code> with a message body explaining what went wrong.</p> 
   <h2><a id="user-content-error-responses" class="anchor" href="https://github.com/quasar-analytics/quasar#error-responses" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
