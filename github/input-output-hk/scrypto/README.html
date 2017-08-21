@@ -29,6 +29,9 @@
    <li>Blake2b</li> 
    <li>Keccak</li> 
    <li>Sha</li> 
+   <li>Whirlpool</li> 
+   <li>Skein</li> 
+   <li>Stribog</li> 
   </ul> 
   <p>Take a look at CryptographicHash interface and use supported hash algorithms like</p> 
   <div class="highlight highlight-source-scala">
@@ -44,7 +47,7 @@
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">scorex.crypto.</span><span class="pl-v">applyHashes</span>
 <span class="pl-k">object</span> <span class="pl-en">MyCustomHash</span> <span class="pl-k">extends</span> <span class="pl-e">CryptographicHash</span> {
-  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">DigestSize</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">64</span>
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">DigestSize</span><span class="pl-k">:</span> <span class="pl-k">Int</span> <span class="pl-k">=</span> <span class="pl-c1">64</span> <span class="pl-c"><span class="pl-c">//</span>in bytes</span>
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">hash</span>(<span class="pl-v">input</span>: <span class="pl-en">Message</span>)<span class="pl-k">:</span> <span class="pl-en">Digest</span> <span class="pl-k">=</span> applyHashes(input, <span class="pl-en">Blake2b512</span>, <span class="pl-en">Keccak512</span>)
 }</pre>
   </div> 
@@ -89,7 +92,7 @@
   <span class="pl-k">val</span> <span class="pl-en">sig</span> <span class="pl-k">=</span> curveImpl.sign(keyPair._1, message)
   assert(curveImpl.verify(sig, message, keyPair._2))</pre>
   </div> 
-  <p><strong>Note on security:</strong> Scrypto provides Scala wrapper for <a href="https://github.com/WhisperSystems/curve25519-java" target="_blank">Curve25519-Java</a> by Whisper Systems, so has the same security properties. JDK's SecureRandom used to obtain seed bytes.</p> 
+  <p><strong>Note on security:</strong> Scrypto provides a simple Scala wrapper for <a href="https://github.com/WhisperSystems/curve25519-java" target="_blank">Curve25519-Java</a> by Whisper Systems, so has the same security properties. JDK's SecureRandom is used to obtain seed bytes.</p> 
   <h3><a id="user-content-authenticated-data-structures" class="anchor" href="https://github.com/input-output-hk/scrypto#authenticated-data-structures" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -103,7 +106,7 @@
    <li>First, we create a prover and get an initial digest from it (in a real application, this value is a public constant because anyone, including verifiers, can compute it by using the same two lines of code)</li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">val</span> <span class="pl-en">prover</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLProver</span>(keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>)
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">prover</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLProver</span>(keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLengthOpt <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">8</span>))
   <span class="pl-k">val</span> <span class="pl-en">initialDigest</span> <span class="pl-k">=</span> prover.digest</pre>
   </div> 
   <ul> 
@@ -152,14 +155,14 @@
    <li> <p>Once the verifier for a particular batch is constructed, we perform the same operations as the prover, one by one (but not the ones that failed for the prover). If verification fails at any point (at construction time or during an operation), the verifier digest will equal None from that point forward, and no further verifier operations will change the digest. Else, the verifier's new digest is the correct one for the tree as modified by the verifier. Furthermore, if the verifier performed the same modifications as the prover, then the verifier and prover digests will match.</p> </li> 
   </ul> 
   <div class="highlight highlight-source-scala">
-   <pre>  <span class="pl-k">val</span> <span class="pl-en">verifier1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(initialDigest, proof1, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>, maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">2</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">0</span>))
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">verifier1</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(initialDigest, proof1, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLengthOpt <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">8</span>), maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">2</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">0</span>))
   verifier1.performOneOperation(op1) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)        </span>
   verifier1.performOneOperation(op2) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
   verifier1.performOneOperation(op3) <span class="pl-c"><span class="pl-c">//</span> Returns Success(None)</span>
   verifier1.digest <span class="pl-k">match</span> {
     <span class="pl-k">case</span> <span class="pl-en">Some</span>(d1) <span class="pl-k">if</span> digest1.sameElements(digest1) <span class="pl-k">=&gt;</span>
       <span class="pl-c"><span class="pl-c">//</span>If digest1 from the prover is already trusted, then verification of the second batch can simply start here</span>
-      <span class="pl-k">val</span> <span class="pl-en">verifier2</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(d1, proof2, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLength <span class="pl-k">=</span> <span class="pl-c1">8</span>, maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">3</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">1</span>))
+      <span class="pl-k">val</span> <span class="pl-en">verifier2</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">BatchAVLVerifier</span>(d1, proof2, keyLength <span class="pl-k">=</span> <span class="pl-c1">1</span>, valueLengthOpt <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">8</span>), maxNumOperations <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">3</span>), maxDeletes <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">1</span>))
       verifier2.performOneOperation(op4) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(10)))</span>
       verifier2.performOneOperation(op6) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>
       verifier2.performOneOperation(op8) <span class="pl-c"><span class="pl-c">//</span> Returns Try(Some(Longs.toByteArray(30)))</span>

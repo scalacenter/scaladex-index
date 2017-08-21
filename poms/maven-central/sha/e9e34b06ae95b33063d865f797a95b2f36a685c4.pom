@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>au.com.dius</groupId>
+  <artifactId>pact-jvm-provider_2.11</artifactId>
+  <version>3.5.4</version>
+  <name>pact-jvm-provider_2.11</name>
+  <description>Pact provider
+=============
+
+sub project of https://github.com/DiUS/pact-jvm
+
+The pact provider is responsible for verifying that an API provider adheres to a number of pacts authored by its clients
+
+This library provides the basic tools required to automate the process, and should be usable on its own in many instances.
+
+Framework and build tool specific bindings will be provided in separate libraries that build on top of this core functionality.
+
+### Running Pacts
+
+Main takes 2 arguments:
+
+The first is the root folder of your pact files
+(all .json files in root and subfolders are assumed to be pacts)
+
+The second is the location of your pact config json file.
+
+### Pact config
+
+
+The pact config is a simple mapping of provider names to endpoint url&amp;apos;s
+paths will be appended to endpoint url&amp;apos;s when interactions are attempted
+
+for an example see: https://github.com/DiUS/pact-jvm/blob/master/pact-jvm-provider/src/test/resources/pact-config.json
+
+### Provider State
+
+Before each interaction is executed, the provider under test will have the opportunity to enter a state.
+Generally the state maps to a set of fixture data for mocking out services that the provider is a consumer of (they will have their own pacts)
+
+The pact framework will instruct the test server to enter that state by sending:
+
+    POST &amp;quot;${config.stateChangeUrl.url}/setup&amp;quot; { &amp;quot;state&amp;quot; : &amp;quot;${interaction.stateName}&amp;quot; }
+
+
+### An example of running provider verification with junit
+
+This example uses java, junit and hamcrest matchers to run the provider verification. 
+As the provider service is a DropWizard application, it uses the DropwizardAppRule to startup the service before running any test.
+
+Warning: It only grabs the first interaction from the pact file with the consumer, where there could be many. (This could possibly be solved with a parameterized test)
+
+```java
+public class PactJVMProviderJUnitTest {
+
+    @ClassRule
+    public static TestRule startServiceRule = new DropwizardAppRule&amp;lt;DropwizardAppConfig&amp;gt;(DropwizardApp.class, &amp;quot;config.yml&amp;quot;);
+
+    private static ProviderInfo serviceProvider;
+    private static Pact testConsumerPact;
+    
+    @BeforeClass
+    public static void setupProvider() {
+        serviceProvider = new ProviderInfo(&amp;quot;Dropwizard App&amp;quot;);
+        serviceProvider.setProtocol(&amp;quot;http&amp;quot;);
+        serviceProvider.setHost(&amp;quot;localhost&amp;quot;);
+        serviceProvider.setPort(8080);
+        serviceProvider.setPath(&amp;quot;/&amp;quot;);
+        
+        ConsumerInfo consumer = new ConsumerInfo();
+        consumer.setName(&amp;quot;test_consumer&amp;quot;);
+        consumer.setPactFile(new File(&amp;quot;target/pacts/ping_client-ping_service.json&amp;quot;));
+        
+    //  serviceProvider.getConsumers().add(consumer);
+        testConsumerPact = (Pact) new PactReader().loadPact(consumer.getPactFile());
+    }
+    
+    @Test
+    @SuppressWarnings(&amp;quot;unchecked&amp;quot;)
+    public void runConsumerPacts() {
+
+        //grab the first interaction from the pact with consumer
+        List&amp;lt;Interaction&amp;gt; interactions = scala.collection.JavaConversions.seqAsJavaList(testConsumerPact.interactions());
+        Interaction interaction1 = interactions.get(0);
+        
+        //setup any provider state
+
+        //setup the client and interaction to fire against the provider
+        ProviderClient client = new ProviderClient();
+        client.setProvider(serviceProvider);
+        client.setRequest(interaction1.request());
+        Map&amp;lt;String, Object&amp;gt; clientResponse = (Map&amp;lt;String, Object&amp;gt;) client.makeRequest();
+        Map&amp;lt;String, Object&amp;gt; result = (Map&amp;lt;String, Object&amp;gt;) ResponseComparison.compareResponse(interaction1.response(), 
+                clientResponse, (int) clientResponse.get(&amp;quot;statusCode&amp;quot;), (Map) clientResponse.get(&amp;quot;headers&amp;quot;), (String) clientResponse.get(&amp;quot;data&amp;quot;));
+
+        //assert all good
+        assertThat(result.get(&amp;quot;method&amp;quot;), is(true)); // method type matches
+        
+        Map headers = (Map) result.get(&amp;quot;headers&amp;quot;); //headers match
+        headers.forEach( (k, v) -&amp;gt; 
+            assertThat(format(&amp;quot;Header: [%s] does not match&amp;quot;, k), v, org.hamcrest.Matchers.equalTo(true))
+        );
+        
+        assertThat((Collection&amp;lt;Object&amp;gt;)((Map)result.get(&amp;quot;body&amp;quot;)).values(), org.hamcrest.Matchers.hasSize(0)); // empty list of body mismatches
+    }
+}
+```
+    
+### An example of running provider verification with spock
+
+This example uses groovy and spock to run the provider verification. 
+Again the provider service is a DropWizard application, and is using the DropwizardAppRule to startup the service.
+
+This example runs all interactions using spocks Unroll feature
+
+```groovy
+class PactJVMProviderSpockSpec extends Specification {
+
+    @ClassRule @Shared
+    TestRule startServiceRule = new DropwizardAppRule&amp;lt;DropwizardAppConfig&amp;gt;(DropwizardApp.class, &amp;quot;config.yml&amp;quot;);
+
+    @Shared
+    ProviderInfo serviceProvider
+    @Shared
+    Pact testConsumerPact
+
+    def setupSpec() {
+        serviceProvider = new ProviderInfo(&amp;quot;Dropwizard App&amp;quot;)
+        serviceProvider.protocol = &amp;quot;http&amp;quot;
+        serviceProvider.host = &amp;quot;localhost&amp;quot;
+        serviceProvider.port = 8080;
+        serviceProvider.path = &amp;quot;/&amp;quot;
+        def consumer = serviceProvider.hasPactWith(&amp;quot;ping_consumer&amp;quot;, {
+            pactFile = new File(&amp;apos;target/pacts/ping_client-ping_service.json&amp;apos;)
+        })
+
+        testConsumerPact = (Pact) new PactReader().loadPact(consumer.getPactFile());
+    }
+
+    def cleanup() {
+        //cleanup provider state
+        //ie. db.truncateAllTables()
+    }
+
+    def cleanupSpec() {
+        //cleanup provider
+    }
+
+    @Unroll
+    def &amp;quot;Provider Pact - With Consumer&amp;quot;() {
+        given:
+        //setup provider state
+        // ie.    db.setupRecords()
+        //        serviceProvider.requestFilter = { req -&amp;gt;
+        //            req.addHeader(&amp;apos;Authorization&amp;apos;, token)
+        //        }
+
+        when:
+        ProviderClient client = new ProviderClient(provider: serviceProvider, request: interaction.request())
+        Map clientResponse = (Map) client.makeRequest()
+        Map result = (Map) ResponseComparison.compareResponse(interaction.response(),
+                clientResponse, clientResponse.statusCode, clientResponse.headers, clientResponse.data)
+
+        then:
+
+        // method matches
+        result.method == true
+
+        // headers all match, spock needs the size checked before
+        // asserting each result
+        if (result.headers.size() &amp;gt; 0) {
+            result.headers.each() { k, v -&amp;gt;
+                assert v == true
+            }
+        }
+
+        // empty list of body mismatches
+        result.body.size() == 0
+
+        where:
+        interaction &amp;lt;&amp;lt; scala.collection.JavaConversions.seqAsJavaList(testConsumerPact.interactions())
+    }
+}
+```
+    
+</description>
+  <url>https://github.com/DiUS/pact-jvm</url>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>thetrav</id>
+      <name>Travis Dixon</name>
+      <email>the.trav@gmail.com</email>
+    </developer>
+    <developer>
+      <id>rholshausen</id>
+      <name>Ronald Holshausen</name>
+      <email>rholshausen@dius.com.au</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/DiUS/pact-jvm.git</connection>
+    <url>https://github.com/DiUS/pact-jvm</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jre8</artifactId>
+      <version>1.1.3-2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-reflect</artifactId>
+      <version>1.1.3-2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.21</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.4.11</version>
+      <classifier>indy</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.github.microutils</groupId>
+      <artifactId>kotlin-logging</artifactId>
+      <version>1.4.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.11.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>2.11.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging_2.11</artifactId>
+      <version>3.4.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-model</artifactId>
+      <version>3.5.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-pact-broker</artifactId>
+      <version>3.5.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-matchers_2.11</artifactId>
+      <version>3.5.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.11</artifactId>
+      <version>2.2.6</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.jansi</groupId>
+      <artifactId>jansi</artifactId>
+      <version>1.16</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy.modules.http-builder</groupId>
+      <artifactId>http-builder</artifactId>
+      <version>0.7.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>0.9.10</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder</groupId>
+      <artifactId>unfiltered-netty-server_2.11</artifactId>
+      <version>0.8.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.databinder.dispatch</groupId>
+      <artifactId>dispatch-core_2.11</artifactId>
+      <version>0.11.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-core_2.11</artifactId>
+      <version>3.8.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2-junit_2.11</artifactId>
+      <version>3.8.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.10.19</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>1.1-groovy-2.4</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>org.codehaus.groovy</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version>3.2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>au.com.dius</groupId>
+      <artifactId>pact-jvm-consumer-groovy_2.11</artifactId>
+      <version>3.5.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.7</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
