@@ -20,14 +20,14 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation</h2> 
   <p>Inside a project definition you can depend on the MemSQL Connector using sbt:</p> 
-  <pre><code>libraryDependencies  += "com.memsql" %% "memsql-connector" % "2.0.0"
+  <pre><code>libraryDependencies  += "com.memsql" %% "memsql-connector" % "2.0.2"
 </code></pre> 
   <p>or Maven:</p> 
   <div class="highlight highlight-text-xml">
    <pre>&lt;<span class="pl-ent">dependency</span>&gt;
     &lt;<span class="pl-ent">groupId</span>&gt;com.memsql&lt;/<span class="pl-ent">groupId</span>&gt;
     &lt;<span class="pl-ent">artifactId</span>&gt;memsql-connector_2.11&lt;/<span class="pl-ent">artifactId</span>&gt;
-    &lt;<span class="pl-ent">version</span>&gt;2.0.0&lt;/<span class="pl-ent">version</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;2.0.2&lt;/<span class="pl-ent">version</span>&gt;
 &lt;/<span class="pl-ent">dependency</span>&gt;</pre>
   </div> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/memsql/memsql-spark-connector#usage" aria-hidden="true" target="_blank">
@@ -70,9 +70,14 @@
     <tr> 
      <td>spark.memsql.disablePartitionPushdown</td> 
      <td>false</td> 
+    </tr> 
+    <tr> 
+     <td>spark.memsql.defaultCreateMode</td> 
+     <td>DatabaseAndTable</td> 
     </tr>
    </tbody>
   </table> 
+  <p><code>defaultCreateMode</code> specifies whether the connector will create the database and/or table if it doesn't already exist, when saving data to MemSQL. The possible values are <code>DatabaseAndTable</code>, <code>Table</code>, and <code>Skip</code>. The user will need the corresponding create permissions if the value is not <code>Skip</code>.</p> 
   <p>Note that all MemSQL credentials have to be the same on all nodes to take advantage of partition pushdown, which queries leaves directly.</p> 
   <h3><a id="user-content-loading-data-from-memsql" class="anchor" href="https://github.com/memsql/memsql-spark-connector#loading-data-from-memsql" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -172,6 +177,49 @@ df
     </tr>
    </tbody>
   </table> 
+  <p>Other MemSQL write settings can be specified using <code>.option(...)</code> or <code>.options(...)</code>. To perform a dry run of the previous example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>df
+	.write
+	.format(<span class="pl-s"><span class="pl-pds">"</span>com.memsql.spark.connector<span class="pl-pds">"</span></span>)
+	.mode(<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>)
+	.option(<span class="pl-s"><span class="pl-pds">"</span>dryRun<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>)
+	.save(<span class="pl-s"><span class="pl-pds">"</span>people.students<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>Option name</th> 
+     <th>Description</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td>writeToMaster</td> 
+     <td>Force this write to be sent to the master aggregator</td> 
+    </tr> 
+    <tr> 
+     <td>dryRun</td> 
+     <td>Don't actually perform the write (this will still create the database and table if they don't exist)</td> 
+    </tr> 
+    <tr> 
+     <td>saveMode</td> 
+     <td>See Spark configuration settings</td> 
+    </tr> 
+    <tr> 
+     <td>createMode</td> 
+     <td>See Spark configuration settings</td> 
+    </tr> 
+    <tr> 
+     <td>insertBatchSize</td> 
+     <td>See Spark configuration settings</td> 
+    </tr> 
+    <tr> 
+     <td>loadDataCompression</td> 
+     <td>See Spark configuration settings</td> 
+    </tr>
+   </tbody>
+  </table> 
   <p>The second interface to save data to MemSQL is via the <code>saveToMemSQL</code> implicit function on a DataFrame you wish to save:</p> 
   <div class="highlight highlight-source-scala">
    <pre>...
@@ -184,6 +232,19 @@ df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>people.students<
       <span class="pl-c"><span class="pl-c">//</span> The database name can be omitted if "spark.memsql.defaultDatabase" is set</span>
       <span class="pl-c"><span class="pl-c">//</span> in the Spark configuration df.sqlContext.sparkContext.getConf.getAll</span></pre>
   </div> 
+  <p>A call to <code>saveToMemSQL</code> can take three forms:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre># <span class="pl-en">Table</span> only
+df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>tbl<span class="pl-pds">"</span></span>)
+
+# <span class="pl-en">Database</span> and table
+df.saveToMemSQL(<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>tbl<span class="pl-pds">"</span></span>)
+
+# <span class="pl-en">Database</span>, table, and options
+<span class="pl-k">val</span> <span class="pl-en">saveConf</span> <span class="pl-k">=</span> <span class="pl-en">SaveToMemSQLConf</span>(ss.memSQLConf, params<span class="pl-k">=</span><span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>dryRun<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>))
+df.saveToMemSQL(<span class="pl-en">TableIdentifier</span>(<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>tbl<span class="pl-pds">"</span></span>), saveConf)</pre>
+  </div> 
+  <p>Any options not specified in <code>saveConf</code> will default to those in the <code>MemSQLConf</code>.</p> 
   <h2><a id="user-content-types" class="anchor" href="https://github.com/memsql/memsql-spark-connector#types" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

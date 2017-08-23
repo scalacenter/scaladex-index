@@ -43,7 +43,7 @@
     </svg></a>Streaming from IoT hub to <em>any</em></h4> 
   <p>An interesting example is reading telemetry data from Azure IoT Hub, and sending it to a Kafka topic, so that it can be consumed by other services downstream:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>... 
+   <pre>...
 <span class="pl-k">import</span> <span class="pl-v">org.apache.kafka.common.serialization.</span><span class="pl-v">StringSerializer</span>
 <span class="pl-k">import</span> <span class="pl-v">org.apache.kafka.common.serialization.</span><span class="pl-v">ByteArraySerializer</span>
 <span class="pl-k">import</span> <span class="pl-v">org.apache.kafka.clients.producer.</span><span class="pl-v">ProducerRecord</span>
@@ -64,7 +64,7 @@
   </div> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">kafkaProducer</span> <span class="pl-k">=</span> <span class="pl-en">KafkaProducer</span>(bootstrapServer)
- 
+
 <span class="pl-en">IoTHub</span>().source()
     .map(m <span class="pl-k">⇒</span> parse(m.contentAsString).extract[<span class="pl-en">Temperature</span>])
     .filter(_.value <span class="pl-k">&gt;</span> <span class="pl-c1">100</span>)
@@ -126,20 +126,20 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Stream processing restart - saving the current position</h3> 
   <p>The library provides a mechanism to restart the stream from a recent <em>checkpoint</em>, to be resilient to restarts and crashes. <em>Checkpoints</em> are saved automatically, with a configured frequency, on a storage provided. For instance, the stream position can be saved every 30 seconds and/or every 500 messages (the values are configurable), in a table in Cassandra or using Azure blobs.</p> 
-  <p>Currently the position is saved in a concurrent thread, delayed by time and/or count, depending on the configuration settings. Given the current implementation it's possible that the position saved is ahead of your processing logic. While it's possible to mitigate the risk via the configuration settings, <strong>at-least-once</strong> cannot be guaranteed. We plan to support <strong>at-least-once</strong> soon, providing more control on the checkpointing logic.</p> 
-  <p>For more information about the checkpointing feature, <a href="https://github.com/azure/toketi-iothubreact/blob/master/checkpointing.md" target="_blank">please read here</a>.</p> 
+  <p>Currently the position may be saved in two different ways. The first, simpler method is accomplished by saving in a concurrent thread, delayed by time and/or count, depending on the configuration settings. The second requires slightly more coding but allows the developer to implement <a href="http://www.cloudcomputingpatterns.org/at_least_once_delivery/" target="_blank">at-least-once delivery semantics</a>, due to the fact the offset saves can be included downstream of processing in your graph.</p> 
+  <p>For more information about the checkpointing feature, <a href="https://github.com/azure/toketi-iothubreact/blob/master/CHECKPOINTING.md" target="_blank">please read here</a>.</p> 
   <h2><a id="user-content-build-configuration" class="anchor" href="https://github.com/azure/toketi-iothubreact#build-configuration" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Build configuration</h2> 
   <p>IoTHubReact is available in Maven Central for Scala 2.11 and 2.12. To import the library into your project, add the following reference in your <code>build.sbt</code> file:</p> 
-  <p><code>libraryDependencies += "com.microsoft.azure.iot" %% "iothub-react" % "0.9.0"</code></p> 
+  <p><code>libraryDependencies += "com.microsoft.azure.iot" %% "iothub-react" % "0.9.1"</code></p> 
   <p>or this dependency in <code>pom.xml</code> file when working with Maven:</p> 
   <div class="highlight highlight-text-xml">
    <pre>&lt;<span class="pl-ent">dependency</span>&gt;
     &lt;<span class="pl-ent">groupId</span>&gt;com.microsoft.azure.iot&lt;/<span class="pl-ent">groupId</span>&gt;
     &lt;<span class="pl-ent">artifactId</span>&gt;iothub-react_2.12&lt;/<span class="pl-ent">artifactId</span>&gt;
-    &lt;<span class="pl-ent">version</span>&gt;0.9.0&lt;/<span class="pl-ent">version</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;0.9.1&lt;/<span class="pl-ent">version</span>&gt;
 &lt;/<span class="pl-ent">dependency</span>&gt;</pre>
   </div> 
   <p>IoTHubReact internally uses some libraries like Azure IoT SDK, Azure Storage SDK, Akka etc. If your project depends on these libraries too, your can override the versions, explicitly importing the packages in your <code>build.sbt</code> and <code>pom.xml</code> files. If you encounter some incompatibility with future versions of these, please let us know opening an issue, or sending a PR.</p> 
@@ -171,7 +171,7 @@
     accessKey      = "&lt;access policy key&gt;"
     accessHostName = "&lt;access host name&gt;"
   }
-  
+
   [... other settings...]
 }
 </code></pre> 
@@ -186,7 +186,7 @@
     accessKey      = ${?IOTHUB_ACCESS_KEY}
     accessHostName = ${?IOTHUB_ACCESS_HOSTNAME}
   }
-  
+
   [... other settings...]
 }
 </code></pre> 
@@ -206,10 +206,10 @@
    <li><strong>streaming.retrieveRuntimeInfo</strong>: when enabled, the messages returned by <code>IoTHub.Source</code> will contain some runtime information about the last message in each partition. You can use this information to calculate how many telemetry events remain to process.</li> 
   </ul> 
   <p>The complete configuration reference (and default values) is available in <a href="https://github.com/azure/toketi-iothubreact/blob/master/src/main/resources/reference.conf" target="_blank">reference.conf</a>.</p> 
-  <h2><a id="user-content-samples" class="anchor" href="https://github.com/azure/toketi-iothubreact#samples" aria-hidden="true" target="_blank">
+  <h1><a id="user-content-samples" class="anchor" href="https://github.com/azure/toketi-iothubreact#samples" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Samples</h2> 
+    </svg></a>Samples</h1> 
   <p>The project includes several demos in Java and Scala, showing some of the use cases and how IoThub React API works. All the demos require an instance of Azure IoT hub, with some devices and messages.</p> 
   <ol> 
    <li><strong>DisplayMessages</strong> [Java]: how to stream Azure IoT hub withing a Java application, filtering temperature values greater than 60C</li> 
@@ -225,7 +225,8 @@
    <li><strong>PrintTemperature</strong> [Scala]: stream all Temperature events and print data to the console.</li> 
    <li><strong>Throughput</strong> [Scala]: stream all events and display statistics about the throughput.</li> 
    <li><strong>Throttling</strong> [Scala]: throttle the incoming stream to a defined speed of events/second.</li> 
-   <li><strong>StoreOffsetsWhileStreaming</strong> [Scala]: demonstrates how the stream can be restarted without losing its position. The current position is stored in a Cassandra table (we suggest to run a docker container for the purpose of the demo, e.g. <code>docker run -ip 9042:9042 --rm cassandra</code>).</li> 
+   <li><strong>StoreOffsets_While_Processing</strong> [Scala]: demonstrates how the stream can be restarted without losing its position, using an optimistic approach (the position is stored in parallel, with some configurable delay fomr the moment of processing). The current position is stored in a Cassandra table (we suggest to run a docker container for the purpose of the demo, e.g. <code>docker run -ip 9042:9042 --rm cassandra</code>).</li> 
+   <li><strong>StoreOffsets_After_Processing</strong> [Scala]: demonstrates how the stream can be restarted without losing its position, using At Least Once Delivery semantic (this guarantees that every event is delivered at least once, regardless of frequency and crashes).The current position is stored in a Cassandra table (we suggest to run a docker container for the purpose of the demo, e.g. <code>docker run -ip 9042:9042 --rm cassandra</code>).</li> 
    <li><strong>StartFromStoredOffsetsButDontWriteNewOffsets</strong> [Scala]: shows how to use the saved checkpoints to start streaming from a known position, without changing the value in the storage. If the storage doesn't contain checkpoints, the stream starts from the beginning.</li> 
    <li><strong>StartFromStoredOffsetsIfAvailableOrByTimeOtherwise</strong> [Scala]: similar to the previous demo, with a fallback datetime when the storage doesn't contain checkpoints.</li> 
    <li><strong>StreamIncludingRuntimeInformation</strong> [Scala]: shows how runtime information works.</li> 
@@ -239,36 +240,20 @@
    <li><a href="https://github.com/azure/toketi-iothubreact/blob/master/run_scala_samples.sh" target="_blank"><code>run_scala_samples.sh</code></a>: execute Scala demos</li> 
    <li><a href="https://github.com/azure/toketi-iothubreact/blob/master/run_java_samples.sh" target="_blank"><code>run_java_samples.sh</code></a>: execute Java demos</li> 
   </ul> 
-  <h2><a id="user-content-future-work-moscow" class="anchor" href="https://github.com/azure/toketi-iothubreact#future-work-moscow" aria-hidden="true" target="_blank">
+  <h1><a id="user-content-running-the-tests" class="anchor" href="https://github.com/azure/toketi-iothubreact#running-the-tests" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Future work (MoSCoW)</h2> 
+    </svg></a>Running the tests</h1> 
+  <p>You can use the included <code>build.sh</code> script to execute all the unit and functional tests in the suite.</p> 
+  <p>The functional tests require an existing Azure IoT Hub resource, that yous should setup. For the tests to connect to your IoT Hub, configure your environment using the <code>setup-env-vars.*</code> scripts mentioned above in this page.</p> 
+  <h1><a id="user-content-other-docs" class="anchor" href="https://github.com/azure/toketi-iothubreact#other-docs" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Other docs</h1> 
   <ul> 
-   <li>M: device twins and device methods</li> 
-   <li>M: support at-least-once when checkpointing</li> 
-   <li>S: clustering awareness</li> 
-   <li>C: redefine the streaming graph at runtime, e.g. add/remove partitions on the fly</li> 
-   <li>C: reopen hub after closing (currently one creates a new instance)</li> 
-   <li>W: asynchronicity by using EventHub SDK async APIs</li> 
+   <li><a href="https://github.com/azure/toketi-iothubreact/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li> 
+   <li><a href="https://github.com/azure/toketi-iothubreact/blob/master/CHECKPOINTING.md" target="_blank">Checkpointing</a></li> 
+   <li><a href="https://azure.github.io/toketi-iothubreact" target="_blank">API specs</a></li> 
   </ul> 
-  <h1><a id="user-content-contributing" class="anchor" href="https://github.com/azure/toketi-iothubreact#contributing" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Contributing</h1> 
-  <h2><a id="user-content-contribution-license-agreement" class="anchor" href="https://github.com/azure/toketi-iothubreact#contribution-license-agreement" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Contribution license Agreement</h2> 
-  <p>If you want/plan to contribute, we ask you to sign a <a href="https://cla.microsoft.com/" target="_blank">CLA</a> (Contribution license Agreement). A friendly bot will remind you about it when you submit a pull-request.</p> 
-  <h2><a id="user-content-code-style" class="anchor" href="https://github.com/azure/toketi-iothubreact#code-style" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Code style</h2> 
-  <p>If you are sending a pull request, please check the code style with IntelliJ IDEA, importing the settings from <a href="https://github.com/Azure/toketi-iot-tools/blob/dev/Codestyle.IntelliJ.xml" target="_blank"><code>Codestyle.IntelliJ.xml</code></a>.</p> 
-  <h2><a id="user-content-running-the-tests" class="anchor" href="https://github.com/azure/toketi-iothubreact#running-the-tests" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Running the tests</h2> 
-  <p>You can use the included <code>build.sh</code> script to execute all the unit and functional tests in the suite. The functional tests require an existing Azure IoT Hub resource, that yous should setup. For the tests to connect to your IoT Hub, configure your environment using the <code>setup-env-vars.*</code> scripts mentioned above in this page.</p> 
  </article>
 </div>

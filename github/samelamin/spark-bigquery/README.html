@@ -8,8 +8,9 @@
   <p>This Spark module allows saving DataFrame as BigQuery table.</p> 
   <p>The project was inspired by <a href="https://github.com/spotify/spark-bigquery" target="_blank">spotify/spark-bigquery</a>, but there are several differences and enhancements:</p> 
   <ul> 
-   <li> <p>Use of the Structured Streaming API on Spark 2.1</p> </li> 
+   <li> <p>Use of the Structured Streaming API</p> </li> 
    <li> <p>Use within Pyspark</p> </li> 
+   <li> <p>Saving via Decorators</p> </li> 
    <li> <p>Allow saving to partitioned tables</p> </li> 
    <li> <p>Easy integration with <a href="https://github.com/samelamin/spark-bigquery/blob/master/Databricks.md" target="_blank">Databricks</a></p> </li> 
    <li> <p>Use of Standard SQL</p> </li> 
@@ -141,11 +142,26 @@ sqlContext.setBQTableTimestampColumn(<span class="pl-s"><span class="pl-pds">"</
 <span class="pl-k">val</span> <span class="pl-en">df</span> <span class="pl-k">=</span> ...
 df.saveAsBigQueryTable(<span class="pl-s"><span class="pl-pds">"</span>project-id:dataset-id.table-name<span class="pl-pds">"</span></span>)</pre>
   </div> 
+  <p>You can also save to a table decorator by saving to 'dataset-id.table-name$YYYYMMDD'</p> 
+  <h3><a id="user-content-saving-dataframe-using-pyspark" class="anchor" href="https://github.com/samelamin/spark-bigquery#saving-dataframe-using-pyspark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Saving DataFrame using Pyspark</h3> 
   <div class="highlight highlight-source-python">
-   <pre>bq <span class="pl-k">=</span> spark._sc._jvm.com.samelamin.spark.bigquery.BigQuerySQLContext(spark._wrapped._jsqlContext)
-val df <span class="pl-k">=</span> <span class="pl-c1">...</span>
-bqDF <span class="pl-k">=</span> spark._sc._jvm.com.samelamin.spark.bigquery.BigQueryDataFrame(df._jdf)
-bqDF.saveAsBigQueryTable(<span class="pl-s"><span class="pl-pds">"</span>project-id:dataset-id.table-name<span class="pl-pds">"</span></span>)</pre>
+   <pre><span class="pl-c1">BQ_PROJECT_ID</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>projectId<span class="pl-pds">"</span></span>
+<span class="pl-c1">DATASET_ID</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>datasetId<span class="pl-pds">"</span></span>
+jsonFile <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>/path/to/json<span class="pl-pds">"</span></span>
+GcsBucket <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gcs-bucket<span class="pl-pds">"</span></span>
+session <span class="pl-k">=</span> SparkSession.builder.getOrCreate()
+bq <span class="pl-k">=</span> session._sc._jvm.com.samelamin.spark.bigquery.BigQuerySQLContext(session._wrapped._jsqlContext)
+bq.setGcpJsonKeyFile(jsonFile)
+bq.setBigQueryProjectId(<span class="pl-c1">BQ_PROJECT_ID</span>)
+bq.setGSProjectId(<span class="pl-c1">BQ_PROJECT_ID</span>)
+bq.setBigQueryGcsBucket(GcsBucket)
+bq.setBigQueryDatasetLocation(<span class="pl-s"><span class="pl-pds">"</span>US<span class="pl-pds">"</span></span>)
+tableName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">{0}</span>:<span class="pl-c1">{1}</span>.<span class="pl-c1">{2}</span><span class="pl-pds">"</span></span>.format(<span class="pl-c1">BQ_PROJECT_ID</span>,<span class="pl-c1">DATASET_ID</span>,<span class="pl-c1">TABLE_NAME</span>)
+bqDF <span class="pl-k">=</span> session._sc._jvm.com.samelamin.spark.bigquery.BigQueryDataFrame(df._jdf)
+bqDF.saveAsBigQueryTable(tableName, <span class="pl-c1">False</span>, <span class="pl-c1">0</span>,<span class="pl-c1">None</span>,<span class="pl-c1">None</span>)</pre>
   </div> 
   <h3><a id="user-content-reading-dataframe-from-bigquery" class="anchor" href="https://github.com/samelamin/spark-bigquery#reading-dataframe-from-bigquery" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -162,6 +178,14 @@ bqDF.saveAsBigQueryTable(<span class="pl-s"><span class="pl-pds">"</span>project
 <span class="pl-c"><span class="pl-c">//</span> Only legacy SQL dialect is supported for now</span>
 <span class="pl-k">val</span> <span class="pl-en">df</span> <span class="pl-k">=</span> sqlContext.bigQuerySelect(
   <span class="pl-s"><span class="pl-pds">"</span>SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare]<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <h3><a id="user-content-reading-dataframe-from-bigquery-in-pyspark" class="anchor" href="https://github.com/samelamin/spark-bigquery#reading-dataframe-from-bigquery-in-pyspark" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reading DataFrame From BigQuery in Pyspark</h3> 
+  <div class="highlight highlight-source-python">
+   <pre>bq <span class="pl-k">=</span> spark._sc._jvm.com.samelamin.spark.bigquery.BigQuerySQLContext(spark._wrapped._jsqlContext)
+df<span class="pl-k">=</span> DataFrame(bq.bigQuerySelect(<span class="pl-s"><span class="pl-pds">"</span>SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare]<span class="pl-pds">"</span></span>), session._wrapped)</pre>
   </div> 
   <h3><a id="user-content-running-dml-queries" class="anchor" href="https://github.com/samelamin/spark-bigquery#running-dml-queries" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

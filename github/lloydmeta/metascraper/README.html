@@ -36,52 +36,6 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 <span class="pl-k">val</span> <span class="pl-en">fData</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">ScrapedData</span>] <span class="pl-k">=</span> scraper.fetch(<span class="pl-en">ScrapeUrl</span>(<span class="pl-s"><span class="pl-pds">"</span>https://google.com<span class="pl-pds">"</span></span>))
 </pre>
   </div> 
-  <h3><a id="user-content-scraperactor" class="anchor" href="https://github.com/lloydmeta/metascraper#scraperactor" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>ScraperActor</h3> 
-  <p>If you prefer to use a Scraper actor (e.g. to distribute load to remote systems), use ScraperActor:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">akka.actor.</span><span class="pl-v">ActorSystem</span>
-<span class="pl-k">import</span> <span class="pl-v">com.beachape.metascraper.Messages.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">com.beachape.metascraper.</span><span class="pl-v">ScraperActor</span>
-<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">Await</span>
-<span class="pl-k">import</span> <span class="pl-v">akka.pattern.</span><span class="pl-v">ask</span>
-<span class="pl-k">import</span> <span class="pl-v">akka.util.</span><span class="pl-v">Timeout</span>
-<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
-
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">timeout</span> <span class="pl-k">=</span> <span class="pl-en">Timeout</span>(<span class="pl-c1">30</span> seconds)
-
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>actorSystem<span class="pl-pds">"</span></span>)
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispatcher</span> <span class="pl-k">=</span> system.dispatcher
-
-<span class="pl-k">val</span> <span class="pl-en">scraperActor</span> <span class="pl-k">=</span> system.actorOf(<span class="pl-en">ScraperActor</span>())
-
-<span class="pl-k">for</span> {
-  future <span class="pl-k">&lt;</span><span class="pl-k">-</span> ask(scraperActor, <span class="pl-en">ScrapeUrl</span>(<span class="pl-s"><span class="pl-pds">"</span>https://bbc.co.uk<span class="pl-pds">"</span></span>)).mapTo[<span class="pl-en">Either</span>[<span class="pl-en">Throwable</span>,<span class="pl-en">ScrapedData</span>]]
-} {
-  future <span class="pl-k">match</span> {
-    <span class="pl-k">case</span> <span class="pl-en">Left</span>(throwable) <span class="pl-k">=&gt;</span> {
-      println(<span class="pl-s"><span class="pl-pds">"</span>Failed: <span class="pl-pds">"</span></span>)
-      println(throwable.getMessage)
-    }
-    <span class="pl-k">case</span> <span class="pl-en">Right</span>(data) <span class="pl-k">=&gt;</span> {
-      println(<span class="pl-s"><span class="pl-pds">"</span>Image urls<span class="pl-pds">"</span></span>)
-      data.imageUrls.foreach(println)
-    }
-  }
-}
-
-<span class="pl-c"><span class="pl-c">/*</span></span>
-<span class="pl-c"> #=&gt;</span>
-<span class="pl-c">  Image URLs:</span>
-<span class="pl-c">  http://www.bbc.co.uk/img/iphone.png</span>
-<span class="pl-c">  http://sa.bbc.co.uk/bbc/bbc/s?name=SET-COUNTER&amp;pal_route=index&amp;ml_name=barlesque&amp;app_type=web&amp;language=en-GB&amp;ml_version=0.16.1&amp;pal_webapp=wwhp&amp;blq_s=3.5&amp;blq_r=3.5&amp;blq_v=default-worldwide</span>
-<span class="pl-c">  http://static.bbci.co.uk/frameworks/barlesque/2.51.2/desktop/3.5/img/blq-blocks_grey_alpha.png</span>
-<span class="pl-c">  http://static.bbci.co.uk/frameworks/barlesque/2.51.2/desktop/3.5/img/blq-search_grey_alpha.png</span>
-<span class="pl-c">  http://news.bbcimg.co.uk/media/images/69612000/jpg/_69612953_69612952.jpg</span>
-<span class="pl-c"><span class="pl-c">*/</span></span></pre>
-  </div> 
   <h3><a id="user-content-custom-scraping-schema" class="anchor" href="https://github.com/lloydmeta/metascraper#custom-scraping-schema" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

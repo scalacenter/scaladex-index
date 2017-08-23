@@ -1,0 +1,107 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-play-jsonapi" class="anchor" href="https://github.com/retailmenotsandbox/play-jsonapi#play-jsonapi" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Play JsonAPI</h1> 
+  <p>Play JsonAPI is a helper library for representing the super flexible <a href="http://jsonapi.org/" target="_blank">JsonAPI</a> entities with the precise types for your use case. For example, instead of using <code>Option[Either[ResourceIdentifier, Seq[ResourceIdentifier]]]</code> to represent all the legal possibilities for resource linkages, you can refine it down to <code>Seq[ResourceIdentifier]</code>.</p> 
+  <p>Play JsonAPI comes in at compile time, validates that your types are still valid JsonAPI models, and then automatically generates <a href="https://www.playframework.com/documentation/2.6.x/ScalaJson" target="_blank">Play JSON</a> Formatters for your model.</p> 
+  <h2><a id="user-content-top-level-models" class="anchor" href="https://github.com/retailmenotsandbox/play-jsonapi#top-level-models" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Top Level Models</h2> 
+  <p>Play JsonAPI works by having highly generic case classes and pre-defined type classes/context bounds to represent the JsonAPI model. For example, the <code>TopLevelData</code> class (used to represent the <a href="http://jsonapi.org/format/#document-top-level" target="_blank">root object</a> of a JsonAPI response) is simply defined as</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">TopLevelData</span>[<span class="pl-en">JApi</span><span class="pl-k">:</span> <span class="pl-en">JsonApiTypes</span>, <span class="pl-en">Data</span><span class="pl-k">:</span> <span class="pl-en">PrimaryDataTypes</span>, <span class="pl-en">Meta</span> <span class="pl-k">:</span> <span class="pl-en">MetaTypes</span>, <span class="pl-en">Links</span><span class="pl-k">:</span> <span class="pl-en">FullLinkTypes</span>, <span class="pl-en">Included</span><span class="pl-k">:</span> <span class="pl-en">IncludedTypes</span>](
+  <span class="pl-v">jsonapi</span>: <span class="pl-en">JApi</span>,
+  <span class="pl-v">data</span>: <span class="pl-en">Data</span>,
+  <span class="pl-v">meta</span>: <span class="pl-en">Meta</span>,
+  <span class="pl-v">links</span>: <span class="pl-en">Links</span>,
+  <span class="pl-v">included</span>: <span class="pl-en">Included</span>
+)</pre>
+  </div> 
+  <p>Every field is a generic type, but the context bounds on the generic type ensures that it is a valid JsonAPI type.</p> 
+  <p>You don't have to generate types for each field; oftentimes there are parts of the spec or model that you just don't care about. In these cases, Play JsonAPI provides the <code>Undefined</code> type and value that will ignore that field when doing JSON (de)serialization.</p> 
+  <p>Let's walk through changing around the <code>meta</code> object type. It should give a feel for how to use the library.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.rmn.jsonapi.models.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.rmn.jsonapi.models.TypeAliases.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">play.api.libs.json.</span><span class="pl-v">_</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">SeqMeta</span>(<span class="pl-v">seqNum</span>: <span class="pl-k">Long</span>)
+<span class="pl-k">object</span> <span class="pl-en">SeqMeta</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">fmt</span> <span class="pl-k">=</span> <span class="pl-en">Json</span>.format[<span class="pl-en">SeqMeta</span>]
+}
+
+<span class="pl-k">type</span> <span class="pl-en">SeqTopLevel</span>  <span class="pl-k">=</span> <span class="pl-en">TopLevelData</span>[<span class="pl-en">GenericJsonApiType</span>, <span class="pl-en">GenericDataType</span>, <span class="pl-en">SeqMeta</span>, <span class="pl-en">GenericFullLinkType</span>, <span class="pl-en">GenericIncludedType</span>]</pre>
+  </div> 
+  <p>Here we declare a top level document type that accepts almost any valid JsonAPI document, with the exception that the <code>meta</code> field <em>must</em> be present and <em>must</em> be a json object with a numeric <code>seqNum</code> sequence field.</p> 
+  <p>If instead we wanted to let the <code>meta</code> object maybe be present, we would change the type alias to</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">SeqTopLevel</span>  <span class="pl-k">=</span> <span class="pl-en">TopLevelData</span>[<span class="pl-en">GenericJsonApiType</span>, <span class="pl-en">GenericDataType</span>, <span class="pl-en">Option</span>[<span class="pl-en">SeqMeta</span>], <span class="pl-en">GenericFullLinkType</span>, <span class="pl-en">GenericIncludedType</span>]</pre>
+  </div> 
+  <p>and now the type system and json serialization will respect the <code>Option</code> type.</p> 
+  <p>Play JsonAPI comes with a full definition of "Generic" types that match the full JsonAPI spec. These can be found in the <code>com.rmn.jsonapi.models.TypeAliases</code> object.</p> 
+  <p>While convenient, they still can be a hassle to remember. For parts of the model that you don't care about, you can use the <code>Undefined</code> type. <code>Undefined</code> will ignore JSON while deserializing, and generate no JSON while serializing.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.rmn.jsonapi.</span><span class="pl-v">Undefined</span>
+
+<span class="pl-k">type</span> <span class="pl-en">SeqTopLevel</span>  <span class="pl-k">=</span> <span class="pl-en">TopLevelData</span>[<span class="pl-en">Undefined</span>, <span class="pl-en">GenericDataType</span>, <span class="pl-en">Option</span>[<span class="pl-en">SeqMeta</span>], <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>]
+
+<span class="pl-k">val</span> <span class="pl-en">topLevel</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SeqTopLevel</span>(<span class="pl-en">Undefined</span>, <span class="pl-en">Some</span>(<span class="pl-en">JsObject</span>()), <span class="pl-en">Some</span>(<span class="pl-en">SeqMeta</span>(<span class="pl-c1">123</span>)), <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>)</pre>
+  </div> 
+  <p>Let's say we wanted to change the primary payload of <code>SeqTopLevel</code> to a list of a local class:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.rmn.jsonapi.</span><span class="pl-v">ReadRefine</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ValidationAttributes</span>(<span class="pl-v">mobile</span>: <span class="pl-k">Boolean</span>, <span class="pl-v">droid</span>: <span class="pl-k">Boolean</span>, <span class="pl-v">ios</span>: <span class="pl-k">Boolean</span>, <span class="pl-v">desktop</span>: <span class="pl-k">Boolean</span>)
+
+<span class="pl-k">object</span> <span class="pl-en">ValidationAttributes</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">format</span> <span class="pl-k">=</span> <span class="pl-en">Json</span>.format[<span class="pl-en">ValidationAttributes</span>]
+}
+
+
+<span class="pl-k">class</span> <span class="pl-en">ValidationResource</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>, <span class="pl-v">validations</span>: <span class="pl-en">ValidationAttributes</span>)
+  <span class="pl-k">extends</span> <span class="pl-e">Resource</span>[<span class="pl-en">ValidationAttributes</span>, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>](<span class="pl-s"><span class="pl-pds">"</span>validation<span class="pl-pds">"</span></span>, id, validations, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>)
+  
+<span class="pl-k">object</span> <span class="pl-en">ValidationResource</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">format</span><span class="pl-k">:</span> <span class="pl-en">Format</span>[<span class="pl-en">ValidationResource</span>] <span class="pl-k">=</span> <span class="pl-en">ReadRefine</span> { <span class="pl-v">in</span>: <span class="pl-en">Resource</span>[<span class="pl-en">ValidationAttributes</span>, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>] <span class="pl-k">=&gt;</span>
+    <span class="pl-k">if</span> (in.`type` <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>validation<span class="pl-pds">"</span></span>) {
+      <span class="pl-en">JsSuccess</span>(<span class="pl-k">new</span> <span class="pl-en">ValidationResource</span>(in.id, in.attributes))
+    } <span class="pl-k">else</span> {
+      <span class="pl-en">JsError</span>(s<span class="pl-s"><span class="pl-pds">"</span>Expected type 'validation', found '${in.`type`}'.<span class="pl-pds">"</span></span>)
+    }
+  }
+}
+
+<span class="pl-k">type</span> <span class="pl-en">SeqTopLevel</span>  <span class="pl-k">=</span> <span class="pl-en">TopLevelData</span>[<span class="pl-en">Undefined</span>, <span class="pl-en">Seq</span>[<span class="pl-en">ValidationResource</span>], <span class="pl-en">Option</span>[<span class="pl-en">SeqMeta</span>], <span class="pl-en">Undefined</span>, <span class="pl-en">Undefined</span>]</pre>
+  </div> 
+  <p>Now our JSON Formatter will require a list of <code>ValidationResource</code>. One piece of interest here is the <code>ReadRefine</code> helper, which helps uplift from the more generic <code>Resource[...]</code> to our new <code>ValidationResource</code>.</p> 
+  <h2><a id="user-content-installing" class="anchor" href="https://github.com/retailmenotsandbox/play-jsonapi#installing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installing</h2> 
+  <p>For scala 2.11.X and Play Json 2.5:</p> 
+  <pre><code>libraryDependencies +=   "com.rmn" %% "play-jsonapi" % "0.1"
+</code></pre> 
+  <h2><a id="user-content-publishing" class="anchor" href="https://github.com/retailmenotsandbox/play-jsonapi#publishing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Publishing</h2> 
+  <p>For testing locally</p> 
+  <pre><code>sbt publish-local
+</code></pre> 
+  <p>For publishing to Maven, your credentials should be available at ~/.ivy2/.credentials</p> 
+  <pre><code>realm=Sonatype Nexus Repository Manager
+host=oss.sonatype.org
+user=***
+password=***
+</code></pre> 
+  <p>Make a new non-SNAPSHOT commit, and tag it in git. With the above credentials stored:</p> 
+  <pre><code>sbt publishSigned
+&lt;verify the artifacts in Nexus&gt;
+sbt sonatypeRelease
+</code></pre> 
+  <p>Update <code>build.sbt</code>'s version to the next -SNAPSHOT, and fix the above installation instructions.</p> 
+ </article>
+</div>

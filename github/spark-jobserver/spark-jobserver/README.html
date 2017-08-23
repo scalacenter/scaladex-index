@@ -40,7 +40,9 @@
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#manual-steps" target="_blank">Manual steps</a></li> 
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#context-per-jvm" target="_blank">Context per JVM</a> 
       <ul> 
-       <li><a href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-meta-data-database-backend" target="_blank">Configuring Spark Jobserver meta data Database backend</a></li> 
+       <li><a href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-h2-database-backend" target="_blank">Configuring Spark Jobserver H2 Database backend</a></li> 
+       <li><a href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-postgresql-database-backend" target="_blank">Configuring Spark Jobserver PostgreSQL Database backend</a></li> 
+       <li><a href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-mysql-database-backend" target="_blank">Configuring Spark Jobserver MySQL Database backend</a></li> 
       </ul> </li> 
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#chef" target="_blank">Chef</a></li> 
     </ul> </li> 
@@ -58,6 +60,7 @@
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#context-configuration" target="_blank">Context configuration</a></li> 
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#other-configuration-settings" target="_blank">Other configuration settings</a></li> 
      <li><a href="https://github.com/spark-jobserver/spark-jobserver#job-result-serialization" target="_blank">Job Result Serialization</a></li> 
+     <li><a href="https://github.com/spark-jobserver/spark-jobserver#http-override" target="_blank">HTTP Override</a></li> 
     </ul> </li> 
    <li><a href="https://github.com/spark-jobserver/spark-jobserver#clients" target="_blank">Clients</a></li> 
    <li><a href="https://github.com/spark-jobserver/spark-jobserver#contribution-and-development" target="_blank">Contribution and Development</a> 
@@ -102,7 +105,7 @@
   <ul> 
    <li><em>"Spark as a Service"</em>: Simple REST interface (including HTTPS) for all aspects of job, context management</li> 
    <li>Support for Spark SQL, Hive, Streaming Contexts/jobs and custom job contexts! See <a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/doc/contexts.md" target="_blank">Contexts</a>.</li> 
-   <li><a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/doc/python.md" target="_blank">Python</a>, Scala, and Java (see <a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/job-server-api/src/main/java/spark/jobserver/api/TestJob.java" target="_blank">TestJob.java</a>) support</li> 
+   <li><a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/doc/python.md" target="_blank">Python</a>, Scala, and <a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/doc/javaapi.md" target="_blank">Java</a> (see <a href="https://github.com/spark-jobserver/spark-jobserver/blob/master/job-server-api/src/main/java/spark/jobserver/api/TestJob.java" target="_blank">TestJob.java</a>) support</li> 
    <li>LDAP Auth support via Apache Shiro integration</li> 
    <li>Separate JVM per SparkContext for isolation (EXPERIMENTAL)</li> 
    <li>Supports sub-second low-latency jobs via long-running job contexts</li> 
@@ -406,6 +409,39 @@ Content-Length: 929
   }
 }
 </code></pre> 
+  <h3><a id="user-content-new-sparkjob-api-with-spark-v21" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#new-sparkjob-api-with-spark-v21" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>NEW SparkJob API with Spark v2.1</h3> 
+  <p>Deploying Spark JobServer with Spark v2.x cluster, you can create a SparkSession context which enables Spark-SQL and Hive support</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>curl <span class="pl-k">-</span>i <span class="pl-k">-</span>d <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-en">'http</span><span class="pl-k">:</span><span class="pl-c"><span class="pl-c">//</span>localhost:8090/contexts/sql-context-1?num-cpu-cores=2&amp;memory-per-node=512M&amp;context-factory=spark.jobserver.context.SessionContextFactory'</span></pre>
+  </div> 
+  <p>Spark JobServer application shall extend from the SparkSessionJob to use the spark.jobserver.context.SessionContextFactory, here is an example</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.typesafe.config.</span><span class="pl-v">Config</span>
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.sql.</span><span class="pl-v">SparkSession</span>
+<span class="pl-k">import</span> <span class="pl-v">org.scalactic.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">spark.jobserver.</span><span class="pl-v">SparkSessionJob</span>
+<span class="pl-k">import</span> <span class="pl-v">spark.jobserver.api.</span>{<span class="pl-v">JobEnvironment</span>, <span class="pl-v">SingleProblem</span>, <span class="pl-v">ValidationProblem</span>}
+
+<span class="pl-k">import</span> <span class="pl-v">scala.util.</span><span class="pl-v">Try</span>
+
+<span class="pl-k">object</span> <span class="pl-en">WordCountExampleSparkSession</span> <span class="pl-k">extends</span> <span class="pl-e">SparkSessionJob</span> {
+  <span class="pl-k">type</span> <span class="pl-en">JobData</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>[<span class="pl-k">String</span>]
+  <span class="pl-k">type</span> <span class="pl-en">JobOutput</span> <span class="pl-k">=</span> collection.<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">Long</span>]
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">runJob</span>(<span class="pl-v">sparkSession</span>: <span class="pl-en">SparkSession</span>, <span class="pl-v">runtime</span>: <span class="pl-en">JobEnvironment</span>, <span class="pl-v">data</span>: <span class="pl-en">JobData</span>)<span class="pl-k">:</span> <span class="pl-en">JobOutput</span> <span class="pl-k">=</span>
+    sparkSession.sparkContext.parallelize(data).countByValue
+
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">validate</span>(<span class="pl-v">sparkSession</span>: <span class="pl-en">SparkSession</span>, <span class="pl-v">runtime</span>: <span class="pl-en">JobEnvironment</span>, <span class="pl-v">config</span>: <span class="pl-en">Config</span>)<span class="pl-k">:</span>
+  <span class="pl-en">JobData</span> <span class="pl-en">Or</span> <span class="pl-en">Every</span>[<span class="pl-en">ValidationProblem</span>] <span class="pl-k">=</span> {
+    <span class="pl-en">Try</span>(config.getString(<span class="pl-s"><span class="pl-pds">"</span>input.string<span class="pl-pds">"</span></span>).split(<span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span>).toSeq)
+      .map(words <span class="pl-k">=&gt;</span> <span class="pl-en">Good</span>(words))
+      .getOrElse(<span class="pl-en">Bad</span>(<span class="pl-en">One</span>(<span class="pl-en">SingleProblem</span>(<span class="pl-s"><span class="pl-pds">"</span>No input.string param<span class="pl-pds">"</span></span>))))
+  }
+}</pre>
+  </div> 
   <h3><a id="user-content-dependency-jars" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#dependency-jars" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -576,39 +612,43 @@ securityManager.cacheManager = $cacheManager
   </ul> 
   <p>Log files are separated out for each context (assuming <code>context-per-jvm</code> is <code>true</code>) in their own subdirs under the <code>LOG_DIR</code> configured in <code>settings.sh</code> in the deployed directory.</p> 
   <p>Note: to test out the deploy to a local staging dir, or package the job server for Mesos, use <code>bin/server_package.sh &lt;environment&gt;</code>.</p> 
-  <h4><a id="user-content-configuring-spark-jobserver-meta-data-database-backend" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-meta-data-database-backend" aria-hidden="true" target="_blank">
+  <h4><a id="user-content-configuring-spark-jobserver-h2-database-backend" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-h2-database-backend" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Configuring Spark Jobserver meta data Database backend</h4> 
-  <p>By default, H2 database is used for storing Spark Jobserver related meta data. But this can be overridden. For example, to use PostgreSQL as backend add the following configuration to local.conf. Ensure that you have spark_jobserver database created with necessary rights granted to user.</p> 
-  <pre><code>sqldao {
-  # Slick database driver, full classpath
-  slick-driver = slick.driver.PostgresDriver
+    </svg></a>Configuring Spark Jobserver H2 Database backend</h4> 
+  <p>By default, H2 database is used for storing Spark Jobserver related meta data. This can be overridden if you prefer to use PostgreSQL or MySQL. It is also important that any dependent jars are to be added to Job Server class path.</p> 
+  <p>To use embedded H2 as backend add the following configuration to local.conf.</p> 
+  <pre><code>spark {
+  jobserver {
+    ...
+    sqldao {
+      # Slick database driver, full classpath
+      slick-driver = slick.driver.H2Driver
 
-  # JDBC driver, full classpath
-  jdbc-driver = org.postgresql.Driver
+      # JDBC driver, full classpath
+      jdbc-driver = org.h2.Driver
 
-  # Directory where default H2 driver stores its data. Only needed for H2.
-  rootdir = "/var/spark-jobserver/sqldao/data"
+      # Directory where default H2 driver stores its data. Only needed for H2.
+      rootdir = "/var/spark-jobserver/sqldao/data"
 
-  jdbc {
-    url = "jdbc:postgresql://db_host/spark_jobserver"
-    user = "secret"
-    password = "secret"
-  }
+      jdbc {
+        url = "jdbc:h2:file:/var/spark-jobserver/sqldao/data/h2-db"
+        user = "secret"
+        password = "secret"
+      }
 
-  dbcp {
-    maxactive = 20
-    maxidle = 10
-    initialsize = 10
+      dbcp {
+        maxactive = 20
+        maxidle = 10
+        initialsize = 10
+      }
+    }
   }
 }
+# also add the following line at the root level.
+flyway.locations="db/h2/migration"
 </code></pre> 
   <p>If you are using <code>context-per-jvm = true</code>, be sure to add <a href="http://h2database.com/html/features.html#auto_mixed_mode" target="_blank">AUTO_MIXED_MODE</a> to your H2 JDBC URL; this allows multiple processes to share the same H2 database using a lock file.</p> 
-  <p>Also add the following line at the root level.</p> 
-  <pre><code>flyway.locations="db/postgresql/migration"
-</code></pre> 
-  <p>It is also important that any dependent jars are to be added to Job Server class path.</p> 
   <p>In a yarn-client mode if using H2 the below is advised.</p> 
   <ul> 
    <li>Run H2 in server mode (<a href="http://www.h2database.com/html/download.html" target="_blank">http://www.h2database.com/html/download.html</a>, and follow docs.,) Jdbc configuration should be like below:</li> 
@@ -618,6 +658,104 @@ securityManager.cacheManager = $cacheManager
         user = "secret"
         password = "secret"
       }
+</code></pre> 
+  <h4><a id="user-content-configuring-spark-jobserver-postgresql-database-backend" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-postgresql-database-backend" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuring Spark Jobserver PostgreSQL Database backend</h4> 
+  <p>Ensure that you have spark_jobserver database created with necessary rights granted to user.</p> 
+  <pre><code># create database user jobserver and database spark_jobserver:
+$ createuser --username=&lt;superuser&gt; -RDIElPS jobserver
+$ createdb -Ojobserver -Eutf8 spark_jobserver
+CTRL-D -&gt; logout from psql
+
+# logon as superuser and enable the large object extension:
+$ psql -U &lt;superuser&gt; spark_jobserver
+spark_jobserver=# CREATE EXTENSION lo;
+CTRL-D -&gt; logout from psql
+
+# you can connect to the database using the psql command line client:
+$ psql -U jobserver spark_jobserver
+</code></pre> 
+  <p>To use PostgreSQL as backend add the following configuration to local.conf.</p> 
+  <pre><code>spark {
+  jobserver {
+    ...
+    sqldao {
+      # Slick database driver, full classpath
+      slick-driver = slick.driver.PostgresDriver
+
+      # JDBC driver, full classpath
+      jdbc-driver = org.postgresql.Driver
+
+      # Directory where default H2 driver stores its data. Only needed for H2.
+      rootdir = "/var/spark-jobserver/sqldao/data"
+
+      jdbc {
+        url = "jdbc:postgresql://db_host/spark_jobserver"
+        user = "jobserver"
+        password = "secret"
+      }
+
+      dbcp {
+        maxactive = 20
+        maxidle = 10
+        initialsize = 10
+      }
+    }
+  }
+}
+# also add the following line at the root level.
+flyway.locations="db/postgresql/migration"
+</code></pre> 
+  <h4><a id="user-content-configuring-spark-jobserver-mysql-database-backend" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#configuring-spark-jobserver-mysql-database-backend" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuring Spark Jobserver MySQL Database backend</h4> 
+  <p>Ensure that you have spark_jobserver database created with necessary rights granted to user.</p> 
+  <pre><code># secure your mysql installation and define password for mysql root user
+$ mysql_secure_installation
+
+# logon as database root
+$ mysql -u root -p
+
+# create a database user and a database for spark jobserver:
+mysql&gt; CREATE USER 'jobserver'@'localhost' IDENTIFIED BY 'secret';
+mysql&gt; CREATE DATABASE spark_jobserver;
+mysql&gt; GRANT ALL ON spark_jobserver.* TO 'jobserver'@'localhost';
+mysql&gt; FLUSH PRIVILEGES;
+CTRL-D -&gt; logout from mysql
+
+# you can connect to the database using the mysql command line client:
+$ mysql -u jobserver -p
+</code></pre> 
+  <p>To use MySQL as backend add the following configuration to local.conf.</p> 
+  <pre><code>spark {
+  jobserver {
+    ...
+    sqldao {
+      # Slick database driver, full classpath
+      slick-driver = slick.driver.MySQLDriver
+
+      # JDBC driver, full classpath
+      jdbc-driver = com.mysql.jdbc.Driver
+
+      jdbc {
+        url = "jdbc:mysql://db_host/spark_jobserver"
+        user = "jobserver"
+        password = "secret"
+      }
+
+      dbcp {
+        maxactive = 20
+        maxidle = 10
+        initialsize = 10
+      }
+    }
+  }
+}
+# also add the following line at the root level.
+flyway.locations="db/mysql/migration"
 </code></pre> 
   <h3><a id="user-content-chef" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#chef" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -780,6 +918,15 @@ POST /contexts/my-new-context?spark.cores.max=10
    <li>If a job result is of scala's Stream[Byte] type it will be serialised directly as a chunk encoded stream. This is useful if your job result payload is large and may cause a timeout serialising as objects. Beware, this will not currently work as desired with context-per-jvm=true configuration, since it would require serialising Stream[_] blob between processes. For now use Stream[_] job results in context-per-jvm=false configuration, pending potential future enhancements to support this in context-per-jvm=true mode.</li> 
   </ul> 
   <p>If we encounter a data type that is not supported, then the entire result will be serialized to a string.</p> 
+  <h3><a id="user-content-http-override" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#http-override" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HTTP Override</h3> 
+  <p>Spark Job Server offers HTTP override functionality. Often reverse proxies and firewall implement access limitations to, for example, DELETE and PUT requests. HTTP override allows overcoming these limitations by wrapping, for example, a DELETE request into a POST request.</p> 
+  <p>Requesting the destruction of a context can be accomplished through HTTP override using the following syntax:</p> 
+  <pre><code>$ curl -X POST "localhost:8090/contexts/test_context?_method=DELETE"
+</code></pre> 
+  <p>Here, a DELETE request is passed to Spark Job Server "through" a POST request.</p> 
   <h2><a id="user-content-clients" class="anchor" href="https://github.com/spark-jobserver/spark-jobserver#clients" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

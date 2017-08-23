@@ -6,10 +6,15 @@
     </svg></a>scalaconfig</h1> 
   <p><a href="https://travis-ci.org/andr83/scalaconfig" target="_blank"><img src="https://camo.githubusercontent.com/4287e2c76e2043025ee161e28ae4d90945cf50fa/68747470733a2f2f7472617669732d63692e6f72672f616e647238332f7363616c61636f6e6669672e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/andr83/scalaconfig.svg?branch=master" style="max-width:100%;"></a> <a href="https://codecov.io/gh/andr83/scalaconfig" target="_blank"><img src="https://camo.githubusercontent.com/759d2fcbf9d24f9ba540e3eb3aa9c467abe41cb2/68747470733a2f2f636f6465636f762e696f2f67682f616e647238332f7363616c61636f6e6669672f6272616e63682f6d61737465722f67726170682f62616467652e737667" alt="codecov" data-canonical-src="https://codecov.io/gh/andr83/scalaconfig/branch/master/graph/badge.svg" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.andr83/scalaconfig_2.11" target="_blank"><img src="https://camo.githubusercontent.com/b846f40ca6cbd8825863063c86aca70e7b79dc28/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e616e647238332f7363616c61636f6e6669675f322e31312f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.andr83/scalaconfig_2.11/badge.svg" style="max-width:100%;"></a></p> 
   <p>ScalaConfig is a lightweight wrapper over Typesafe Config library provides scala friendly access. It is implemented with type classes pattern and use shapeless for reading case classes.</p> 
-  <p>ScalaConfig adds two metods:</p> 
+  <blockquote> 
+   <p>Current documentation is a actual for 0.4-SNAPSHOT version.</p> 
+  </blockquote> 
+  <p>ScalaConfig adds additional metods:</p> 
   <ul> 
-   <li><code>as[A](path)</code> - return value of type A by path in config object</li> 
-   <li><code>as[A]</code> - convert config object to value of type A</li> 
+   <li><code>as[A](path)</code> - return <code>Either[Seq[Throwable], A]</code> by path in config object</li> 
+   <li><code>as[A]</code> - convert config object to <code>Either[Seq[Throwable], A]</code></li> 
+   <li><code>asUnsafe[A](path)</code> - return value of type <code>A</code> by path in config object. On fail a first exception will thrown.</li> 
+   <li><code>asUnsafe[A]</code> - convert config object to value of type <code>A</code>. On fail a first exception will thrown.</li> 
   </ul> 
   <h2><a id="user-content-supported-types" class="anchor" href="https://github.com/andr83/scalaconfig#supported-types" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -20,6 +25,7 @@
    <li><code>String</code>, <code>Symbol</code></li> 
    <li>Typesafe <code>Config</code> and <code>ConfigValue</code></li> 
    <li><code>FiniteDuration</code></li> 
+   <li><code>Properties</code></li> 
    <li>Collections (<code>List[A]</code>, <code>Set[A]</code>, <code>Map[String, A]</code>, <code>Map[String, AnyRef]</code>, <code>Array[A]</code>, etc. All types with a CanBuildFrom instance are supported)</li> 
    <li><code>Option[A]</code></li> 
    <li>Case classes</li> 
@@ -33,30 +39,46 @@
 
 <span class="pl-k">val</span> <span class="pl-en">config</span><span class="pl-k">:</span> <span class="pl-en">Config</span> <span class="pl-k">=</span> <span class="pl-en">ConfigFactory</span>.load()
 
-<span class="pl-k">val</span> <span class="pl-en">host</span>   <span class="pl-k">=</span> config.as[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">port</span>   <span class="pl-k">=</span> config.as[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">path</span>   <span class="pl-k">=</span> config.as[<span class="pl-en">Option</span>[<span class="pl-k">String</span>]](<span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">users</span>  <span class="pl-k">=</span> config.as[<span class="pl-en">List</span>[<span class="pl-k">String</span>]](<span class="pl-s"><span class="pl-pds">"</span>access.users<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">host</span>   <span class="pl-k">=</span> config.asUnsafe[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>host<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">port</span>   <span class="pl-k">=</span> config.asUnsafe[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>port<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">path</span>   <span class="pl-k">=</span> config.asUnsafe[<span class="pl-en">Option</span>[<span class="pl-k">String</span>]](<span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">users</span>  <span class="pl-k">=</span> config.asUnsafe[<span class="pl-en">List</span>[<span class="pl-k">String</span>]](<span class="pl-s"><span class="pl-pds">"</span>access.users<span class="pl-pds">"</span></span>)
 
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">DbConfig</span>(<span class="pl-v">host</span>: <span class="pl-k">String</span>, <span class="pl-v">port</span>: <span class="pl-k">Int</span>, <span class="pl-v">user</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-c1">None</span>, <span class="pl-v">passwd</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-c1">None</span>)
 
-<span class="pl-k">val</span> <span class="pl-en">dbConfig</span>   <span class="pl-k">=</span> config.as[<span class="pl-en">DbConfig</span>](<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>)
-<span class="pl-k">val</span> <span class="pl-en">dbConfig2</span>  <span class="pl-k">=</span> config.as[<span class="pl-en">DbConfig</span>] <span class="pl-c"><span class="pl-c">//</span> Direct `config` mapping to case class</span>
-<span class="pl-k">val</span> <span class="pl-en">dbConfig3</span>  <span class="pl-k">=</span> config.as[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">String</span>]]
-<span class="pl-k">val</span> <span class="pl-en">dbConfig3</span>  <span class="pl-k">=</span> config.as[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AnyRef</span>]]
+<span class="pl-k">val</span> <span class="pl-en">dbConfig</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>.<span class="pl-en">Result</span>[<span class="pl-en">DbConfig</span>]               <span class="pl-k">=</span> config.as[<span class="pl-en">DbConfig</span>](<span class="pl-s"><span class="pl-pds">"</span>db<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">dbConfig2</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>.<span class="pl-en">Result</span>[<span class="pl-en">DbConfig</span>]              <span class="pl-k">=</span> config.as[<span class="pl-en">DbConfig</span>] <span class="pl-c"><span class="pl-c">//</span> Direct `config` mapping to case class</span>
+<span class="pl-k">val</span> <span class="pl-en">dbConfig3</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>.<span class="pl-en">Result</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">String</span>]]   <span class="pl-k">=</span> config.as[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">String</span>]]
+<span class="pl-k">val</span> <span class="pl-en">dbConfig3</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>.<span class="pl-en">Result</span>[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AnyRef</span>]]]  <span class="pl-k">=</span> config.as[<span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">AnyRef</span>]]
 
 <span class="pl-c"><span class="pl-c">//</span> Custom reader </span>
 <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">password</span>: <span class="pl-k">String</span>)
 
-<span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">userReader</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>[<span class="pl-en">User</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Reader</span>[<span class="pl-en">User</span>] {
-  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">config</span>: <span class="pl-en">Config</span>, <span class="pl-v">path</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">User</span> <span class="pl-k">=</span> {
+<span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">userReader</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>[<span class="pl-en">User</span>] <span class="pl-k">=</span> <span class="pl-en">Reader</span>.pure((<span class="pl-v">config</span>: <span class="pl-en">Config</span>, <span class="pl-v">path</span>: <span class="pl-k">String</span>) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">val</span> <span class="pl-en">userConfig</span> <span class="pl-k">=</span> config.getConfig(path)
     <span class="pl-k">new</span> <span class="pl-en">User</span>(
-      user <span class="pl-k">=</span> userConfig.as[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>),
-      password <span class="pl-k">=</span> userConfig.as[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>)
+      user <span class="pl-k">=</span> userConfig.asUnsafe[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>),
+      password <span class="pl-k">=</span> userConfig.asUnsafe[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>)
     )
   }
-}
+})
+
+<span class="pl-c"><span class="pl-c">//</span> OR</span>
+<span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">userReader</span><span class="pl-k">:</span> <span class="pl-en">Reader</span>[<span class="pl-en">User</span>] <span class="pl-k">=</span> <span class="pl-en">Reader</span>.pureV((<span class="pl-v">config</span>: <span class="pl-en">Config</span>, <span class="pl-v">path</span>: <span class="pl-k">String</span>) <span class="pl-k">=&gt;</span> {
+    <span class="pl-k">val</span> <span class="pl-en">userConfig</span> <span class="pl-k">=</span> config.getConfig(path)
+    
+    <span class="pl-k">val</span> <span class="pl-en">userE</span> <span class="pl-k">=</span> userConfig.as[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">passwordE</span> <span class="pl-k">=</span> userConfig.as[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>)
+    
+    <span class="pl-c"><span class="pl-c">//</span> with Cats or Scalaz it can be of course more elegant!</span>
+    (userE, passwordE)  <span class="pl-k">match</span> {
+      <span class="pl-k">case</span> (<span class="pl-en">Right</span>(user), <span class="pl-en">Right</span>(password)) <span class="pl-k">=&gt;</span> <span class="pl-en">Right</span>(<span class="pl-k">new</span> <span class="pl-en">User</span>(user, password))
+      <span class="pl-k">case</span> ( <span class="pl-en">Left</span>(errors1), <span class="pl-en">Left</span>(errors2)) <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>(errors1 <span class="pl-k">++</span> errors2)
+      <span class="pl-k">case</span> (<span class="pl-en">Left</span>(errors), _) <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>(errors)
+      <span class="pl-k">case</span> (_, <span class="pl-en">Left</span>(errors)) <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>(errors)
+    }
+  }
+})
 </pre>
   </div> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/andr83/scalaconfig#usage" aria-hidden="true" target="_blank">

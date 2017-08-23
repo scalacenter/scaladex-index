@@ -3,7 +3,158 @@
   <h1><a id="user-content-microservice" class="anchor" href="https://github.com/segment-of-one/microservice#microservice" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>microservice</h1> 
-  <p>Easily create an akka-http based microservice</p> 
+    </svg></a>Microservice</h1> 
+  <p>Microservice library allows you to easily create an akka-http based service.</p> 
+  <p>The library exposes for you two important pieces of information required by microservice-based architecture, which are:</p> 
+  <ul> 
+   <li>Service health status which can be used by proxy, service discovery or your monitoring system</li> 
+   <li>Service version</li> 
+  </ul> 
+  <p>Data is being exposed by convenient endpoints created by library:</p> 
+  <ul> 
+   <li><code>.../health</code></li> 
+   <li><code>.../version</code></li> 
+  </ul> 
+  <p>with almost no work required from you.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/segment-of-one/microservice#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Add library dependency to your sbt definition file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>net.so1<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>microservice<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Next extend your application stating point with <code>Microservice</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Boot</span> <span class="pl-k">extends</span> <span class="pl-e">Microservice</span> {...}</pre>
+  </div> 
+  <p>and provide <code>actor system enviroment</code> on which your microservice will work:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">actorSystem</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>so1microservice-example<span class="pl-pds">"</span></span>)
+<span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span><span class="pl-k">:</span> <span class="pl-en">ActorMaterializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+<span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispacher</span><span class="pl-k">:</span> <span class="pl-en">ExecutionContextExecutor</span> <span class="pl-k">=</span> actorSystem.dispatcher</pre>
+  </div> 
+  <p>Of course you need to be able to query your service health &amp; version. In order to build proper endpoints you need to define a <code>BasePath</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">override</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">basePath</span><span class="pl-k">:</span> <span class="pl-en">BasePath</span> <span class="pl-k">=</span> <span class="pl-en">BasePath</span>(<span class="pl-s"><span class="pl-pds">"</span>microservice<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>example<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>which will create following endpoints:</p> 
+  <ul> 
+   <li><code>/microservice/example/health</code></li> 
+   <li><code>/microservice/example/version</code></li> 
+  </ul> 
+  <p>If you want to expose some other functionalities via endpoints, just create routing:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">override</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">serviceRoute</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Route</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(exampleRoute)</pre>
+  </div> 
+  <p>Additional routing is optional, so if you have a service which is, for instance, only processing kafka events without exposing any endpoints you can still monitor it in a consistent way.</p> 
+  <p>Your service is ready to start, so please start it with a configuration:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>start(<span class="pl-en">Config</span>.serverConfig) onComplete {
+  <span class="pl-k">case</span> <span class="pl-en">Success</span>(_) <span class="pl-k">=&gt;</span> logger.info(s<span class="pl-s"><span class="pl-pds">"</span>Everything is ok...<span class="pl-pds">"</span></span>)
+  <span class="pl-k">case</span> <span class="pl-en">Failure</span>(ex) <span class="pl-k">=&gt;</span> logger.error(<span class="pl-s"><span class="pl-pds">"</span>Something is wrong...<span class="pl-pds">"</span></span>, ex); actorSystem.terminate()
+}</pre>
+  </div> 
+  <p>Library leaves up to you how do you handle service start giving you a full control of what is happening. <strong>Important</strong> service won't start if service is not healthy.</p> 
+  <h2><a id="user-content-health-system" class="anchor" href="https://github.com/segment-of-one/microservice#health-system" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Health system</h2> 
+  <p>Health system is build on two concepts:</p> 
+  <ul> 
+   <li><code>Checkable</code> - simple trait that tells the executor how to check health status of particular part of the service</li> 
+   <li><code>HealthService</code> - health check executor</li> 
+  </ul> 
+  <p>In short you can implement any check, which is relevant for your service and pass it to the health check executor. The check will be executed every time you query <code>.../health</code> endpoint. The <code>Microservice</code> library doesn't provide any checks, as they highly depend on your needs and middlewear / client libraries you are using. We successfuly monitor db connection status, state of kafka events processing, availability of some external services etc.</p> 
+  <h4><a id="user-content-checkable" class="anchor" href="https://github.com/segment-of-one/microservice#checkable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Checkable</h4> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Checkable</span> {
+  <span class="pl-k">def</span> <span class="pl-en">check</span>()<span class="pl-k">:</span> <span class="pl-en">Checkable</span>.<span class="pl-en">CheckResult</span>
+}</pre>
+  </div> 
+  <p>Simplest check implementation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">AlwaysSuccessCheck</span> <span class="pl-k">extends</span> <span class="pl-e">Checkable</span> {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">check</span>()<span class="pl-k">:</span> <span class="pl-en">CheckResult</span> <span class="pl-k">=</span> <span class="pl-en">Checkable</span>.<span class="pl-en">Success</span>(<span class="pl-s"><span class="pl-pds">"</span>always-success-check<span class="pl-pds">"</span></span>)
+}</pre>
+  </div> 
+  <p>Notice that some string is being passed in a response - it is check name visible in <code>.../health</code> response. In case of check failure in addition to the check name you can also pass string describing an error.</p> 
+  <h4><a id="user-content-healthservice" class="anchor" href="https://github.com/segment-of-one/microservice#healthservice" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>HealthService</h4> 
+  <p>Health service is kind of an executor for a set of <code>Checkable</code>. You can implement your own or use one of provided:</p> 
+  <ul> 
+   <li>DummyHealthCheckService is a default one and returns ok every time, so when you use it health request behaves like a ping</li> 
+   <li>SyncHealthCheckService synchronously executes a set of checkable</li> 
+   <li>AsyncHealthCheckService asynchronously executes a set of checkable</li> 
+  </ul> 
+  <p>You can change an implementation simply overriding it on top level:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">healthCheckService</span><span class="pl-k">:</span> <span class="pl-en">HealthCheckService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SyncHealthCheckService</span>(checks)</pre>
+  </div> 
+  <p>When you query <code>.../health</code> endpoint you will receive response in a following format:</p> 
+  <div class="highlight highlight-source-json">
+   <pre>{  
+   <span class="pl-s"><span class="pl-pds">"</span>status<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>unhealthy<span class="pl-pds">"</span></span>,
+   <span class="pl-s"><span class="pl-pds">"</span>checks<span class="pl-pds">"</span></span>:[  
+      {  
+         <span class="pl-s"><span class="pl-pds">"</span>isOk<span class="pl-pds">"</span></span>:<span class="pl-c1">true</span>,
+         <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>always-success-check<span class="pl-pds">"</span></span>
+      },
+      {  
+         <span class="pl-s"><span class="pl-pds">"</span>isOk<span class="pl-pds">"</span></span>:<span class="pl-c1">false</span>,
+         <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>always-failure-check<span class="pl-pds">"</span></span>,
+         <span class="pl-s"><span class="pl-pds">"</span>reason<span class="pl-pds">"</span></span>:<span class="pl-s"><span class="pl-pds">"</span>You can put here a message from the exception...<span class="pl-pds">"</span></span>
+      }
+   ]
+}</pre>
+  </div> 
+  <h2><a id="user-content-version" class="anchor" href="https://github.com/segment-of-one/microservice#version" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Version</h2> 
+  <p>Version service simply returns the current version of your service. Currently there are two implementations provided:</p> 
+  <ul> 
+   <li>DummyVersionService returns given string</li> 
+   <li>ManifestBasedVersionService returns <code>MANIFEST.MF</code> file content</li> 
+  </ul> 
+  <p>You can change implementation by simply overriding it on top level:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">versionService</span><span class="pl-k">:</span> <span class="pl-en">VersionService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ManifestBasedVersionService</span>()</pre>
+  </div> 
+  <h2><a id="user-content-full-example" class="anchor" href="https://github.com/segment-of-one/microservice#full-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Full example</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">object</span> <span class="pl-en">Boot</span> <span class="pl-k">extends</span> <span class="pl-e">Microservice</span> <span class="pl-k">with</span> <span class="pl-e">ExampleRouting</span> {
+
+  <span class="pl-k">override</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">basePath</span><span class="pl-k">:</span> <span class="pl-en">BasePath</span> <span class="pl-k">=</span> <span class="pl-en">BasePath</span>(<span class="pl-s"><span class="pl-pds">"</span>so1microservice<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>example<span class="pl-pds">"</span></span>)
+  <span class="pl-k">override</span> <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">serviceRoute</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Route</span>] <span class="pl-k">=</span> <span class="pl-en">Some</span>(exampleRoute)
+
+  <span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">actorSystem</span><span class="pl-k">:</span> <span class="pl-en">ActorSystem</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>so1microservice-example<span class="pl-pds">"</span></span>)
+  <span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">materializer</span><span class="pl-k">:</span> <span class="pl-en">ActorMaterializer</span> <span class="pl-k">=</span> <span class="pl-en">ActorMaterializer</span>()
+  <span class="pl-k">override</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">dispacher</span><span class="pl-k">:</span> <span class="pl-en">ExecutionContextExecutor</span> <span class="pl-k">=</span> actorSystem.dispatcher
+
+  <span class="pl-k">val</span> <span class="pl-en">alwaysSuccessCheck</span><span class="pl-k">:</span> <span class="pl-en">Checkable</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AlwaysSuccessCheck</span>
+  <span class="pl-k">val</span> <span class="pl-en">alwaysFailureCheck</span><span class="pl-k">:</span> <span class="pl-en">Checkable</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AlwaysFailureCheck</span>
+  <span class="pl-k">override</span> <span class="pl-k">val</span> <span class="pl-en">healthCheckService</span><span class="pl-k">:</span> <span class="pl-en">HealthCheckService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SyncHealthCheckService</span>(
+    <span class="pl-en">Set</span>(
+      alwaysSuccessCheck
+<span class="pl-c"><span class="pl-c">//</span>      , alwaysFailureCheck //Comment it if you want to be able to start the service</span>
+    )
+  )
+
+  start(<span class="pl-en">Config</span>.serverConfig) onComplete {
+    <span class="pl-k">case</span> <span class="pl-en">Success</span>(_) <span class="pl-k">=&gt;</span> logger.info(s<span class="pl-s"><span class="pl-pds">"</span>Everything is ok...<span class="pl-pds">"</span></span>)
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(ex) <span class="pl-k">=&gt;</span> logger.error(<span class="pl-s"><span class="pl-pds">"</span>Something is wrong...<span class="pl-pds">"</span></span>, ex); actorSystem.terminate()
+  }
+
+}</pre>
+  </div> 
  </article>
 </div>

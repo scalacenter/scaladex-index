@@ -122,7 +122,20 @@
 
 <span class="pl-k">import static</span> <span class="pl-smi">com.faunadb.client.query.Language.*</span>;
 
+<span class="pl-k">class</span> <span class="pl-en">Person</span> {
+  <span class="pl-k">@FaunaField</span> <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">String</span> firstName;
+  <span class="pl-k">@FaunaField</span> <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">String</span> lastName;
+
+  <span class="pl-k">@FaunaConstructor</span>
+  <span class="pl-k">public</span> <span class="pl-en">Person</span>(<span class="pl-k">@FaunaField</span>(<span class="pl-s"><span class="pl-pds">"</span>firstName<span class="pl-pds">"</span></span>) <span class="pl-smi">String</span> <span class="pl-v">firstName</span>, <span class="pl-k">@FaunaField</span>(<span class="pl-s"><span class="pl-pds">"</span>lastName<span class="pl-pds">"</span></span>) <span class="pl-smi">String</span> <span class="pl-v">lastName</span>) {
+    <span class="pl-c1">this</span><span class="pl-k">.</span>firstName <span class="pl-k">=</span> firstName;
+    <span class="pl-c1">this</span><span class="pl-k">.</span>lastName <span class="pl-k">=</span> lastName;
+  }
+}
+
 <span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Main</span> {
+  <span class="pl-k">private</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-k">Field&lt;<span class="pl-smi">Person</span>&gt;</span> <span class="pl-c1">PERSON_FIELD</span> <span class="pl-k">=</span> <span class="pl-smi">Field</span><span class="pl-k">.</span>at(<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>)<span class="pl-k">.</span>to(<span class="pl-smi">Person</span><span class="pl-k">.</span>class);
+
   <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
     <span class="pl-smi">FaunaClient</span> client <span class="pl-k">=</span> <span class="pl-smi">FaunaClient</span><span class="pl-k">.</span>builder()
       .withSecret(<span class="pl-s"><span class="pl-pds">"</span>your-secret-here<span class="pl-pds">"</span></span>)
@@ -132,9 +145,15 @@
       .at(<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>)<span class="pl-k">.</span>collect(<span class="pl-smi">Field</span><span class="pl-k">.</span>as(<span class="pl-smi">Codec</span><span class="pl-c1"><span class="pl-k">.</span>REF</span>));
 
     <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(indexes);
+
+    <span class="pl-smi">Person</span> person <span class="pl-k">=</span> client<span class="pl-k">.</span>query(Get(Ref(<span class="pl-s"><span class="pl-pds">"</span>classes/people/123456789<span class="pl-pds">"</span></span>)))<span class="pl-k">.</span>get()
+      .get(<span class="pl-c1">PERSON_FIELD</span>);
+    
+    <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(person);
+
+    client<span class="pl-k">.</span>close();
   }
-}
-</pre>
+}</pre>
   </div> 
   <h3><a id="user-content-scala-1" class="anchor" href="https://github.com/fauna/faunadb-jvm#scala-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -162,6 +181,12 @@
 <span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
 
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">firstName</span>: <span class="pl-k">String</span>, <span class="pl-v">lastName</span>: <span class="pl-k">String</span>)
+
+<span class="pl-k">object</span> <span class="pl-en">Person</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">personCodec</span><span class="pl-k">:</span> <span class="pl-en">Codec</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> <span class="pl-en">Codec</span>.caseClass[<span class="pl-en">Person</span>]
+}
+
 <span class="pl-k">object</span> <span class="pl-en">Main</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
   <span class="pl-k">import</span> <span class="pl-v">ExecutionContext.Implicits.</span><span class="pl-v">_</span>
 
@@ -174,6 +199,16 @@
   println(
     <span class="pl-en">Await</span>.result(indexes, <span class="pl-en">Duration</span>.<span class="pl-en">Inf</span>)
   )
+
+  <span class="pl-k">val</span> <span class="pl-en">person</span> <span class="pl-k">=</span> client
+    .query(<span class="pl-en">Get</span>(<span class="pl-en">Ref</span>(<span class="pl-s"><span class="pl-pds">"</span>classes/person/123456789<span class="pl-pds">"</span></span>)))
+    .map(value <span class="pl-k">=&gt;</span> value(<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>).to[<span class="pl-en">Person</span>].get)
+
+  println(
+    <span class="pl-en">Await</span>.result(person, <span class="pl-en">Duration</span>.<span class="pl-en">Inf</span>)
+  )
+  
+  client.close()
 }</pre>
   </div> 
   <h2><a id="user-content-building" class="anchor" href="https://github.com/fauna/faunadb-jvm#building" aria-hidden="true" target="_blank">

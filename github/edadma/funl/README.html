@@ -1,0 +1,165 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-the-funl-programming-language" class="anchor" href="https://github.com/edadma/funl#the-funl-programming-language" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The FunL Programming Language</h1> 
+  <p><em>FunL</em> (pronounced "funnel") is a functional dynamically typed scripting language. The name FunL stands for "fun language", but it can also stand for "functional language". One of the goals in creating FunL was to make a scripting language that would be as enjoyable and convenient to use as Python but with the added support for pattern matching and more of a "functional" style of programming. FunL has the same kind of indentation or "off-side rule" syntax as Python.</p> 
+  <p>As an example, here is a tail-recursive version of the well known factorial function.</p> 
+  <pre><code>def factorial( n )
+  | n &gt;= 0 =
+    def
+      fact( acc, 0 ) = acc
+      fact( acc, n ) = fact( acc*n, n - 1 )
+
+    fact( 1, n )
+  | otherwise = error( "factorial: n should be non-negative" )
+</code></pre> 
+  <p>Here is the same calculation expressed more concisely (which is also tail-recursive internally).</p> 
+  <pre><code>def factorial( n ) = product( 1..n )
+</code></pre> 
+  <p>Another goal in creating FunL was to have a scripting language that is highly Java and Scala interoperable. FunL is implemented in Scala and therefore relies upon both the Java and Scala runtime support libraries.</p> 
+  <p>To give a small example of a complete program in FunL that does something useful, here is a simple static file web server (in under 50 lines).</p> 
+  <pre><code>native java.io.{File, InputStreamReader, BufferedReader, PrintStream}
+native java.net.ServerSocket
+import concurrent.thread
+import io.readFile
+
+val listener = ServerSocket( port )
+val dir = File( '.' ).getCanonicalPath()
+val types = {'txt': 'text/plain', 'html': 'text/html', 'css': 'text/css',
+  'js': 'application/javascript', 'png': 'image/png', 'gif': 'image/gif', 'jpeg': 'image/jpeg'}
+
+def connection( socket ) =
+  input = BufferedReader( InputStreamReader(socket.getInputStream(), 'UTF-8') )
+  output = PrintStream( socket.getOutputStream(), true )
+
+  def response( code, type ) =
+    output.println( 'HTTP/1.1 ' + code )
+    output.println( 'Content-Type: ' + (if type != null then type else 'text/html') )
+    output.println()
+    
+    if (type == null) then output.println( '&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;header&gt;&lt;title&gt;' + code + '&lt;/title&gt;&lt;body&gt;&lt;h1&gt;' + code + '&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;' )
+
+  val line = input.readLine()
+
+  if line != null
+    val (request, url, _) = tuple( line.split(' +') )
+    val file = File( dir + url + (if url == '/' then 'index.html' else '') ).getCanonicalFile()
+
+    if request == 'GET'
+      if file.getPath().startsWith( dir ) and file.exists() and file.isFile() and file.canRead()
+        ext = list( file.getPath().split('\\.') ).last()
+        
+        if (ext in types)
+          response( '200 OK', types(ext) )
+          output.write( readFile(file) )
+          output.flush()
+        else
+          response( '415 Unsupported Media Type', null )
+      else
+        response( '404 Not Found', null )
+    else
+      response( '405 Method Not Allowed', null )
+
+  socket.shutdownInput()
+  socket.shutdownOutput()
+  socket.close()
+
+loop thread( connection, listener.accept() ).start()
+</code></pre> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/funl#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>FunL is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-documentation" class="anchor" href="https://github.com/edadma/funl#documentation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Documentation</h2> 
+  <p>The project's website is <a href="http://edadma.github.io/funl-docs/" target="_blank">http://edadma.github.io/funl-docs/</a> where you will find documentation and download instructions so that you can get a binary executable of the interpreter.</p> 
+  <p>There are also many examples of FunL code to be found at <a href="http://rosettacode.org/wiki/FunL" target="_blank">http://rosettacode.org/wiki/FunL</a>, which serve to document how FunL can be used in solving various types of programming problems in a concise and functional way.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/funl#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Use the following elements to use FunL in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+	&lt;id&gt;hyperreal&lt;/id&gt;
+	&lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+	&lt;groupId&gt;ca.hyperreal&lt;/groupId&gt;
+	&lt;artifactId&gt;funl&lt;/artifactId&gt;
+	&lt;version&gt;0.20&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use FunL in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "ca.hyperreal" %% "funl" % "0.20"
+</code></pre> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/edadma/funl#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <h3><a id="user-content-requirements" class="anchor" href="https://github.com/edadma/funl#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h3> 
+  <ul> 
+   <li>SBT 13.2+</li> 
+   <li>Java 6+</li> 
+  </ul> 
+  <p>Clone and build:</p> 
+  <pre><code>git clone git://github.com/edadma/funl.git
+cd funl
+sbt assembly
+</code></pre> 
+  <p>This will build an executable requiring only that Java be installed. You can now also type</p> 
+  <pre><code>sbt run
+</code></pre> 
+  <p>to start the REPL, or</p> 
+  <pre><code>sbt "run &lt;FunL script file&gt;"
+</code></pre> 
+  <p>to execute a script. Note that the double quotes are required.</p> 
+  <h2><a id="user-content-installing" class="anchor" href="https://github.com/edadma/funl#installing" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installing</h2> 
+  <p>These instructions apply to Ubuntu or any Debian based distribution. It is assumed that Java is installed and in your PATH, as well as the <code>unzip</code> utility.</p> 
+  <p>In these instructions <code>&lt;path to jar&gt;</code> means the path where the executable JAR file was downloaded to, and <code>&lt;path to funl&gt;</code> means the path to the directory that you created in which to install FunL.</p> 
+  <p>Here are the steps.</p> 
+  <ol> 
+   <li>Download the latest release from <a href="https://dl.bintray.com/edadma/generic/funl-0.20.jar" target="_blank">https://dl.bintray.com/edadma/generic/funl-0.20.jar</a>.</li> 
+   <li>Create a directory where FunL should be installed.</li> 
+   <li>Start a shell.</li> 
+   <li>Enter <code>cd &lt;path to jar&gt;</code></li> 
+   <li>Enter <code>unzip funl-0.20.jar bin/funl -d &lt;path to funl&gt;</code></li> 
+   <li>Enter <code>chmod a+x &lt;path to funl&gt;/bin/*</code></li> 
+   <li>Enter <code>cp funl-0.20.jar &lt;path to funl&gt;/bin</code></li> 
+   <li>Open ~/.profile in an editor.</li> 
+   <li>Add <code>PATH="&lt;path to funl&gt;/bin:$PATH"</code></li> 
+   <li>Enter <code>source ~/.profile</code></li> 
+   <li>Enter <code>funl</code></li> 
+  </ol> 
+  <p>After the last step, you should see</p> 
+  <pre><code>    ______            __
+   / ____/_  __ ___  / /     FunL Programming Language
+  / __/ / / / / __ \/ /      (c) 2014 Edward A. Maxedon, Sr.
+ / /   / /_/ / / / / /__     http://funl-lang.org/
+/_/    \____/_/ /_/____/                                     
+
+Welcome to FunL version 0.20
+Type in expressions to have them evaluated.
+Type :help for more information.
+</code></pre> 
+  <p>indicating that the installation worked. You are inside the FunL REPL. Press Ctrl-C to get out.</p> 
+  <h2><a id="user-content-executable" class="anchor" href="https://github.com/edadma/funl#executable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Executable</h2> 
+  <p>The latest development executable can be downloaded from <a href="https://dl.bintray.com/edadma/generic/funl-0.20.jar" target="_blank">https://dl.bintray.com/edadma/generic/funl-0.20.jar</a>.</p> 
+ </article>
+</div>

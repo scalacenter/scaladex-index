@@ -12,7 +12,7 @@
     </svg></a>Usage</h2> 
   <p>sbt-fmpp-template is compatible with sbt 0.13.13+ and sbt 1.0.</p> 
   <p>To allow a specific project to use the <code>FmppTemplateResolver</code>, add the following to <code>project/plugins.sbt</code>:</p> 
-  <pre><code>addSbtPlugin("com.github.jeffreyolchovy" % "sbt-fmpp-template" % "0.1.1")
+  <pre><code>addSbtPlugin("com.github.jeffreyolchovy" % "sbt-fmpp-template" % "0.1.2")
 </code></pre> 
   <p>To globally allow sbt to evaluate templates using this resolver, add that same line to <code>~/.sbt/0.13/plugins/build.sbt</code>.</p> 
   <p>Once the plugin has been installed for a given project (or globally), you can leverage it using <code>sbt new</code> or via the <code>fmpp</code> input task.</p> 
@@ -31,7 +31,24 @@
   </ul> 
   <pre><code>sbt new -S templates -O src -D "name:MyProject, organization:com.example" --freemarker-links includes:includes
 </code></pre> 
-  <p>The file system structure of the <code>templates</code> directory will be preserved, however, file and directory names can be altered using FreeMarker macros. This allows for the interpolation and expansion of template file paths, if desired.</p> 
+  <p>If that invocation seems too intimidating, sweep your specifications into a <code>config.fmpp</code> file and invoke:</p> 
+  <pre><code>sbt new -C config.fmpp
+</code></pre> 
+  <p>For the above example, the contents of <code>config.fmpp</code> should include:</p> 
+  <pre><code>sourceRoot: templates
+outputRoot: src
+data: {
+  name: MyProject,
+  organization: com.example
+}
+freemarkerLinks: {
+  includes: includes
+}
+modes: [
+  ignore(config.fmpp)
+]
+</code></pre> 
+  <p>File and directory names can be altered using FreeMarker macros. This allows for the interpolation and expansion of template file paths, if desired.</p> 
   <p>By default, empty directories will not be copied to the target destination. This behavior is configurable.</p> 
   <p>For more information refer to the <a href="http://freemarker.org/docs/index.html" target="_blank">FreeMarker manual</a> and the <a href="http://fmpp.sourceforge.net/commandline.html" target="_blank">FMPP Command-line tool documentation</a>.</p> 
   <p>All of FMPP's command-line options are respected.</p> 
@@ -55,22 +72,16 @@
    <li>Evaluate templates from a <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/plugin/src/sbt-test/sbt-fmpp-template/remote/test" target="_blank">remote git repository, referencing a given tag</a></li> 
    <li>Evaluate templates that need to create <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/plugin/src/sbt-test/sbt-fmpp-template/dynamic-files-and-dirs/templates/main/scala/$%7Borganization%7D/Bar.scala" target="_blank">dynamic directory paths and file names</a></li> 
    <li>Evaluate templates that utilize <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/plugin/src/sbt-test/sbt-fmpp-template/macros/includes/custom_macros.ftl" target="_blank">custom user-defined macros</a></li> 
+   <li>Evaluate templates using a <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/plugin/src/sbt-test/sbt-fmpp-template/config-file" target="_blank">configuration file</a></li> 
   </ul> 
   <h2><a id="user-content-motivation" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#motivation" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Motivation</h2> 
   <p>sbt supports the idea of pluggable template resolvers, however, only one implementation (<a href="http://www.foundweekends.org/giter8/" target="_blank">Giter8</a>) is provided out of the box. While I have made extensive use of Giter8 for project templates and project archetypes in the past, Giter8 is somewhat lacking in terms of raw features and extensibility. This is not necessarily a bad thing. The simplicity and limited range of Giter8 has actually been quite welcoming for the majority of my use cases, but when more power is required, there's not a whole lot you can do...</p> 
-  <p>I considered forking and extending Giter8 with additional functionality, but since there already exist myriad templating solutions, it would make more sense, in my opinion, to leverage a more robust templating engine and implement any of Giter8's integral features in the new resolver or in the chosen templating solution itself.</p> 
-  <p>After surveying the landscape of existing templating engines, I landed on Apache FreeMarker. FreeMarker has much more power than I anticipated -- or even desired -- and its array of features can, at times, be rather dizzying. The thing that's worth noting, however, is how simple integration has been. The FMPP front-end has a well documented feature set and Java API.</p> 
-  <p>sbt's mechanism for adding template resolvers has also proven to be rather simple. The <a href="http://www.scala-sbt.org/0.13/docs/sbt-new-and-Templates.html#Template+Resolver" target="_blank">docs</a> explain the process rather well.</p> 
-  <p>I've spent most of my time wrestling with configuring the plugin to work against both sbt 0.13 and 1.0. There is a bit of noise and hackery in the build.sbt that I can't seem to simplify, and I hope some attention is placed on cross-sbt-version-plugin-development before we get an official 1.0 release.</p> 
-  <p>Notably, some issues that I ran into when developing the plugin against sbt 0.13 and 1.0 were:</p> 
-  <ul> 
-   <li><a href="https://github.com/sbt/sbt/issues/3392" target="_blank">https://github.com/sbt/sbt/issues/3392</a></li> 
-   <li><a href="https://github.com/sbt/sbt/issues/3393" target="_blank">https://github.com/sbt/sbt/issues/3393</a></li> 
-  </ul> 
-  <p>See the build.sbt and the linked issues for more information on the workarounds.</p> 
+  <p>I considered forking and extending Giter8 with additional functionality, but since there already exist myriad templating solutions, it would make more sense, in my opinion, to leverage a more robust templating engine and implement any of Giter8's integral features in the new resolver or with the chosen templating solution itself.</p> 
+  <p>After surveying the landscape of existing templating engines, I landed on Apache FreeMarker. FreeMarker has much more power than I anticipated -- or even desired -- and its array of features can, at times, be rather dizzying. The thing that's worth noting is how simple integration has been. The FMPP front-end has a well documented feature set and Java API.</p> 
+  <p>sbt's mechanism for adding template resolvers has also proven to be rather simple. The <a href="http://www.scala-sbt.org/0.13/docs/sbt-new-and-Templates.html#Template+Resolver" target="_blank">docs</a> explain the process clearly.</p> 
   <h2><a id="user-content-project-structure" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#project-structure" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -85,6 +96,12 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>plugin</h3> 
   <p>An sbt plugin that adds the <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/resolver/src/main/scala/sbtfmppresolver/FmppTemplateResolver.scala" target="_blank"><code>FmppTemplateResolver</code></a> to sbt's <code>templateResolverInfos</code> setting.</p> 
+  <p>This plugin cross builds for sbt 0.13 and sbt 1.0. There is still a bit of noise and hackery in the build.sbt that I can't seem to simplify, notably:</p> 
+  <ul> 
+   <li><a href="https://github.com/sbt/sbt/issues/3392" target="_blank">https://github.com/sbt/sbt/issues/3392</a></li> 
+   <li><a href="https://github.com/sbt/sbt/issues/3393" target="_blank">https://github.com/sbt/sbt/issues/3393</a></li> 
+  </ul> 
+  <p>See the build.sbt and the linked issues for more information on the workarounds.</p> 
   <h3><a id="user-content-plugin-buildinfo" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#plugin-buildinfo" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -98,20 +115,17 @@
     </svg></a>resolver</h3> 
   <p>The template resolver implementation.</p> 
   <p>Currently, it programmatically invokes the FMPP <code>CommandLine</code> front-end via FMPP's Java API.</p> 
-  <p>This will be replaced by a custom front-end which can resolve remote resources.</p> 
-  <h2><a id="user-content-limitations-and-workarounds" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#limitations-and-workarounds" aria-hidden="true" target="_blank">
+  <p>It uses logic ported from Giter8 for resolving remote resources.</p> 
+  <h2><a id="user-content-notes" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#notes" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Limitations (and workarounds)</h2> 
+    </svg></a>Notes</h2> 
   <ul> 
-   <li><del>Does not support dynamic file and directory names</del> 
+   <li>Dynamic file and directory names can be obtained by utilizing <code>pp</code> directives <em>inside</em> templates</li> 
+   <li>The <code>config.fmpp</code> files in the <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/examples" target="_blank">example</a> projects present a method for automatically interpolating variables when present in file names or directory paths</li> 
+   <li>FreeMarker does not include built-in string operations for Java-esque string transformations (e.g. to/from UpperCamelCase, lowerCamelCase, snake_case, etc.) 
     <ul> 
-     <li>Dynamic file and directory names can be obtained by utilizing <code>pp</code> directives <em>inside</em> templates</li> 
-     <li>The <code>config.fmpp</code> files in the <a href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver/blob/master/examples" target="_blank">example</a> projects present a method for automatically interpolating variables when present in file names or directory paths</li> 
-    </ul> </li> 
-   <li>Does not include built-ins for Java-esque style string conversions (e.g. to/from UpperCamelCase or lowerCamelCase) 
-    <ul> 
-     <li>These operations can be defined in custom macros and included as a library (<strong>namespace</strong>, in FreeMarker lingo)</li> 
+     <li>These operations can be defined in custom macros and included as a library (or <strong>namespace</strong>, in FreeMarker lingo)</li> 
     </ul> </li> 
   </ul> 
   <h2><a id="user-content-credits" class="anchor" href="https://github.com/jeffreyolchovy/sbt-fmpp-resolver#credits" aria-hidden="true" target="_blank">

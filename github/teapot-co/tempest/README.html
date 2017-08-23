@@ -85,29 +85,42 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Using Tempest DB (alpha)</h2> 
   <ol> 
-   <li> <p>Tempest's dependencies (including postgres and java) are neatly packaged in a Docker container. Tempest stores your data in a given directory outside docker, so you can upgrade tempest without losing your data. To use Tempest DB, install docker on your machine, then run</p> <p><code>docker run -t -i -v $YOUR_DATA_DIR:/data -p 127.0.0.1:10001:10001 teapotco/tempestdb:latest bash</code> You can make additional directories available to docker as needed, for example, to make your home directory available from inside docker, add <code>-v ~/:/mnt/home/</code> to the above command. The docker image contains a built release of Tempest. If you're a developer and would like to run against a tempest repo you've checked out locally (say at ~/tempest), add <code>-v ~/tempest/:/root/tempest/</code> to the above command. For development, you should also add <code>-p 5432:5432</code> to the above command, and follow the below instructions for creating the test node and edge types, so that your tests can run outside docker against the postgres database inside docker.</p> </li> 
-   <li> <p>You need three types of file to fire up the Tempest server with your graph: a) a csv file for each node type, b) a csv file for each edge type, and c) a folder of config files (one file for each node type and each edge type).</p> </li> 
-  </ol> 
-  <p>To see the format of the headerless node csv and the edge csv expected by Tempest, look at <code>example/users.csv</code> and <code>follows.csv</code>. 3. Once you have your node and edge files in csv format, create a config file in <code>$YOUR_DATA_DIR/config/</code> for each node and edge type. The name of the config file must match the name of the node or edge type, so for example if you have a node type called <code>user</code> there must be a file in <code>$YOUR_DATA_DIR/config/user.yaml</code>. As in the example files <code>example/user.yaml</code> and <code>example/book.yaml</code>, each <code>&lt;node_type&gt;.yaml</code> file should have the following fields: - csvFile: the headerless csv file, for example "/mnt/home/data/users.csv" - nodeAttributes A list of name and type for each attribute in your csv file. Attributes type may only be 'string', 'int' (32 bit), 'bigint' (64 bit), or 'boolean'. Enter the attributes in the same order as they appear in the node file. - One of your nodeAttributes must be called 'id'. This nodeAttribute must have type string, and must be unique across all nodes of this type. As in the example files <code>example/follows.yaml</code> and <code>example/has_read.yaml</code>, each <code>&lt;edge_type&gt;.yaml</code> file should have the following fields: - csvFile: the headerless csv file, for example '/mnt/home/data/has_read.csv'. Every line of this file must be a pair "sourceId,targetId" where sourceId matches some id of sourceNodeType, and targetId matches the id of some node in targetNodeType - sourceNodeType: The type of node on the left of each edge, for example 'user' - targetNodeType: The type of node on the right of each edge, for example 'book' 4. Convert your graph to binary and load your nodes and edges into Postgres by running <code>create_node_type.sh &lt;node_type&gt;</code> or <code>create_edge_type.sh &lt;edge_type&gt;</code> for each node or edge type. For example, to load the example graphs, from inside docker run</p> 
-  <pre><code># Note: normally you'd create config files outside docker, directly in $YOUR_DATA_DIR
-mkdir /data/config/
+   <li> <p>Tempest's dependencies (including postgres and java) are neatly packaged in a Docker container. Tempest stores your data in a given directory outside docker, so you can upgrade tempest without losing your data. To use Tempest DB, install docker on your machine, then run</p> <p><code>docker run -t -i -v $YOUR_DATA_DIR:/data -p 127.0.0.1:10001:10001 teapotco/tempestdb:latest bash</code></p> <p>where <code>$YOUR_DATA_DIR</code> is a directory on your machine with the graph you want to import and which will also store your config files. You can make additional directories available to docker as needed; for example, to make your home directory available from inside docker, add <code>-v ~/:/mnt/home/</code> to the above command. The docker image contains a built release of Tempest. If you're a developer and would like to run against a tempest repo you've checked out locally (say at ~/tempest), add <code>-v ~/tempest/:/root/tempest/</code> to the above command. For development, you should also add <code>-p 5432:5432</code> to the above command, and follow the below instructions for creating the test node and edge types, so that your tests can run outside docker against the postgres database inside docker.</p> </li> 
+   <li> <p>You need three types of file to fire up the Tempest server with your graph:</p> 
+    <ol> 
+     <li>a csv file for each node type,</li> 
+     <li>a csv file for each edge type, and</li> 
+     <li>a folder of config files (one file for each node type and each edge type).</li> 
+    </ol> <p>To see the format of the headerless node csv and the edge csv expected by Tempest, look at <code>example/users.csv</code> and <code>follows.csv</code>.</p> </li> 
+   <li> <p>Once you have your node and edge files in csv format, create a config file in <code>$YOUR_DATA_DIR/config/</code> for each node and edge type. The name of the config file must match the name of the node or edge type, so for example if you have a node type called <code>user</code> there must be a file in <code>$YOUR_DATA_DIR/config/user.yaml</code>. As in the example files <code>example/user.yaml</code> and <code>example/book.yaml</code>, each <code>&lt;node_type&gt;.yaml</code> file should have the following fields:</p> 
+    <ul> 
+     <li>csvFile: the headerless csv file, for example "/mnt/home/data/users.csv"</li> 
+     <li>nodeAttributes A list of name and type for each attribute in your csv file. Attributes type may only be 'string', 'int' (32 bit), 'bigint' (64 bit), or 'boolean'. Enter the attributes in the same order as they appear in the node file. One of your nodeAttributes must be called 'id'. This nodeAttribute must have type string, and must be unique across all nodes of this type. As in the example files <code>example/follows.yaml</code> and <code>example/has_read.yaml</code>, each <code>&lt;edge_type&gt;.yaml</code> file should have the following fields:</li> 
+     <li>csvFile: the headerless csv file, for example '/mnt/home/data/has_read.csv'. Every line of this file must be a pair "sourceId,targetId" where sourceId matches some id of sourceNodeType, and targetId matches the id of some node in targetNodeType</li> 
+     <li>sourceNodeType: The type of node on the left of each edge, for example 'user'</li> 
+     <li>targetNodeType: The type of node on the right of each edge, for example 'book'</li> 
+    </ul> </li> 
+   <li> <p>Convert your graph to binary and load your nodes and edges into Postgres by running <code>create_node_type.sh &lt;node_type&gt;</code> or <code>create_edge_type.sh &lt;edge_type&gt;</code> for each node or edge type. For example, to load the example graphs, from inside docker run</p> <pre><code># Note: normally you'd create config files outside docker, directly in $YOUR_DATA_DIR
+mkdir -p /data/config/
 cp /root/tempest/example/{user,book,follows,has_read}.yaml /data/config/
+chmod 777 /data/config/
 create_node_type.sh user
 create_node_type.sh book
 create_edge_type.sh follows
 create_edge_type.sh has_read
-</code></pre> 
-  <p>Depending on the size of your initial graph, this step may take up to a few hours. For example, for a graph of 1B edges, this step will take about 4 hours. We realize that is a long time to wait to get your hands on Tempest, but this is one-time hassle: once Tempest is initialized, stopping/starting only takes a few seconds. 5. Start the server <code>start_server.sh</code> 6. Now you can connect to the server from inside or outside docker. If outside docker, first run <code>pip install tempest_db</code>. Then in <code>ipython</code> you can run, for example</p> 
-  <pre><code>import tempest_db
-c = tempest_db.TempestClient()
+</code></pre> <p>Depending on the size of your initial graph, this step may take up to a few hours. For example, for a graph of 1B edges, this step will take about 4 hours. We realize that is a long time to wait to get your hands on Tempest, but this is one-time hassle: once Tempest is initialized, stopping/starting only takes a few seconds.</p> </li> 
+   <li> <p>Start the server with <code>start_server.sh</code></p> </li> 
+   <li> <p>Now you can connect to the server from inside or outside docker. If outside docker, first run <code>pip install tempest_db</code>. Then in <code>ipython</code> you can run, for example</p> <pre><code>import tempest_db
+client = tempest_db.TempestClient()
 alice = tempest_db.Node("user", "alice")
 client.out_neighbors("follows", alice)
 # result: [Node(type='user', id='bob')]
 alice_books = client.out_neighbors("has_read", alice)
-c.multi_node_attribute(alice_books, "title")
+client.multi_node_attribute(alice_books, "title")
 # result: {Node(type='book', id='101'): 'The Lord of the Rings',
 #          Node(type='book', id='103'): 'Roots'}
-</code></pre> 
+</code></pre> </li> 
+  </ol> 
   <h3><a id="user-content-recommended-machine-sizes" class="anchor" href="https://github.com/teapot-co/tempest#recommended-machine-sizes" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

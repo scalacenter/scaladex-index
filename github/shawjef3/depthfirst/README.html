@@ -1,0 +1,125 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-depth-first-flatmap" class="anchor" href="https://github.com/shawjef3/depthfirst#depth-first-flatmap" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Depth First flatMap</h1> 
+  <p>by Jeff Shaw</p> 
+  <h1><a id="user-content-motivation" class="anchor" href="https://github.com/shawjef3/depthfirst#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h1> 
+  <p>While thinking about data locality, performance, and flatMap, I realized that for most data structures, flatMap behaves exactly the way we wouldn't want it to.</p> 
+  <p>Consider the order of operations for an eager data structure when performing the following.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">vv</span> <span class="pl-k">=</span> <span class="pl-en">Vector</span>(...)
+<span class="pl-k">for</span> {
+  v0 <span class="pl-k">&lt;</span><span class="pl-k">-</span> vv
+  v1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f0(v0)
+  v2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1(v1)
+} <span class="pl-k">yield</span> v2</pre>
+  </div> 
+  <p>First, <code>f0</code> is applied to each element of <code>vv</code>. Second, <code>f1</code> is applied to each element of <code>vv.flatMap(f0)</code>. If <code>vv</code> or <code>vv.flatMap(f0)</code> are too large to fit into cache, then by the time <code>f1</code> runs, some of the values it will act on have been evicted and will have to be loaded from RAM.</p> 
+  <p>Ideally, we'd want to perform <code>f0</code> and <code>f1</code> in a depth first manner. This way, any uses of a value are more likely to be in cache, since the value was more recently used or created. Of course this isn't a guarantee.</p> 
+  <h1><a id="user-content-implementation" class="anchor" href="https://github.com/shawjef3/depthfirst#implementation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Implementation</h1> 
+  <p>I created a run-time for Scala's <code>for</code> syntax operations that performs them in a depth-first manner. It uses a stack of queues. A stack element is an operation to perform, along with the values for the operation. When a value is requested, operations are performed until a value without no further operations is found.</p> 
+  <p>Clever readers will realize that this is similar to the way Stream works. If you have a Stream that is the result of various operations, and then ask for an element, the data structure will perform the minimum work to get it. In fact <a href="https://github.com/shawjef3/depthfirst/blob/master/examples/src/main/scala/me/jeffshaw/depthfirst/examples/StreamComparison.scala" target="_blank">a simple experiment</a> comparing the two shows similar behavior. I haven't thought deeply about why, but the depth first flatMap is faster for large data sets.</p> 
+  <p>I have not analyzed the memory use of DepthFirst.</p> 
+  <h1><a id="user-content-use" class="anchor" href="https://github.com/shawjef3/depthfirst#use" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Use</h1> 
+  <h2><a id="user-content-dependency" class="anchor" href="https://github.com/shawjef3/depthfirst#dependency" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependency</h2> 
+  <p>The current draft is on Sonatype's Maven repository for Scala 2.10, 2.11 and 2.12.</p> 
+  <p><code>"me.jeffshaw.depthfirst" %% "depthfirst" % "0.0-M1"</code></p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/shawjef3/depthfirst#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <p><code>DataLocal</code> is a data structure that you build up using the familiar <code>for</code> syntax. The result is <code>TraversableOnce</code>, with the underlying implementation being an <code>Iterator</code>.</p> 
+  <p>The following will print the results immediately.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">me.jeffshaw.depthfirst.</span><span class="pl-v">DepthFirst</span>
+
+<span class="pl-k">val</span> <span class="pl-en">vv</span> <span class="pl-k">=</span> <span class="pl-en">Vector</span>(...)
+
+<span class="pl-k">for</span> {
+  v0 <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">DepthFirst</span>(vv)
+  v1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f0(v0)
+  v2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1(v1)
+} println(v2)</pre>
+  </div> 
+  <p>The following will create the resulting collection before printing the results.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">me.jeffshaw.depthfirst.</span><span class="pl-v">DepthFirst</span>
+
+<span class="pl-k">val</span> <span class="pl-en">vv</span> <span class="pl-k">=</span> <span class="pl-en">Vector</span>(...)
+
+<span class="pl-k">val</span> <span class="pl-en">vv_</span> <span class="pl-k">=</span> {
+  <span class="pl-k">for</span> {
+    v0 <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-en">DepthFirst</span>(vv)
+    v1 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f0(v0)
+    v2 <span class="pl-k">&lt;</span><span class="pl-k">-</span> f1(v1)
+  } <span class="pl-k">yield</span> v2
+}.toVector
+
+println(vv_)</pre>
+  </div> 
+  <h1><a id="user-content-cpu-benchmarks" class="anchor" href="https://github.com/shawjef3/depthfirst#cpu-benchmarks" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>CPU Benchmarks</h1> 
+  <p>I have run benchmarks using various sizes of <code>Vector[Int]</code>s, various numbers of <code>flatMap</code>s of <code>x =&gt; Vector(x)</code>, and on a few different CPUs. Generally speaking, if you are using collections on the order of 100,000, or have 4 or more flatMaps, maps, or filters, you'll gain 10% by using <code>DepthFirst</code>. The benefit increases as the collection size increases, the number of operations on the collection increases, or the amount of cache your CPU has increases.</p> 
+  <p>Following are graphs of the % improvement you can expect from overhead coming from your collection operations. I apologize for the inconsistent colors. I'll try to improve them in the future.</p> 
+  <p><a href="https://github.com/shawjef3/depthfirst/blob/master/benchmarks/src/main/scala/me/jeffshaw/depthfirst/benchmarks/DepthFirstBenchmarks.scala" target="_blank">DepthFirstBenchmarks.scala</a></p> 
+  <p>If the images aren't loading, try the <a href="https://drive.google.com/open?id=0B8oSBVnQGD_wNV9YblNCVnVJU1k" target="_blank">pdf</a>.</p> 
+  <h2><a id="user-content-vs-vector" class="anchor" href="https://github.com/shawjef3/depthfirst#vs-vector" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>vs Vector</h2> 
+  <p>DepthFirst performs better when using Vectors if your Vectors have more than about 1000 elements.</p> 
+  <p>6 MB cache, Intel i7 - 4980 HQ, dedicated MacBook</p> 
+  <p><a href="https://camo.githubusercontent.com/4b3a6153518338ecbc81d15641ec59b4f4dc320a/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f362e706e67" target="_blank"><img src="https://camo.githubusercontent.com/4b3a6153518338ecbc81d15641ec59b4f4dc320a/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f362e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/6.png" style="max-width:100%;"></a></p> 
+  <p>8 MB cache, AMD Ryzen 1700, dedicated Windows</p> 
+  <p><a href="https://camo.githubusercontent.com/599e289383fc333715ed9d6450b77e6f716298dd/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f382e706e67" target="_blank"><img src="https://camo.githubusercontent.com/599e289383fc333715ed9d6450b77e6f716298dd/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f382e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/8.png" style="max-width:100%;"></a></p> 
+  <p>30 MB cache, Intel E5-2650L, VM from Digital Ocean</p> 
+  <p><a href="https://camo.githubusercontent.com/8af0dd27b234506da8bcfc2b09d639448bec6081/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f33302e706e67" target="_blank"><img src="https://camo.githubusercontent.com/8af0dd27b234506da8bcfc2b09d639448bec6081/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f33302e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/30.png" style="max-width:100%;"></a></p> 
+  <p>40 MB cache, Intel E5-2697A, VM from Digital Ocean</p> 
+  <p><a href="https://camo.githubusercontent.com/b34a176db2b2dc839dcc07bc255687c02e8be204/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f34302e706e67" target="_blank"><img src="https://camo.githubusercontent.com/b34a176db2b2dc839dcc07bc255687c02e8be204/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f34302e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/40.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-vs-stream" class="anchor" href="https://github.com/shawjef3/depthfirst#vs-stream" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>vs Stream</h2> 
+  <p>Stream performs much better than using Vector directly, and so we have to be using collections on the order of 10^6 to see a benefit from DepthFirst.</p> 
+  <p>6 MB cache, Intel i7 - 4980 HQ, dedicated MacBook</p> 
+  <p><a href="https://camo.githubusercontent.com/794ba90662c01fd6c2163ea513957c9626e9aa43/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f3673747265616d2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/794ba90662c01fd6c2163ea513957c9626e9aa43/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f3673747265616d2e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/6stream.png" style="max-width:100%;"></a></p> 
+  <p>8 MB cache, AMD Ryzen 1700, dedicated Windows</p> 
+  <p><a href="https://camo.githubusercontent.com/d384fc1f09f6ebca318bc6ed61b2ab49e11659b1/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f3873747265616d2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/d384fc1f09f6ebca318bc6ed61b2ab49e11659b1/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f3873747265616d2e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/8stream.png" style="max-width:100%;"></a></p> 
+  <p>30 MB cache, Intel E5-2650L, VM from Digital Ocean</p> 
+  <p><a href="https://camo.githubusercontent.com/58d08baa0864e7103879b3e1ffa07a10e4f8352d/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f333073747265616d2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/58d08baa0864e7103879b3e1ffa07a10e4f8352d/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f333073747265616d2e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/30stream.png" style="max-width:100%;"></a></p> 
+  <p>40 MB cache, Intel E5-2697A, VM from Digital Ocean</p> 
+  <p><a href="https://camo.githubusercontent.com/e041b6f1f2cc28c80c515a17e1ee5000f7ffd4a8/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f343073747265616d2e706e67" target="_blank"><img src="https://camo.githubusercontent.com/e041b6f1f2cc28c80c515a17e1ee5000f7ffd4a8/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f343073747265616d2e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/40stream.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-best-case" class="anchor" href="https://github.com/shawjef3/depthfirst#best-case" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Best Case</h2> 
+  <p>The ideal use of DepthFirst is on a CPU with a large cache and large collections. The number of operations doesn't much matter. A CPU with 40 MB of cache and a collection with 3 million elements can see a 69% improvement in the overhead used by a single flatMap. Additional flatMaps yield an increase in the improvement.</p> 
+  <p><a href="https://camo.githubusercontent.com/290afac44f66e2f8641503d2ccff1e3f381fa04c/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f34306269672e706e67" target="_blank"><img src="https://camo.githubusercontent.com/290afac44f66e2f8641503d2ccff1e3f381fa04c/68747470733a2f2f7777772e6a656666736861772e6d652f646570746866697273742f4d302f34306269672e706e67" alt="image" data-canonical-src="https://www.jeffshaw.me/depthfirst/M0/40big.png" style="max-width:100%;"></a></p> 
+  <h2><a id="user-content-data" class="anchor" href="https://github.com/shawjef3/depthfirst#data" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Data</h2> 
+  <p>See <a href="https://github.com/shawjef3/depthfirst/blob/master/benchmarks/benchmark_data.csv" target="_blank">benchmark_data.csv</a>.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/shawjef3/depthfirst#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>The contents of this repository are usable under the terms of <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GPL 3</a>.</p> 
+ </article>
+</div>

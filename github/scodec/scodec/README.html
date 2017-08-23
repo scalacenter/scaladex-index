@@ -44,14 +44,16 @@
     <span class="pl-k">import</span> <span class="pl-v">codecs.</span><span class="pl-v">_</span>
 
     <span class="pl-c"><span class="pl-c">//</span> Create a codec for an 8-bit unsigned int followed by an 8-bit unsigned int followed by a 16-bit unsigned int</span>
-    <span class="pl-k">val</span> <span class="pl-en">firstCodec</span> <span class="pl-k">=</span> (uint8 <span class="pl-k">~</span> uint8 <span class="pl-k">~</span> uint16)
+    <span class="pl-k">val</span> <span class="pl-en">firstCodec</span> <span class="pl-k">=</span> uint8 <span class="pl-k">~</span> uint8 <span class="pl-k">~</span> uint16
 
     <span class="pl-c"><span class="pl-c">//</span> Decode a bit vector using that codec</span>
-    <span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">DecodeResult</span>[(<span class="pl-k">Int</span> <span class="pl-k">~</span> <span class="pl-k">Int</span> <span class="pl-k">~</span> <span class="pl-k">Int</span>)] <span class="pl-k">=</span> <span class="pl-en">Codec</span>.decode(firstCodec, <span class="pl-en">BitVector</span>(<span class="pl-c1">0x10</span>, <span class="pl-c1">0x2a</span>, <span class="pl-c1">0x03</span>, <span class="pl-c1">0xff</span>))
+    <span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">Attempt</span>[<span class="pl-en">DecodeResult</span>[(<span class="pl-k">Int</span> <span class="pl-k">~</span> <span class="pl-k">Int</span> <span class="pl-k">~</span> <span class="pl-k">Int</span>)]] <span class="pl-k">=</span> firstCodec.decode(hex<span class="pl-s"><span class="pl-pds">"</span>102a03ff<span class="pl-pds">"</span></span>.bits)
+    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(((16, 42), 1023), BitVector(empty)))</span>
 
     <span class="pl-c"><span class="pl-c">//</span> Sum the result</span>
     <span class="pl-k">val</span> <span class="pl-en">add3</span> <span class="pl-k">=</span> (<span class="pl-v">_</span>: <span class="pl-k">Int</span>) <span class="pl-k">+</span> (<span class="pl-v">_</span>: <span class="pl-k">Int</span>) <span class="pl-k">+</span> (<span class="pl-v">_</span>: <span class="pl-k">Int</span>)
-    <span class="pl-k">val</span> <span class="pl-en">sum</span><span class="pl-k">:</span> <span class="pl-en">DecodeResult</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> result map add3</pre>
+    <span class="pl-k">val</span> <span class="pl-en">sum</span><span class="pl-k">:</span> <span class="pl-en">Attempt</span>[<span class="pl-en">DecodeResult</span>[<span class="pl-k">Int</span>]] <span class="pl-k">=</span> result.map(_.map(add3))
+    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(1081, BitVector(empty)))</span></pre>
   </div> 
   <p>Automatic case class binding is supported via Shapeless HLists:</p> 
   <div class="highlight highlight-source-scala">
@@ -63,7 +65,7 @@
     <span class="pl-c"><span class="pl-c">//</span> Successful(BitVector(24 bits, 0xfb0a01))</span>
 
     <span class="pl-k">val</span> <span class="pl-en">decoded</span><span class="pl-k">:</span> <span class="pl-en">Attempt</span>[<span class="pl-en">DecodeResult</span>[<span class="pl-en">Point</span>]] <span class="pl-k">=</span> pointCodec.decode(hex<span class="pl-s"><span class="pl-pds">"</span>0xfb0a01<span class="pl-pds">"</span></span>.bits)
-    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(Point(-5,10,1),BitVector(empty)))</span></pre>
+    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(Point(-5, 10, 1), BitVector(empty)))</span></pre>
   </div> 
   <p>Codecs can also be implicitly resolved, resulting in usage like:</p> 
   <div class="highlight highlight-source-scala">
@@ -73,13 +75,24 @@
     <span class="pl-c"><span class="pl-c">//</span> Successful(BitVector(24 bits, 0xfb0a01))</span>
 
     <span class="pl-k">val</span> <span class="pl-en">decoded</span><span class="pl-k">:</span> <span class="pl-en">Attempt</span>[<span class="pl-en">DecodeResult</span>[<span class="pl-en">Point</span>]] <span class="pl-k">=</span> <span class="pl-en">Codec</span>.decode[<span class="pl-en">Point</span>](hex<span class="pl-s"><span class="pl-pds">"</span>0xfb0a01<span class="pl-pds">"</span></span>.bits)
-    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(Point(-5,10,1),BitVector(empty)))</span></pre>
+    <span class="pl-c"><span class="pl-c">//</span> Successful(DecodeResult(Point(-5, 10, 1), BitVector(empty)))</span></pre>
   </div> 
+  <p>Note: by default, scodec provides no implicit codecs. Many sensible defaults can be imported via <code>import scodec.codecs.implicits._</code>, including codecs for various primitive types and some immutable collections.</p> 
   <p>New codecs can be created by either implementing the <code>Codec</code> trait or by passing an encoder function and decoder function to the <code>Codec</code> apply method. Typically, new codecs are created by applying one or more combinators to existing codecs.</p> 
   <p>See <a href="http://scodec.org/guide/" target="_blank">the guide</a> for detailed documentation. Also, see <a href="http://scodec.org/api/" target="_blank">ScalaDoc</a>. Especially:</p> 
   <ul> 
-   <li><a href="http://scodec.org/api/scodec-core/1.9.0/#scodec.Codec" target="_blank"><code>Codec</code></a></li> 
-   <li><a href="http://scodec.org/api/scodec-core/1.9.0/#scodec.codecs.package" target="_blank"><code>codecs</code> package</a></li> 
+   <li><a href="http://scodec.org/api/scodec-core/1.10.3/#scodec.Codec" target="_blank"><code>Codec</code></a></li> 
+   <li><a href="http://scodec.org/api/scodec-core/1.10.3/#scodec.codecs.package" target="_blank"><code>codecs</code> package</a></li> 
+  </ul> 
+  <h2><a id="user-content-ecosystem" class="anchor" href="https://github.com/scodec/scodec#ecosystem" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ecosystem</h2> 
+  <p>Many libraries have support for scodec:</p> 
+  <ul> 
+   <li><a href="https://github.com/functional-streams-for-scala" target="_blank">FS2</a></li> 
+   <li><a href="https://github.com/circe/circe" target="_blank">Circe</a></li> 
+   <li><a href="https://github.com/fthomas/refined" target="_blank">Refined</a></li> 
   </ul> 
   <h2><a id="user-content-examples" class="anchor" href="https://github.com/scodec/scodec#examples" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -94,6 +107,7 @@
   <p>The <a href="https://github.com/scodec/scodec-protocols" target="_blank">scodec-protocols</a> has production quality codecs for the above examples.</p> 
   <p>The <a href="https://github.com/yzernik/bitcoin-scodec" target="_blank">bitcoin-scodec</a> library has a codec for the Bitcoin network protocol.</p> 
   <p>The <a href="https://github.com/pocketberserker/scodec-msgpack" target="_blank">scodec-msgpack</a> library provides codecs for <a href="http://msgpack.org/" target="_blank">MessagePack</a>.</p> 
+  <p>The <a href="https://github.com/Spinoco/fs2-http" target="_blank">fs2-http</a> project uses FS2, scodec, and shapeless to implement a minimal HTTP client and server.</p> 
   <h2><a id="user-content-getting-binaries" class="anchor" href="https://github.com/scodec/scodec#getting-binaries" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

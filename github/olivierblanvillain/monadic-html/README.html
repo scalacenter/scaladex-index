@@ -137,9 +137,9 @@ mount(div, component)</pre>
 <span class="pl-c"><span class="pl-c">//</span> doubles =&gt; 0 2 8 6 4 ...</span></pre>
     </div> </li> 
    <li> <p><code>def flatMap[B](f: A =&gt; Rx[B]): Rx[B]</code></p> <p>Dynamically switch between different <code>Rx</code>s according to the given function, applied on each element of this <code>Rx</code>. Each switch will cancel the subscriptions for the previous outgoing <code>Rx</code> and start a new subscription on the next <code>Rx</code>.</p> <p>Together with <code>Rx#map</code> and <code>Rx.apply</code>, flatMap forms a <code>Monad</code>. <a href="https://github.com/OlivierBlanvillain/monadic-html/blob/master/monadic-rx-cats/src/main/scala/mhtml/cats.scala" target="_blank">Proof</a>.</p> </li> 
-   <li> <p><code>def product[B](other: Rx[B]): Rx[(A, B)]</code></p> <p>Create the Cartesian product of two <code>Rx</code>. The output tuple contains the latest values from each input <code>Rx</code>, which updates whenever the value from either input <code>Rx</code> update. This method is faster than combining <code>Rx</code>s using <code>for { a &lt;- ra; b &lt;- rb } yield (a, b)</code>.</p> <pre><code>// r1      =&gt; 0     8                       9     ...
-// r2      =&gt; 1           4     5     6           ...
-// product =&gt; (0,1) (8,1) (8,4) (8,5) (8,6) (9,6) ...
+   <li> <p><code>def zip[B](other: Rx[B]): Rx[(A, B)]</code></p> <p>Create the Cartesian product of two <code>Rx</code>. The output tuple contains the latest values from each input <code>Rx</code>, which updates whenever the value from either input <code>Rx</code> update. This method is faster than combining <code>Rx</code>s using <code>for { a &lt;- ra; b &lt;- rb } yield (a, b)</code>.</p> <pre><code>// r1  =&gt; 0     8                       9     ...
+// r2  =&gt; 1           4     5     6           ...
+// zip =&gt; (0,1) (8,1) (8,4) (8,5) (8,6) (9,6) ...
 </code></pre> <p>This method, together with <code>Rx.apply</code>, forms am <code>Applicative</code>. <code>|@|</code> syntax is available via the <code>monadic-rx-cats</code> package.</p> </li> 
    <li> <p><code>def dropRepeats: Rx[A]</code></p> <p>Drop repeated value of this <code>Rx</code>.</p> 
     <div class="highlight highlight-source-scala">
@@ -303,7 +303,7 @@ dom.document.getElementsByTagName(<span class="pl-s"><span class="pl-pds">"</spa
     <span class="pl-c1">self</span>.foldRight(<span class="pl-en">Rx</span>(<span class="pl-en">List</span>[<span class="pl-en">A</span>]()))(<span class="pl-k">for</span> {n<span class="pl-k">&lt;</span><span class="pl-k">-</span>_;s<span class="pl-k">&lt;</span><span class="pl-k">-</span>_} <span class="pl-k">yield</span> n<span class="pl-k">+</span><span class="pl-k">:</span>s)
 }</pre>
   </div> 
-  <p><a href="http://typelevel.org/cats/typeclasses/traverse.html" target="_blank">Long answer:</a></p> 
+  <p><a href="https://github.com/typelevel/cats/blob/master/docs/src/main/tut/typeclasses/traverse.md" target="_blank">Long answer:</a></p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-s"><span class="pl-pds">"</span>in.nvilla<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>monadic-rx-cats<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.2<span class="pl-pds">"</span></span></pre>
   </div> 
@@ -378,6 +378,36 @@ println(rx3)
 mount(root, view(store))</pre>
   </div> 
   <p>If you're really into <em>globally mutable state</em>™, you can also give up on purity and type safety by making allActions a <code>Var[Action]</code> and calling <code>:=</code> all around your code.</p> 
+  <h3><a id="user-content-is-it-possible-to-have-a-cyclic-rx-graph" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#is-it-possible-to-have-a-cyclic-rx-graph" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Is it possible to have a cyclic <code>Rx</code> graph?</h3> 
+  <p>Yes, using the <code>imitate</code> method on a <code>Var</code> to "close the loop" of a cyclic graph:</p> 
+  <ul> 
+   <li> <p><code>def imitate(other: Rx[A]): Rx[A]</code></p> <p>Updates this <code>Var</code> with values emitted by the <code>other</code> <code>Rx</code>. This method is side effect free. Consequently, the returned <code>Rx</code> must be used at least once for the imitation to take place. This <code>Var</code> the <code>other</code> <code>Rx</code> and the returned <code>Rx</code> will all emit the same values.</p> <p>This method exists (only) to allow <em>circular dependency</em> in <code>Rx</code> graphs.</p> </li> 
+  </ul> 
+  <p>As an example, suppose we want to augment a source of integers with the successors of all odd elements, interleave with the original elements. A possible implementation uses two <code>Rx</code> with a <em>circular dependency</em>:</p> 
+  <pre><code>source ----------&gt; \
+                    --&gt; fst --+
++--&gt; snd --(+1)--&gt; /          |
+|                             |
++----------(isOdd?)-----------+
+
+// source   =&gt; 1       6     7
+// fst      =&gt;  1 2     6     7 8
+// snd      =&gt;   1             7
+</code></pre> 
+  <p>The naive approach to implement this graph is not valid Scala code because of the forward reference to an uninitialized variable:</p> 
+  <pre><code>val source = Var(1)
+val fst = snd.map(1.+).merge(source)
+val snd = fst.keepIf(isOdd)(-1)
+</code></pre> 
+  <p>The typical <em>imitate</em> pattern involves a pair <code>Rx</code>/<code>Var</code>, <code>snd</code> and <code>sndProxy</code> in this case, that are later reconsolidated by having <code>sndProxy</code> imitating <code>snd</code>:</p> 
+  <pre><code>val sndProxy = Var(1)
+val fst = source.merge(sndProxy.map(1.+))
+val snd = fst.keepIf(isOdd)(-1)
+val imitating = sndProxy.imitate(snd)
+</code></pre> 
   <h2><a id="user-content-further-reading" class="anchor" href="https://github.com/olivierblanvillain/monadic-html#further-reading" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

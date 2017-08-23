@@ -1,11 +1,37 @@
 <div class="announce instapaper_body md" data-path="README.md" id="readme">
  <article class="markdown-body entry-content" itemprop="text">
   <p><a href="http://opensource.box.com/badges" target="_blank"><img src="https://camo.githubusercontent.com/dabe9115005a5820390e20ae3bbae24e66778bcf/687474703a2f2f6f70656e736f757263652e626f782e636f6d2f6261646765732f6163746976652e737667" alt="Project Status" data-canonical-src="http://opensource.box.com/badges/active.svg" style="max-width:100%;"></a> <a href="https://travis-ci.org/Box-Castle/core" target="_blank"><img src="https://camo.githubusercontent.com/f73bd0ae1f07dd27e272f4173d758ed63416896a/68747470733a2f2f7472617669732d63692e6f72672f426f782d436173746c652f636f72652e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/Box-Castle/core.svg?branch=master" style="max-width:100%;"></a></p> 
-  <h2><a id="user-content-overview" class="anchor" href="https://github.com/box-castle/core#overview" aria-hidden="true" target="_blank">
+  <h2><a id="user-content-preface" class="anchor" href="https://github.com/box-castle/core#preface" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Overview</h2> 
-  <p>Castle core library.</p> 
+    </svg></a>Preface</h2> 
+  <p>A lot has changed since Castle was written. You may want to look into <a href="http://docs.confluent.io/current/streams/index.html" target="_blank">Kafka Streams</a> and <a href="http://docs.confluent.io/2.0.0/connect/" target="_blank">Kafka Connect</a> as alternatives to Castle.</p> 
+  <h2><a id="user-content-what-is-castle" class="anchor" href="https://github.com/box-castle/core#what-is-castle" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What is Castle?</h2> 
+  <p>Castle is a Scala framework that executes plugins called Committers which consume data from Kafka and write the data to some other destination. At <a href="https://www.box.com/" target="_blank">Box</a>, we use Kafka as the central queuing component for a number of our data streams. Kafka serves as the buffer that can take on traffic bursts that might otherwise overwhelm downstream components. It also allows for flexibility with how we process and consume the data from multiple sources. Getting vast amounts of data into Kafka is easy. However, getting the data out in order to transform it and move it somewhere else is not as straightforward. Performing this operation in a robust manner ends up being a deceptively difficult problem with multiple gotchas that must be solved time and again by the code that is performing this consumption. This is where the Castle framework comes in. It allows engineers to write Committers that focus solely on data processing because the framework guarantees at least once delivery of all the messages in a Kafka stream to the committer code, which then has the sole responsibility of getting the messages to their final destination.</p> 
+  <p>The Castle framework takes care of the following:</p> 
+  <ul> 
+   <li> <p>at least once delivery of messages to committer code</p> </li> 
+   <li> <p>cluster definition and expansion / shrinking</p> </li> 
+   <li> <p>nodes going down and going back up</p> </li> 
+   <li> <p>task assignment</p> </li> 
+   <li> <p>position tracking in the source stream</p> </li> 
+   <li> <p>retrieving data efficiently</p> </li> 
+   <li> <p>easy debugging/configuration</p> </li> 
+   <li> <p>retry logic for transient failures</p> </li> 
+   <li> <p>continuous operation to get the latest data from the stream</p> </li> 
+   <li> <p>reduction of read traffic against Kafka via stream sharing between different committers</p> </li> 
+   <li> <p>handling changes in Kafka topics and partitions</p> </li> 
+   <li> <p>handling Kafka brokers going down</p> </li> 
+   <li> <p>support for targeting a specific batch size (helpful if you want to write larger files)</p> </li> 
+   <li> <p>providing observability by emitting metrics about itself as well as fundamental metrics that are pertinent to all committers</p> </li> 
+   <li> <p>allowing you to tune parallelism of your committer instances as a function of the number of partitions that a Kafka topic has. For example, if a Kafka topic has N partitions, you can chose to run 4N instances of your committer if it is compute heavy and needs to be distributed across more Castle nodes but the stream itself is not heavy enough to justify that many partitions within Kafka, or you have other Committers that are tuned to N partitions</p> </li> 
+  </ul> 
+  <p>Each Committer can be configured so it consumes a specific set of topics from Kafka, and there can be multiple instances of the same Committer configured in different ways. A simplified diagram of a running Castle process looks like this:</p> 
+  <p><a href="https://github.com/box-castle/core/blob/master/img/castle_simplified.png" target="_blank"><img src="https://github.com/box-castle/core/raw/master/img/castle_simplified.png" alt="Castle Simplified Diagram" style="max-width:100%;"></a></p> 
+  <p>In this diagram, we have three different types of committers: <strong>Elastic Search</strong>, <strong>S3</strong>, and <strong>HDFS</strong> consuming data from the <em>Foo</em> and <em>Bar</em> topics. However, for the <strong>ES Committer</strong>, we have configured two separate instances. The first <strong>ES Committer</strong> is configured to only consume the <em>Foo</em> topic and writes it to ES Cluster 1. The second <strong>ES Committer</strong> is configured to consume data from both the <em>Foo</em> and <em>Bar</em> topics and writes the data to ES Cluster 2.</p> 
   <h2><a id="user-content-support" class="anchor" href="https://github.com/box-castle/core#support" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>

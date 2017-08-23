@@ -7,18 +7,22 @@
   <p><a href="https://travis-ci.org/avast/cactus" target="_blank"><img src="https://camo.githubusercontent.com/38a7376a25e01f4ee9b0837952f2cc456ee2df6b/68747470733a2f2f7472617669732d63692e6f72672f61766173742f6361637475732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/avast/cactus.svg?branch=master" style="max-width:100%;"></a> <a href="https://bintray.com/avast/maven/cactus/_latestVersion" target="_blank"> <img src="https://camo.githubusercontent.com/5c1473bc7133c2b7154ded95d1aa2d5179a09630/68747470733a2f2f6170692e62696e747261792e636f6d2f7061636b616765732f61766173742f6d6176656e2f6361637475732f696d616765732f646f776e6c6f61642e737667" alt="Download" data-canonical-src="https://api.bintray.com/packages/avast/maven/cactus/images/download.svg" style="max-width:100%;"> </a></p> 
   <p>Library for mapping between <a href="https://developers.google.com/protocol-buffers/" target="_blank">GPB</a> messages and Scala's case classes.</p> 
   <p>The library automatically converts common data types (<code>String</code>, primitive types, collections) and can map optional fields into <code>Option</code>. This process is extensible via <code>Converter</code>.</p> 
+  <p>The library uses <code>org.scalactic.Or</code> as a return type. The reason is it has great ability to collect all errors raised during the processing (read more on <a href="http://www.scalactic.org/user_guide/OrAndEvery" target="_blank">Scalatic website</a>). It results into all failures raised during the conversion being returned as <code>Bad[Every[CactusFailure]]</code>.</p> 
+  <p>The conversion never throws an exception. If there is an exception caught during the conversion, it's transformed into <code>UnknownFailure</code>.</p> 
+  <p>In case of failure (e.g. <code>MissingRequiredField</code>), a whole variable path (e.g. <em>gpb.fieldGpb2RepeatedRecurse.fieldGpb.fieldBlob</em>) is reported inside the failure.</p> 
   <h2><a id="user-content-gpb-to-case-class" class="anchor" href="https://github.com/avast/cactus#gpb-to-case-class" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>GPB to case class</h2> 
   <p>We often need to map GPB message to business object (which is usually a case class) when GPB is used for communication over the network. It is a good practice to follow Google's recommendation to have all fields <code>optional</code>. However that is not very handy during mapping because validation is necessary.</p> 
+  <p><em>Since v3.0, optional keyword is removed. See <a href="https://developers.google.com/protocol-buffers/docs/proto3" target="_blank">GPB v3 official docs</a>.</em></p> 
   <p>This library solves both problems - it generates mapping (using macros) between GPB message and Scala case class based on the fields of the case class and validates that all the required fields (not wrapped in <code>Option</code>) are present. It also automatically converts between common data types.</p> 
-  <p>Currently there is only one possible failure (<code>MissingFieldFailure</code>) which contains the name of the missing field.</p> 
+  <p>There are several types of failure which can happen. The most common one is <code>MissingFieldFailure</code> which contains the name of the missing field.</p> 
   <p>It is common that the field has different name in the GPB and in the case class. You can use <code>GpbName</code> annotation to override the expected name - see the example.</p> 
   <p>Sometimes the case class has more fields than the GPB and you just want to ignore them during conversion. You can use <code>GpbIgnored</code> annotation to achieve this. Please note that the ignored field in the case class <strong>must</strong> have default value!</p> 
-  <p>GPBs 2.x do not have map type and it's usually solved by using repeated field with message, which contains <code>key</code> and <code>value</code> fields. Automatic conversion to (and from) Scala <code>Map</code> is supported via <code>GpbMap</code> annotation - see the <code>CaseClassA</code> in example.</p> 
+  <p>GPBs 2.x do not have map type and it's usually solved by using repeated field with message, which contains <code>key</code> and <code>value</code> fields. Automatic conversion to (and from) Scala <code>Map</code> is supported via <code>GpbMap</code> annotation - see the <code>CaseClassA</code> in example. See <a href="https://github.com/avast/cactus#map" target="_blank">GPBv3 section</a> for native maps mapping.</p> 
   <p>Mapping of complex messages (message contains another message which contains another message) is supported. However <strong>recursive</strong> mapping (field with <code>Data</code> type in <code>Data</code> class) is <strong>NOT supported</strong>.</p> 
-  <p>When using your own converters, please note it's necessary to use exactly the same type as present in the GPB instance/case class. For example see <code>JavaIntegerListStringConverter</code> in <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/CactusMacrosTest.scala" target="_blank">test</a>.</p> 
+  <p>When using your own converters, please note it's necessary to use exactly the same type as present in the GPB instance/case class. For example see <code>JavaIntegerListStringConverter</code> in <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v2/CactusMacrosTestV2.scala" target="_blank">test</a>.</p> 
   <h3><a id="user-content-example" class="anchor" href="https://github.com/avast/cactus#example" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -115,13 +119,13 @@ message MapMessage {
   }
 }</pre>
   </div> 
-  <p>See <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/CactusMacrosTest.scala" target="_blank">unit tests</a> for more examples.</p> 
+  <p>See <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v2/CactusMacrosTestV2.scala" target="_blank">unit tests</a> for more examples.</p> 
   <p>Collections (<code>java.util.List&lt;T&gt;</code>) are converted to <code>scala.collection.immutable.Seq[T]</code> - concretely to <code>scala.collection.immutable.Vector[T]</code> by default. Another option is to use <code>scala.collection.immutable.List[T]</code> - you have to use the <code>List</code> type explicitly. By specifying <code>scala.collection.Seq[T]</code>, which can contain also mutable collections, you get the <code>Vector[T]</code>.</p> 
   <h2><a id="user-content-case-class-to-gpb" class="anchor" href="https://github.com/avast/cactus#case-class-to-gpb" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Case class to GPB</h2> 
-  <p>When using your own converters, please note it's necessary to use exactly the same type as present in the GPB builder/case class. For example see <code>StringJavaIntegerListConverter</code> in <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/CactusMacrosTest.scala" target="_blank">test</a>.</p> 
+  <p>When using your own converters, please note it's necessary to use exactly the same type as present in the GPB builder/case class. For example see <code>StringJavaIntegerListConverter</code> in <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v2/CactusMacrosTestV2.scala" target="_blank">test</a>.</p> 
   <h3><a id="user-content-example-1" class="anchor" href="https://github.com/avast/cactus#example-1" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -199,11 +203,265 @@ message Data2 {
   }
 }</pre>
   </div> 
-  <p>See <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/CactusMacrosTest.scala" target="_blank">unit tests</a> for more examples.</p> 
+  <p>See <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v2/CactusMacrosTestV2.scala" target="_blank">unit tests</a> for more examples.</p> 
+  <h2><a id="user-content-gpb-v3-support" class="anchor" href="https://github.com/avast/cactus#gpb-v3-support" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GPB v3 support</h2> 
+  <p>Cactus currently supports v3.3. See <a href="https://developers.google.com/protocol-buffers/docs/proto3" target="_blank">official docs</a> for more information about v3 features.</p> 
+  <p>See <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v3/CactusMacrosTestV3.scala" target="_blank">unit tests</a> for more examples.</p> 
+  <h3><a id="user-content-any" class="anchor" href="https://github.com/avast/cactus#any" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Any</h3> 
+  <p>The <code>Any</code> is by design very benevolent from a types POV. The Cactus provides better API for parsing messages hidden in <code>Any</code> field:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.v3.</span><span class="pl-v">AnyValue </span><span class="pl-c"><span class="pl-c">//</span> mind the import!</span>
+<span class="pl-k">import</span> <span class="pl-v">com.google.protobuf.</span><span class="pl-v">Any</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ExtClass</span>(<span class="pl-v">any</span>: <span class="pl-en">AnyValue</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">innerMessage</span> <span class="pl-k">=</span> <span class="pl-en">MessageInsideAnyField</span>.newBuilder().setFieldInt(<span class="pl-c1">42</span>).setFieldString(<span class="pl-s"><span class="pl-pds">"</span>ahoj<span class="pl-pds">"</span></span>).build()
+
+<span class="pl-c"><span class="pl-c">//</span> to case class:</span>
+
+<span class="pl-k">val</span> <span class="pl-en">msg</span> <span class="pl-k">=</span> <span class="pl-en">ExtensionsMessage</span>.newBuilder().setAny(<span class="pl-en">Any</span>.pack(innerMessage)).build()
+
+
+<span class="pl-k">val</span> <span class="pl-en">c1</span> <span class="pl-k">=</span> msg.asCaseClass[<span class="pl-en">ExtClass</span>]
+<span class="pl-k">val</span> <span class="pl-en">c2</span> <span class="pl-k">=</span> c1.flatMap(_.any.asGpb[<span class="pl-en">MessageInsideAnyField</span>])
+
+<span class="pl-c"><span class="pl-c">//</span> to GPB:</span>
+
+<span class="pl-k">val</span> <span class="pl-en">c21</span> <span class="pl-k">=</span> <span class="pl-en">ExtClass</span>(<span class="pl-en">AnyValue</span>.of(innerMessage))
+<span class="pl-k">val</span> <span class="pl-en">c22</span> <span class="pl-k">=</span> c21.asGpb[<span class="pl-en">ExtensionsMessage</span>]</pre>
+  </div> 
+  <p>There is the <code>WrongAnyTypeFailure</code> error defined for a case when the programmer tries to parse the <code>Any</code> as different type than it's serialized inside.</p> 
+  <h3><a id="user-content-oneof" class="anchor" href="https://github.com/avast/cactus#oneof" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>OneOf</h3> 
+  <p>OneOf functionality is supported with mapping to a user-defined <code>sealed trait</code> and its implementations. The name of the OneOf in the GPB definition has to be reflected either by name of the field or by <code>GpbName</code> annotation.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.v3.ValueOneOf.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">/*</span></span>
+<span class="pl-c">message Data {</span>
+<span class="pl-c">    repeated Data2      field_gpb = 1;</span>
+<span class="pl-c"></span>
+<span class="pl-c">    oneof named_one_of {</span>
+<span class="pl-c">             int32      foo_int = 2;</span>
+<span class="pl-c">             string     foo_string = 3;</span>
+<span class="pl-c">    }</span>
+<span class="pl-c">}</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
+
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">OneOfNamed</span>
+
+<span class="pl-k">object</span> <span class="pl-en">OneOfNamed</span> {
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">FooInt</span>(<span class="pl-v">value</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">OneOfNamed</span>
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">FooString</span>(<span class="pl-v">value</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">OneOfNamed</span>
+
+}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClassA</span>(<span class="pl-v">fieldGpb</span>: <span class="pl-en">Seq</span>[<span class="pl-en">CaseClassB</span>], <span class="pl-k">@</span><span class="pl-en">GpbOneOf</span> <span class="pl-k">@</span><span class="pl-en">GpbName</span>(<span class="pl-s"><span class="pl-pds">"</span>NamedOneOf<span class="pl-pds">"</span></span>) <span class="pl-v">oneOfNamed</span>: <span class="pl-en">OneOfNamed</span>)
+
+<span class="pl-c"><span class="pl-c">//</span> to case class:</span>
+
+<span class="pl-k">val</span> <span class="pl-en">gpb</span> <span class="pl-k">=</span> <span class="pl-en">Data</span>.newBuilder()
+  .setFieldGpb(gpb2)
+  .setFooInt(<span class="pl-c1">42</span>)
+  .build()
+  
+gpb.asCaseClass[<span class="pl-en">CaseClassA</span>] <span class="pl-k">match</span> {
+  <span class="pl-k">case</span> <span class="pl-en">Good</span>(<span class="pl-en">CaseClassA</span>(_, <span class="pl-en">OneOfNamed</span>.<span class="pl-en">FooInt</span>(v))) <span class="pl-k">=&gt;</span> v
+}  
+
+<span class="pl-c"><span class="pl-c">//</span> to gpb:</span>
+
+<span class="pl-en">CaseClassA</span>(<span class="pl-en">Seq</span>.empty, <span class="pl-en">OneOfNamed</span>.<span class="pl-en">FooInt</span>(<span class="pl-c1">42</span>)).asGpb[<span class="pl-en">Data</span>]
+</pre>
+  </div> 
+  <p>There is the <code>OneOfValueNotSetFailure</code> error defined for a case when OneOf doesn't have value set even though it's required to. There is an option to hide this state by wrapping the OneOf field in case class into the <code>Option[T]</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClassC</span>(<span class="pl-v">fieldGpb</span>: <span class="pl-en">Seq</span>[<span class="pl-en">CaseClassB</span>], <span class="pl-k">@</span><span class="pl-en">GpbOneOf</span> <span class="pl-v">namedOneOf</span>: <span class="pl-en">Option</span>[<span class="pl-en">OneOfNamed</span>])
+</pre>
+  </div> 
+  <h3><a id="user-content-map" class="anchor" href="https://github.com/avast/cactus#map" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Map</h3> 
+  <p>GPB v3 has native support for maps - the map is then directly in the GPB as the <code>java.util.Map</code> class. Cactus supports this the same as custom maps implementations by repeated field (GPBv2 way).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">/*</span></span>
+<span class="pl-c">message Data {</span>
+<span class="pl-c">             string     field_string = 1;                   // REQUIRED</span>
+<span class="pl-c">             string     field_option = 2;                   // OPTIONAL</span>
+<span class="pl-c">             map&lt;string, int32&gt; field_map = 3;              // REQUIRED</span>
+<span class="pl-c">             map&lt;string, MapInnerMessage&gt; field_map2 = 4;   // REQUIRED</span>
+<span class="pl-c"></span>
+<span class="pl-c">             message MapInnerMessage {</span>
+<span class="pl-c">                string     field_string = 1;</span>
+<span class="pl-c">                string     field_int = 2;</span>
+<span class="pl-c">             }</span>
+<span class="pl-c">}</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClassMapInnerMessage</span>(<span class="pl-v">fieldString</span>: <span class="pl-k">String</span>, <span class="pl-v">fieldInt</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClass</span>(<span class="pl-v">fieldString</span>: <span class="pl-k">String</span>,
+                     <span class="pl-v">fieldOption</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>],
+                     <span class="pl-v">fieldMap</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-k">Int</span>],
+                     <span class="pl-v">fieldMap2</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">CaseClassMapInnerMessage</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">original</span> <span class="pl-k">=</span> <span class="pl-en">CaseClass</span>(
+    fieldString <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>ahoj<span class="pl-pds">"</span></span>,
+    fieldOption <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>ahoj2<span class="pl-pds">"</span></span>),
+    fieldMap <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>one<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span>, <span class="pl-s"><span class="pl-pds">"</span>two<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-c1">2</span>),
+    fieldMap2 <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>one<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">CaseClassMapInnerMessage</span>(<span class="pl-s"><span class="pl-pds">"</span>str<span class="pl-pds">"</span></span>, <span class="pl-c1">42</span>))
+)
+
+<span class="pl-k">val</span> <span class="pl-en">Good</span>(converted) <span class="pl-k">=</span> original.asGpb[<span class="pl-en">Data</span>]
+
+assertResult(<span class="pl-en">Good</span>(original))(converted.asCaseClass[<span class="pl-en">CaseClass</span>])
+</pre>
+  </div> 
+  <h3><a id="user-content-wrappers" class="anchor" href="https://github.com/avast/cactus#wrappers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Wrappers</h3> 
+  <p>There as a possibility to use so-called wrappers provided by Google as an extension. This is fully supported by Cactus by mapping to prepared case classes - <code>trait ValueOneOf</code> and its implementations.</p> 
+  <p>The same as normal fields, these can be wrapped in the <code>Option[T]</code> which turns them into optional fields.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">/*</span></span>
+<span class="pl-c">message ExtensionsMessage {</span>
+<span class="pl-c">             google.protobuf.BoolValue bool_value = 1;</span>
+<span class="pl-c">             google.protobuf.Int32Value int32_value = 2;</span>
+<span class="pl-c">             google.protobuf.Int64Value long_value = 3;</span>
+<span class="pl-c"></span>
+<span class="pl-c">             google.protobuf.Duration duration = 4;</span>
+<span class="pl-c">             google.protobuf.Timestamp timestamp = 5;</span>
+<span class="pl-c">             google.protobuf.ListValue list_value = 6;</span>
+<span class="pl-c"></span>
+<span class="pl-c">             google.protobuf.Struct struct = 7;</span>
+<span class="pl-c">}</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.v3.ValueOneOf.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.google.protobuf.</span>{<span class="pl-v">Any</span>, <span class="pl-v">BoolValue</span>, <span class="pl-v">ByteString</span>, <span class="pl-v">BytesValue</span>, <span class="pl-v">DoubleValue</span>, <span class="pl-v">FloatValue</span>, <span class="pl-v">Int32Value</span>, <span class="pl-v">Int64Value</span>, <span class="pl-v">ListValue</span>, <span class="pl-v">StringValue</span>, <span class="pl-v">Struct</span>, <span class="pl-v">Value</span>, <span class="pl-v">Duration</span> <span class="pl-k">=&gt;</span> <span class="pl-v">GpbDuration</span>, <span class="pl-v">Timestamp</span> <span class="pl-k">=&gt;</span> <span class="pl-v">GpbTimestamp</span>}
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClassExtensions</span>(<span class="pl-v">boolValue</span>: <span class="pl-en">BoolValue</span>,
+                               <span class="pl-v">int32Value</span>: <span class="pl-en">Int32Value</span>,
+                               <span class="pl-v">longValue</span>: <span class="pl-en">Int64Value</span>,
+                               <span class="pl-v">listValue</span>: <span class="pl-en">ListValue</span>,
+                               <span class="pl-v">duration</span>: <span class="pl-en">GpbDuration</span>,
+                               <span class="pl-v">timestamp</span>: <span class="pl-en">GpbTimestamp</span>,
+                               <span class="pl-v">struct</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">ValueOneOf</span>])
+
+<span class="pl-k">val</span> <span class="pl-en">gpb</span> <span class="pl-k">=</span> <span class="pl-en">ExtensionsMessage</span>.newBuilder()
+  .setBoolValue(<span class="pl-en">BoolValue</span>.newBuilder().setValue(<span class="pl-c1">true</span>))
+  .setInt32Value(<span class="pl-en">Int32Value</span>.newBuilder().setValue(<span class="pl-c1">123</span>))
+  .setLongValue(<span class="pl-en">Int64Value</span>.newBuilder().setValue(<span class="pl-c1">456</span>))
+  .setDuration(<span class="pl-en">GpbDuration</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>))
+  .setTimestamp(<span class="pl-en">GpbTimestamp</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>))
+  .setListValue(<span class="pl-en">ListValue</span>.newBuilder().addValues(<span class="pl-en">Value</span>.newBuilder().setNumberValue(<span class="pl-c1">456.789</span>)))
+  .setStruct(<span class="pl-en">Struct</span>.newBuilder().putFields(<span class="pl-s"><span class="pl-pds">"</span>mapKey<span class="pl-pds">"</span></span>, <span class="pl-en">Value</span>.newBuilder().setNumberValue(<span class="pl-c1">42</span>).build()))
+  .build()
+
+<span class="pl-k">val</span> <span class="pl-en">expected</span> <span class="pl-k">=</span> <span class="pl-en">CaseClassExtensions</span>(
+  boolValue <span class="pl-k">=</span> <span class="pl-en">BoolValue</span>.newBuilder().setValue(<span class="pl-c1">true</span>).build(),
+  int32Value <span class="pl-k">=</span> <span class="pl-en">Int32Value</span>.newBuilder().setValue(<span class="pl-c1">123</span>).build(),
+  longValue <span class="pl-k">=</span> <span class="pl-en">Int64Value</span>.newBuilder().setValue(<span class="pl-c1">456</span>).build(),
+  duration <span class="pl-k">=</span> <span class="pl-en">GpbDuration</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>).build(),
+  timestamp <span class="pl-k">=</span> <span class="pl-en">GpbTimestamp</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>).build(),
+  listValue <span class="pl-k">=</span> <span class="pl-en">ListValue</span>.newBuilder().addValues(<span class="pl-en">Value</span>.newBuilder().setNumberValue(<span class="pl-c1">456.789</span>)).build(),
+  struct <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>mapKey<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">NumberValue</span>(<span class="pl-c1">42</span>))
+)
+
+<span class="pl-k">val</span> <span class="pl-en">Good</span>(converted) <span class="pl-k">=</span> gpb.asCaseClass[<span class="pl-en">CaseClassExtensions</span>]
+
+assertResult(expected)(converted)
+
+assertResult(<span class="pl-en">Good</span>(gpb))(converted.asGpb[<span class="pl-en">ExtensionsMessage</span>])
+</pre>
+  </div> 
+  <p>Conversion to basic Scala types is supported too:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.avast.cactus.v3.ValueOneOf.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.google.protobuf.</span>{<span class="pl-v">BoolValue</span>, <span class="pl-v">BytesValue</span>, <span class="pl-v">DoubleValue</span>, <span class="pl-v">FloatValue</span>, <span class="pl-v">Int32Value</span>, <span class="pl-v">Int64Value</span>, <span class="pl-v">ListValue</span>, <span class="pl-v">StringValue</span>, <span class="pl-v">Struct</span>, <span class="pl-v">Value</span>, <span class="pl-v">Duration</span> <span class="pl-k">=&gt;</span> <span class="pl-v">GpbDuration</span>, <span class="pl-v">Timestamp</span> <span class="pl-k">=&gt;</span> <span class="pl-v">GpbTimestamp</span>}
+
+<span class="pl-k">val</span> <span class="pl-en">gpb</span> <span class="pl-k">=</span> <span class="pl-en">ExtensionsMessage</span>.newBuilder()
+  .setBoolValue(<span class="pl-en">BoolValue</span>.newBuilder().setValue(<span class="pl-c1">true</span>))
+  .setInt32Value(<span class="pl-en">Int32Value</span>.newBuilder().setValue(<span class="pl-c1">123</span>))
+  .setLongValue(<span class="pl-en">Int64Value</span>.newBuilder().setValue(<span class="pl-c1">456</span>))
+  .setDuration(<span class="pl-en">GpbDuration</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>))
+  .setTimestamp(<span class="pl-en">GpbTimestamp</span>.newBuilder().setSeconds(<span class="pl-c1">123</span>).setNanos(<span class="pl-c1">456</span>))
+  .setListValue(<span class="pl-en">ListValue</span>.newBuilder().addValues(<span class="pl-en">Value</span>.newBuilder().setNumberValue(<span class="pl-c1">456.789</span>)))
+  .setStruct(<span class="pl-en">Struct</span>.newBuilder().putFields(<span class="pl-s"><span class="pl-pds">"</span>mapKey<span class="pl-pds">"</span></span>, <span class="pl-en">Value</span>.newBuilder().setNumberValue(<span class="pl-c1">42</span>).build()))
+  .build()
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CaseClassExtensionsScala</span>(<span class="pl-v">boolValue</span>: <span class="pl-k">Boolean</span>,
+                                    <span class="pl-v">int32Value</span>: <span class="pl-k">Int</span>,
+                                    <span class="pl-v">longValue</span>: <span class="pl-en">Option</span>[<span class="pl-k">Long</span>], <span class="pl-c"><span class="pl-c">//</span> Option is supported</span>
+                                    <span class="pl-v">listValue</span>: <span class="pl-en">Seq</span>[<span class="pl-en">ValueOneOf</span>],
+                                    <span class="pl-v">duration</span>: <span class="pl-en">Duration</span>,
+                                    <span class="pl-v">timestamp</span>: <span class="pl-en">Instant</span>,
+                                    <span class="pl-v">struct</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">ValueOneOf</span>]
+                                    )
+                                    
+gpb.asCaseClass[<span class="pl-en">CaseClassExtensionsScala</span>]</pre>
+  </div> 
+  <h2><a id="user-content-defining-own-converters" class="anchor" href="https://github.com/avast/cactus#defining-own-converters" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Defining own converters</h2> 
+  <p>There are following ways how to implement own <code>Converter</code>:</p> 
+  <ul> 
+   <li>Plain conversion<br> <code>implicit val StringToByteStringConverter: Converter[String, ByteString] = Converter((b: String) =&gt; ByteString.copyFromUtf8(b))</code><br> This is to be used when just simple A -&gt; B conversion is needed.</li> 
+   <li>Checked conversion</li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> unsafe way:</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">StringJavaIntegerListConverter</span><span class="pl-k">:</span> <span class="pl-en">Converter</span>[<span class="pl-k">String</span>, java.lang.<span class="pl-en">Iterable</span>[_ <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Integer</span>]] <span class="pl-k">=</span> <span class="pl-en">Converter</span>(_.split(<span class="pl-s"><span class="pl-pds">"</span>, <span class="pl-pds">"</span></span>).map(_.toInt).map(int2Integer).toSeq.asJava)
+
+<span class="pl-c"><span class="pl-c">//</span> safe (checked) way:</span>
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">StringJavaIntegerListConverter2</span><span class="pl-k">:</span> <span class="pl-en">Converter</span>[<span class="pl-k">String</span>, java.lang.<span class="pl-en">Iterable</span>[_ <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Integer</span>]] <span class="pl-k">=</span> <span class="pl-en">Converter</span>.checked { (fieldPath, str) <span class="pl-k">=&gt;</span>
+    <span class="pl-k">val</span> <span class="pl-en">parts</span> <span class="pl-k">=</span> str.split(<span class="pl-s"><span class="pl-pds">"</span>, <span class="pl-pds">"</span></span>)
+    
+    <span class="pl-k">if</span> (parts.nonEmpty <span class="pl-k">&amp;&amp;</span> parts.forall(_.matches(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>d+<span class="pl-pds">"</span></span>))) {
+      <span class="pl-en">Good</span>(parts.map(_.toInt).map(int2Integer).toSeq.asJava)
+    } <span class="pl-k">else</span> {
+      <span class="pl-en">Bad</span>(<span class="pl-en">One</span>(<span class="pl-en">CustomFailure</span>(fieldPath, s<span class="pl-s"><span class="pl-pds">"</span>Wrong format of '$fieldPath' field<span class="pl-pds">"</span></span>)))
+    }
+}</pre>
+  </div> 
+  <p>This is to be used when the conversion can go wrong and it's better to cover possible failures right in the converter.<br> <strong>Please note</strong>, that even if the <code>StringJavaIntegerListConverter</code> fails, the exception <em>will <em>not</em></em> be thrown outside. <code>Bad(One(UnknownFailure(..., ...)))</code> will be returned instead.</p> 
+  <ul> 
+   <li>Just implement <code>new Converter</code></li> 
+  </ul> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">StringJavaIntegerListConverter2</span><span class="pl-k">:</span> <span class="pl-en">Converter</span>[<span class="pl-k">String</span>, java.lang.<span class="pl-en">Iterable</span>[_ <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Integer</span>]] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Converter</span>[<span class="pl-k">String</span>, java.lang.<span class="pl-en">Iterable</span>[_ <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Integer</span>]] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">fieldPath</span>: <span class="pl-k">String</span>)(<span class="pl-v">str</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">ResultOrError</span>[lang.<span class="pl-en">Iterable</span>[_ <span class="pl-k">&lt;</span><span class="pl-k">:</span> <span class="pl-en">Integer</span>]] <span class="pl-k">=</span> {
+      <span class="pl-k">val</span> <span class="pl-en">parts</span> <span class="pl-k">=</span> str.split(<span class="pl-s"><span class="pl-pds">"</span>, <span class="pl-pds">"</span></span>)
+
+      <span class="pl-k">if</span> (parts.nonEmpty <span class="pl-k">&amp;&amp;</span> parts.forall(_.matches(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>d+<span class="pl-pds">"</span></span>))) {
+        <span class="pl-en">Good</span>(parts.map(_.toInt).map(int2Integer).toSeq.asJava)
+      } <span class="pl-k">else</span> {
+        <span class="pl-en">Bad</span>(<span class="pl-en">One</span>(<span class="pl-en">CustomFailure</span>(fieldPath, s<span class="pl-s"><span class="pl-pds">"</span>Wrong format of '$fieldPath' field<span class="pl-pds">"</span></span>)))
+      }
+  }
+}</pre>
+  </div> 
+  <p>Basic examples of custom converters may have been seen in examples above or in <a href="https://github.com/avast/cactus/blob/master/macros/src/test/scala/com/avast/cactus/v3/CactusMacrosTestV3.scala" target="_blank">unit tests</a>.</p> 
   <h2><a id="user-content-appendix" class="anchor" href="https://github.com/avast/cactus#appendix" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Appendix</h2> 
-  <p>The library is compiled with dependency on GPB 2.6.1. It should be safe to exclude the dependency and use version <code>2.5.x</code> or <code>2.4.x</code> instead since it uses the <code>MessageLite</code> interface only as a "marker trait".</p> 
+  <p>The library is compiled with optional dependency on GPB 3.3.0. It should be safe to use the library with versions <code>2.6.x</code>, <code>2.5.x</code> or <code>2.4.x</code> since it uses the <code>MessageLite</code> interface only as a <em>"marker trait"</em>.</p> 
  </article>
 </div>

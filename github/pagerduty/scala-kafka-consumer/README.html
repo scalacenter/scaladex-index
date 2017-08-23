@@ -7,23 +7,32 @@
   <p><a href="https://travis-ci.org/PagerDuty/scala-kafka-consumer" target="_blank"><img src="https://camo.githubusercontent.com/a665d13d2c8d2c514b46cf1d966f949b31f42c70/68747470733a2f2f7472617669732d63692e6f72672f5061676572447574792f7363616c612d6b61666b612d636f6e73756d65722e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/PagerDuty/scala-kafka-consumer.svg?branch=master" style="max-width:100%;"></a></p> 
   <p>This is an open source project!</p> 
   <p>This is an opinionated wrapper around the Kafka consumer, adding a default set of policies/interactions. It also specifies the version of the Kafka client library to use as a transitive dependency (so don't double-specify it if you're depending on this library) and provides a base test class for Kafka-eske integration tests.</p> 
+  <p>*** NOTE: This library uses Java 8 functionality. ***</p> 
   <h2><a id="user-content-installation" class="anchor" href="https://github.com/pagerduty/scala-kafka-consumer#installation" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Installation</h2> 
-  <p>This library is published to PagerDuty Bintray OSS Maven repository:</p> 
+  <p>This library is published as a number of different artifacts to the PagerDuty Bintray OSS Maven repository:</p> 
   <div class="highlight highlight-source-scala">
    <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>bintray-pagerduty-oss-maven<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://dl.bintray.com/pagerduty/oss-maven<span class="pl-pds">"</span></span></pre>
   </div> 
-  <p>Adding the dependency to your SBT build file:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.pagerduty<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>kafka-consumer<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.2<span class="pl-pds">"</span></span></pre>
-  </div> 
+  <p>Currently, there are two different consumers available:</p> 
+  <ul> 
+   <li> <p><a href="https://github.com/pagerduty/scala-kafka-consumer/blob/master/main/src/main/scala/com/pagerduty/kafkaconsumer/SimpleKafkaConsumer.scala" target="_blank"><code>SimpleKafkaConsumer</code></a> - As the name suggests, this consumer is very simple to use and has few dependencies. It is available as follows:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.pagerduty<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>kafka-consumer<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;version&gt;<span class="pl-pds">"</span></span></pre>
+    </div> </li> 
+   <li> <p><a href="https://github.com/pagerduty/scala-kafka-consumer/blob/master/partitioned/src/main/scala/com/pagerduty/kafkaconsumer/PartitionedKafkaConsumer.scala" target="_blank"><code>PartitionedKafkaConsumer</code></a> - This consumer improves on <code>SimpleKafkaConsumer</code> at the expense of an additional dependency (Akka Streams) and no support for 2.10. This consumer processes and commits Kafka messages for each assigned partition independently and in parallel. Therefore, this consumer is both faster and more tolerant of transient processing failures. It is available as follows:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.pagerduty<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>kafka-consumer-partitioned<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;version&gt;<span class="pl-pds">"</span></span></pre>
+    </div> </li> 
+  </ul> 
   <h2><a id="user-content-usage" class="anchor" href="https://github.com/pagerduty/scala-kafka-consumer#usage" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Usage</h2> 
-  <p>Create a new <code>SimpleKafkaConsumer</code> and get cranking. Usually you need three items to get a default consumer up and running:</p> 
+  <p>This library is published as a number of separate artifacts</p> 
+  <p>Create a new <code>SimpleKafkaConsumer</code> or <code>PartitionedKafkaConsumer</code> and get cranking. Usually you need three items to get a default consumer up and running:</p> 
   <ul> 
    <li>The topic the consumer works on (constructor argument)</li> 
    <li>The consumer group your consumer belongs to (passed through properties)</li> 

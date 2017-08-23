@@ -1,0 +1,95 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-bittydb" class="anchor" href="https://github.com/edadma/bittydb#bittydb" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>BittyDB</h1> 
+  <p>BittyDB is a small embeddable database engine for the JVM for storing documents (i.e. JSON-like objects). The implementation is in Scala, however, this project will aim to be very Java friendly as well.</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/edadma/bittydb#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example</h2> 
+  <p>Here is a simple example demonstrating database insertion, querying and deletion.</p> 
+  <pre><code>import xyz.hyperreal.bittydb
+
+object Main extends App
+{
+  // open a connection to an in-memory database using 'GB 18030',
+  //   the Chinese government standard character encoding (UTF-8 is the default)
+  val db = Connection.mem( 'charset -&gt; "GB18030" )
+
+  // insert some documents into a collection named 'test',
+  //   which is created since it doesn't exist at this point,
+  //   adding a field '_id' with a UUID value to every document
+  db( "test" ).insert( Map("a" -&gt; 1, "b" -&gt; "first"), Map("a" -&gt; 2, "b" -&gt; "second"), Map("a" -&gt; 3, "b" -&gt; "third") )
+  
+  // show the contents of the entire database
+  println( db.root("test").get )
+
+  // query collection 'test' for a document with field 'a' less than 3
+  println( db( "test" ) find (_("a") &lt; 3) toList )
+
+  // remove from collection 'test' any document with field 'a' equal to either 1 or 2
+  db( "test" ) remove (_("a") in Set(1, 2))
+  println( db.root("test").get )
+  
+  // update collection 'test' such that any document with field 'a' equal to 3
+  //   will have field 'b' changed to "第三" (meaning 'third' in Chinese)
+  db( "test" ) update (_("a") === 3, "b" -&gt; "第三")
+  println( db.root("test").get )
+}
+</code></pre> 
+  <p>The above example should output something very similar (the UUID's will be different) to</p> 
+  <pre><code>List(Map(a -&gt; 1, b -&gt; first, _id -&gt; 85fac459-2638-4524-b671-d35bb4fd1b86), Map(a -&gt; 2, b -&gt; second, _id -&gt; 7484e63b-6598-4d6c-9bdd-f25c69a942f1), Map(a -&gt; 3, b -&gt; third, _id -&gt; 543de2cb-5899-49a7-8f37-741f6fd9c4d5))
+List(Map(a -&gt; 1, b -&gt; first, _id -&gt; 85fac459-2638-4524-b671-d35bb4fd1b86), Map(a -&gt; 2, b -&gt; second, _id -&gt; 7484e63b-6598-4d6c-9bdd-f25c69a942f1))
+List(Map(a -&gt; 3, b -&gt; third, _id -&gt; 543de2cb-5899-49a7-8f37-741f6fd9c4d5))
+List(Map(a -&gt; 3, b -&gt; 第三, _id -&gt; 543de2cb-5899-49a7-8f37-741f6fd9c4d5))
+</code></pre> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/edadma/bittydb#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>BittyDB is distributed under the MIT License, meaning that you are free to use it in your free or proprietary software.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/edadma/bittydb#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Use the following elements to use BittyDB in your Maven project:</p> 
+  <pre><code>&lt;repository&gt;
+	&lt;id&gt;hyperreal&lt;/id&gt;
+	&lt;url&gt;https://dl.bintray.com/edadma/maven&lt;/url&gt;
+&lt;/repository&gt;
+
+&lt;dependency&gt;
+	&lt;groupId&gt;xyz.hyperreal&lt;/groupId&gt;
+	&lt;artifactId&gt;bittydb&lt;/artifactId&gt;
+	&lt;version&gt;0.7&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre> 
+  <p>Add the following to your <code>build.sbt</code> file to use BittyDB in your SBT project:</p> 
+  <pre><code>resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
+
+libraryDependencies += "xyz.hyperreal" %% "bittydb" % "0.7"
+</code></pre> 
+  <h2><a id="user-content-building" class="anchor" href="https://github.com/edadma/bittydb#building" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Building</h2> 
+  <h3><a id="user-content-requirements" class="anchor" href="https://github.com/edadma/bittydb#requirements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Requirements</h3> 
+  <ul> 
+   <li>SBT 13.15+</li> 
+   <li>Java 8+</li> 
+  </ul> 
+  <h3><a id="user-content-clone-and-build" class="anchor" href="https://github.com/edadma/bittydb#clone-and-build" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Clone and build</h3> 
+  <pre><code>git clone git://github.com/edadma/bittydb.git
+cd bittydb
+sbt "test-only * -- -l \"org.scalatest.tags.Disk org.scalatest.tags.CPU\""
+</code></pre> 
+ </article>
+</div>

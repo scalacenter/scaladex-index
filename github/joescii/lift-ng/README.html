@@ -53,7 +53,7 @@
   <span class="pl-en">Seq</span>(
     <span class="pl-c"><span class="pl-c">//</span> Other dependencies ...</span>
     <span class="pl-s"><span class="pl-pds">"</span>org.webjars.bower<span class="pl-pds">"</span></span> <span class="pl-k">%</span>  <span class="pl-s"><span class="pl-pds">"</span>angularjs<span class="pl-pds">"</span></span>         <span class="pl-k">%</span> angularVersion,
-    <span class="pl-s"><span class="pl-pds">"</span>net.liftmodules<span class="pl-pds">"</span></span>   <span class="pl-k">%%</span> (<span class="pl-s"><span class="pl-pds">"</span>ng_<span class="pl-pds">"</span></span><span class="pl-k">+</span>liftEdition) <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.9.6<span class="pl-pds">"</span></span>  <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>compile<span class="pl-pds">"</span></span>
+    <span class="pl-s"><span class="pl-pds">"</span>net.liftmodules<span class="pl-pds">"</span></span>   <span class="pl-k">%%</span> (<span class="pl-s"><span class="pl-pds">"</span>ng_<span class="pl-pds">"</span></span><span class="pl-k">+</span>liftEdition) <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.10.1<span class="pl-pds">"</span></span>  <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>compile<span class="pl-pds">"</span></span>
    )
 }</pre>
   </div> 
@@ -87,7 +87,10 @@
       includeAngularCspCss <span class="pl-k">=</span> <span class="pl-c1">true</span>,
 
       <span class="pl-c"><span class="pl-c">//</span> Set to true to preserve the order of ajax service calls even in the event of server communication failures</span>
-      retryAjaxInOrder <span class="pl-k">=</span> <span class="pl-c1">true</span>
+      retryAjaxInOrder <span class="pl-k">=</span> <span class="pl-c1">true</span>,
+      
+      <span class="pl-c"><span class="pl-c">//</span> Set to any function mapping a net.liftweb.common.Failure into a Reject</span>
+      failureHandler <span class="pl-k">=</span> net.liftmodules.ng.<span class="pl-en">Angular</span>.defaultFailureHandler
     )
 
     <span class="pl-k">val</span> <span class="pl-en">context</span><span class="pl-k">:</span><span class="pl-en">ExecutionContext</span> <span class="pl-k">=</span> <span class="pl-c"><span class="pl-c">//</span> Create context</span>
@@ -225,8 +228,18 @@
   <ul> 
    <li><code>Full(value)</code> =&gt; A resolved promise with the given value.</li> 
    <li><code>Empty</code> =&gt; A resolved promise with <code>undefined</code> value.</li> 
-   <li><code>Failure(msg)</code> =&gt; A rejected promise with the given message value.</li> 
+   <li><code>Failure(msg)</code> =&gt; A rejected promise with the given message value (see <a href="https://github.com/joescii/lift-ng#failure-handler" target="_blank">Failure Handler</a> below for configuration)</li> 
   </ul> 
+  <h5><a id="user-content-failure-handler" class="anchor" href="https://github.com/joescii/lift-ng#failure-handler" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Failure Handler</h5> 
+  <p>The <code>Angular.init</code> function has a parameter <code>failureHandler: Failure =&gt; Reject</code>. Any service which returns a <code>Failure</code> or throws an <code>Exception</code> will have the failure pass through this function. The returned <code>Reject</code> object is used to reject the respective Promise on the client.</p> 
+  <p>The default implementation of this function simply places the <code>Failure</code>'s <code>msg: String</code> into the <code>Reject</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>f<span class="pl-k">:</span> <span class="pl-en">Failure</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Reject</span>(<span class="pl-en">JString</span>(f.msg))</pre>
+  </div> 
+  <p>The <code>Reject</code> case class can accept any <code>JValue</code>, allowing full control over the data used to reject Promises from lift-ng.</p> 
   <h4><a id="user-content-json-serialization" class="anchor" href="https://github.com/joescii/lift-ng#json-serialization" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
@@ -781,6 +794,9 @@ goodbye=Goodbye, {0}!
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Change log</h2> 
   <ul> 
+   <li><em>0.10.1</em>: Minor internal update to update lift-ng angular services to explicitly annotate dependencies.</li> 
+   <li>See <a href="https://docs.angularjs.org/error/$injector/strictdi" target="_blank">Angular Strict DI</a> for more information.</li> 
+   <li><em>0.10.0</em>: Adds <code>failureHandler: Failure =&gt; Reject</code> to the <code>init()</code> function.</li> 
    <li><em>0.9.6</em>: Indirect bug fix for <a href="https://github.com/joescii/lift-ng#i18n-internationalization" target="_blank">i18n-internationalization</a> by bumping <em>j2js-i18n</em> dependency. Quotes in parameterized strings are now correctly escaped.</li> 
    <li><em>0.9.5</em>: Minor bug fix to guarantee server-side exceptions form valid JSON responses to the client.</li> 
    <li><em>0.9.4</em>: This release contains exactly the same code as <em>0.9.3</em>, thanks to midnight piloting errors.</li> 

@@ -23,18 +23,15 @@
   <p>The actual type of the node is unimportant. What is important is the node labels and the relationships between the nodes (parent, child, sibling, etc). This structure is enough to describe most of the types of trees you are familiar with.</p> 
   <p>Bonsai encodes this notion of trees with the <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/TreeOps.scala" target="_blank">TreeOps type class</a>. Here is a truncated version of the type class:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">trait</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">T</span>] {
+   <pre><span class="pl-k">trait</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">Tree</span>, <span class="pl-en">Label</span>] {
 
 <span class="pl-c">  <span class="pl-c">/**</span> The type of the nodes in the tree. <span class="pl-c">*/</span></span>
   <span class="pl-k">type</span> <span class="pl-en">Node</span>
 
-<span class="pl-c">  <span class="pl-c">/**</span> The type of the label attached to each node. <span class="pl-c">*/</span></span>
-  <span class="pl-k">type</span> <span class="pl-en">Label</span>
-
 <span class="pl-c">  <span class="pl-c">/**</span></span>
 <span class="pl-c">   * Returns the root node of the tree.</span>
 <span class="pl-c">   <span class="pl-c">*/</span></span>
-  <span class="pl-k">def</span> <span class="pl-en">root</span>(<span class="pl-v">t</span>: <span class="pl-en">T</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Node</span>]
+  <span class="pl-k">def</span> <span class="pl-en">root</span>(<span class="pl-v">t</span>: <span class="pl-en">Tree</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">Node</span>]
 
 <span class="pl-c">  <span class="pl-c">/**</span></span>
 <span class="pl-c">   * Returns all the direct children of the given node. The order may or may</span>
@@ -61,18 +58,19 @@
   </div> 
   <p>And here is how we would implement its <code>TreeOps</code> instance:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">object</span> <span class="pl-en">HuffmanTree</span> {
-  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">huffmanTreeOps</span>[<span class="pl-en">A</span>]<span class="pl-k">:</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span>
-    <span class="pl-k">new</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] {
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.stripe.bonsai.</span><span class="pl-v">TreeOps</span>
+
+<span class="pl-k">object</span> <span class="pl-en">HuffmanTree</span> {
+  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">huffmanTreeOps</span>[<span class="pl-en">A</span>]<span class="pl-k">:</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>], <span class="pl-en">Option</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span>
+    <span class="pl-k">new</span> <span class="pl-en">TreeOps</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>], <span class="pl-en">Option</span>[<span class="pl-en">A</span>]] {
       <span class="pl-k">type</span> <span class="pl-en">Node</span> <span class="pl-k">=</span> <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]
-      <span class="pl-k">type</span> <span class="pl-en">Label</span> <span class="pl-k">=</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>]
 
       <span class="pl-k">def</span> <span class="pl-en">root</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> <span class="pl-en">Some</span>(tree)
       <span class="pl-k">def</span> <span class="pl-en">children</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Iterable</span>[<span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> tree <span class="pl-k">match</span> {
         <span class="pl-k">case</span> <span class="pl-en">Branch</span>(l, r) <span class="pl-k">=&gt;</span> l <span class="pl-k">::</span> r <span class="pl-k">::</span> <span class="pl-c1">Nil</span>
         <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">Nil</span>
       }
-      <span class="pl-k">def</span> <span class="pl-en">label</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Label</span> <span class="pl-k">=</span> tree <span class="pl-k">match</span> {
+      <span class="pl-k">def</span> <span class="pl-en">label</span>(<span class="pl-v">tree</span>: <span class="pl-en">HuffmanTree</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> tree <span class="pl-k">match</span> {
         <span class="pl-k">case</span> <span class="pl-en">Leaf</span>(value) <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(value)
         <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> <span class="pl-c1">None</span>
       }
@@ -81,9 +79,10 @@
   </div> 
   <p>As long as we are careful to implement all our operations on a Huffman tree by using its more generic <code>TreeOps</code> interface, rather than <code>HuffmanTree</code> directly, we can then swap out the actual tree data structure, without affecting the code using it.</p> 
   <p>For example, below we implement a <code>decode</code> operation as an implicit class using just <code>TreeOps</code>.</p> 
-  <p><em>Note that <code>TreeOps.Aux[T, Option[A]]</code> is just a type alias for <code>TreeOps[T] { type Label = Option[A] }</code></em></p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">HuffmanTreeOps</span>[<span class="pl-en">T</span>, <span class="pl-en">A</span>](<span class="pl-v">tree</span>: <span class="pl-en">T</span>)(<span class="pl-k">implicit</span> <span class="pl-v">treeOps</span>: <span class="pl-en">TreeOps</span>.<span class="pl-en">Aux</span>[<span class="pl-en">T</span>, <span class="pl-en">Option</span>[<span class="pl-en">A</span>]]) {
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.collection.immutable.</span><span class="pl-v">BitSet</span>
+
+<span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">HuffmanTreeOps</span>[<span class="pl-en">T</span>, <span class="pl-en">A</span>](<span class="pl-v">tree</span>: <span class="pl-en">T</span>)(<span class="pl-k">implicit</span> <span class="pl-v">treeOps</span>: <span class="pl-en">TreeOps</span>[<span class="pl-en">T</span>, <span class="pl-en">Option</span>[<span class="pl-en">A</span>]]) {
   <span class="pl-c"><span class="pl-c">//</span> Importing treeOps gives us some useful methods on `tree`</span>
   <span class="pl-k">import</span> <span class="pl-v">treeOps.</span><span class="pl-v">_</span>
 
@@ -117,7 +116,9 @@
   <p>Bonsai provides a <a href="https://github.com/stripe/bonsai/blob/master/bonsai-core/src/main/scala/com/stripe/bonsai/Layout.scala" target="_blank">Layout</a> type class, along with some simple combinators, for describing how to (de)serialize your labels. At the lowest level are a set of Layout "primitives" that can encode simple data types into compact data structures. The combinators then allow more complex structures to be described (tuples, <code>Either</code>, mappings to case classes, etc), without adding much, if any, overhead.</p> 
   <p>Here is an example of a <code>Layout</code> for some <code>Widget</code> type we made up:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Widget</span>
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.stripe.bonsai.</span><span class="pl-v">Layout</span>
+
+<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Widget</span>
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Sprocket</span>(<span class="pl-v">radius</span>: <span class="pl-k">Int</span>, <span class="pl-v">weight</span>: <span class="pl-en">Option</span>[<span class="pl-k">Double</span>]) <span class="pl-k">extends</span> <span class="pl-e">Widget</span>
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Doodad</span>(<span class="pl-v">length</span>: <span class="pl-k">Int</span>, <span class="pl-v">width</span>: <span class="pl-k">Int</span>, <span class="pl-v">weight</span>: <span class="pl-en">Option</span>[<span class="pl-k">Double</span>]) <span class="pl-k">extends</span> <span class="pl-e">Widget</span>
 
@@ -144,7 +145,7 @@
     </svg></a>Using Bonsai in SBT or Maven</h1> 
   <p>Bonsai is published on sonatype. To use it in your SBT project, you can add the following to your <code>build.sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.stripe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>bonsai<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2.1<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.stripe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>bonsai<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.0<span class="pl-pds">"</span></span></pre>
   </div> 
   <h1><a id="user-content-miscellaneous" class="anchor" href="https://github.com/stripe/bonsai#miscellaneous" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">

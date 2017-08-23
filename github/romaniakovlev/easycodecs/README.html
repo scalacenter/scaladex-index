@@ -1,0 +1,94 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-codecs-for-recursive-map-like-data-types" class="anchor" href="https://github.com/romaniakovlev/easycodecs#codecs-for-recursive-map-like-data-types" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Codecs for recursive map-like data types</h1> 
+  <p>This project aims to give developers tools to easily derive typeclasses for encoding and decoding Scala classes to and from recursive map-like data types.</p> 
+  <h2><a id="user-content-motivation" class="anchor" href="https://github.com/romaniakovlev/easycodecs#motivation" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>Converting from application-specific classes (e.g. model layer) to an external data structure and back is a frequent task programmer faces. In Scala such conversion is typically done via typeclasses, which you can either write by hand or, in certain cases, derive automatically.</p> 
+  <p>However, when one tries to set up automatic typeclasses derivation for encoding and decoding to external data structures, Scala starts to show its quirky character. Coming up with a reliable and feature-rich generic typeclasses derivation solution is definitely possible, but can be quite intimidating, especially (but not only) for beginners.</p> 
+  <p>On the other hand, recursive map-like data types are quite numerous. Here are some examples of them:</p> 
+  <ul> 
+   <li>JSON</li> 
+   <li>NoSQL database records (e.g. DynamoDB, Cassandra)</li> 
+   <li>Configuration files (e.g. Typesafe config)</li> 
+   <li>etc.</li> 
+  </ul> 
+  <p>Essentially, it's a data type that can be represented as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">type</span> <span class="pl-en">Data</span> <span class="pl-k">=</span> <span class="pl-en">Map</span>[<span class="pl-en">Key</span>, <span class="pl-en">Data</span>]</pre>
+  </div> 
+  <p>Despite the similar meta-structure, the actual structure of the types used to represent JSON is very different from Cassandra records. Therefore it's not possible to create a single typeclass supporting conversion of Scala classes into all of such data structures and back. However it's possible to define a typeclass working with an abstract map-like recursive data type, and delegates details of how to work with primitive types (numbers, strings, collections, etc.) in the context of a concrete map-like data type (JSON, DynamoDB record) to a different typeclass. This is exactly what this project does.</p> 
+  <p>Many Scala libraries provide generic codec typeclasses for their own data types. One of the best examples is <a href="https://circe.github.io/circe/" target="_blank">Circe</a> library, which provides very feature-rich and configurable generic codec derivation for JSON. However, there are still many libraries providing recursive map-like data structures, especially rooted in Java world, which don't offer such desirable capabilities. This project aims to enable developers to fill those gaps with much less efforts than writing full-blown generic typeclass derivation themselves.</p> 
+  <h2><a id="user-content-implementation-details" class="anchor" href="https://github.com/romaniakovlev/easycodecs#implementation-details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Implementation details</h2> 
+  <p>The core typeclasses supporting the mapping between Scala classes and recursive map-like data types are <code>Encoder</code> and <code>Decoder</code> (collectively as codecs). <code>Encoder</code> converts a Scala class instance to data item, and <code>Decoder</code> converts a data item into a Scala class instance. The other typeclasses supporting concrete data types are called <code>PrimitivesReader</code> and <code>PrimitivesWriter</code>. <code>PrimitivesReader</code> can read Scala primitive values (e.g. <code>Int</code>, <code>String</code>, collections) from a single data item. <code>PrimitivesWriter</code> can create a single data item from a Scala primitive value.</p> 
+  <p>Such approach have the following benefits:</p> 
+  <ul> 
+   <li>All the heavy lifting is done once, in the <code>Encoder</code> and <code>Decoder</code> typeclasses. No need to have different codecs for e.g. DynamoDB and Cassandra.</li> 
+   <li>By writing new <code>PrimitivesReader</code> and <code>PrimitivesWriter</code> instances, one can add support for new map-like data types.</li> 
+  </ul> 
+  <p>You can find the definitions of typeclasses used in this project below:</p> 
+  <p><code>Encoder</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Encoder</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">encode</span>(<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">EncodingError</span>, <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">B</span>]]
+}</pre>
+  </div> 
+  <p><code>Decoder</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Decoder</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">decode</span>(<span class="pl-v">a</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">DecodingError</span>, <span class="pl-en">B</span>]
+}</pre>
+  </div> 
+  <p><code>PrimitivesReader</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">PrimitivesReader</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">extract</span>(<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">DecodingError</span>, <span class="pl-en">B</span>]
+}</pre>
+  </div> 
+  <p><code>PrimitivesWriter</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">PrimitivesWriter</span>[<span class="pl-en">A</span>, <span class="pl-en">B</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">write</span>(<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">B</span>
+}</pre>
+  </div> 
+  <p>Codecs can be derived for the following Scala types:</p> 
+  <ul> 
+   <li>case classes (and certain non-case classes)</li> 
+   <li>numbers (<code>Int</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>BigDecimal</code>)</li> 
+   <li><code>String</code></li> 
+   <li>Collections (<code>Iterable</code>-based) of supported types</li> 
+   <li>Maps with <code>String</code> key and values of supported types</li> 
+   <li>Options of supported types</li> 
+   <li>Sealed trait families 
+    <ul> 
+     <li>Enum-like sealed trait families</li> 
+    </ul> </li> 
+  </ul> 
+  <p>The generic derivation of <code>Encoder</code> and <code>Decoder</code> is implemented using pure <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a>, with no custom macros.</p> 
+  <h2><a id="user-content-project-structure" class="anchor" href="https://github.com/romaniakovlev/easycodecs#project-structure" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Project structure</h2> 
+  <p>This project is a multi-project SBT build with the following structure: there is a <code>core</code> project, where all typeclasses are defined. <code>Encoder</code> and <code>Decoder</code> are also implemented there. Then there are additional projects providing implementations of <code>PrimitivesReader</code> and <code>PrimitivesWriter</code> for concrete data types (e.g. DynamoDB's <code>AttributeValue</code>). Those additional projects depend on <code>core</code> for <code>PrimitivesReader</code> and <code>PrimitivesWriter</code> definitions.</p> 
+  <p>Currently, one data type is supported, namely DynamoDB's <a href="http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/AttributeValue.html" target="_blank">AttributeValue</a> from AWS Java SDK v1.x.</p> 
+  <h2><a id="user-content-project-status" class="anchor" href="https://github.com/romaniakovlev/easycodecs#project-status" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Project status</h2> 
+  <p>This project has started as an attempt to learn how to write generic codec derivation for DynamoDB records. However, during implementation I've understood this problem can be generalized, and the project acquired its current scope. I personally feel excited about opportunities this approach provides, and I hope others will feel the same. However, I'm aware of the <a href="https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/" target="_blank">law of the leaky abstractions</a>, and therefore I'm sure further usage of this approach, especially by someone other than me, will uncover its weaknesses.</p> 
+  <p>Therefore, please use codecs from this project, submit support for new codecs (see <a href="https://github.com/romaniakovlev/easycodecs/blob/master/../master/CONTRIBUTING.md" target="_blank">Contributing</a>), and share your experience.</p> 
+  <h2><a id="user-content-license" class="anchor" href="https://github.com/romaniakovlev/easycodecs#license" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>Apache License 2.0</p> 
+ </article>
+</div>

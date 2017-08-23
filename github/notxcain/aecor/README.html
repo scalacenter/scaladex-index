@@ -26,24 +26,9 @@ scalacOptions <span class="pl-k">+</span><span class="pl-k">=</span> <span class
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Defining and running behavior</h3> 
-  <p>Let's start with entity operations:</p> 
+  <p>Let's start with defining domain events:</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">SubscriptionOp</span>[<span class="pl-en">A</span>] {
-  <span class="pl-k">def</span> <span class="pl-en">subscriptionId</span><span class="pl-k">:</span> <span class="pl-k">String</span>
-}
-<span class="pl-k">object</span> <span class="pl-en">SubscriptionOp</span> {
-  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CreateSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>, <span class="pl-v">userId</span>: <span class="pl-k">String</span>, <span class="pl-v">productId</span>: <span class="pl-k">String</span>, <span class="pl-v">planId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
-  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">PauseSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
-  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ResumeSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
-  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CancelSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
-}</pre>
-  </div> 
-  <p>Entity events with persistent encoder and decoder:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">import</span> <span class="pl-v">aecor.data.Folded.syntax.</span><span class="pl-v">_</span>
-<span class="pl-k">import</span> <span class="pl-v">cats.syntax.option.</span><span class="pl-v">_</span>
-
-<span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">SubscriptionEvent</span>
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">SubscriptionEvent</span>
 <span class="pl-k">object</span> <span class="pl-en">SubscriptionEvent</span> {
   <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">SubscriptionCreated</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>, <span class="pl-v">userId</span>: <span class="pl-k">String</span>, <span class="pl-v">productId</span>: <span class="pl-k">String</span>, <span class="pl-v">planId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionEvent</span>
   <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">SubscriptionPaused</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionEvent</span>
@@ -54,7 +39,8 @@ scalacOptions <span class="pl-k">+</span><span class="pl-k">=</span> <span class
   <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">persistentDecoder</span><span class="pl-k">:</span> <span class="pl-en">PersistentDecoder</span>[<span class="pl-en">SubscriptionEvent</span>] <span class="pl-k">=</span> `and <span class="pl-c1">this</span> one too`
 }</pre>
   </div> 
-  <p><code>Folder[F, E, S]</code> instance represents the ability to fold <code>E</code>s into <code>S</code>, with effect <code>F</code> on each step. Aecor runtime uses <code>Folded[A]</code> data type, with two possible states: <code>Next(a)</code> - says that a should be used as a state for next folding step <code>Impossible</code> - says that folding should be aborted (underlying runtime actor throws <code>IllegalStateException</code>)</p> 
+  <p>Then we define how this events affect aggregate state:</p> 
+  <p><code>Folder[F, E, S]</code> instance represents the ability to fold <code>E</code>s into <code>S</code>, with effect <code>F</code> on each step. Aecor runtime uses <code>Folded[A]</code> data type, with two possible states: <code>Next(a)</code> - says that <code>a</code> should be used as a state for next folding step <code>Impossible</code> - says that folding should be aborted (e.g. underlying runtime actor throws <code>IllegalStateException</code>)</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">SubscriptionStatus</span>
 <span class="pl-k">object</span> <span class="pl-en">SubscriptionStatus</span> {
@@ -63,80 +49,93 @@ scalacOptions <span class="pl-k">+</span><span class="pl-k">=</span> <span class
   <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">Cancelled</span> <span class="pl-k">extends</span> <span class="pl-e">SubscriptionStatus</span>
 }
 
-<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Subscription</span>(<span class="pl-v">status</span>: <span class="pl-en">SubscriptionStatus</span>)
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Subscription</span>(<span class="pl-v">status</span>: <span class="pl-en">SubscriptionStatus</span>) {
+  <span class="pl-k">def</span> <span class="pl-en">applyEvent</span>(<span class="pl-v">e</span>: <span class="pl-en">SubscriptionEvent</span>)<span class="pl-k">:</span> <span class="pl-en">Folded</span>[<span class="pl-en">Subscription</span>] <span class="pl-k">=</span> e <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionCreated</span> <span class="pl-k">=&gt;</span>
+      impossible
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionPaused</span> <span class="pl-k">=&gt;</span>
+      subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Paused</span>).next
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionResumed</span> <span class="pl-k">=&gt;</span>
+      subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Active</span>).next
+    <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionCancelled</span> <span class="pl-k">=&gt;</span>
+      subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Cancelled</span>).next
+  }
+}
 <span class="pl-k">object</span> <span class="pl-en">Subscription</span> {
   <span class="pl-k">import</span> <span class="pl-v">SubscriptionStatus.</span><span class="pl-v">_</span>
-
-  <span class="pl-k">implicit</span> <span class="pl-k">def</span> <span class="pl-en">folder</span><span class="pl-k">:</span> <span class="pl-en">Folder</span>[<span class="pl-en">Folded</span>, <span class="pl-en">SubscriptionEvent</span>, <span class="pl-en">Option</span>[<span class="pl-en">Subscription</span>]] <span class="pl-k">=</span>
-    <span class="pl-en">Folder</span>.instance(<span class="pl-en">Option</span>.empty[<span class="pl-en">Subscription</span>]) {
-      <span class="pl-k">case</span> <span class="pl-en">Some</span>(subscription) <span class="pl-k">=&gt;</span> {
-        <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionCreated</span> <span class="pl-k">=&gt;</span>
-          impossible
-        <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionPaused</span> <span class="pl-k">=&gt;</span>
-          subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Paused</span>).some.next
-        <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionResumed</span> <span class="pl-k">=&gt;</span>
-          subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Active</span>).some.next
-        <span class="pl-k">case</span> <span class="pl-v">e</span>: <span class="pl-en">SubscriptionCancelled</span> <span class="pl-k">=&gt;</span>
-          subscription.copy(status <span class="pl-k">=</span> <span class="pl-en">Cancelled</span>).some.next
-      }
-      <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> {
-        <span class="pl-k">case</span> <span class="pl-en">SubscriptionCreated</span>(subscriptionId, userId, productId, planId) <span class="pl-k">=&gt;</span>
-          <span class="pl-en">Subscription</span>(<span class="pl-en">Active</span>).some.next
-        <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
-          impossible
-      }
-    }
-}
-</pre>
+  <span class="pl-k">def</span> <span class="pl-en">init</span>(<span class="pl-v">e</span>: <span class="pl-en">SubscriptionEvent</span>)<span class="pl-k">:</span> <span class="pl-en">Folded</span>[<span class="pl-en">Subscription</span>] <span class="pl-k">=</span> e <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">SubscriptionCreated</span>(subscriptionId, userId, productId, planId) <span class="pl-k">=&gt;</span>
+      <span class="pl-en">Subscription</span>(<span class="pl-en">Active</span>).next
+    <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span> impossible
+  }
+  <span class="pl-k">def</span> <span class="pl-en">folder</span><span class="pl-k">:</span> <span class="pl-en">Folder</span>[<span class="pl-en">Folded</span>, <span class="pl-en">SubscriptionEvent</span>, <span class="pl-en">Option</span>[<span class="pl-en">Subscription</span>]] <span class="pl-k">=</span>
+    <span class="pl-en">Folder</span>.optionInstance(init)(_.applyEvent)
+}</pre>
   </div> 
-  <p>Now let's define a behavior that converts operation to its handler. A <code>Handler[State, Event, Reply]</code> is just a wrapper around <code>State =&gt; (Seq[Event], Reply)</code>, you can think of it as <code>Kleisli[(Seq[Event], ?), State, Reply]</code> i.e. a side-effecting function with a side effect being a sequence of events representing state change caused by operation.</p> 
+  <p>Now let's define a behavior that converts operation to its handler. A <code>Handler[F, State, Event, Reply]</code> is just a wrapper around <code>State =&gt; (Seq[Event], Reply)</code>, you can think of it as <code>Kleisli[(Seq[Event], ?), State, Reply]</code> i.e. a side-effecting function with a side effect being a sequence of events representing state change caused by operation.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">behavior</span> <span class="pl-k">=</span> <span class="pl-en">Lambda</span>[<span class="pl-en">SubscriptionOp</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Handler</span>[<span class="pl-en">Option</span>[<span class="pl-en">Subscription</span>], <span class="pl-en">SubscriptionEvent</span>, <span class="pl-k">?</span>]] {
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">SubscriptionOp</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">subscriptionId</span><span class="pl-k">:</span> <span class="pl-k">String</span>
+}
+<span class="pl-k">object</span> <span class="pl-en">SubscriptionOp</span> {
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CreateSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>, <span class="pl-v">userId</span>: <span class="pl-k">String</span>, <span class="pl-v">productId</span>: <span class="pl-k">String</span>, <span class="pl-v">planId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">PauseSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ResumeSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CancelSubscription</span>(<span class="pl-v">subscriptionId</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">SubscriptionOp</span>[<span class="pl-k">Unit</span>]
+}
+
+<span class="pl-k">def</span> <span class="pl-en">handler</span>[<span class="pl-en">F</span>[_]](<span class="pl-k">implicit</span> <span class="pl-en">F</span><span class="pl-k">:</span> <span class="pl-en">Applicative</span>[<span class="pl-en">F</span>]) <span class="pl-k">=</span> <span class="pl-en">Lambda</span>[<span class="pl-en">SubscriptionOp</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Handler</span>[<span class="pl-en">F</span>, <span class="pl-en">Option</span>[<span class="pl-en">Subscription</span>], <span class="pl-en">SubscriptionEvent</span>, <span class="pl-k">?</span>]] {
   <span class="pl-k">case</span> <span class="pl-en">CreateSubscription</span>(subscriptionId, userId, productId, planId) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">case</span> <span class="pl-en">Some</span>(subscription) <span class="pl-k">=&gt;</span>
       <span class="pl-c"><span class="pl-c">//</span> Do nothing reply with ()</span>
-      <span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
     <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span>
       <span class="pl-c"><span class="pl-c">//</span> Produce event and reply with ()</span>
-      <span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionCreated</span>(subscriptionId, userId, productId, planId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionCreated</span>(subscriptionId, userId, productId, planId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
   }
   <span class="pl-k">case</span> <span class="pl-en">PauseSubscription</span>(subscriptionId) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">case</span> <span class="pl-en">Some</span>(subscription) <span class="pl-k">if</span> subscription.status <span class="pl-k">==</span> <span class="pl-en">Active</span> <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionPaused</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionPaused</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
     <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
   }
   <span class="pl-k">case</span> <span class="pl-en">ResumeSubscription</span>(subscriptionId) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">case</span> <span class="pl-en">Some</span>(subscription) <span class="pl-k">if</span> subscription.status <span class="pl-k">==</span> <span class="pl-en">Paused</span> <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionResumed</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionResumed</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
     <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
   }
   <span class="pl-k">case</span> <span class="pl-en">CancelSubscription</span>(subscriptionId) <span class="pl-k">=&gt;</span> {
     <span class="pl-k">case</span> <span class="pl-en">Some</span>(subscription) <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionCancelled</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>(<span class="pl-en">SubscriptionCancelled</span>(subscriptionId)) <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
     <span class="pl-k">case</span> _ <span class="pl-k">=&gt;</span>
-      <span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ()
+      <span class="pl-en">F</span>.pure(<span class="pl-en">Seq</span>.empty <span class="pl-k">-</span><span class="pl-k">&gt;</span> ())
   }
 }</pre>
   </div> 
-  <p>Then you define a correlation function, entity name and a value provided by correlation function form unique primary key for aggregate. It should not be changed in the future, at least without prior event migration.</p> 
+  <p>Then you define a correlation function, entity name and a value provided by correlation function form unique primary key for aggregate. It should not be changed between releases, at least without prior event migration.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">def</span> <span class="pl-en">correlation</span><span class="pl-k">:</span> <span class="pl-en">Correlation</span>[<span class="pl-en">SubscriptionOp</span>] <span class="pl-k">=</span> {
-  <span class="pl-k">def</span> <span class="pl-en">mk</span>[<span class="pl-en">A</span>](<span class="pl-v">op</span>: <span class="pl-en">SubscriptionOp</span>[<span class="pl-en">A</span>])<span class="pl-k">:</span> <span class="pl-en">CorrelationF</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> op.subscriptionId
-  <span class="pl-en">FunctionK</span>.lift(mk _)
-}</pre>
+   <pre><span class="pl-k">def</span> <span class="pl-en">correlation</span><span class="pl-k">:</span> <span class="pl-en">Correlation</span>[<span class="pl-en">SubscriptionOp</span>] <span class="pl-k">=</span> _.subscriptionId</pre>
   </div> 
   <p>After that we are ready to launch.</p> 
   <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
+   <pre><span class="pl-k">import</span> <span class="pl-v">monix.cats.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">monix.eval.</span><span class="pl-v">Task</span>
+<span class="pl-k">import</span> <span class="pl-v">aecor.effect.monix.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">aecor.runtime.akkapersistence.</span><span class="pl-v">AkkaPersistenceRuntime</span>
 
-<span class="pl-k">val</span> <span class="pl-en">subscriptions</span><span class="pl-k">:</span> <span class="pl-en">SubscriptionOp</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Future</span> <span class="pl-k">=</span>
-  <span class="pl-en">AkkaRuntime</span>(system).start(
-    entityName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Subscription<span class="pl-pds">"</span></span>,
-    behavior,
+<span class="pl-k">val</span> <span class="pl-en">system</span> <span class="pl-k">=</span> <span class="pl-en">ActorSystem</span>(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">val</span> <span class="pl-en">subscriptions</span><span class="pl-k">:</span> <span class="pl-en">SubscriptionOp</span> <span class="pl-k">~</span><span class="pl-k">&gt;</span> <span class="pl-en">Task</span> <span class="pl-k">=</span>
+  <span class="pl-en">AkkaPersistenceRuntime</span>(
+    system,
+    <span class="pl-s"><span class="pl-pds">"</span>Subscription<span class="pl-pds">"</span></span>,
     correlation,
-    <span class="pl-en">Tagging</span>(<span class="pl-en">EventTag</span>(<span class="pl-s"><span class="pl-pds">"</span>Payment<span class="pl-pds">"</span></span>)
+    <span class="pl-en">EventsourcedBehavior</span>(
+      handler,
+      <span class="pl-en">Subscription</span>.folder
+    ),
+    <span class="pl-en">Tagging</span>.const[<span class="pl-en">SubscriptionEvent</span>](<span class="pl-en">EventTag</span>(<span class="pl-s"><span class="pl-pds">"</span>Payment<span class="pl-pds">"</span></span>))
   )</pre>
   </div> 
  </article>

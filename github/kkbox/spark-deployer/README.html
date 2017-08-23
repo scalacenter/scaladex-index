@@ -1,0 +1,236 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-spark-deployer" class="anchor" href="https://github.com/kkbox/spark-deployer#spark-deployer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark-deployer</h1> 
+  <p><a href="https://gitter.im/KKBOX/spark-deployer?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/KKBOX/spark-deployer" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <ul> 
+   <li>A Scala tool which helps deploying <a href="http://spark.apache.org/" target="_blank">Apache Spark</a> stand-alone cluster on <a href="http://aws.amazon.com/ec2/" target="_blank">EC2</a> and submitting job.</li> 
+   <li>Currently supports Spark 2.0.0+.</li> 
+   <li>There are two modes when using spark-deployer: SBT plugin mode and embedded mode.</li> 
+  </ul> 
+  <h2><a id="user-content-sbt-plugin-mode" class="anchor" href="https://github.com/kkbox/spark-deployer#sbt-plugin-mode" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SBT plugin mode</h2> 
+  <p>Here are the basic steps to run a Spark job (all the sbt commands support TAB-completion):</p> 
+  <ol> 
+   <li>Set the environment variables <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>.</li> 
+   <li>Prepare a project with structure like below:</li> 
+  </ol> 
+  <pre><code>project-root
+├── build.sbt
+├── project
+│&nbsp;&nbsp; └── plugins.sbt
+└── src
+    └── main
+        └── scala
+            └── mypackage
+                └── Main.scala
+</code></pre> 
+  <ol start="3"> 
+   <li>Add one line in <code>project/plugins.sbt</code>:</li> 
+  </ol> 
+  <pre><code>addSbtPlugin("net.pishen" % "spark-deployer-sbt" % "3.0.2")
+</code></pre> 
+  <ol start="4"> 
+   <li>Write your Spark project's <code>build.sbt</code> (Here we give a simple example):</li> 
+  </ol> 
+  <pre><code>name := "my-project-name"
+ 
+scalaVersion := "2.11.8"
+ 
+libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % "2.0.0" % "provided"
+)
+</code></pre> 
+  <ol start="5"> 
+   <li>Write your job's algorithm in <code>src/main/scala/mypackage/Main.scala</code>:</li> 
+  </ol> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">package</span> <span class="pl-en">mypackage</span>
+ 
+<span class="pl-k">import</span> <span class="pl-v">org.apache.spark.</span><span class="pl-v">_</span>
+ 
+<span class="pl-k">object</span> <span class="pl-en">Main</span> {
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+    <span class="pl-c"><span class="pl-c">//</span>setup spark</span>
+    <span class="pl-k">val</span> <span class="pl-en">sc</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkContext</span>(<span class="pl-k">new</span> <span class="pl-en">SparkConf</span>())
+    <span class="pl-c"><span class="pl-c">//</span>your algorithm</span>
+    <span class="pl-k">val</span> <span class="pl-en">n</span> <span class="pl-k">=</span> <span class="pl-c1">10000000</span>
+    <span class="pl-k">val</span> <span class="pl-en">count</span> <span class="pl-k">=</span> sc.parallelize(<span class="pl-c1">1</span> to n).map { i <span class="pl-k">=&gt;</span>
+      <span class="pl-k">val</span> <span class="pl-en">x</span> <span class="pl-k">=</span> scala.math.random
+      <span class="pl-k">val</span> <span class="pl-en">y</span> <span class="pl-k">=</span> scala.math.random
+      <span class="pl-k">if</span> (x <span class="pl-k">*</span> x <span class="pl-k">+</span> y <span class="pl-k">*</span> y <span class="pl-k">&lt;</span> <span class="pl-c1">1</span>) <span class="pl-c1">1</span> <span class="pl-k">else</span> <span class="pl-c1">0</span>
+    }.reduce(_ <span class="pl-k">+</span> _)
+    println(<span class="pl-s"><span class="pl-pds">"</span>Pi is roughly <span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-c1">4.0</span> <span class="pl-k">*</span> count <span class="pl-k">/</span> n)
+  }
+}</pre>
+  </div> 
+  <ol start="6"> 
+   <li>Enter <code>sbt</code>, and build a config by:</li> 
+  </ol> 
+  <pre><code>&gt; sparkBuildConfig
+</code></pre> 
+  <p>(Most settings have default values, just hit Enter to go through it.)</p> 
+  <ol start="7"> 
+   <li>Create a cluster with 1 master and 2 workers by:</li> 
+  </ol> 
+  <pre><code>&gt; sparkCreateCluster 2
+</code></pre> 
+  <ol start="8"> 
+   <li>See your cluster's status by:</li> 
+  </ol> 
+  <pre><code>&gt; sparkShowMachines
+</code></pre> 
+  <ol start="9"> 
+   <li>Submit your job by:</li> 
+  </ol> 
+  <pre><code>&gt; sparkSubmit
+</code></pre> 
+  <ol start="10"> 
+   <li>When your job is done, destroy your cluster with</li> 
+  </ol> 
+  <pre><code>&gt; sparkDestroyCluster
+</code></pre> 
+  <h3><a id="user-content-advanced-functions" class="anchor" href="https://github.com/kkbox/spark-deployer#advanced-functions" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Advanced functions</h3> 
+  <ul> 
+   <li> <p>To build config with different name or build a config based on old one:</p> <pre><code>&gt; sparkBuildConfig &lt;new-config-name&gt;
+&gt; sparkBuildConfig &lt;new-config-name&gt; from &lt;old-config-name&gt;
+</code></pre> <p>All the configs are stored as <code>.deployer.json</code> files in the <code>conf/</code> folder. You can modify it if you know what you're doing.</p> </li> 
+   <li> <p>To change the current config:</p> <pre><code>&gt; sparkChangeConfig &lt;config-name&gt;
+</code></pre> </li> 
+   <li> <p>To submit a job with arguments or with a main class:</p> <pre><code>&gt; sparkSubmit &lt;args&gt;
+&gt; sparkSubmitMain mypackage.Main &lt;args&gt;
+</code></pre> </li> 
+   <li> <p>To add or remove worker machines dynamically:</p> <pre><code>&gt; sparkAddWorkers &lt;num-of-workers&gt;
+&gt; sparkRemoveWorkers &lt;num-of-workers&gt;
+</code></pre> </li> 
+  </ul> 
+  <h2><a id="user-content-embedded-mode" class="anchor" href="https://github.com/kkbox/spark-deployer#embedded-mode" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Embedded mode</h2> 
+  <p>If you don't want to use sbt, or if you would like to trigger the cluster creation from within your Scala application, you can include the library of spark-deployer directly:</p> 
+  <pre><code>libraryDependencies += "net.pishen" %% "spark-deployer-core" % "3.0.2"
+</code></pre> 
+  <p>Then, from your Scala code, you can do something like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">sparkdeployer.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> build a ClusterConf</span>
+<span class="pl-k">val</span> <span class="pl-en">clusterConf</span> <span class="pl-k">=</span> <span class="pl-en">ClusterConf</span>.build()
+
+<span class="pl-c"><span class="pl-c">//</span> save and load ClusterConf</span>
+clusterConf.save(<span class="pl-s"><span class="pl-pds">"</span>path/to/conf.deployer.json<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">clusterConfReloaded</span> <span class="pl-k">=</span> <span class="pl-en">ClusterConf</span>.load(<span class="pl-s"><span class="pl-pds">"</span>path/to/conf.deployer.json<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"><span class="pl-c">//</span> create cluster and submit job</span>
+<span class="pl-k">val</span> <span class="pl-en">sparkDeployer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkDeployer</span>()(clusterConf)
+
+<span class="pl-k">val</span> <span class="pl-en">workers</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>
+sparkDeployer.createCluster(workers)
+
+<span class="pl-k">val</span> <span class="pl-en">jar</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">File</span>(<span class="pl-s"><span class="pl-pds">"</span>path/to/job.jar<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">mainClass</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>mypackage.Main<span class="pl-pds">"</span></span>
+<span class="pl-k">val</span> <span class="pl-en">args</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>arg0<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>arg1<span class="pl-pds">"</span></span>)
+sparkDeployer.submit(jar, mainClass, args)
+
+sparkDeployer.destroyCluster()</pre>
+  </div> 
+  <ul> 
+   <li>Environment variables <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> should also be set.</li> 
+   <li>You may prepare the <code>job.jar</code> by sbt-assembly from other sbt project with Spark.</li> 
+   <li>For other available functions, check <code>SparkDeployer.scala</code> in our source code.</li> 
+  </ul> 
+  <p>spark-deployer uses slf4j, remember to add your own backend to see the log. For example, to print the log on screen, add</p> 
+  <pre><code>libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.14"
+</code></pre> 
+  <h2><a id="user-content-faq" class="anchor" href="https://github.com/kkbox/spark-deployer#faq" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FAQ</h2> 
+  <h3><a id="user-content-could-i-use-other-ami" class="anchor" href="https://github.com/kkbox/spark-deployer#could-i-use-other-ami" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Could I use other ami?</h3> 
+  <p>Yes, just specify the ami id when running <code>sparkBuildConfig</code>. The image should be HVM EBS-Backed with Java 7+ installed. You can also run some commands before Spark start on each machine by editing the <code>preStartCommands</code> in json config. For example:</p> 
+  <pre><code>"preStartCommands": [
+  "sudo bash -c \"echo -e 'LC_ALL=en_US.UTF-8\\nLANG=en_US.UTF-8' &gt;&gt; /etc/environment\"",
+  "sudo apt-get -qq install openjdk-8-jre",
+  "cd spark/conf/ &amp;&amp; cp log4j.properties.template log4j.properties &amp;&amp; echo 'log4j.rootCategory=WARN, console' &gt;&gt; log4j.properties"
+]
+</code></pre> 
+  <p>When using custom ami, the <code>root device</code> should be your root volume's name (<code>/dev/sda1</code> for Ubuntu) that can be enlarged by <code>disk size</code> settings in master and workers.</p> 
+  <h3><a id="user-content-could-i-use-custom-spark-tarball" class="anchor" href="https://github.com/kkbox/spark-deployer#could-i-use-custom-spark-tarball" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Could I use custom Spark tarball?</h3> 
+  <p>Yes, just change the tgz url when running <code>sparkBuildConfig</code>, the tgz will be extracted as a <code>spark/</code> folder in each machine's home folder.</p> 
+  <h3><a id="user-content-what-rules-should-i-set-on-my-security-group" class="anchor" href="https://github.com/kkbox/spark-deployer#what-rules-should-i-set-on-my-security-group" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What rules should I set on my security group?</h3> 
+  <p>Assuming your security group id is <code>sg-abcde123</code>, the basic settings is:</p> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>Type</th> 
+     <th>Protocol</th> 
+     <th>Port Range</th> 
+     <th>Source</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td>All traffic</td> 
+     <td>All</td> 
+     <td>All</td> 
+     <td><code>sg-abcde123</code></td> 
+    </tr> 
+    <tr> 
+     <td>SSH</td> 
+     <td>TCP</td> 
+     <td>22</td> 
+     <td><code>&lt;your-allowed-ip&gt;</code></td> 
+    </tr> 
+    <tr> 
+     <td>Custom TCP Rule</td> 
+     <td>TCP</td> 
+     <td>8080-8081</td> 
+     <td><code>&lt;your-allowed-ip&gt;</code></td> 
+    </tr> 
+    <tr> 
+     <td>Custom TCP Rule</td> 
+     <td>TCP</td> 
+     <td>4040</td> 
+     <td><code>&lt;your-allowed-ip&gt;</code></td> 
+    </tr>
+   </tbody>
+  </table> 
+  <h3><a id="user-content-how-do-i-upgrade-the-config-to-new-version-of-spark-deployer" class="anchor" href="https://github.com/kkbox/spark-deployer#how-do-i-upgrade-the-config-to-new-version-of-spark-deployer" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How do I upgrade the config to new version of spark-deployer?</h3> 
+  <p>Change to the config you want to upgrade, and run <code>sparkUpgradeConfig</code> to build a new config based on settings in old one. If this doesn't work or you don't mind rebuilding one from scratch, it's recommended to directly create a new config by <code>sparkBuildConfig</code>.</p> 
+  <h3><a id="user-content-could-i-change-the-directory-where-configurations-are-saved" class="anchor" href="https://github.com/kkbox/spark-deployer#could-i-change-the-directory-where-configurations-are-saved" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Could I change the directory where configurations are saved?</h3> 
+  <p>You can change it by add the following line to your <code>build.sbt</code>:</p> 
+  <pre><code>sparkConfigDir := "path/to/my-config-dir"
+</code></pre> 
+  <h2><a id="user-content-how-to-contribute" class="anchor" href="https://github.com/kkbox/spark-deployer#how-to-contribute" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How to contribute</h2> 
+  <ul> 
+   <li>Please report issue or ask on gitter if you meet any problem.</li> 
+   <li>Pull requests are welcome.</li> 
+  </ul> 
+ </article>
+</div>

@@ -1,0 +1,59 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/tresata/spark-wordtophrase" target="_blank"><img src="https://camo.githubusercontent.com/f1846e6d7c046c8cc065194c354dffb913005c71/68747470733a2f2f7472617669732d63692e6f72672f747265736174612f737061726b2d776f7264746f7068726173652e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/tresata/spark-wordtophrase.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-spark-wordtophrase" class="anchor" href="https://github.com/tresata/spark-wordtophrase#spark-wordtophrase" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>spark-wordtophrase</h1> 
+  <p>This is an RDD based implementation of word2phrase algorithm explained in "Section 4. Learning Phrases" of the paper <a href="http://arxiv.org/pdf/1310.4546.pdf" target="_blank">Distributed Representations of Words and Phrases and their Compositionality</a></p> 
+  <p>There is already a Spark based <a href="https://github.com/s4weng/word2phrase" target="_blank">implementation</a>, but it did not fit our needs.</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/tresata/spark-wordtophrase#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Say you have an RDD[String] of different sentences from the Game of Thrones books that contain the word 'winter', and you are interested in finding common phrases present in the text.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">SparkSuite.</span>{ <span class="pl-v">sc</span>, <span class="pl-v">sqlc</span> }
+
+<span class="pl-c"><span class="pl-c">//</span> Define then CountMinSketch and scoring function parameters</span>
+<span class="pl-k">val</span> <span class="pl-en">cmsParams</span> <span class="pl-k">=</span> <span class="pl-en">CMSParams</span>(epsilon<span class="pl-k">=</span> <span class="pl-c1">1E-3</span>, delta <span class="pl-k">=</span> <span class="pl-c1">1E-10</span>, seed <span class="pl-k">=</span> <span class="pl-c1">1</span>)
+<span class="pl-k">val</span> <span class="pl-en">scoreParams</span> <span class="pl-k">=</span> <span class="pl-en">ScoreParams</span>(delta <span class="pl-k">=</span> <span class="pl-c1">1</span>, threshold <span class="pl-k">=</span> <span class="pl-c1">2</span>)
+
+<span class="pl-c"><span class="pl-c">//</span> Definte how you want to tokenize the text</span>
+<span class="pl-k">def</span> <span class="pl-en">token</span><span class="pl-k">:</span> <span class="pl-en">Tokenize</span> <span class="pl-k">=</span> _.toLowerCase.replaceAll(<span class="pl-s"><span class="pl-pds">"</span>'<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>).replaceAll(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>W+<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span>).trim.split(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>s+<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">rdd</span> <span class="pl-k">=</span> sc.makeRDD(<span class="pl-en">List</span>((<span class="pl-s"><span class="pl-pds">"</span>Winter is coming, and when the Long Night falls, only the Night's Watch will stand between the realm and the darkness that sweeps from the north.<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>What will this place be like in the winter<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>And winter is coming<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>He could feel the eyes of the dead. They were all listening, he knew. And winter was coming.<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>'The winters are hard,' Ned admitted. 'But the Starks will endure. We always have.'<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>Because winter is coming<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>'Winter is coming,' Arya whispered.<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>Fear is for the winter, my little lord, when the snows fall a hundred feet deep and the ice wind comes howling out of the north.<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>'You are a young man, Tyrion,' Mormont said. 'How many winters have you seen?'<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>He could almost hear him, and their lord father as well. Winter is coming, and you are almost a man grown, Bran. You have a duty.<span class="pl-pds">"</span></span>),
+                          (<span class="pl-s"><span class="pl-pds">"</span>Promise me, Ned, his sister had whispered from her bed of blood. She had loved the scent of winter roses.<span class="pl-pds">"</span></span>)))
+
+<span class="pl-en">WordToPhrase</span>(rdd, cmsParams, scoreParams, token, <span class="pl-c1">2</span>, <span class="pl-en">StorageLevel</span>.<span class="pl-en">MEMORY_ONLY</span>)</pre>
+  </div> 
+  <p>This can also be applied to a specific column of a Spark dataframe</p> 
+  <pre><code>import sqlc.implicits._
+val phrases = WordToPhrase(rdd.toDF("words"), "words", cmsParams, scoreParams, token)
+
+WordToPhrase(rdd.toDF("words"), "words", cmsParams, scoreParams, token, 2, StorageLevel.MEMORY_ONLY).collect().foreach(println)
+</code></pre> 
+  <p>The printed output would look something like this:</p> 
+  <pre><code>[winter_is_coming and when the long night falls only the nights watch will stand between the realm and the darkness that sweeps from the north]
+[what will this place be like in the winter]
+[and winter_is_coming]
+[he could feel the eyes of the dead they were all listening he knew and winter was coming]
+[the winters are hard ned admitted but the starks will endure we always have]
+[because winter_is_coming]
+[winter_is_coming arya whispered]
+[fear is for the winter my little lord when the snows fall a hundred feet deep and the ice wind comes howling out of the north]
+[you are a young man tyrion mormont said how many winters have you seen]
+[he could almost hear him and their lord father as well winter_is_coming and you are almost a man grown bran you have a duty]
+[promise me ned his sister had whispered from her bed of blood she had loved the scent of winter roses]
+</code></pre> 
+  <p>Stay warm, Team @Tresata</p> 
+ </article>
+</div>

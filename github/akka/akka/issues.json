@@ -4,30 +4,6 @@
       "issues":{
         "nodes":[
           {
-            "number":18230,
-            "title":"EventAdapter can fail more nicely if match error occurs",
-            "bodyText":"As witnessed by gitter chat @ August 17, 2015 7:08 AM users will forget to properly handle case _ =>, we can catch matche errors there and at least include a little bit of information on which message it failed.",
-            "url":"https://github.com/akka/akka/issues/18230"
-          },
-          {
-            "number":18383,
-            "title":"Scheduled Source with 0 initialDelay is using interval as initialDelay",
-            "bodyText":"The test app below with initialDelay = 0.nanos prints this:\nroot 2015-09-01T16:28:12.209Z BEFORE\nroot 2015-09-01T16:28:17.317Z TICK\n\n-> applied initialDelay is ~5 seconds which is clearly unexpected\nnow change to initialDelay = 1.nanos and you get\nroot 2015-09-01T16:28:38.760Z BEFORE\nroot 2015-09-01T16:28:38.889Z TICK\n\n-> initialDelay is correctly applied\nimport java.time.Instant\n\nimport akka.actor.ActorSystem\nimport akka.stream.ActorMaterializer\nimport akka.stream.scaladsl.{Sink, Source}\n\nimport scala.concurrent.duration._\n\nobject BugInitialDelay extends App{\n\n  import scala.concurrent.ExecutionContext.Implicits.global\n\n  implicit val system = ActorSystem(\"foo\")\n  implicit val materializer = ActorMaterializer()\n\n  println(Instant.now() + \" BEFORE\")\n  Source(initialDelay = 0.nanos, interval = 5.seconds, tick = ()).take(1).map{ tick =>\n    println(Instant.now() + \" TICK\")\n  }.runWith(Sink.ignore).onComplete { _ =>\n    system.shutdown()\n  }\n}",
-            "url":"https://github.com/akka/akka/issues/18383"
-          },
-          {
-            "number":18444,
-            "title":"Investigate Aalto async (pushpull) XML parser",
-            "bodyText":"Allows streaming, async XML parsing. Not anactive project though.\nhttps://github.com/FasterXML/aalto-xml",
-            "url":"https://github.com/akka/akka/issues/18444"
-          },
-          {
-            "number":18515,
-            "title":"Consider using Resume directive on DelimiterFraming to drop oversized lines",
-            "bodyText":"I.e. if supervision with Resume is used, just start dropping incoming bytes from the oversized line until new delimiter is found.",
-            "url":"https://github.com/akka/akka/issues/18515"
-          },
-          {
             "number":18590,
             "title":"Allow wildcards in DistributedPubSubMediator",
             "bodyText":"Hi,\nNot sure if such proposal will find support here, but it would be nice to have (at least basic) wildcard support in DistributedPubSubMediator, similar to what is provided by actorSelection. Consider following simple modification:\ndef publish(path: String, msg: Any, allButSelf: Boolean = false): Unit = {\n  val pattern = Helpers.makePattern(path)\n  for {\n    (address, bucket) <- registry\n    if !(allButSelf && address == selfAddress) // if we should skip sender() node and current address == self address => skip\n    valueHolder <- bucket.content.filterKeys(k => pattern.matcher(k).matches).values\n    ref <- valueHolder.ref\n  } ref forward msg\n}\nThis would allow to do something like:\nmediator ! SendToAll(\"/user/parent/foo:bar:*\", \"Hello World\", false)\n\nI'm new to Akka/Scala and not sure if I can provide a production-quality pull request, but at least I'm showing the basic idea and a straightforward implementation. I hope similar functionality could be included in Akka, to make it even more powerful ☺️",
@@ -424,6 +400,12 @@
             "url":"https://github.com/akka/akka/issues/22457"
           },
           {
+            "number":22566,
+            "title":"[Documentation] Akka Cluster/Remote with SSL ",
+            "bodyText":"I was trying to use ssl in an akka cluster. To do that, I follow the doc...  http://doc.akka.io/docs/akka/2.4/scala/remoting.html#Configuring_SSL_TLS_for_Akka_Remoting\nIMHO, it could be a good idea to include that its necessary to specify the hostname and port of the ssl connection actor. The problem is, if you don't specify those parammeters, the cluster node will be started at 127.0.0.1 always, and it's is possible that it can't discover itself due to the seed nodes maybe won't be at 127.0.0.1.\nExample:\nakka {\nremote {\nnetty.ssl.security {\nhostname = myHosy\nport = 12345\nkey-store = \"/example/path/to/mykeystore.jks\"\ntrust-store = \"/example/path/to/mytruststore.jks\"\nkey-store-password = \"changeme\"\nkey-password = \"changeme\"\ntrust-store-password = \"changeme\"\nprotocol = \"TLSv1.2\"\nenabled-algorithms = [TLS_DHE_RSA_WITH_AES_128_GCM_SHA256]\nrandom-number-generator = \"AES128CounterSecureRNG\"\n}\n}\n}",
+            "url":"https://github.com/akka/akka/issues/22566"
+          },
+          {
             "number":22575,
             "title":"Improve Scheduler docs a bit",
             "bodyText":"We should be more helpful in the docs comment as Endre pointed out here: #22334 (comment)",
@@ -514,12 +496,6 @@
             "url":"https://github.com/akka/akka/issues/23111"
           },
           {
-            "number":23215,
-            "title":"avoid match error for null message in DistributedPubSubMediator",
-            "bodyText":"Sending null message can't work, but we should not throw match error.\n[info] [ERROR] [06/14/2017 21:55:18.433] [ClusterSystem-akka.actor.default-dispatcher-3] [akka://ClusterSystem/system/distributedPubSubMediator] null\n[info] scala.MatchError: null\n[info]  at akka.cluster.pubsub.DistributedPubSubMediator$Internal$$anonfun$wrapIfNeeded$1.apply(DistributedPubSubMediator.scala:400)\n[info]  at akka.cluster.pubsub.DistributedPubSubMediator$$anonfun$receive$1.applyOrElse(DistributedPubSubMediator.scala:550)\n[info]  at akka.actor.Actor$class.aroundReceive(Actor.scala:497)\n[info]  at akka.cluster.pubsub.DistributedPubSubMediator.aroundReceive(DistributedPubSubMediator.scala:479)\n[info]  at akka.actor.ActorCell.receiveMessage(ActorCell.scala:526)\n[info]  at akka.actor.ActorCell.invoke(ActorCell.scala:495)\n[info]  at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:257)\n[info]  at akka.dispatch.Mailbox.run(Mailbox.scala:224)\n[info]  at akka.dispatch.Mailbox.exec(Mailbox.scala:234)\n[info]  at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)\n[info]  at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)\n[info]  at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)\n[info]  at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)",
-            "url":"https://github.com/akka/akka/issues/23215"
-          },
-          {
             "number":23250,
             "title":"Using serializer [akka.serialization.JavaSerializer] for message [akka.cluster.sharding.ShardRegion$ShardRegionStats]",
             "bodyText":"Hi,\nApparently there is no serializer for akka.cluster.sharding.ShardRegion$ShardRegionStats.\nThis would be nice to have one as the JavaSerializer could potentially not perform well.\nLooking at the reference.conf it includes only one serializer. This serializer doesn't make any reference to ShardRegionStats.\nThe type only defines one map[string, int] so serialization for this  type should be straightforward enough to implement.\nLooking forward to hear your opinion on it.\nRegards,\nLeo",
@@ -602,6 +578,30 @@
             "title":"[Docs] Streams \"Working with streaming IO\" has broken snippet",
             "bodyText":"The page uses inline language switch for multi-line code snippets, rendering verbatim the @scala[... directives.\nInstead of using:\n@scala[\n``` ...\n    ...```\n]@java[\n```...\n   ...```\n]\n\nOne could use:\n@@@ div { .group-scala }\n......\n@@@\n@@@ div { .group-java }\n....\n@@@\n\nSee screen shot:",
             "url":"https://github.com/akka/akka/issues/23513"
+          },
+          {
+            "number":23516,
+            "title":"[Docs] HowTo Common Patterns for Scala contains Java code",
+            "bodyText":"The HowTo: Common Patterns page for Scala contains Java code examples.\nAdditionally, there are some dangling @@@",
+            "url":"https://github.com/akka/akka/issues/23516"
+          },
+          {
+            "number":23517,
+            "title":"[Docs] Actors page has broken link",
+            "bodyText":"http://doc.akka.io/docs/akka/current/scala/actors.html#identifying-actors-via-actor-selection\nhas a broken link named akka.actor.ActorNotFound  pointing to http://doc.akka.io/docs/akka/current/scala/akka.actor.ActorNotFound.html",
+            "url":"https://github.com/akka/akka/issues/23517"
+          },
+          {
+            "number":23543,
+            "title":"Dns resolution throws UnknownHostException with only the hostname as message",
+            "bodyText":"It should provide more info for the case where the exception name is not printed along with the message as reported in akka/akka-http#1364. Right now error messages from Akka IO / Akka Stream read like this:\nakka.stream.StreamTcpException: Tcp command [Connect(potato:80,None,List(),Some(10 seconds),true)] failed because of potato\n\n\n  \n    \n      akka/akka-actor/src/main/scala/akka/io/Dns.scala\n    \n    \n        Lines 31 to 35\n      in\n      c2ff4f7\n    \n    \n    \n    \n\n        \n          \n               @throws[UnknownHostException] \n        \n\n        \n          \n               def addr: InetAddress = addrOption match { \n        \n\n        \n          \n                 case Some(ipAddress) ⇒ ipAddress \n        \n\n        \n          \n                 case None            ⇒ throw new UnknownHostException(name) \n        \n\n        \n          \n               }",
+            "url":"https://github.com/akka/akka/issues/23543"
+          },
+          {
+            "number":23553,
+            "title":"DeadLetterSuppression for Replicator.UpdateSuccess in distributed data",
+            "bodyText":"In my code, I do a Replicate.Update directly before I stop the actor doing the update. This means I tend to get the Replicator.UpdateSuccess as a dead letter.\nIs Replicator.UpdateSuccess a good candidate for DeadLetterSuppression? If people agree with this, I can make the pull request.",
+            "url":"https://github.com/akka/akka/issues/23553"
           }
         ]
       }

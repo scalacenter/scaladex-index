@@ -20,13 +20,13 @@
     </svg></a>Usage</h2> 
   <p>BeanPurée is available for Scala 2.10, 2.11 and 2.12. Currently there is no release version. Adding in <code>sbt</code>:</p> 
   <div class="highlight highlight-source-scala">
-   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.limansky<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>beanpuree<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.limansky<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>beanpuree<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>If you'd like to use development version:</p> 
   <div class="highlight highlight-source-scala">
    <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.sonatypeRepo(<span class="pl-s"><span class="pl-pds">"</span>snapshots<span class="pl-pds">"</span></span>)
 
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.limansky<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>beanpuree<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.2-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>me.limansky<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>beanpuree<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3-SNAPSHOT<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>The core of BeanPurée is <code>BeanGeneric</code> class, which have a same role with shapeless <code>Generic</code>, but for JavaBeans. Assume we have class:</p> 
   <div class="highlight highlight-source-java">
@@ -60,7 +60,24 @@ scala<span class="pl-k">&gt;</span> gen.to(foo)
 res2<span class="pl-k">:</span> gen.<span class="pl-en">Repr</span> <span class="pl-k">=</span> <span class="pl-c1">5</span> <span class="pl-k">::</span> changed <span class="pl-k">::</span> <span class="pl-en">HNil</span></pre>
   </div> 
   <p>Another important thing is <code>LabelledBeanGeneric</code>, which is a <code>LabelledGeneric</code> adopted for the beans. It's important to note, that it uses "field names" generated from the getters names. E.g. <code>getStartTime</code> become <code>startTime</code> and <code>isEven</code> become <code>even</code>.</p> 
-  <p>The next thing is a <code>BeanConverter</code> class. It uses <code>LabelledBeanGeneric</code> and <code>LabelledGeneric</code> to convert between beans and case classes.</p> 
+  <p><code>JavaTypeMapper[J, S]</code> provides converters for different Java and Scala classes. There are converter instances from Java numeric classes to corresponding Scala ones. It also can convert nullable value to <code>Option</code>. You can convert <code>HList</code>s of convertable values as well.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">type</span> <span class="pl-en">JavaType</span> <span class="pl-k">=</span> <span class="pl-en">Integer</span> <span class="pl-k">::</span> <span class="pl-k">String</span> <span class="pl-k">::</span> java.lang.<span class="pl-k">Long</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>
+defined <span class="pl-k">type</span> <span class="pl-en">alias</span> <span class="pl-en">JavaType</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">type</span> <span class="pl-en">ScalaType</span> <span class="pl-k">=</span> <span class="pl-k">Int</span> <span class="pl-k">::</span> <span class="pl-k">String</span> <span class="pl-k">::</span> <span class="pl-en">Option</span>[<span class="pl-k">Long</span>] <span class="pl-k">::</span> <span class="pl-en">HNil</span>
+defined <span class="pl-k">type</span> <span class="pl-en">alias</span> <span class="pl-en">ScalaType</span>
+
+scala<span class="pl-k">&gt;</span> <span class="pl-k">val</span> <span class="pl-en">m</span> <span class="pl-k">=</span> <span class="pl-en">JavaTypeMapper</span>[<span class="pl-en">JavaType</span>, <span class="pl-en">ScalaType</span>]
+m<span class="pl-k">:</span> me.limansky.beanpuree.<span class="pl-en">JavaTypeMapper</span>[<span class="pl-en">JavaType</span>,<span class="pl-en">ScalaType</span>] <span class="pl-k">=</span> me.limansky.beanpuree.<span class="pl-en">JavaTypeMapper</span>$$anon$<span class="pl-c1">1</span><span class="pl-k">@</span>41bbc4c4
+
+scala<span class="pl-k">&gt;</span> m.javaToScala(<span class="pl-c1">6</span> <span class="pl-k">::</span> <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span> <span class="pl-k">::</span> <span class="pl-c1">null</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>)
+res0<span class="pl-k">:</span> <span class="pl-en">ScalaType</span> <span class="pl-k">=</span> <span class="pl-c1">6</span> <span class="pl-k">::</span> test <span class="pl-k">::</span> <span class="pl-c1">None</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span>
+
+scala<span class="pl-k">&gt;</span> m.scalaToJava(<span class="pl-c1">42</span> <span class="pl-k">::</span> <span class="pl-c1">null</span> <span class="pl-k">::</span> <span class="pl-en">Some</span>(<span class="pl-c1">66l</span>) <span class="pl-k">::</span> <span class="pl-en">HNil</span>)
+res1<span class="pl-k">:</span> <span class="pl-en">JavaType</span> <span class="pl-k">=</span> <span class="pl-c1">42</span> <span class="pl-k">::</span> <span class="pl-c1">null</span> <span class="pl-k">::</span> <span class="pl-c1">66</span> <span class="pl-k">::</span> <span class="pl-en">HNil</span></pre>
+  </div> 
+  <p>The next thing is a <code>BeanConverter</code> and <code>StrictBeanConverter</code> classes. They use <code>LabelledBeanGeneric</code> and <code>LabelledGeneric</code> to convert between beans and case classes.</p> 
   <div class="highlight highlight-source-scala">
    <pre>scala<span class="pl-k">&gt;</span> <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Bar</span>(<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">String</span>)
 defined <span class="pl-k">class</span> <span class="pl-en">Bar</span>
@@ -74,6 +91,7 @@ res3<span class="pl-k">:</span> <span class="pl-en">Bar</span> <span class="pl-k
 scala<span class="pl-k">&gt;</span> conv.productToBean(<span class="pl-en">Bar</span>(<span class="pl-c1">15</span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>))
 res4<span class="pl-k">:</span> <span class="pl-en">Foo</span> <span class="pl-k">=</span> <span class="pl-en">Foo</span>(<span class="pl-c1">15</span>, <span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>)</pre>
   </div> 
-  <p><code>BeanConverter</code> doesn't care about fields order, but requires to have all the same fields with the same types. It also mean that if the bean uses Java numeric classes (like java.lang.Integer), the case class also should have the field with Java class.</p> 
+  <p>The converters doesn't care about fields order. The difference between these two classes is that <code>StrictBeanConverter</code> requires the same fields of converting classes having the same types. It means that if the bean uses Java numeric classes (like java.lang.Integer), the case class also should have the field with Java class.</p> 
+  <p><code>BeanConverter</code> is more intelligent. It uses <code>JavaTypeMapper</code> to convert field types. You should be careful using it. For example if you have an Integer field in Java class and Int in Scala, you might get a NullPointerException if the value is null. Use <code>Option[Int]</code> to make it safe.</p> 
  </article>
 </div>
