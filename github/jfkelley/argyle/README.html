@@ -1,0 +1,265 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://github.com/jfkelley/argyle/blob/master/argyle-logo-msmall.png" target="_blank"><img src="https://github.com/jfkelley/argyle/raw/master/argyle-logo-msmall.png" alt="Argyle" style="max-width:100%;"></a></p> 
+  <p>Command-line argument parsing for Scala</p> 
+  <h2><a id="user-content-example" class="anchor" href="https://github.com/jfkelley/argyle#example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example:</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.joefkelley.argyle.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.util.</span>{<span class="pl-v">Try</span>, <span class="pl-v">Success</span>, <span class="pl-v">Failure</span>}
+
+<span class="pl-k">object</span> <span class="pl-en">Example</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">a</span> <span class="pl-k">=</span> (
+    required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>-n<span class="pl-pds">"</span></span>) and
+    optional[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--occupation<span class="pl-pds">"</span></span>) and
+    required[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>--age<span class="pl-pds">"</span></span>) and
+    repeated[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--hobby<span class="pl-pds">"</span></span>) and
+    requiredOneOf(<span class="pl-s"><span class="pl-pds">"</span>--single<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Single</span>, <span class="pl-s"><span class="pl-pds">"</span>--married<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Married</span>) and
+    optional[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>--fingers<span class="pl-pds">"</span></span>).default(<span class="pl-c1">10</span>) and
+    flag(<span class="pl-s"><span class="pl-pds">"</span>--debug<span class="pl-pds">"</span></span>) and
+    optionalBranch[<span class="pl-en">Pet</span>](
+      <span class="pl-s"><span class="pl-pds">"</span>--pet-rock<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--rock-name<span class="pl-pds">"</span></span>).to[<span class="pl-en">Rock</span>],
+      <span class="pl-s"><span class="pl-pds">"</span>--pet-dog<span class="pl-pds">"</span></span>  <span class="pl-k">-</span><span class="pl-k">&gt;</span> (required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--dog-breed<span class="pl-pds">"</span></span>) and required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--dog-name<span class="pl-pds">"</span></span>)).to[<span class="pl-en">Dog</span>]
+    ) and
+    (requiredOneOf(<span class="pl-s"><span class="pl-pds">"</span>--male<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Male</span>, <span class="pl-s"><span class="pl-pds">"</span>--female<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-en">Female</span>) xor required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--gender<span class="pl-pds">"</span></span>).to[<span class="pl-en">OtherGender</span>])
+  ).to[<span class="pl-en">PersonConfig</span>]
+
+  a.parse(args) <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">Success</span>(person) <span class="pl-k">=&gt;</span> println(person)
+    <span class="pl-k">case</span> <span class="pl-en">Failure</span>(e) <span class="pl-k">=&gt;</span> <span class="pl-k">throw</span> e
+  }
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">PersonConfig</span>(
+      <span class="pl-v">name</span>: <span class="pl-k">String</span>,
+      <span class="pl-v">occupation</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>],
+      <span class="pl-v">age</span>: <span class="pl-k">Int</span>,
+      <span class="pl-v">hobbies</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>],
+      <span class="pl-v">maritalStatus</span>: <span class="pl-en">MaritalStatus</span>,
+      <span class="pl-v">nFingers</span>: <span class="pl-k">Int</span>,
+      <span class="pl-v">likesToDebug</span>: <span class="pl-k">Boolean</span>,
+      <span class="pl-v">pet</span>: <span class="pl-en">Option</span>[<span class="pl-en">Pet</span>],
+      <span class="pl-v">gender</span>: <span class="pl-en">Gender</span>)
+
+  <span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">MaritalStatus</span>
+  <span class="pl-k">object</span> <span class="pl-en">Single</span> <span class="pl-k">extends</span> <span class="pl-e">MaritalStatus</span>
+  <span class="pl-k">object</span> <span class="pl-en">Married</span> <span class="pl-k">extends</span> <span class="pl-e">MaritalStatus</span>
+
+  <span class="pl-k">trait</span> <span class="pl-en">Pet</span>
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Dog</span>(<span class="pl-v">breed</span>: <span class="pl-k">String</span>, <span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Pet</span>
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Rock</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Pet</span>
+
+  <span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Gender</span>
+  <span class="pl-k">object</span> <span class="pl-en">Male</span> <span class="pl-k">extends</span> <span class="pl-e">Gender</span>
+  <span class="pl-k">object</span> <span class="pl-en">Female</span> <span class="pl-k">extends</span> <span class="pl-e">Gender</span>
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">OtherGender</span>(<span class="pl-v">str</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Gender</span>
+
+}</pre>
+  </div> 
+  <h2><a id="user-content-background" class="anchor" href="https://github.com/jfkelley/argyle#background" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Background</h2> 
+  <p>Argyle is a simple tool for parsing command-line arguments. Its goals are:</p> 
+  <ul> 
+   <li>Absolute minimum boilerplate</li> 
+   <li>Type-safe</li> 
+   <li>Flexible / Extensible</li> 
+   <li>Minimal dependencies</li> 
+   <li>Pure functional</li> 
+  </ul> 
+  <p>It does not currently have the ability to print help/usage information. The hope is that the syntax is so concise and readable that the code is documentation enough. Including this feature would be a crutch that would allow compromising on the first goal ;)</p> 
+  <h2><a id="user-content-usage" class="anchor" href="https://github.com/jfkelley/argyle#usage" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Three steps:</p> 
+  <ol> 
+   <li>Define a case class containing all of the options you want to configure</li> 
+   <li>Construct a <code>com.joefkelley.argyle.Arg[&lt;config class&gt;]</code> by "and"-ing together more granular Args representing individual fields</li> 
+   <li>Call <code>.parse(args)</code> on that, returning a <code>Try[&lt;config class&gt;]</code></li> 
+  </ol> 
+  <p>Here's a simple example that requires two command-line arguments: "--name" and "--age":</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)
+<span class="pl-k">val</span> <span class="pl-en">nameArg</span> <span class="pl-k">=</span> required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--name<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">ageArg</span> <span class="pl-k">=</span> required[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>--age<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">personArg</span> <span class="pl-k">=</span> (nameArg and ageArg).to[<span class="pl-en">Person</span>]
+<span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> personArg.parse(args)</pre>
+  </div> 
+  <p>Breaking this down line-by-line:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Person</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">age</span>: <span class="pl-k">Int</span>)</pre>
+  </div> 
+  <p>This class will eventually contain all of the configuration options we want from the command line</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">nameArg</span> <span class="pl-k">=</span> required[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>--name<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Creates an <code>Arg[String]</code> that will match arguments passed in the form "--name Joe" or similar. Note that because the arg is required, parsing will fail if it is not present.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ageArg</span> <span class="pl-k">=</span> required[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>--age<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>The specified argument type will be the type of the resulting object that is eventually returned by the parser. In this case it is Int, so this creates an <code>Arg[Int]</code>. The signature of the <code>required</code> method is:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">required</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>Note that the type requires an implicit typeclass <code>com.joefkelley.argyle.Reader[A]</code>. There are built-in values for all primitive types, Files, ISO-8601 Dates and Times, Lists (comma-separated), and Eithers. If you wish to use some different parsing logic, the Reader trait has a very simple interface that you can implement.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">personArg</span> <span class="pl-k">=</span> (nameArg and ageArg).to[<span class="pl-en">Person</span>]</pre>
+  </div> 
+  <p>The <code>and</code> method here combines an <code>Arg[String]</code> and an <code>Arg[Int]</code> into an <code>Arg[String :: Int :: HNil]</code>, an arg parser for a shapeless hlist. But there is no need to deal with shapeless directly. The <code>.to[Person]</code> call converts this to an <code>Arg[Person]</code>. Note that this is still type-safe; the types must match the fields of the <code>Person</code> class or it would not compile.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">Person</span>] <span class="pl-k">=</span> personArg.parse(args)</pre>
+  </div> 
+  <p>Finally, we call <code>.parse(args)</code>, which will return a <code>Success[Person]</code> iff both "--name" and "--age" are supplied, the argument for "--age" is an integer, and there are no other unused arguments. Otherwise, it will return a <code>Failure</code> containing an appropriate error message. By default, the args are expected in the form "--name Joe --age 100", but equals-separated format can also be used by calling <code>.parse(args, com.joefkelley.argyle.EqualsSeparated)</code>, for example "--name=Joe --age=100".</p> 
+  <h2><a id="user-content-full-api-details" class="anchor" href="https://github.com/jfkelley/argyle#full-api-details" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Full API Details</h2> 
+  <p><strong>The <code>com.joefkelley.argyle</code> package object contains several methods for creating <code>Arg</code>s. They are:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">required</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>Requires that one of the given keys must be present exactly once, and will fail otherwise.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">optional</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Requires that one of the given keys will be present at most once. Will result in a <code>None</code> if not present, a <code>Some[A]</code> if present, and fail if present more than once.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">repeated</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Matches any one of the keys any number of times, resulting in a <code>List[A]</code>. For example, <code>repeated[Int]("-n")</code> would successfully parse "-n 1 -n 5 -n 10", resulting in <code>List(1, 5, 10)</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">repeatedAtLeastOnce</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>](<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Same as above, but fails if not present at least once. Always results in a list with at least one element.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">requiredOneOf</span>[<span class="pl-en">A</span>](<span class="pl-v">kvs</span>: (<span class="pl-k">String</span>, <span class="pl-en">A</span>)<span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>A parser that matches exactly one of the keys in the key-value pairs, resulting in its corresponding value. Note that no value should be passed in the command-line arguments. For example, <code>requiredOneOf("-a" -&gt; 1, "-b" -&gt; 2)</code> would match just "-a", resulting in a value of 1. Fails if none of the keys are present.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">optionalOneOf</span>[<span class="pl-en">A</span>](<span class="pl-v">kvs</span>: (<span class="pl-k">String</span>, <span class="pl-en">A</span>)<span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Same as above, except returns a <code>None</code> instead of failing if none are present, and returns a <code>Some[A]</code> if one is.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">flag</span>(<span class="pl-v">keys</span>: <span class="pl-k">String</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-k">Boolean</span>]</pre>
+  </div> 
+  <p>If any of the provided keys are present, results in <code>true</code>, otherwise <code>false</code>.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">requiredFree</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>]<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>Matches any argument. For example, <code>requiredFree[String] and required[Int]("--n")</code> would match "--n 5 foo". Fails if no extra args are present.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">optionalFree</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>]<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Same as above, except returns a <code>None</code> instead of failing if none are present, and returns a <code>Some[A]</code> if one is.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">repeatedFree</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>]<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Matches any number of arguments not matched by "keyed" arguments.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">repeatedAtLeastOnceFree</span>[<span class="pl-en">A</span> <span class="pl-k">:</span> <span class="pl-en">Reader</span>]<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Same as above, except fails if no arguments are present.</p> 
+  <p>Note that the order of free arguments is important; they are matched greedily in order, but with back-tracking if neccessary. For example, <code>repeatedFree[String] and requiredFree[String]</code> will match all arguments except the last for the <code>repeatedFree</code>, and just the last for the <code>requiredFree</code>. If the order were reversed, the <code>requiredFree</code> would match the first argument, and the <code>repeatedFree</code> would match the rest.</p> 
+  <p>Something like <code>repeatedFree[String] and requiredFree[Int]</code> should also successfully match "foo 5 bar", since back-tracking will eventually find that the <code>requiredFree[Int]</code> must match the "5", and the <code>repeatedFree[String]</code> will match everything else.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">requiredBranch</span>[<span class="pl-en">A</span>](<span class="pl-v">kvs</span>: (<span class="pl-k">String</span>, <span class="pl-en">Arg</span>[<span class="pl-en">A</span>])<span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>Allows branching behavior based on the presence of keys in the key-value pairs. "Activates" one of the passed args based on which key is present, and parses using that arg. For example: <code>requiredBranch("-a" -&gt; required[String]("--foo"), "-b" -&gt; requiredFree[String])</code> would parse either "-a --foo hello" or "-b hello". Arbitrarily-complex args can be used, including nested branches or anything else. Note that the "branching" argument must be present in the command line arguments before the arguments parsed within that branch (i.e. "--foo hello -a" would not work).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">optionalBranch</span>[<span class="pl-en">A</span>](<span class="pl-v">kvs</span>: (<span class="pl-k">String</span>, <span class="pl-en">Arg</span>[<span class="pl-en">A</span>])<span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]]</pre>
+  </div> 
+  <p>Same as above, but does not fail if none of the branching keys are present.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">constant</span>[<span class="pl-en">A</span>](<span class="pl-v">a</span>: <span class="pl-en">A</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]</pre>
+  </div> 
+  <p>Does not consume or require any command-line arguments, just returns the value back. Useful for configuration options that can't be changed, or for simple cases of branching arguments.</p> 
+  <p><strong>The <code>com.joefkelley.argyle.Arg[A]</code> class itself contains methods for combining and modifying args. They are:</strong></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">flatMap</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>]</pre>
+  </div> 
+  <p>If parsing succeeds, applies <code>f</code> to the result, and succeeds if the result is a success, otherwise fails.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">map</span>[<span class="pl-en">B</span>](<span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> flatMap(a <span class="pl-k">=&gt;</span> <span class="pl-en">Success</span>(f(a)))</pre>
+  </div> 
+  <p>If parsing succeeds, applies <code>f</code> to the result and returns the output.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">as</span>[<span class="pl-en">B</span>](<span class="pl-k">implicit</span> <span class="pl-v">f</span>: <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> map(f)</pre>
+  </div> 
+  <p>Syntactic sugar for <code>map</code> for cases when an implicit conversion <code>A =&gt; B</code> is possible.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">xor</span>[<span class="pl-en">B</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">A</span>](<span class="pl-v">arg2</span>: <span class="pl-en">Arg</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>]</pre>
+  </div> 
+  <p>Returns a new Arg that succeeds if either this, or the passed in arg is present and succeeds. Notably fails if they are both present. For example, <code>required[Int]("-n").xor(required[Int]("-m"))</code> would return 1 for both "-n 1" and "-m 1", but would fail for "-n 1 -m 1".</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">or</span>[<span class="pl-en">B</span> <span class="pl-k">&gt;</span><span class="pl-k">:</span> <span class="pl-en">A</span>](<span class="pl-v">arg2</span>: <span class="pl-en">Arg</span>[<span class="pl-en">B</span>], <span class="pl-v">f</span>: (<span class="pl-en">B</span>, <span class="pl-en">B</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">B</span>)<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>]</pre>
+  </div> 
+  <p>Same as <code>xor</code>, except does not fail if both are present. Instead, calls <code>f</code> with the output from both. (In the order <code>f(thisOutput, arg2Output)</code>).</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">default</span>[<span class="pl-en">B</span>](<span class="pl-v">b</span>: <span class="pl-en">B</span>)(<span class="pl-k">implicit</span> <span class="pl-v">ev</span>: <span class="pl-en">A</span> <span class="pl-k">&lt;</span><span class="pl-k">:</span><span class="pl-k">&lt;</span> <span class="pl-en">Option</span>[<span class="pl-en">B</span>])<span class="pl-k">:</span> <span class="pl-en">Arg</span>[<span class="pl-en">B</span>]</pre>
+  </div> 
+  <p>For arguments that result in an <code>Option[A]</code>, such as those from <code>optional[A](...)</code>, promotes it from an <code>Arg[Option[A]]</code> to an <code>Arg[A]</code> by providing a default result value for when the argument is not present.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>and</pre>
+  </div> 
+  <p>The signature for the <code>and</code> method is a bit more complex because it involves a small amount of shapeless magic. If <code>a</code> is an <code>Arg[A]</code>, and <code>b</code> is an <code>Arg[B]</code>, and <code>A</code> is not an <code>HList</code>, then <code>a and b</code> returns an <code>Arg[A :: B :: HNil]</code>. However, if <code>A</code> <em>is</em> an <code>HList</code>, then the resulting <code>Arg</code> has <code>B</code> appended to the end of <code>A</code>. If this was not the case, then <code>a and b and c</code> would return an <code>Arg[(A :: B :: HNil) :: C :: HNil]</code>, which is subtly different than the expected <code>Arg[A :: B :: C :: HNil]</code> that is actually returned.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>to</pre>
+  </div> 
+  <p>The <code>arg.to[MyClass]</code> is useful to avoid dealing with shapeless <code>HLists</code> directly. Can be used if the type of <code>arg</code> is an <code>HList</code> and the output class's fields match exactly the types of the <code>HList</code>.</p> 
+  <p><strong>The <code>Arg</code> class is meant to be extensible</strong></p> 
+  <p>Custom parsing logic can added by implementing the <code>Arg</code> trait's two abstract methods:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">VisitResult</span>[<span class="pl-k">+</span><span class="pl-en">A</span>]
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">VisitError</span>(<span class="pl-v">msg</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">VisitResult</span>[<span class="pl-en">Nothing</span>]
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">VisitConsume</span>[<span class="pl-k">+</span><span class="pl-en">A</span>](<span class="pl-v">next</span>: <span class="pl-en">Arg</span>[<span class="pl-en">A</span>], <span class="pl-v">remaining</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>]) <span class="pl-k">extends</span> <span class="pl-e">VisitResult</span>[<span class="pl-en">A</span>]
+<span class="pl-k">object</span> <span class="pl-en">VisitNoop</span> <span class="pl-k">extends</span> <span class="pl-e">VisitResult</span>[<span class="pl-en">Nothing</span>]
+
+<span class="pl-k">trait</span> <span class="pl-en">Arg</span>[<span class="pl-k">+</span><span class="pl-en">A</span>] {
+
+  <span class="pl-k">def</span> <span class="pl-en">visit</span>(<span class="pl-v">xs</span>: <span class="pl-en">NonEmptyList</span>[<span class="pl-k">String</span>], <span class="pl-v">mode</span>: <span class="pl-en">ArgMode</span>)<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">VisitResult</span>[<span class="pl-en">A</span>]]
+
+  <span class="pl-k">def</span> <span class="pl-en">complete</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>]
+
+}</pre>
+  </div> 
+  <p>The <code>visit</code> method will be called multiple times, passing in smaller and smaller subsets of the command-line arguments. Most often, the returned <code>Seq</code> should contain a single element. If the head of the passed list is not relevant to the Arg, it should return <code>VisitNoop</code>. If the head is relevant, but incorrect or unexpected in some way, it should return <code>VisitError</code>. If the head is relevant and correct, A <code>VisitConsume</code> should be returned containing a new <code>Arg</code> to use for parsing instead of this from here on out, and the remaining unmatched/unconsumed part of the arguments. If you do not wish to use a purely-functional style, you may instead mutate the <code>Arg</code> and return <code>this</code>. If it is unclear which to return, depending on the rest of the arguments, and you wish to allow back-tracking to find the correct option, return a <code>Seq</code> with multiple elements. The back-tracking procedure has the possibility of becoming exponential, so putting more likely outcomes first can vastly improve runtime.</p> 
+  <p>The branching arg class is a good simple example implementation:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">BranchArg</span>[<span class="pl-en">A</span>](<span class="pl-v">branch</span>: <span class="pl-en">Map</span>[<span class="pl-k">String</span>, <span class="pl-en">Arg</span>[<span class="pl-en">A</span>]]) <span class="pl-k">extends</span> <span class="pl-e">Arg</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">visit</span>(<span class="pl-v">xs</span>: <span class="pl-en">NonEmptyList</span>[<span class="pl-k">String</span>], <span class="pl-v">mode</span>: <span class="pl-en">ArgMode</span>)<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">VisitResult</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]]] <span class="pl-k">=</span> xs <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">NonEmptyList</span>(x, rest) <span class="pl-k">=&gt;</span> branch.get(x) <span class="pl-k">match</span> {
+      <span class="pl-k">case</span> <span class="pl-en">Some</span>(arg) <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>(<span class="pl-en">VisitConsume</span>(arg.map(a <span class="pl-k">=&gt;</span> <span class="pl-en">Some</span>(a)), rest))
+      <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>(<span class="pl-en">VisitNoop</span>)
+    }
+  }
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">complete</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">Option</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> <span class="pl-en">Success</span>(<span class="pl-c1">None</span>)
+}</pre>
+  </div> 
+  <p>And the repeated free arg class is a good example of returning multiple <code>VisitResult</code>s for back-tracking:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">RepeatedFreeArg</span>[<span class="pl-en">A</span>](
+    <span class="pl-v">parse</span>: <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>], <span class="pl-v">collected</span>: <span class="pl-en">List</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-c1">Nil</span>) <span class="pl-k">extends</span> <span class="pl-e">Arg</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]] {
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">visit</span>(<span class="pl-v">xs</span>: <span class="pl-en">NonEmptyList</span>[<span class="pl-k">String</span>], <span class="pl-v">mode</span>: <span class="pl-en">ArgMode</span>)<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">VisitResult</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]]] <span class="pl-k">=</span> xs <span class="pl-k">match</span> {
+    <span class="pl-k">case</span> <span class="pl-en">NonEmptyList</span>(head, rest) <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>(<span class="pl-en">VisitNoop</span>, <span class="pl-en">VisitConsume</span>(<span class="pl-c1">this</span>.copy(collected <span class="pl-k">=</span> collected <span class="pl-k">:</span><span class="pl-k">+</span> head), rest))
+  }
+  <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">complete</span><span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">List</span>[<span class="pl-en">A</span>]] <span class="pl-k">=</span> <span class="pl-en">Utils</span>.sequence(collected.map(parse))
+}</pre>
+  </div> 
+  <p><strong>An instance of the <code>Reader</code> typeclass is required for parsing individual argument values from strings to specific types</strong></p> 
+  <p>This is the one section of code that is somewhat less type-safe (it's "stringly-typed"), so it is isolated and very simple. Default instances are provided for: String, Boolean, Byte, Short, Int, Long, Float, Double, Char, java.time.Duration, scala.concurrent.duration.Duration, File, Path, LocalDate, LocalTime, LocalDateTime (all ISO 8601), <code>List[A : Reader]</code> (comma-separated), and <code>Either[A : Reader, B : Reader]</code>.</p> 
+  <p>If you wish to parse to some other class, this is also extensible. The trait to implement is:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Reader</span>[<span class="pl-en">A</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Try</span>[<span class="pl-en">A</span>]
+}</pre>
+  </div> 
+  <p>Built-in instances are, unsurprisingly, very simple examples to follow:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">IntParser</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Reader</span>[<span class="pl-k">Int</span>] { <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-en">Try</span>(s.toInt) }</pre>
+  </div> 
+ </article>
+</div>
