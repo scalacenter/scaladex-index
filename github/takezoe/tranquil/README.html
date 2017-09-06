@@ -6,9 +6,7 @@
     </svg></a>Tranquil <a href="https://travis-ci.org/takezoe/tranquil" target="_blank"><img src="https://camo.githubusercontent.com/e16c9302b4067a0462253d124534e0701317be93/68747470733a2f2f7472617669732d63692e6f72672f74616b657a6f652f7472616e7175696c2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/takezoe/tranquil.svg?branch=master" style="max-width:100%;"></a></h1> 
   <p>Tranquil is a experiment of type-safe SQL builder for Scala.</p> 
   <div class="highlight highlight-source-scala">
-   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Sonatype OSS Snapshots<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>https://oss.sonatype.org/content/repositories/snapshots<span class="pl-pds">"</span></span>
-
-libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.takezoe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>tranquil<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3-SNAPSHOT<span class="pl-pds">"</span></span></pre>
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.takezoe<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>tranquil<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.3<span class="pl-pds">"</span></span></pre>
   </div> 
   <p>At first, ready table definitions like following:</p> 
   <div class="highlight highlight-source-scala">
@@ -17,12 +15,10 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">userId</span>: <span class="pl-k">String</span>, <span class="pl-v">userName</span>: <span class="pl-k">String</span>, <span class="pl-v">companyId</span>: <span class="pl-en">Option</span>[<span class="pl-k">Int</span>])
 
-<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Users</span>(
-  <span class="pl-v">alias</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>],
-  <span class="pl-v">userId</span>: <span class="pl-en">Column</span>[<span class="pl-k">String</span>],
-  <span class="pl-v">userName</span>: <span class="pl-en">Column</span>[<span class="pl-k">String</span>],
-  <span class="pl-v">companyId</span>: <span class="pl-en">OptionalColumn</span>[<span class="pl-k">Int</span>]
-) <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">User</span>](<span class="pl-s"><span class="pl-pds">"</span>USERS<span class="pl-pds">"</span></span>) {
+<span class="pl-k">class</span> <span class="pl-en">Users</span> <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">User</span>](<span class="pl-s"><span class="pl-pds">"</span>USERS<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">val</span> <span class="pl-en">userId</span>    <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](<span class="pl-c1">this</span>, <span class="pl-s"><span class="pl-pds">"</span>USER_ID<span class="pl-pds">"</span></span>),
+  <span class="pl-k">val</span> <span class="pl-en">userName</span>  <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](<span class="pl-c1">this</span>, <span class="pl-s"><span class="pl-pds">"</span>USER_NAME<span class="pl-pds">"</span></span>),
+  <span class="pl-k">val</span> <span class="pl-en">companyId</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">OptionalColumn</span>[<span class="pl-k">Int</span>](<span class="pl-c1">this</span>, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>)
 
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">toModel</span>(<span class="pl-v">rs</span>: <span class="pl-en">ResultSet</span>)<span class="pl-k">:</span> <span class="pl-en">User</span> <span class="pl-k">=</span> {
     <span class="pl-en">User</span>(userId.get(rs), userName.get(rs), companyId.get(rs))
@@ -30,40 +26,22 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 }
 
 <span class="pl-k">object</span> <span class="pl-en">Users</span> {
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Users</span>](table(<span class="pl-c1">None</span>))
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">alias</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Query</span>[<span class="pl-en">Users</span>, <span class="pl-en">Users</span>, <span class="pl-en">User</span>](table(<span class="pl-en">Some</span>(alias)))
-  <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">table</span>(<span class="pl-v">alias</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>]) <span class="pl-k">=</span> {
-    <span class="pl-k">new</span> <span class="pl-en">Users</span>(
-      alias,
-      <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>USER_ID<span class="pl-pds">"</span></span>),
-      <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>USER_NAME<span class="pl-pds">"</span></span>),
-      <span class="pl-k">new</span> <span class="pl-en">OptionalColumn</span>[<span class="pl-k">Int</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>)
-    )
-  }
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Users</span>](<span class="pl-k">new</span> <span class="pl-en">Users</span>())
 }
 
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Company</span>(<span class="pl-v">companyId</span>: <span class="pl-k">Int</span>, <span class="pl-v">companyName</span>: <span class="pl-k">String</span>)
 
-<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Companies</span>(
-  <span class="pl-v">alias</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>],
-  <span class="pl-v">companyId</span>: <span class="pl-en">Column</span>[<span class="pl-k">Int</span>],
-  <span class="pl-v">companyName</span>: <span class="pl-en">Column</span>[<span class="pl-k">String</span>]
-) <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">Company</span>](<span class="pl-s"><span class="pl-pds">"</span>COMPANIES<span class="pl-pds">"</span></span>) {
+<span class="pl-k">class</span> <span class="pl-en">Companies</span> <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">Company</span>](<span class="pl-s"><span class="pl-pds">"</span>COMPANIES<span class="pl-pds">"</span></span>) {
+  <span class="pl-k">val</span> <span class="pl-en">companyId</span>   <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">Int</span>](<span class="pl-c1">this</span>, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>),
+  <span class="pl-k">val</span> <span class="pl-en">companyName</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](<span class="pl-c1">this</span>, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_NAME<span class="pl-pds">"</span></span>)
+
   <span class="pl-k">override</span> <span class="pl-k">def</span> <span class="pl-en">toModel</span>(<span class="pl-v">rs</span>: <span class="pl-en">ResultSet</span>)<span class="pl-k">:</span> <span class="pl-en">Company</span> <span class="pl-k">=</span> {
     <span class="pl-en">Company</span>(companyId.get(rs), companyName.get(rs))
   }
 }
 
 <span class="pl-k">object</span> <span class="pl-en">Companies</span> {
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Companies</span>](table(<span class="pl-c1">None</span>))
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">alias</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Query</span>[<span class="pl-en">Companies</span>, <span class="pl-en">Companies</span>, <span class="pl-en">Company</span>](table(<span class="pl-en">Some</span>(alias)))
-  <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">table</span>(<span class="pl-v">alias</span>: <span class="pl-en">Option</span>[<span class="pl-k">String</span>]) <span class="pl-k">=</span> {
-    <span class="pl-k">new</span> <span class="pl-en">Companies</span>(
-      alias,
-      <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">Int</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_ID<span class="pl-pds">"</span></span>),
-      <span class="pl-k">new</span> <span class="pl-en">Column</span>[<span class="pl-k">String</span>](alias, <span class="pl-s"><span class="pl-pds">"</span>COMPANY_NAME<span class="pl-pds">"</span></span>)
-    )
-  }
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Companies</span>](<span class="pl-k">new</span> <span class="pl-en">Companies</span>())
 }</pre>
   </div> 
   <p>Then you can assemble SQL using type-safe DSL.</p> 
@@ -75,8 +53,8 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
 
 <span class="pl-c"><span class="pl-c">//</span> SELECT</span>
 <span class="pl-k">val</span> <span class="pl-en">users</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">User</span>, <span class="pl-en">Option</span>[<span class="pl-en">Company</span>])] <span class="pl-k">=</span>
-  <span class="pl-en">Users</span>(<span class="pl-s"><span class="pl-pds">"</span>u<span class="pl-pds">"</span></span>)
-    .leftJoin(<span class="pl-en">Companies</span>(<span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span>)){ <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.companyId eq c.companyId }
+  <span class="pl-en">Users</span>()
+    .leftJoin(<span class="pl-en">Companies</span>()){ <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.companyId eq c.companyId }
     .filter { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>) <span class="pl-k">||</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoen<span class="pl-pds">"</span></span>) }
     .sortBy { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.userId asc }
     .list(conn)</pre>
@@ -97,7 +75,7 @@ libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span
   <p>Grouping and aggregation are possible as follows:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">counts</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">Option</span>[<span class="pl-k">Int</span>], <span class="pl-k">Long</span>)] <span class="pl-k">=</span> 
-  <span class="pl-en">Users</span>(<span class="pl-s"><span class="pl-pds">"</span>u<span class="pl-pds">"</span></span>)
+  <span class="pl-en">Users</span>()
     .groupBy { t <span class="pl-k">=&gt;</span> t.companyId <span class="pl-k">~</span> t.userId.count }
     .filter  { <span class="pl-k">case</span> companyId <span class="pl-k">~</span> count <span class="pl-k">=&gt;</span> count ge <span class="pl-c1">10</span> }
     .list(conn)</pre>

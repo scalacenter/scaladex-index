@@ -1,0 +1,133 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-sequentialstate" class="anchor" href="https://github.com/timbertson/sequentialstate#sequentialstate" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SequentialState</h1> 
+  <p>A minimal, type-safe alternative to (some of) akka.</p> 
+  <p><strong>Quick links:</strong></p> 
+  <ul> 
+   <li><a href="https://timbertson.github.io/sequentialstate/api/net/gfxmonk/sequentialstate/" target="_blank">API docs</a></li> 
+   <li><a href="https://github.com/timbertson/sequentialstate/blob/master/examples/src/main/scala/net/gfxmonk/sequentialstate/examples" target="_blank">examples</a> for working examples.</li> 
+  </ul> 
+  <p>I also presented an introduction to SequentialState at the <a href="https://www.meetup.com/en-AU/Melbourne-Scala-User-Group/" target="_blank">Melbourne Scala User Group</a> in August 2017, you can see the <a href="https://youtu.be/WsE4S8qDjgk" target="_blank">video</a> and <a href="https://timbertson.github.io/sequentialstate/talk/" target="_blank">slides</a> (with speaker notes).</p> 
+  <h2><a id="user-content-why-should-i-use-sequentialstate" class="anchor" href="https://github.com/timbertson/sequentialstate#why-should-i-use-sequentialstate" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Why should I use SequentialState?</h2> 
+  <p><em>SequentialState provides the same concurrency model as local actors, plus type safety and builtin support for non-blocking backpressure. It achieves this by simply encapsulating state, doing away with most other features of actors.</em></p> 
+  <p>Parallel programming (using locks, mutexes, etc) is still a surprisingly error-prone task even in modern scala. While you rarely need to implement your own concurrency primitives, you do need to use the builtin ones correctly. That isn't always straightforward or efficient, and frequently requires diligence that cannot be enforced by the compiler.</p> 
+  <p>I liked the simple concurrency guarantees of actors, but found that akka was unfitting for many purposes. I realised that I didn't want my system to be composed of actors, I was happy with <em>mostly</em> stateless functional programming. But for the places where I must maintain state, I needed something better than a lock.</p> 
+  <p>Also, when learning about akka-streams and monix (and the reactive streams protocol), I was dismayed to realise that plain akka provides no building blocks for dealing with backpressure and preventing overload.</p> 
+  <h2><a id="user-content-simple-example" class="anchor" href="https://github.com/timbertson/sequentialstate#simple-example" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Simple example:</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">scala.concurrent.ExecutionContext.Implicits.</span><span class="pl-v">global</span>
+<span class="pl-k">import</span> <span class="pl-v">net.gfxmonk.sequentialstate.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">Main</span> {
+	<span class="pl-k">def</span> <span class="pl-en">run</span>()<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> {
+		<span class="pl-c"><span class="pl-c">//</span> create a SequentialState[Int]</span>
+		<span class="pl-k">val</span> <span class="pl-en">state</span> <span class="pl-k">=</span> <span class="pl-en">SequentialState</span>(<span class="pl-c1">0</span>)
+
+		<span class="pl-k">def</span> <span class="pl-en">addOne</span>() <span class="pl-k">=</span> state.sendTransform(_ <span class="pl-k">+</span> <span class="pl-c1">1</span>)
+
+		<span class="pl-c"><span class="pl-c">//</span> This is a bit unnecessary, just showing that</span>
+		<span class="pl-c"><span class="pl-c">//</span> state can be safely accessed from two different</span>
+		<span class="pl-c"><span class="pl-c">//</span> threads</span>
+		<span class="pl-k">def</span> <span class="pl-en">addTwoInParallel</span>() <span class="pl-k">=</span> <span class="pl-en">Future</span>.sequence(<span class="pl-en">List</span>(
+			<span class="pl-en">Future</span>(addOne()),
+			<span class="pl-en">Future</span>(addOne())
+		)).map(_ <span class="pl-k">=&gt;</span> ())
+
+		<span class="pl-k">for</span> {
+			<span class="pl-c"><span class="pl-c">//</span> add two (in parallel)</span>
+			() <span class="pl-k">&lt;</span><span class="pl-k">-</span> addTwoInParallel()
+
+			<span class="pl-c"><span class="pl-c">//</span> then double it (fire-and-forget)</span>
+			() <span class="pl-k">&lt;</span><span class="pl-k">-</span> state.sendTransform(_ <span class="pl-k">*</span> <span class="pl-c1">2</span>)
+
+			<span class="pl-c"><span class="pl-c">//</span> mutate the state and also return a result</span>
+			<span class="pl-c"><span class="pl-c">//</span> (waits for the result, not fire-and-forget)</span>
+			formatted <span class="pl-k">&lt;</span><span class="pl-k">-</span> state.mutate { ref <span class="pl-k">=&gt;</span>
+				ref.set(ref.current <span class="pl-k">+</span> <span class="pl-c1">3</span>)
+				s<span class="pl-s"><span class="pl-pds">"</span>The counter ended up being: ${ref.current}<span class="pl-pds">"</span></span>
+			}
+		} <span class="pl-k">yield</span> formatted
+	}
+
+	<span class="pl-k">def</span> <span class="pl-en">main</span>() {
+		println(<span class="pl-en">Await</span>.result(run(), <span class="pl-en">Duration</span>.<span class="pl-en">Inf</span>))
+	}
+}</pre>
+  </div> 
+  <p>Running this produces:</p> 
+  <pre><code>The counter ended up being: 7
+</code></pre> 
+  <p>Unlike actors, SequentialState instances are typically <code>private</code> and do not talk to each other directly. Since they encapsulate state, you typically use them to wrap the internal state of classes which need to be thread-safe.</p> 
+  <h2><a id="user-content-how-do-i-install-it" class="anchor" href="https://github.com/timbertson/sequentialstate#how-do-i-install-it" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How do I install it?</h2> 
+  <p>TODO: packaging ;)</p> 
+  <h3><a id="user-content-what-features-does-it-have" class="anchor" href="https://github.com/timbertson/sequentialstate#what-features-does-it-have" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What features does it have?</h3> 
+  <ul> 
+   <li>Sequential execution:</li> 
+  </ul> 
+  <p>This is the core of the actor concurrency model. Actors are not a unit of parallelism, they are a unit of sequentiality. One core benefit of actors is that you can have lots of them efficiently executing in parallel, however at the individual actor level <em>an actor is never doing two things at once</em>. For the duration of handling a given message, you are guaranteed that the actor is not doing anything else in parallel, meaning that you can manipulate an actor's private state without concern for race conditions.</p> 
+  <ul> 
+   <li>Type safety</li> 
+  </ul> 
+  <p>Every actor can receive an <code>Any</code>, and responses can only take the form of a <code>Future[Any]</code>. Part of the reason for this is that all messages are funneled through a single <code>receive</code> function which may accept many different types of messages, potentially depending on the state of the actor.</p> 
+  <p>SequentialState actions are fully typed, there is no dynamic typing required (unless you want to introduce it).</p> 
+  <ul> 
+   <li>Backpressure:</li> 
+  </ul> 
+  <p>Sending a SequentialState action (without waiting for its result) returns a Future[Unit] which resolves once the task has been accepted into the receiver's queue (but before the task has run). As long as senders wait for this future to resolve before sending additional messages, the number of actions enqueued on any given SequentialState will be bounded, providing backpressure and preventing work from piling up into unbounded queues. By blocking asynchronously via a Future[Unit], we avoid tying up threads with blocking calls (which can cause deadlocks).</p> 
+  <p>Akka does not allow feedback on message sends, which necessitates explicit backpressure protocols on top of the actor model (e.g. as implemented by akka-streams).</p> 
+  <h3><a id="user-content-what-doesnt-it-have" class="anchor" href="https://github.com/timbertson/sequentialstate#what-doesnt-it-have" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>What <em>doesn't</em> it have?</h3> 
+  <ul> 
+   <li>(Possibly) remote actors:</li> 
+  </ul> 
+  <p>Akka lets you send messages to both remote and local actors using the same interface. If you want a remote communication protocol, you should use one of those :)</p> 
+  <ul> 
+   <li>Heirarchichal supervisor strategies:</li> 
+  </ul> 
+  <p>Actors define a heirarchy, primarily for supervision and error handling purposes. SequentialState provides no builtin mechanisms for this.</p> 
+  <ul> 
+   <li>High level pipeline DSL (a.k.a Reactive Streams):</li> 
+  </ul> 
+  <p>SequentialState is a replacement for local actors, not for a fully fledged data pipeline like akka-streams, monix, etc. If your problem is well represented by a data pipeline, you should probably use one.</p> 
+  <h3><a id="user-content-how-does-backpressure-work" class="anchor" href="https://github.com/timbertson/sequentialstate#how-does-backpressure-work" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>How does backpressure work?</h3> 
+  <p>Synchronous backpressure is reasonably straightforward with a traditional bounded, blocking queue. Each component has a queue of tasks which you can add to. Once that queue reaches capacity, it won't allow more tasks to be enqueued. This is done by blocking the thread trying to enqueue more work until space is available.</p> 
+  <p>To avoid actually tying up a thread (potentially leading to deadlocks), SequentialState blocks the caller by always returning a <code>StagedFuture</code> which won't be <code>accepted</code> until the work has successfully been enqueued. Space is freed up in a queue after a task has run. <strong>Note</strong> that this requires code enqueueing work to be "good citizens" -- you should not enqueue more work until the previous work has been accepted.</p> 
+  <p>This solution is all you need for synchronous tasks - once the item has been run, it is complete. But for asynchronous tasks (which run some code that creates and returns a <code>Future[T]</code>), there are two stages to each task:</p> 
+  <ul> 
+   <li>(synchronous) <strong>started</strong>; the running of the task which creates a <code>Future[T]</code></li> 
+   <li>(asynchronous) <strong>completed</strong>, the point when the <code>Future[T]</code> succeeds (or fails)</li> 
+  </ul> 
+  <p>SequentialState will naturally apply backpressure to the <em>starting</em> of asynchronous tasks, since that part runs synchronously.</p> 
+  <p>But for the asynchronous completion of the work, we need to make <em>started-but-incomplete</em> tasks still occupy a slot in the work queue. This ensures that (for example) a component with a capacity of 10 queued tasks will prevent further tasks from being enqueued once it has:</p> 
+  <ul> 
+   <li>10 enqueued (not executed) tasks, or</li> 
+   <li>9 enqueued tasks plus one run-but-incomplete asynchronous task, or</li> 
+   <li>5 enqueued tasks plus 5 run-but-incomplete asynchronous task, or</li> 
+   <li>10 run-but-incomplete asynchronous tasks, (etc...)</li> 
+  </ul> 
+  <p>To get this behaviour, you must call the <code>Async</code> or <code>Staged</code> versions of the methods on a <code>SequentialState</code> object - e.g. <code>mutateAsync</code>, <code>accessAsync</code>, <code>mutateStaged</code>, etc. Using the non-async variants is typically awkward enough to make this obvious, as you will end up with a nested <code>StagedFuture[Future[T]]</code> which requires flattening - when you see this, you should usually use the <code>Async</code> variant instead.</p> 
+  <p>The only difference between these two variants is that <code>Async</code> (tasks returning a plain <code>Future</code>) occupy a task slot until they complete, while <code>Staged</code> (tasks returning a <code>StagedFuture</code>) occupy a task slot until they are accepted (at which point they will be occupying a task slot in some other <code>SequentialState</code> object's queue, typically). The <code>Staged</code> variant is useful for chaining together multiple <code>SequentialState</code> actions.</p> 
+ </article>
+</div>

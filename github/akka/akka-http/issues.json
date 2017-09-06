@@ -4,12 +4,6 @@
       "issues":{
         "nodes":[
           {
-            "number":107,
-            "title":"Server statistics in Akka HTTP",
-            "bodyText":"Issue by RichardBradley\nMonday Mar 30, 2015 at 10:44 GMT\nOriginally opened as akka/akka#17095\n\nSpray 1.3 had \"Server Statistics\" that reported on various connection-level stats that are difficult or inefficient to monitor in userland:\ncase class Stats(\n  uptime: FiniteDuration,\n  totalRequests: Long,\n  openRequests: Long,\n  maxOpenRequests: Long,\n  totalConnections: Long,\n  openConnections: Long,\n  maxOpenConnections: Long,\n  requestTimeouts: Long)\n\nPlease could we add something similar to Akka HTTP 1.0?",
-            "url":"https://github.com/akka/akka-http/issues/107"
-          },
-          {
             "number":109,
             "title":"Respect Content-Transfer-Encoding in BodyPartParser",
             "bodyText":"Issue by kswmsw\nMonday Feb 23, 2015 at 17:15 GMT\nOriginally opened as akka/akka#16921\n\nakka.http.engine.parsing.BodyPartParser in akka-http-core-experimental 1.0-M3 ignores the Content-Transfer-Encoding header when parsing the entity. This means that currently if a client uploads a body part with Content-Transfer-Encoding quoted-printable or base64, the wrong data is passed to the application with no error or warning.\nInstead, Akka should respect this header, and use its value to decode the bytes of the incoming stream when constructing the bytes of the body part. The dataBytes of the parsed body part should be the decoded bytes of the body part, not the raw bytes of the multipart entity.\nThe relevant standards are RFC2046 section 5.1 and RFC2045 section 6. According to these, each part of a multipart entity may have a Content-Transfer-Encoding. If this has value quoted-printable or base64, then the content of the body part has been encoded with the named encoding. If it is 7bit, 8bit, binary, or omitted, then no encoding has been applied.\nApache Commons has Base64 and QuotedPrintableCodec which may be applicable in an implementation.",
@@ -192,7 +186,7 @@
           {
             "number":450,
             "title":"OutgoingConnectionBlueprint logs errors to wrong logger",
-            "bodyText":"akka-http/akka-http-core/src/main/scala/akka/http/impl/engine/client/OutgoingConnectionBlueprint.scala\n    \n    \n         Line 99\n      in\n      d0b7829\n    \n    \n    \n    \n\n        \n          \n                 val logger = b.add(MapError[ByteString] { case t ⇒ log.error(t, \"Outgoing request stream error\"); t }.named(\"errorLogger\")) \n        \n    \n  \n\n\nIt goes directly to akka.actor.ActorSystemImpl.ERROR, which is probably not what's intended.",
+            "bodyText":"akka-http/akka-http-core/src/main/scala/akka/http/impl/engine/client/OutgoingConnectionBlueprint.scala\n    \n    \n         Line 99\n      in\n      d0b7829\n    \n    \n    \n    \n\n        \n          \n           val logger = b.add(MapError[ByteString] { case t ⇒ log.error(t, \"Outgoing request stream error\"); t }.named(\"errorLogger\")) \n        \n    \n  \n\n\nIt goes directly to akka.actor.ActorSystemImpl.ERROR, which is probably not what's intended.",
             "url":"https://github.com/akka/akka-http/issues/450"
           },
           {
@@ -586,12 +580,6 @@
             "url":"https://github.com/akka/akka-http/issues/1359"
           },
           {
-            "number":1366,
-            "title":"Document that sprinkling onComplete/onSuccess in all routes is not a good idea",
-            "bodyText":"In the onComplete/onSuccess docs we're very dry and only say how it works: http://doc.akka.io/docs/akka-http/10.0.9/scala/http/routing-dsl/directives/future-directives/onSuccess.html#onsuccess\nThis results in people sprinkling these directives into each route where they handle some future and doing the { case Failure(...) => complete(500, ... manually instead of using Exception handling http://doc.akka.io/docs/akka-http/10.0.9/java/http/routing-dsl/exception-handling.html\nWe should improve docs of those directives to explain that most of the time exception handling is the right way to do this. We should also point out that we have the with circuit breaker on complete which is more useful than just completing",
-            "url":"https://github.com/akka/akka-http/issues/1366"
-          },
-          {
             "number":1367,
             "title":"Fix marshalling docs for Java",
             "bodyText":"This one was very very embarrassing to find...\nThe marshalling page for JavaDSL is ScalaDSL 😭 \"TODO overhaul for Java\"\nWe did not notice for quite some time it seems...\nhttp://doc.akka.io/docs/akka-http/current/java/http/common/marshalling.html\nWe've had this since 2.4: http://doc.akka.io/docs/akka/2.4.10/java/http/common/marshalling.html\nWe have to fix this soon.",
@@ -602,6 +590,18 @@
             "title":"Provide support for Forwarded Header",
             "bodyText":"Currently, Akka HTTP doesn't support the standard header Forwarded, but only one of the de-facto standard X-Forwarded-For header that is only part of the standard Forwarded.\nIt would be good to add support for Forwarded header as described in https://tools.ietf.org/html/rfc7239\nAdditionally, it might be also good to implement X-Forwarded-Proto and X-Forwarded-Host:\n\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Proto",
             "url":"https://github.com/akka/akka-http/issues/1377"
+          },
+          {
+            "number":1381,
+            "title":"\"Directives from scratch\" could use a code example",
+            "bodyText":"As easily creating new directives is one of the strengths of our DSL, it'd be nice to have a code example in http://doc.akka.io/docs/akka-http/current/scala/http/routing-dsl/directives/custom-directives.html#directives-from-scratch",
+            "url":"https://github.com/akka/akka-http/issues/1381"
+          },
+          {
+            "number":1391,
+            "title":"Thread loops infinitely consuming CPU with non-zero `akka.http.host-connection-pool.min-connections` setting",
+            "bodyText":"This issue created as followup for 2-months-old thread in google groups: https://groups.google.com/forum/#!topic/akka-user/062Op2fyD-E\nSorry for absent of minimal example, only text description here.\nHow to reproduce:\n\nCreate temporary DNS record (we were doing this with Amazon Route53 service)\nSpin up Actor System with akka.http.host-connection-pool.min-connections set to non-zero value\nMake request (from the ActorSystem) to the temp. DNS name\nDelete DNS record\n(Optional) Make any http request\n\nAs a result - one of threads\\actors starts to consume all available CPU by processing some inner-state actor messages.",
+            "url":"https://github.com/akka/akka-http/issues/1391"
           }
         ]
       }

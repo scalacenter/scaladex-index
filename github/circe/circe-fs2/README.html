@@ -10,38 +10,54 @@
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Parsing</h2> 
-  <p>Circe-fs2 provides three pipes to parse your streams of JSONs:</p> 
-  <h3><a id="user-content-stringparser-streamf_-string--streamf_-json" class="anchor" href="https://github.com/circe/circe-fs2#stringparser-streamf_-string--streamf_-json" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>stringParser: <code>Stream[F[_], String] =&gt; Stream[F[_], Json]</code></h3> 
-  <p><code>stringParser</code> converts a stream of <code>String</code> to a stream of <code>Json</code>, Circe's representation of JSONs:</p> 
+  <p>Circe-fs2 provides different pipes to parse your streams of JSONs depending on whether your stream is:</p> 
+  <ul> 
+   <li>a \n-separated stream of JSON values or value stream:</li> 
+  </ul> 
+  <div class="highlight highlight-source-json">
+   <pre>{ <span class="pl-s"><span class="pl-pds">"</span>repo<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>circe-fs2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>stars<span class="pl-pds">"</span></span>: <span class="pl-c1">14</span> }
+{ <span class="pl-s"><span class="pl-pds">"</span>repo<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>circe-config<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>stars<span class="pl-pds">"</span></span>: <span class="pl-c1">5</span> }</pre>
+  </div> 
+  <ul> 
+   <li>or a JSON array:</li> 
+  </ul> 
+  <div class="highlight highlight-source-json">
+   <pre>[
+  { <span class="pl-s"><span class="pl-pds">"</span>repo<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>circe-fs2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>stars<span class="pl-pds">"</span></span>: <span class="pl-c1">14</span> },
+  { <span class="pl-s"><span class="pl-pds">"</span>repo<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>circe-config<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>stars<span class="pl-pds">"</span></span>: <span class="pl-c1">5</span> }
+]</pre>
+  </div> 
+  <p>The appropriate pipe for the job also depends on your input stream value type (i.e. <code>String</code>, <code>Byte</code> or <code>Chunk[Byte]</code>).</p> 
+  <p>The following table sums up every pipe available as a function of the input stream value type as well as the JSON structure:</p> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th>String</th> 
+     <th>Byte</th> 
+     <th>Chunk[Byte]</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td><strong>Value stream</strong></td> 
+     <td><code>stringStreamParser</code></td> 
+     <td><code>byteStreamParser</code></td> 
+     <td><code>byteStreamParserC</code></td> 
+    </tr> 
+    <tr> 
+     <td><strong>Array</strong></td> 
+     <td><code>stringArrayParser</code></td> 
+     <td><code>byteArrayParser</code></td> 
+     <td><code>byteArrayParserC</code></td> 
+    </tr>
+   </tbody>
+  </table> 
+  <p>As an example, let's say we have a stream of strings representing a JSON array, we'll pick the <code>stringArrayParser</code> pipe which converts a stream of <code>String</code> to a stream of <code>Json</code>, Circe's representation of JSONs:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">io.circe.fs2.</span><span class="pl-v">_</span>
-
 <span class="pl-k">val</span> <span class="pl-en">stringStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-k">String</span>] <span class="pl-k">=</span> ...
-
-<span class="pl-k">val</span> <span class="pl-en">parsedStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-en">Json</span>] <span class="pl-k">=</span> stringStream.through(stringParser)</pre>
-  </div> 
-  <h3><a id="user-content-byteparser-streamf_-byte--streamf_-json" class="anchor" href="https://github.com/circe/circe-fs2#byteparser-streamf_-byte--streamf_-json" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>byteParser: <code>Stream[F[_], Byte] =&gt; Stream[F[_], Json]</code></h3> 
-  <p><code>byteParser</code> converts a stream of <code>Byte</code> to a stream of <code>Json</code>:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">byteStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-k">Byte</span>] <span class="pl-k">=</span> ...
-
-<span class="pl-k">val</span> <span class="pl-en">parsedStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-en">Json</span>] <span class="pl-k">=</span> byteStream.through(byteParser)</pre>
-  </div> 
-  <h3><a id="user-content-byteparserc-streamf_-chunkbyte--streamf_-json" class="anchor" href="https://github.com/circe/circe-fs2#byteparserc-streamf_-chunkbyte--streamf_-json" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>byteParserC: <code>Stream[F[_], Chunk[Byte]] =&gt; Stream[F[_], Json]</code></h3> 
-  <p><code>byteParserC</code> converts a chunked stream of <code>Byte</code> to a stream of <code>Json</code>:</p> 
-  <div class="highlight highlight-source-scala">
-   <pre><span class="pl-k">val</span> <span class="pl-en">chunkedByteStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-en">Chunk</span>[<span class="pl-k">Byte</span>]] <span class="pl-k">=</span> ...
-
-<span class="pl-k">val</span> <span class="pl-en">parsedStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-en">Json</span>] <span class="pl-k">=</span> chunkedByteStream.through(byteParserC)</pre>
+<span class="pl-k">val</span> <span class="pl-en">parsedStream</span><span class="pl-k">:</span> <span class="pl-en">Stream</span>[<span class="pl-en">Task</span>, <span class="pl-en">Json</span>] <span class="pl-k">=</span> stringStream.through(stringArrayParser)</pre>
   </div> 
   <h2><a id="user-content-decoding" class="anchor" href="https://github.com/circe/circe-fs2#decoding" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
