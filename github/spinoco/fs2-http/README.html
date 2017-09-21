@@ -46,6 +46,13 @@
    </thead> 
    <tbody> 
     <tr> 
+     <td>0.2.0-RC1</td> 
+     <td>2.11, 2.12</td> 
+     <td>0.10-M6</td> 
+     <td>1.10.3</td> 
+     <td>2.3.3</td> 
+    </tr> 
+    <tr> 
      <td>0.1.7</td> 
      <td>2.11, 2.12</td> 
      <td>0.9.5</td> 
@@ -75,6 +82,8 @@
   <p>Throughout this usage guide, the following imports are required in order for you to be able to run the examples test:console:</p> 
   <pre><code>import fs2._
 import fs2.util.syntax._
+import cats.effect._
+import cats.syntax.all._
 import spinoco.fs2.http
 import http._
 import http.websocket._
@@ -90,20 +99,20 @@ import spinoco.fs2.http.Resources._
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>HTTP Client</h3> 
   <p>Currently fs2-http supports HTTP 1.1 protocol and allows you to connect to server with either http:// or https:// scheme. A simple client that requests https page body data with the GET method from <code>https://github.com/Spinoco/fs2-http</code> may be constructed, for example, as:</p> 
-  <pre><code>http.client[Task]().flatMap { client =&gt;
-  val request = HttpRequest.get[Task](Uri.https("github.com", "/Spinoco/fs2-http"))
+  <pre><code>http.client[IO]().flatMap { client =&gt;
+  val request = HttpRequest.get[IO](Uri.https("github.com", "/Spinoco/fs2-http"))
   client.request(request).flatMap { resp =&gt;
     Stream.eval(resp.bodyAsString)
   }.runLog.map {
     println
   }
-}.unsafeRun()
+}.unsafeRunSync()
 </code></pre> 
-  <p>The above code snippet only "builds" the http client, resulting in <code>fs2.Task</code> that will be evaluated once run (using <code>unsafeRunAsync()</code>). The line with <code>Stream.eval(resp.bodyAsString)</code> on it actually evaluates the consumed body of the response. The body of the response can be evaluated strictly (meaning all output is first collected and then converted to the desired type), or it can be streamed (meaning it will be converted to the desired type as it is received from the server). A streamed body is accessible as <code>resp.body</code>.</p> 
+  <p>The above code snippet only "builds" the http client, resulting in <code>IO</code> that will be evaluated once run (using <code>unsafeRunSync()</code>). The line with <code>Stream.eval(resp.bodyAsString)</code> on it actually evaluates the consumed body of the response. The body of the response can be evaluated strictly (meaning all output is first collected and then converted to the desired type), or it can be streamed (meaning it will be converted to the desired type as it is received from the server). A streamed body is accessible as <code>resp.body</code>.</p> 
   <p>Requests to the server are modeled with <a href="https://github.com/Spinoco/fs2-http/blob/master/src/main/scala/spinoco/fs2/http/HttpRequestOrResponse.scala#L116" target="_blank">HttpRequest[F]</a>, and responses are modeled as <a href="https://github.com/Spinoco/fs2-http/blob/master/src/main/scala/spinoco/fs2/http/HttpRequestOrResponse.scala#L232" target="_blank">HttpResponse[F]</a>. Both of them share several <a href="https://github.com/Spinoco/fs2-http/blob/master/src/main/scala/spinoco/fs2/http/HttpRequestOrResponse.scala#L17" target="_blank">helpers</a> to help you work easily with the body.</p> 
   <p>There is also a simple way to sent (stream) arbitrary data to server. It is easily achieved by modifying the request accordingly:</p> 
-  <pre><code>val stringStream: Stream[Task, String] = ???
-implicit val encoder = StreamBodyEncoder.utf8StringEncoder[Task]
+  <pre><code>val stringStream: Stream[IO, String] = ???
+implicit val encoder = StreamBodyEncoder.utf8StringEncoder[IO]
 
 HttpRequest.get(Uri.https("github.com", "/Spinoco/fs2-http"))
 .withMethod(HttpMethod.POST)
@@ -115,13 +124,13 @@ HttpRequest.get(Uri.https("github.com", "/Spinoco/fs2-http"))
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>WebSocket</h3> 
   <p>fs2-http has support for websocket clients (RFC 6455). A websocket client is built with the following construct:</p> 
-  <pre><code>def wsPipe: Pipe[Task, Frame[String], Frame[String]] = { inbound =&gt;
-  val output =  time.awakeEvery[Task](1.second).map { dur =&gt; println(s"SENT $dur"); Frame.Text(s" ECHO $dur") }.take(5)
+  <pre><code>def wsPipe: Pipe[IO, Frame[String], Frame[String]] = { inbound =&gt;
+  val output =  time.awakeEvery[IO](1.second).map { dur =&gt; println(s"SENT $dur"); Frame.Text(s" ECHO $dur") }.take(5)
   inbound.take(5).map { in =&gt; println(("RECEIVED ", in)) }
   .mergeDrainL(output)
 }
 
-http.client[Task]().flatMap { client =&gt;
+http.client[IO]().flatMap { client =&gt;
   val request = WebSocketRequest.ws("echo.websocket.org", "/", "encoding" -&gt; "text")  
   client.websocket(request, wsPipe).run  
 }.unsafeRun()
@@ -141,7 +150,7 @@ http.client[Task]().flatMap { client =&gt;
  implicit val ACG = AsynchronousChannelGroup.withThreadPool(ES) // http.server requires a group
  implicit val S = Strategy.fromExecutor(ES) // Async (Task) requires a strategy
 
- def service(request: HttpRequestHeader, body: Stream[Task,Byte]): Stream[Task,HttpResponse[Task]] = {
+ def service(request: HttpRequestHeader, body: Stream[IO,Byte]): Stream[IO,HttpResponse[IO]] = {
     if (request.path != Uri.Path / "echo") Stream.emit(HttpResponse(HttpStatusCode.Ok).withUtf8Body("Hello World"))
     else {
       val ct =  request.headers.collectFirst { case `Content-Type`(ct) =&gt; ct }.getOrElse(ContentType(MediaType.`application/octet-stream`, None, None))
@@ -165,7 +174,7 @@ http.client[Task]().flatMap { client =&gt;
   <pre><code>import spinoco.fs2.http.routing._
 import shapeless.{HNil, ::}
 
-route[Task] ( choice(
+route[IO] ( choice(
   "example1" / "path" map { case _ =&gt; ??? }
   , "example2" / as[Int] :/: as[String] map { case int :: s :: HNil =&gt; ??? }
   , "example3" / body.as[Foo] :: choice(Post, Put) map { case foo :: postOrPut :: HNil =&gt; ??? }
@@ -175,7 +184,7 @@ route[Task] ( choice(
 ))
 
 </code></pre> 
-  <p>Here the choice indicates that any of the supplied routes may match, starting with the very first route. Instead of ??? you may supply any function producing the <code>Stream[Task, HttpResponse[Task]]</code>, that will be evaluated when the route will match.</p> 
+  <p>Here the choice indicates that any of the supplied routes may match, starting with the very first route. Instead of ??? you may supply any function producing the <code>Stream[IO, HttpResponse[IO]]</code>, that will be evaluated when the route will match.</p> 
   <p>The meaning of the individual routes is as follows:</p> 
   <ul> 
    <li>example1 : will match path "/example1/path"</li> 
@@ -185,17 +194,10 @@ route[Task] ( choice(
    <li>example5 : will match path "/example5?count=1&amp;query=sql_query" supplying 1 :: "sql:query" :: HNil to map</li> 
    <li>example6 : will match path "/example6" and then evaluating <code>someEffect</code> where the result of someEffect will be passed to map</li> 
   </ul> 
-  <h3><a id="user-content-other-documentation-and-helpful-links" class="anchor" href="https://github.com/spinoco/fs2-http#other-documentation-and-helpful-links" aria-hidden="true" target="_blank">
-    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
-     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
-    </svg></a>Other documentation and helpful links</h3> 
-  <ul> 
-   <li><a href="https://github.com/Spinoco/fs2-http/blob/master/doc/custom_codec.md" target="_blank">Using custom headers</a></li> 
-  </ul> 
   <h3><a id="user-content-comparing-to-httphttp4sorg" class="anchor" href="https://github.com/spinoco/fs2-http#comparing-to-httphttp4sorg" aria-hidden="true" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Comparing to <a href="http://http4s.org/" target="_blank">http://http4s.org/</a></h3> 
-  <p>Http4s.org is a very nice library for http, originaly started with scalaz-stream and currently migrating to fs2. The main difference between http4s.org and fs2-http is that unlike http4s.org, fs2-http has a minimal amount of dependencies and is using fs2 for its networking stack (tcp, ssl) as well. Unlike http4s.org you don't need a special build for scalaz and cats, as fs2-http does not dependes on any of them.</p> 
+  <p>Http4s.org is a very usefull library for http, originaly started with scalaz-stream and currently migrating to fs2. The main difference between http4s.org and fs2-http is that unlike http4s.org, fs2-http has a minimal amount of dependencies and is using fs2 for its networking stack (tcp, ssl) as well.</p> 
  </article>
 </div>

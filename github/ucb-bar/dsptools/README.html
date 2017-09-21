@@ -1,0 +1,147 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-dsp-tools-development-environment" class="anchor" href="https://github.com/ucb-bar/dsptools#dsp-tools-development-environment" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>DSP Tools Development Environment</h1> 
+  <p><a href="https://travis-ci.org/ucb-bar/dsptools" target="_blank"><img src="https://camo.githubusercontent.com/e49723bad314ec76f81654febe03ed3a38996864/68747470733a2f2f7472617669732d63692e6f72672f7563622d6261722f647370746f6f6c732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/ucb-bar/dsptools.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>This repository serves as a good starting point for making and easily testing your various DSP generators in Chisel <em>(1 generator at a time)</em>. See <a href="https://chisel.eecs.berkeley.edu" target="_blank">UC Berkeley Chisel</a> homepage for more information about Chisel.</p> 
+  <p>For a list of common errors, check out the <a href="https://github.com/ucb-bar/dsptools/wiki/Common-Errors" target="_blank">wiki page</a>. Feel free to add your own!</p> 
+  <hr> 
+  <h1><a id="user-content-key-enhancements" class="anchor" href="https://github.com/ucb-bar/dsptools#key-enhancements" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Key Enhancements</h1> 
+  <p>Key DSP library enhancements over base Chisel (albeit at the expense of coding style restrictions &amp; verbosity--enforces <em>good practice</em>!):</p> 
+  <ol> 
+   <li> <p>Pipeline delay checking (Isn't it annoying when the delays of two signals into an operation don't line up because you forgot to delay a corresponding signal in your haste to close timing?)</p> </li> 
+   <li> <p>Enhanced support for designing and testing DSP with generic types (i.e. switching between <strong>DSPDbl</strong> for verifying functional correctness with double-precision floating point and <strong>DSPFixed</strong> for evaluating fixed-point design metrics by changing a single <strong>sbt run</strong> parameter).</p> </li> 
+  </ol> 
+  <blockquote> 
+   <p>Inside any class that extends <strong>GenDSPModule</strong>, any <code>gen</code> will conform to the <code>Fixed=true/false</code> option used when running <code>make</code>. To create a new IO or internal node of type <strong>gen</strong> with <code>fixedParams=(integerWidth,fractionalWidth)</code>, use <code>gen.cloneType(fixedParams)</code> where the arguments are optional (defaults to integer and fractional widths indicated in the JSON file). If you want to specify a literal (or constant) of type <strong>gen</strong> within your module, use <code>double2T(yourConstant,fixedParams)</code>. Likewise, you can leave out <em>fixedParams</em> if you want to use defaults.</p> 
+  </blockquote> 
+  <ol start="3"> 
+   <li> <p>Supports parameterization from external sources via JSON (i.e. in theory, configuration options for your generator can be passed in from a web interface, like <a href="http://www.spiral.net/hardware/dftgen.html" target="_blank">Spiral</a>). This is achieved with the help of <a href="http://json4s.org" target="_blank">Json4s</a>.</p> </li> 
+   <li> <p>More useful and universal testing platform for numeric types!</p> </li> 
+  </ol> 
+  <blockquote> 
+   <p>Numbers are displayed in their correct formats instead of hex for peek, poke, and expect operations. Additionally, if your tester extends <strong>DSPTester</strong>, you can optionally dump your test sequence to a <strong>Verilog testbench</strong> file for functional verification on all simulation platforms (i.e. Xilinx, Altera, etc. instead of only VCS). The tolerance of comparisons with expected values can also be changed via <code>DSPTester.setTol(floTol = decimal_tolerance, fixedTol = number_of_bits)</code>.</p> 
+  </blockquote> 
+  <ol start="5"> 
+   <li><strong>Miscellaneous additional features</strong> 
+    <ul> 
+     <li>Wide range of LUT modules for ease of generating lookup tables from pre-calculated constants (no intermediate representation)</li> 
+     <li>Memory modules that abstract out confusion associated with Chisel Mem</li> 
+     <li>Generates useful helper files with each Verilog output (constraints, generator parameters used, etc.).</li> 
+     <li>Easier to rename modules &amp; signals and have renaming actually succeed.</li> 
+     <li>Expanding Support for non-base-2 math.</li> 
+     <li>Adds support for numerical processing in the Chisel Environment via <a href="https://github.com/scalanlp/breeze" target="_blank">Breeze</a>.</li> 
+    </ul> </li> 
+  </ol> 
+  <hr> 
+  <h1><a id="user-content-getting-started" class="anchor" href="https://github.com/ucb-bar/dsptools#getting-started" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Getting Started</h1> 
+  <p>This package is under intensive development right now. Changes are happening quickly and there a dependencies on several different branches of related projects.<br> Until we have a stable release, you will have to <code>sbt publish-local</code> recent versions of the various dependencies. The various projects are</p> 
+  <ul> 
+   <li> <p><a href="https://github.com/ucb-bar/firrtl" target="_blank">FIRRTL</a></p> </li> 
+   <li> <p><a href="https://github.com/ucb-bar/firrtl-interpreter" target="_blank">FIRRTL Interpreter</a></p> </li> 
+   <li> <p><a href="https://github.com/ucb-bar/chisel3" target="_blank">Chisel3</a></p> </li> 
+   <li> <p><a href="https://github.com/ucb-bar/chisel-testers" target="_blank">Chisel Testers</a></p> </li> 
+  </ul> 
+  <p>Generally speaking, we try to make sure dsptools works on the latest version of the main branch of all dependencies. However, new features are pretty commonly added by us and other people and we'll end up in version hell, so we've created a repository to track the last known working versions of all our dependencies.</p> 
+  <p>This project is called <a href="https://github.com/ucb-art/dsp-framework" target="_blank">dsp-framework</a> and includes dsptools.</p> 
+  <hr> 
+  <h1><a id="user-content-numeric-typeclasses" class="anchor" href="https://github.com/ucb-bar/dsptools#numeric-typeclasses" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Numeric Typeclasses</h1> 
+  <p>This library defines a number of typeclasses for numeric types. A brief explanation of how typeclasses work in scala can be found <a href="http://typelevel.org/cats/typeclasses.html" target="_blank">here</a> and <a href="http://blog.jaceklaskowski.pl/2015/05/15/ad-hoc-polymorphism-in-scala-with-type-classes.html" target="_blank">here</a>. Our DSP-specific typeclasses are built on top of <a href="https://github.com/non/spire" target="_blank">spire</a>.</p> 
+  <p>The goal of these typeclasses is to make it easy to write chisel modules that treat the number representation as a parameter. For example, using typeclasses you can write chisel that generates an FIR filter for both real and complex numbers. You can also use typeclasses to write chisel that generates a circuit implementation using floating point (via Verilog's real type). After testing that your circuit implementation works with floating point, you can use the same code to generate a fixed point version of the circuit suitable for synthesis.</p> 
+  <p><strong>For a additional, more detailed description of the Numeric classes in dsptools: see <a href="https://github.com/ucb-bar/dsptools/blob/master/src/main/scala/dsptools/numbers/README.md" target="_blank">The Numbers ReadMe</a></strong></p> 
+  <p>A generic function in scala is defined via</p> 
+  <p><code>def func[T](in: T): T</code></p> 
+  <p>This means that you can call <code>func(obj)</code> for an object of any type. If <code>obj</code> is of type <code>Q</code>, you can write <code>func[Q](obj)</code> to specify that we want the <code>Q</code> version of the generic function <code>func</code>, but this is only necessary if the scala compiler can't figure out what <code>Q</code> is supposed to be.</p> 
+  <p>You can also write</p> 
+  <p><code>class SomeClass[T]</code></p> 
+  <p>and use <code>T</code> like it is a real type for any member functions of variables. To write a generic chisel Module, we might try to write</p> 
+  <pre><code>class Passthrough[T](gen: =&gt; T) extends Module {
+  val io = new IO(Bundle {
+    val in = Input(gen)
+    val out = Output(gen)
+  })
+  io.out := io.in
+}
+</code></pre> 
+  <p>Here, <code>gen</code> is a parameter specifying the type you want to use for your IO's, so you could write <code>Module(new Passthrough(SInt(width=10)))</code> or <code>Module(new Passthrough(new Bundle { ... }))</code>. Unfortunately, there's a problem with this. <code>T</code> can be any type, and a lot of types don't make sense, like <code>String</code> or <code>()=&gt;Unit</code>. This will not compile, because <code>.asInput,</code>.asOutput<code>, and</code>:=` are functions defined on chisel types. We can fix this problem by writing</p> 
+  <p><code>class Passthrough[T&lt;:Data](gen: =&gt; T) extends Module</code></p> 
+  <p>This means that we have to choose <code>T</code> to be a subtype of the chisel type <code>Data</code>. Things like <code>UInt</code>, <code>SInt</code>, and <code>Bundle</code> are subtypes of <code>Data</code>. Now the example above should compile. This example isn't very interesting, though. <code>Data</code> lets you do basic things like assignment and make registers, but doesn't define any mathematical operations, so if we write</p> 
+  <pre><code>class Doubler[T&lt;:Data](gen: =&gt; T) extends Module {
+  val io = IO(new Bundle {
+    val in = Input(gen)
+    val out = Output(gen)
+  })
+  io.out := io.in + io.in
+}
+</code></pre> 
+  <p>it won't compile. This is where typeclasses come in. This library defines a trait</p> 
+  <pre><code>trait Real[T] {
+  ...
+  def plus(x: T, y: T): T
+  ...
+}
+</code></pre> 
+  <p>as well as an implicit conversion so that <code>a+b</code> gets converted to <code>Real[T].plus(a,b)</code>. <code>Real[T]</code> is a typeclass. Typeclasses are a useful pattern in scala, so there is nice concise syntax to make using them easy:</p> 
+  <pre><code>import dsptools.numbers.implicits._
+class Doubler[T&lt;:Data:Real](gen: =&gt; T) extends Module
+</code></pre> 
+  <p>(Including the <code>implicits._</code> object is important, otherwise the implicit conversion from <code>io.in + io.in</code> to <code>Real[T].plus(io.in, io.in)</code> won't work).</p> 
+  <p>Note: If you don't include the <code>:Real</code> at the end, the scala compiler will think <code>io.in + io.in</code> is string concatenation and you'll get a weird error saying</p> 
+  <pre><code>[error]  found   : T
+[error]  required: String
+</code></pre> 
+  <p>Some useful typeclasses:</p> 
+  <ul> 
+   <li> <p>Ring</p> 
+    <ul> 
+     <li>defines +, *, -, **, zero, one</li> 
+     <li>defined in <a href="https://github.com/non/spire" target="_blank">Spire</a></li> 
+     <li>Read: <a href="https://en.wikipedia.org/wiki/Ring_(mathematics)" target="_blank">https://en.wikipedia.org/wiki/Ring_(mathematics)</a></li> 
+     <li>Note: We chose to restrict ourselves to <code>Ring</code> rather than <code>Field</code> because division is particularly expensive and nuanced in hardware. Rather than typing <code>a / b</code> we think it is better to require users to instantiate a module and think about what's going on.</li> 
+    </ul> </li> 
+   <li> <p>Eq</p> 
+    <ul> 
+     <li>defines === and =!= (returning chisel Bools!)</li> 
+    </ul> </li> 
+   <li> <p>PartialOrder</p> 
+    <ul> 
+     <li>extends Eq</li> 
+     <li>defines &gt;, &lt;, &lt;=, &gt;= (returning a <code>ValidIO[ComparisonBundle]</code> that has <code>valid</code> false if the objects are not comparable</li> 
+    </ul> </li> 
+   <li> <p>Order</p> 
+    <ul> 
+     <li>extends PartialOrder</li> 
+     <li>defines &gt;, &lt;, &lt;=, &gt;=, min, max</li> 
+    </ul> </li> 
+   <li> <p>Sign</p> 
+    <ul> 
+     <li>defines abs, isSignZero, isSignPositive, isSignNegative, isSignNonZero, isSignNonPositive, isSignNonNegative</li> 
+    </ul> </li> 
+   <li> <p>Real</p> 
+    <ul> 
+     <li>extends Ring with Order with Sign</li> 
+     <li>defines ceil, round, floor, isWhole</li> 
+     <li>defines a bunch of conversion methods from ConvertableTo, e.g. fromDouble, fromInt</li> 
+    </ul> </li> 
+   <li> <p>Integer</p> 
+    <ul> 
+     <li>extends Real</li> 
+     <li>defines mod</li> 
+    </ul> </li> 
+  </ul> 
+  <hr> 
+  <p>This code is maintained by <a href="https://github.com/chick" target="_blank">Chick</a> <a href="https://github.com/shunshou" target="_blank">Angie</a> and <a href="https://github.com/grebe" target="_blank">Paul</a>. Let us know if you have any questions/feedback!</p> 
+  <p>Copyright (c) 2015 - 2016 The Regents of the University of California. Released under the Modified (3-clause) BSD license.</p> 
+ </article>
+</div>

@@ -1,0 +1,308 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/pheymann/artie" target="_blank"><img src="https://camo.githubusercontent.com/36fa66aec851bcfe49b768a11ae8c1ed3538b7cf/68747470733a2f2f7472617669732d63692e6f72672f706865796d616e6e2f61727469652e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/pheymann/artie.svg?branch=master" style="max-width:100%;"></a> <a href="https://maven-badges.herokuapp.com/maven-central/com.github.pheymann/artie_2.12" target="_blank"><img src="https://camo.githubusercontent.com/193a56a8349c4573936dcc8f7f7700a0606b5d2f/68747470733a2f2f6d6176656e2d6261646765732e6865726f6b756170702e636f6d2f6d6176656e2d63656e7472616c2f636f6d2e6769746875622e706865796d616e6e2f61727469655f322e31322f62616467652e737667" alt="Maven Central" data-canonical-src="https://maven-badges.herokuapp.com/maven-central/com.github.pheymann/artie_2.12/badge.svg" style="max-width:100%;"></a></p> 
+  <h1><a id="user-content-wip-artie-from-rrt--rest-refactoring-test-framework" class="anchor" href="https://github.com/pheymann/artie#wip-artie-from-rrt--rest-refactoring-test-framework" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>[WIP] artie {from rrt := rest-refactoring-test-framework}</h1> 
+  <p>You want to change a (legacy) REST service which has no tests and it is impossible to write some tests without rebuilding the whole thing? If so this tool may help you. It is a small framework to generate REST request from different data sets, run them against two instances of your service (old and new) and compare the responses.</p> 
+  <p>The only thing you have to do is:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">artie.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">artie.implicits.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> write a refactoring spec</span>
+<span class="pl-k">object</span> <span class="pl-en">MyServiceRefactoring</span> <span class="pl-k">extends</span> <span class="pl-e">RefactoringSpec</span>(<span class="pl-s"><span class="pl-pds">"</span>my-service<span class="pl-pds">"</span></span>) {
+
+  <span class="pl-k">import</span> <span class="pl-v">DatabaseGenerator.</span><span class="pl-v">DatabaseConfig</span>
+
+  <span class="pl-c"><span class="pl-c">//</span> give some informations</span>
+  <span class="pl-k">val</span> <span class="pl-en">conf</span> <span class="pl-k">=</span> <span class="pl-en">Config</span>(<span class="pl-s"><span class="pl-pds">"</span>old-host<span class="pl-pds">"</span></span>, <span class="pl-c1">8080</span>, <span class="pl-s"><span class="pl-pds">"</span>new-host<span class="pl-pds">"</span></span>, <span class="pl-c1">8080</span>)
+  <span class="pl-k">val</span> <span class="pl-en">db</span>   <span class="pl-k">=</span> mysql(<span class="pl-s"><span class="pl-pds">"</span>db-host<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>pwd<span class="pl-pds">"</span></span>)
+
+  <span class="pl-c"><span class="pl-c">//</span> add some data</span>
+  <span class="pl-k">val</span> <span class="pl-en">providers</span> <span class="pl-k">=</span> <span class="pl-en">Providers</span> <span class="pl-k">~</span>
+    <span class="pl-c"><span class="pl-c">//</span> random ages between 10 and 100</span>
+    (<span class="pl-en">'ages</span>, provide[<span class="pl-k">Int</span>].random(<span class="pl-c1">10</span>, <span class="pl-c1">100</span>) <span class="pl-k">~</span>
+
+    <span class="pl-c"><span class="pl-c">//</span> some user ids from a db</span>
+    (<span class="pl-en">'userIds</span>, provide[<span class="pl-k">Long</span>].database.random(<span class="pl-s"><span class="pl-pds">"</span>users_table<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>user_id<span class="pl-pds">"</span></span>, limit <span class="pl-k">=</span> <span class="pl-c1">100</span>, db)
+
+  <span class="pl-c"><span class="pl-c">//</span> you have to provide `read` (see below)</span>
+  check(<span class="pl-s"><span class="pl-pds">"</span>get-user<span class="pl-pds">"</span></span>, providers, conf, read[<span class="pl-en">User</span>]) { <span class="pl-k">implicit</span> r <span class="pl-k">=&gt;</span> p <span class="pl-k">=&gt;</span>
+    <span class="pl-k">val</span> <span class="pl-en">userId</span> <span class="pl-k">=</span> select(<span class="pl-en">'userIds</span>, p).next
+    <span class="pl-k">val</span> <span class="pl-en">ageO</span>   <span class="pl-k">=</span> select(<span class="pl-en">'ages</span>, p).nextOpt
+
+    <span class="pl-c"><span class="pl-c">//</span> request builder</span>
+    get(s<span class="pl-s"><span class="pl-pds">"</span>/user/$userId<span class="pl-pds">"</span></span>, <span class="pl-en">Params</span> <span class="pl-k">&lt;</span>&amp;<span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>, ageO))
+  }
+}</pre>
+  </div> 
+  <p>And run it:</p> 
+  <pre><code># if both instances behave the same
+sbt "it:runMain MyServiceRefactoring"
+
+testing refactorings for my-service:
+  + check get-user
+
+Success: Total: 1; Succeeded: 1, Invalid: 0; Failed: 0
+
+# in presence of differences
+sbt "it:runMain MyServiceRefactoring"
+
+testing refactorings for my-service:
+  + check get-user
+    processed: 1 / 1
+    
+    Get /user/0?age=20
+    {
+      city: "Hamburg" != "New York"
+    }
+
+Failed: Total: 1; Succeeded: 0, Invalid: 0; Failed: 1
+</code></pre> 
+  <p>Here <code>Invalid</code> indicates requests which lead to 3.x.x, 4.x.x or 5.x.x responses from both service instances and <code>Failed</code> requests which produced different responses were at least one succeeded.</p> 
+  <p>For some examples take a look <a href="https://github.com/pheymann/artie/tree/master/examples/src/it/scala/examples" target="_blank">here</a>.</p> 
+  <h2><a id="user-content-table-of-contents" class="anchor" href="https://github.com/pheymann/artie#table-of-contents" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Table of Contents</h2> 
+  <ul> 
+   <li><a href="https://github.com/pheymann/artie#get-this-framework" target="_blank">Get This Framework</a></li> 
+   <li><a href="https://github.com/pheymann/artie#dependencies" target="_blank">Dependencies</a></li> 
+   <li><a href="https://github.com/pheymann/artie#read-responses" target="_blank">Read responses</a></li> 
+   <li><a href="https://github.com/pheymann/artie#providers" target="_blank">Providers</a></li> 
+   <li><a href="https://github.com/pheymann/artie#testconfig" target="_blank">TestConfig</a></li> 
+   <li><a href="https://github.com/pheymann/artie#data-selector" target="_blank">Data Selector</a></li> 
+   <li><a href="https://github.com/pheymann/artie#request-builder" target="_blank">Request Builder</a></li> 
+   <li><a href="https://github.com/pheymann/artie#test-suite" target="_blank">Test Suite</a></li> 
+   <li><a href="https://github.com/pheymann/artie#ignore-response-fields" target="_blank">Ignore Response Fields</a></li> 
+   <li><a href="https://github.com/pheymann/artie#response-comparison" target="_blank">Response Comparison</a></li> 
+   <li><a href="https://github.com/pheymann/artie#add-your-database" target="_blank">Add your Database</a></li> 
+  </ul> 
+  <h3><a id="user-content-get-this-framework" class="anchor" href="https://github.com/pheymann/artie#get-this-framework" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Get This Framework</h3> 
+  <p>You can add it as dependency for Scala <strong>2.11</strong> and <strong>2.12</strong>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> take a look at the maven batch to find the latest version</span>
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.pheymann<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>artie<span class="pl-pds">"</span></span> <span class="pl-k">%</span> &lt;<span class="pl-ent">version</span>&gt; <span class="pl-k">%</span> <span class="pl-en">Test</span></pre>
+  </div> 
+  <p>or build it locally:</p> 
+  <pre><code>git clone https://github.com/pheymann/artie.git
+cd artie
+sbt "publishLocal"
+</code></pre> 
+  <p>In <strong>Master</strong> you will find the build for Scala 2.12.x. If you need 2.11.x checkout branch <a href="https://github.com/pheymann/artie/tree/2.11.x" target="_blank">2.11.x</a>.</p> 
+  <h3><a id="user-content-dependencies" class="anchor" href="https://github.com/pheymann/artie#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies</h3> 
+  <p>I tried to keep the dependencies to external libraries as small as possible. Currently this framework uses:</p> 
+  <ul> 
+   <li><a href="https://github.com/milessabin/shapeless/" target="_blank">shapeless</a></li> 
+   <li><a href="https://github.com/scalaj/scalaj-http/" target="_blank">scalaj-http</a></li> 
+  </ul> 
+  <h3><a id="user-content-read-responses" class="anchor" href="https://github.com/pheymann/artie#read-responses" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Read responses</h3> 
+  <p>You have to provide functions mapping raw json strings to your <code>case class</code> instances. They are called <code>Read</code>s and implemented like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> by hand</span>
+<span class="pl-k">val</span> <span class="pl-en">userRead</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Read</span>[<span class="pl-en">User</span>] {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">json</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-k">String</span>, <span class="pl-en">User</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+}
+
+<span class="pl-c"><span class="pl-c">//</span> or by reusing your mappings from some frameworks</span>
+<span class="pl-k">object</span> <span class="pl-en">PlayJsonToRead</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">read</span>[<span class="pl-en">U</span>](<span class="pl-k">implicit</span> <span class="pl-v">reads</span>: play.json.<span class="pl-en">Reads</span>[<span class="pl-en">U</span>])<span class="pl-k">:</span> <span class="pl-en">Read</span>[<span class="pl-en">U</span>] <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Read</span>[<span class="pl-en">U</span>] {
+    <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">json</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-k">String</span>, <span class="pl-en">U</span>] <span class="pl-k">=</span> 
+      <span class="pl-en">Json</span>.fromJson[<span class="pl-en">U</span>](<span class="pl-en">Json</span>.parse(json)) <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> <span class="pl-en">JsSuccess</span>(u, _) <span class="pl-k">=&gt;</span> <span class="pl-en">Right</span>(u)
+        <span class="pl-k">case</span> <span class="pl-en">JsError</span>(errors) <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>(errors.mkString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>))
+      }
+  }
+}</pre>
+  </div> 
+  <h3><a id="user-content-providers" class="anchor" href="https://github.com/pheymann/artie#providers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Providers</h3> 
+  <p>Providers select a single element randomly on every <code>next</code> from an underlying data set.</p> 
+  <p>To select the next element you have to determine the provide by its <strong>id</strong>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> for a scalar value</span>
+<span class="pl-k">val</span> <span class="pl-en">id</span> <span class="pl-k">=</span> select(<span class="pl-en">'userIds</span>, providers).next
+
+<span class="pl-c"><span class="pl-c">//</span> for an Option; maybe a Some maybe a None</span>
+<span class="pl-k">val</span> <span class="pl-en">idO</span> <span class="pl-k">=</span> select(<span class="pl-en">'userIds</span>, providers).nextOpt</pre>
+  </div> 
+  <p>This <strong>id</strong> based select is typesafe thanks to <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a>. This means your compiler will tell you if you try to select an non-existing provider.</p> 
+  <h4><a id="user-content-static" class="anchor" href="https://github.com/pheymann/artie#static" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Static</h4> 
+  <p>Provides data from a static sequence:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>provide[<span class="pl-en">User</span>].static(<span class="pl-en">User</span>(<span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span>), <span class="pl-en">User</span>(<span class="pl-s"><span class="pl-pds">"</span>bar<span class="pl-pds">"</span></span>))</pre>
+  </div> 
+  <h4><a id="user-content-random" class="anchor" href="https://github.com/pheymann/artie#random" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Random</h4> 
+  <p>Provides data from a random generator in a range of <code>min</code> / <code>max</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>provide[<span class="pl-k">Long</span>].random(<span class="pl-c1">0</span>, <span class="pl-c1">100</span>)</pre>
+  </div> 
+  <h4><a id="user-content-database" class="anchor" href="https://github.com/pheymann/artie#database" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Database</h4> 
+  <p>Provides data from a Database query:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> provide a query (add a LIMIT as all data is eagerly loaded)!</span>
+provide[<span class="pl-k">Long</span>].database(<span class="pl-s"><span class="pl-pds">"</span>select id from users limit 100<span class="pl-pds">"</span></span>, db)
+
+<span class="pl-c"><span class="pl-c">//</span> or randomly select elements</span>
+provide[<span class="pl-k">Long</span>].database.random(<span class="pl-s"><span class="pl-pds">"</span>users<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-c1">100</span>, db)</pre>
+  </div> 
+  <h5><a id="user-content-database-1" class="anchor" href="https://github.com/pheymann/artie#database-1" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Database</h5> 
+  <p>Currently provided are <code>mysql</code> and <code>h2</code> and have to be used like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">db0</span> <span class="pl-k">=</span> mysql(&lt;<span class="pl-ent">host</span>&gt;, &lt;<span class="pl-ent">user</span>&gt;, &lt;<span class="pl-ent">password</span>&gt;)
+<span class="pl-k">val</span> <span class="pl-en">db1</span> <span class="pl-k">=</span> h2(&lt;<span class="pl-ent">host</span>&gt;, &lt;<span class="pl-ent">user</span>&gt;, &lt;<span class="pl-ent">password</span>&gt;)</pre>
+  </div> 
+  <h3><a id="user-content-testconfig" class="anchor" href="https://github.com/pheymann/artie#testconfig" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>TestConfig</h3> 
+  <p>Mandatory informations:</p> 
+  <ul> 
+   <li><code>baseHost</code>: host address of the old service</li> 
+   <li><code>basePort</code>: port of the old service</li> 
+   <li><code>refactoredHost</code>: host address of the new (refactored) service</li> 
+   <li><code>refactoredPort</code>: port of the new (refactored) service</li> 
+  </ul> 
+  <p>Additional settings (function calls):</p> 
+  <ul> 
+   <li><code>repetitions</code>: how many requests will be created (repeat this check)</li> 
+   <li><code>parallelism</code>: how many requests can be ran in parallel</li> 
+   <li><code>stopOnFailure</code>: default is <code>true</code>, if set to <code>false</code> the test will continue in the presence of a difference</li> 
+   <li><code>shownDiffsLimit</code>: default is <code>1</code>, how many diffs are shown</li> 
+  </ul> 
+  <h3><a id="user-content-data-selector" class="anchor" href="https://github.com/pheymann/artie#data-selector" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Data Selector</h3> 
+  <p>You can select data for your requests by:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>select(<span class="pl-en">'id</span>, p).next <span class="pl-c"><span class="pl-c">//</span> single element</span>
+select(<span class="pl-en">'id</span>, p).nextOpt <span class="pl-c"><span class="pl-c">//</span> single element which can be `Some` or `None`</span>
+select(<span class="pl-en">'id</span>, p).nextSeq(<span class="pl-c1">10</span>) <span class="pl-c"><span class="pl-c">//</span> sequence of elements of length 10</span>
+select(<span class="pl-en">'id</span>, p).nextSet(<span class="pl-c1">10</span>) <span class="pl-c"><span class="pl-c">//</span> set of elements of maximum size 10</span></pre>
+  </div> 
+  <h3><a id="user-content-request-builder" class="anchor" href="https://github.com/pheymann/artie#request-builder" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Request Builder</h3> 
+  <p>You can create:</p> 
+  <ul> 
+   <li><em>get</em></li> 
+   <li><em>put</em></li> 
+   <li><em>post</em></li> 
+   <li><em>delete</em></li> 
+  </ul> 
+  <p>requests by calling:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>get(&lt;<span class="pl-ent">url</span>&gt;, &lt;<span class="pl-ent">query-params</span>&gt;, &lt;<span class="pl-ent">headers</span>&gt;)
+
+post((&lt;<span class="pl-ent">url</span>&gt;, &lt;<span class="pl-ent">query-params</span>&gt;, &lt;<span class="pl-ent">headers</span>&gt;, <span class="pl-en">Some</span>(&lt;<span class="pl-ent">json-string</span>&gt;))</pre>
+  </div> 
+  <h4><a id="user-content-query-parameter-and-headers" class="anchor" href="https://github.com/pheymann/artie#query-parameter-and-headers" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Query Parameter and Headers</h4> 
+  <p>If you need query params or headers use:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">p</span> <span class="pl-k">=</span> <span class="pl-en">Params</span> <span class="pl-k">&lt;</span>&amp;<span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span>) <span class="pl-k">&lt;</span>&amp;<span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span>, <span class="pl-en">Some</span>(<span class="pl-c1">0</span>)) <span class="pl-k">&lt;</span>&amp;<span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span>, <span class="pl-en">Seq</span>(<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>))
+<span class="pl-k">val</span> <span class="pl-en">h</span> <span class="pl-k">=</span> <span class="pl-en">Headers</span> <span class="pl-k">&lt;</span>&amp;<span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>Content-Type<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>application/json<span class="pl-pds">"</span></span>)
+
+post(<span class="pl-k">???</span>, p, h, <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"""</span>{"id": 0}<span class="pl-pds">"""</span></span>))</pre>
+  </div> 
+  <h3><a id="user-content-test-suite" class="anchor" href="https://github.com/pheymann/artie#test-suite" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Test Suite</h3> 
+  <p>You don't want to execute all your specs by hand? Then you <code>artie.suite.RefactoringSpec</code> (as replacement for <code>artie.RefactoringSpec</code>) and <code>artie.suite.RefactoringSuite</code> to build and collect specs you execute together.</p> 
+  <h3><a id="user-content-ignore-response-fields" class="anchor" href="https://github.com/pheymann/artie#ignore-response-fields" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ignore Response Fields</h3> 
+  <p>Sometimes it is necessary to ignore some response fields (eg. timestamp). If you don't want to rewrite your json mapping you can provide a <code>IgnoreFields</code> instance:</p> 
+  <pre><code>final case class Log(msg: String, time: Long)
+
+implicit val logIgnore = IgnoreFields[Log].ignore('time)
+   
+check("log-endpoint", providers, conf, read[Log]) { ...}
+</code></pre> 
+  <p>The <code>Symbol</code> has to be equal to the field name. If you write something which doesn't exists in your <code>case class</code> the compiler will tell you.</p> 
+  <h3><a id="user-content-response-comparison" class="anchor" href="https://github.com/pheymann/artie#response-comparison" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Response Comparison</h3> 
+  <p>Response comparison is done by creating a list of field-value pairs (<a href="https://github.com/milessabin/shapeless/wiki/Feature-overview:-shapeless-2.0.0#generic-representation-of-sealed-families-of-case-classes" target="_blank">LabelledGenerics</a>) from your responses of class <code>R</code> and comparing each field:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>(<span class="pl-v">old</span>: <span class="pl-en">R</span>, <span class="pl-v">refact</span>: <span class="pl-en">R</span>) <span class="pl-k">=&gt;</span> (<span class="pl-v">old</span>: <span class="pl-en">FieldValues</span>, <span class="pl-v">refact</span>: <span class="pl-en">FieldValues</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">Seq</span>[<span class="pl-en">Diff</span>]</pre>
+  </div> 
+  <p>The result is a sequence of <code>Diff</code> with each diff providing the field name and:</p> 
+  <ul> 
+   <li>the two original values,</li> 
+   <li>a set of diffs of the two values.</li> 
+  </ul> 
+  <p>Currently the framework is able to provide detailed compare-results (fields with values) for:</p> 
+  <ul> 
+   <li>simple case classes (<code>case class User(id: Long, name: String</code>)</li> 
+   <li>nested case classes (<code>case class Friendship(base: User, friend: User)</code>)</li> 
+   <li>sequences, sets and arrays of case classes (<code>case class Group(members: Set[User])</code>)</li> 
+   <li>maps of case classes (<code>case class UserTopic(topics: Map[Topic, User])</code>)</li> 
+   <li>combination of these</li> 
+  </ul> 
+  <p>Everythings else will be compare by <code>!=</code> and completely reported on failure.</p> 
+  <p>If you need something else take a look <a href="https://github.com/pheymann/artie/blob/master/core/src/main/scala/artie/GenericDiff.scala#L90" target="_blank">here</a> to get an idea how to implement it.</p> 
+  <h3><a id="user-content-add-your-database" class="anchor" href="https://github.com/pheymann/artie#add-your-database" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Add your Database</h3> 
+  <p>You can add your Database as easy as this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">trait</span> <span class="pl-en">Mysql</span> <span class="pl-k">extends</span> <span class="pl-e">Database</span> {
+
+  <span class="pl-k">val</span> <span class="pl-en">driver</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.mysql.jdbc.Driver<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">def</span> <span class="pl-en">qualifiedHost</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>jdbc:mysql://<span class="pl-pds">"</span></span> <span class="pl-k">+</span> host
+
+  <span class="pl-k">def</span> <span class="pl-en">randomQuery</span>(<span class="pl-v">table</span>: <span class="pl-k">String</span>, <span class="pl-v">column</span>: <span class="pl-k">String</span>, <span class="pl-v">limit</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-k">String</span> <span class="pl-k">=</span>
+    s<span class="pl-s"><span class="pl-pds">"""</span>SELECT DISTINCT t.$column</span>
+<span class="pl-s">       |FROM $table AS t</span>
+<span class="pl-s">       |ORDER BY RAND()</span>
+<span class="pl-s">       |LIMIT $limit</span>
+<span class="pl-s">       |<span class="pl-pds">"""</span></span>.stripMargin  
+}
+
+<span class="pl-k">object</span> <span class="pl-en">Mysql</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">_host</span>: <span class="pl-k">String</span>, <span class="pl-v">_user</span>: <span class="pl-k">String</span>, <span class="pl-v">_password</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Mysql</span> {
+    <span class="pl-k">val</span> <span class="pl-en">host</span> <span class="pl-k">=</span> _host
+    <span class="pl-k">val</span> <span class="pl-en">user</span> <span class="pl-k">=</span> _user
+    <span class="pl-k">val</span> <span class="pl-en">password</span> <span class="pl-k">=</span> _password
+  }
+}</pre>
+  </div> 
+ </article>
+</div>

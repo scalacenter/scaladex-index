@@ -1,0 +1,152 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a id="user-content-simpledba---simple-database-access-for-scala" class="anchor" href="https://github.com/doolse/simpledba#simpledba---simple-database-access-for-scala" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>simpledba - Simple Database Access for Scala</h1> 
+  <p><a href="https://travis-ci.org/doolse/simpledba" target="_blank"><img src="https://camo.githubusercontent.com/8dab768a5129a9a963db82ee3bfe1b9cb3e710c6/68747470733a2f2f6170692e7472617669732d63692e6f72672f646f6f6c73652f73696d706c656462612e737667" alt="Build Status" data-canonical-src="https://api.travis-ci.org/doolse/simpledba.svg" style="max-width:100%;"></a> <a href="https://coveralls.io/github/doolse/simpledba?branch=master" target="_blank"><img src="https://camo.githubusercontent.com/a037bd0a6f679af66b32f732aef829ed65b51511/68747470733a2f2f636f766572616c6c732e696f2f7265706f732f6769746875622f646f6f6c73652f73696d706c656462612f62616467652e7376673f6272616e63683d6d6173746572" alt="Coverage Status" data-canonical-src="https://coveralls.io/repos/github/doolse/simpledba/badge.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>AKA principled column family access for Scala (highly inspired by <a href="https://github.com/tpolecat/doobie" target="_blank">Doobie</a>)</p> 
+  <p>A database access library designed for easy access to Column Family based databases such as:</p> 
+  <ul> 
+   <li>Apache Cassandra</li> 
+   <li>Amazon DynamoDB</li> 
+   <li>Apache HBase</li> 
+  </ul> 
+  <p>All of which are heavily inspired by Google's BigTable.</p> 
+  <h2><a id="user-content-quickstart" class="anchor" href="https://github.com/doolse/simpledba#quickstart" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Quickstart</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">simpledbaVersion</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.0-SNAPSHOT<span class="pl-pds">"</span></span>
+
+libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>io.doolse<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>simpledba-cassandra<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>io.doolse<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>simpledba-circe<span class="pl-pds">"</span></span>
+).map(_ <span class="pl-k">%</span> simpledbaVersion)</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">java.util.</span><span class="pl-v">UUID</span>
+
+<span class="pl-k">import</span> <span class="pl-v">io.doolse.simpledba.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">io.doolse.simpledba.cassandra.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">QuickstartExample</span> <span class="pl-k">extends</span> <span class="pl-e">App</span> {
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">User</span>(<span class="pl-v">userId</span>: <span class="pl-en">UUID</span>, <span class="pl-v">firstName</span>: <span class="pl-k">String</span>, <span class="pl-v">lastName</span>: <span class="pl-k">String</span>, <span class="pl-v">yearOfBirth</span>: <span class="pl-k">Int</span>)
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Car</span>(<span class="pl-v">id</span>: <span class="pl-en">UUID</span>, <span class="pl-v">make</span>: <span class="pl-k">String</span>, <span class="pl-v">model</span>: <span class="pl-k">String</span>, <span class="pl-v">ownerId</span>: <span class="pl-en">UUID</span>)
+
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Queries</span>[<span class="pl-en">F</span>[_]](<span class="pl-v">users</span>: <span class="pl-en">WriteQueries</span>[<span class="pl-en">F</span>, <span class="pl-en">User</span>],
+                           <span class="pl-v">cars</span>: <span class="pl-en">WriteQueries</span>[<span class="pl-en">F</span>, <span class="pl-en">Car</span>],
+                           <span class="pl-v">userByKey</span>: <span class="pl-en">UniqueQuery</span>[<span class="pl-en">F</span>, <span class="pl-en">User</span>, <span class="pl-en">UUID</span>],
+                           <span class="pl-v">usersByFirstName</span>: <span class="pl-en">SortableQuery</span>[<span class="pl-en">F</span>, <span class="pl-en">User</span>, <span class="pl-k">String</span>],
+                           <span class="pl-v">carsForUser</span>: <span class="pl-en">RangeQuery</span>[<span class="pl-en">F</span>, <span class="pl-en">Car</span>, <span class="pl-en">UUID</span>, <span class="pl-k">String</span>]
+                          )
+
+  <span class="pl-k">val</span> <span class="pl-en">userRel</span> <span class="pl-k">=</span> relation[<span class="pl-en">User</span>](<span class="pl-en">'user</span>).key(<span class="pl-en">'userId</span>)
+  <span class="pl-k">val</span> <span class="pl-en">carRel</span> <span class="pl-k">=</span> relation[<span class="pl-en">Car</span>](<span class="pl-en">'car</span>).key(<span class="pl-en">'id</span>)
+  <span class="pl-k">val</span> <span class="pl-en">model</span> <span class="pl-k">=</span> <span class="pl-en">RelationModel</span>(userRel, carRel
+  ).queries[<span class="pl-en">Queries</span>](
+    writes(userRel),
+    writes(carRel),
+    queryByPK(userRel),
+    query(userRel).multipleByColumns(<span class="pl-en">'firstName</span>),
+    query(carRel).multipleByColumns(<span class="pl-en">'ownerId</span>).sortBy(<span class="pl-en">'make</span>)
+  )
+
+  <span class="pl-k">val</span> <span class="pl-en">mapper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">CassandraMapper</span>()
+  <span class="pl-k">val</span> <span class="pl-en">built</span> <span class="pl-k">=</span> mapper.buildModel(model)
+  <span class="pl-k">val</span> <span class="pl-en">queries</span> <span class="pl-k">=</span> built.queries
+  <span class="pl-k">val</span> <span class="pl-en">sessionConfig</span> <span class="pl-k">=</span> <span class="pl-en">CassandraSession</span>(<span class="pl-en">CassandraIO</span>.simpleSession(<span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>), c <span class="pl-k">=&gt;</span> <span class="pl-en">Console</span>.println(c()))
+  <span class="pl-en">CassandraUtils</span>.initKeyspaceAndSchema(sessionConfig, <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, built.ddl, dropKeyspace <span class="pl-k">=</span> <span class="pl-c1">true</span>).unsafeRunSync()
+
+  <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">magId</span> <span class="pl-k">=</span> <span class="pl-en">UUID</span>.randomUUID()
+  <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">mahId</span> <span class="pl-k">=</span> <span class="pl-en">UUID</span>.randomUUID()
+  println {
+    (<span class="pl-k">for</span> {
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.users.insert(<span class="pl-en">User</span>(magId, <span class="pl-s"><span class="pl-pds">"</span>Jolse<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Maginnis<span class="pl-pds">"</span></span>, <span class="pl-c1">1980</span>))
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.users.insert(<span class="pl-en">User</span>(mahId, <span class="pl-s"><span class="pl-pds">"</span>Jolse<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mahinnis<span class="pl-pds">"</span></span>, <span class="pl-c1">1999</span>))
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.cars.insert(<span class="pl-en">Car</span>(<span class="pl-en">UUID</span>.randomUUID(), <span class="pl-s"><span class="pl-pds">"</span>Honda<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Accord Euro<span class="pl-pds">"</span></span>, magId))
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.cars.insert(<span class="pl-en">Car</span>(<span class="pl-en">UUID</span>.randomUUID(), <span class="pl-s"><span class="pl-pds">"</span>Honda<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Civic<span class="pl-pds">"</span></span>, magId))
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.cars.insert(<span class="pl-en">Car</span>(<span class="pl-en">UUID</span>.randomUUID(), <span class="pl-s"><span class="pl-pds">"</span>Ford<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Laser<span class="pl-pds">"</span></span>, magId))
+      _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.cars.insert(<span class="pl-en">Car</span>(<span class="pl-en">UUID</span>.randomUUID(), <span class="pl-s"><span class="pl-pds">"</span>Hyundai<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Accent<span class="pl-pds">"</span></span>, magId))
+      cars <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.carsForUser(magId, lower <span class="pl-k">=</span> <span class="pl-en">Exclusive</span>(<span class="pl-s"><span class="pl-pds">"</span>Honda<span class="pl-pds">"</span></span>)).runLog
+      users <span class="pl-k">&lt;</span><span class="pl-k">-</span> queries.usersByFirstName(<span class="pl-s"><span class="pl-pds">"</span>Jolse<span class="pl-pds">"</span></span>).runLog
+    } <span class="pl-k">yield</span> (cars <span class="pl-k">++</span> users).mkString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>)).run(sessionConfig).unsafeRunSync()
+  }
+}</pre>
+  </div> 
+  <p>Which will produce CQL like:</p> 
+  <pre><code>	CREATE TABLE car(
+		ownerId uuid, make text,
+		id uuid, model text,
+		PRIMARY KEY(ownerId, make, id))
+
+	CREATE TABLE user(
+		firstName text, userId uuid,
+		lastName text, yearOfBirth int,
+		PRIMARY KEY(firstName, userId))
+
+	CREATE TABLE user_2(
+		userId uuid, firstName text,
+		lastName text, yearOfBirth int,
+		PRIMARY KEY(userId))
+		
+INSERT INTO user_2 (userId,firstName,lastName,yearOfBirth) VALUES (6b59b1cd-a266-4b1d-a9ba-8228c5dec668,'Jolse','Maginnis',1980);
+INSERT INTO user (userId,firstName,lastName,yearOfBirth) VALUES (6b59b1cd-a266-4b1d-a9ba-8228c5dec668,'Jolse','Maginnis',1980);
+INSERT INTO car (id,make,model,ownerId) VALUES (74cf528b-2e1c-4e7b-8fba-cb2945170fb5,'Honda','Accord Euro',6b59b1cd-a266-4b1d-a9ba-8228c5dec668);
+SELECT * FROM car WHERE ownerId=6b59b1cd-a266-4b1d-a9ba-8228c5dec668;
+SELECT * FROM user WHERE firstName='Jolse';
+</code></pre> 
+  <h2><a id="user-content-simple--scalable" class="anchor" href="https://github.com/doolse/simpledba#simple--scalable" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Simple == Scalable</h2> 
+  <p>If you're already sold on column family databases just skip ahead to the <a href="https://github.com/doolse/simpledba#Features" target="_blank">Features</a>.</p> 
+  <p>For those only used to the flexibility of SQL databases, don't be fooled by any ridiculous attempts to dress these types of databases up as if they are SQL-like (looking at you CQL!), you're best to think of them being the equivalent of an SQL database in which you can:</p> 
+  <ul> 
+   <li>Find a row by primary key</li> 
+   <li>Find multiple rows by part of the primary key and filtered/ordered by the rest of it.</li> 
+  </ul> 
+  <p>That's a bit of a simplification but still that's a ridiculously limited subset of functionality right? What happens if I want to query by another column in the table, do I have to duplicate the data? Yep. Ouch! Painful. In essence your data model is dictated by the queries you need to do.</p> 
+  <p>Why would anyone want to submit themselves to such limitations? Scalability, that's it. It becomes easy to spread your data out over a large cluster if you restrict to simple access like this. Don't take my word for it : <a href="https://www.quora.com/Which-companies-use-Cassandra" target="_blank">https://www.quora.com/Which-companies-use-Cassandra</a></p> 
+  <h2><a id="user-content-features" class="anchor" href="https://github.com/doolse/simpledba#features" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a name="user-content-#Features" target="_blank" href=""></a>Features</h2> 
+  <ul> 
+   <li>Define your data model as case classes, define which queries you need, let simpledba do the rest</li> 
+   <li>Same model can be used for all supported database types (easy to seamlessly change between them)</li> 
+   <li>Easy to define your own custom column types</li> 
+   <li>Integration with circe for easy custom JSON columns</li> 
+   <li>Multiple results are returned as functional streams (fs2)</li> 
+   <li>Optimised collection update operations when supported by backend DB</li> 
+  </ul> 
+  <h3><a id="user-content-dependencies" class="anchor" href="https://github.com/doolse/simpledba#dependencies" aria-hidden="true" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Dependencies</h3> 
+  <table> 
+   <thead> 
+    <tr> 
+     <th>cats</th> 
+     <th>shapeless</th> 
+     <th>circe</th> 
+     <th>fs2</th> 
+     <th>cassandra-driver</th> 
+     <th>dynamodb-driver</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <td>1.0.0-MF</td> 
+     <td>2.3.2</td> 
+     <td>0.5.0-M1</td> 
+     <td>0.10.0-M6</td> 
+     <td>3.0.0</td> 
+     <td>1.10.75</td> 
+    </tr>
+   </tbody>
+  </table> 
+ </article>
+</div>

@@ -30,7 +30,7 @@
     </ol> </li> 
    <li> <p>In <code>project/plugins.sbt</code>, add:</p> 
     <div class="highlight highlight-source-scala">
-     <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.twitter<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scrooge-sbt-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>4.18.0<span class="pl-pds">"</span></span>)
+     <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.twitter<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>scrooge-sbt-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>4.20.0<span class="pl-pds">"</span></span>)
 addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>io.gatling<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>gatling-sbt<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.2.2<span class="pl-pds">"</span></span>)</pre>
     </div> </li> 
    <li> <p>And enable GatlingPlugin.</p> 
@@ -52,7 +52,7 @@ addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>io.gatling<span cla
   host(<span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>).
   requestName(<span class="pl-s"><span class="pl-pds">"</span>example request<span class="pl-pds">"</span></span>)
 
-<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> client.echo(<span class="pl-k">new</span> <span class="pl-en">Random</span>().nextInt().toString)
+<span class="pl-k">def</span> <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> client.echo(<span class="pl-k">new</span> <span class="pl-en">Random</span>().nextInt().toString)
 
 <span class="pl-k">val</span> <span class="pl-en">scn</span> <span class="pl-k">=</span> senario(<span class="pl-s"><span class="pl-pds">"</span>Thrift Scenario<span class="pl-pds">"</span></span>).repeqt(<span class="pl-c1">100</span>) {
   exec(callback)
@@ -140,35 +140,37 @@ addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.eed3si9n<span c
     </ol> </li> 
    <li> <p>Add settings as below</p> 
     <div class="highlight highlight-source-scala">
-     <pre>assemblyMergeStrategy in assembly <span class="pl-k">:</span><span class="pl-k">=</span> {
-  <span class="pl-k">case</span> <span class="pl-en">PathList</span>(<span class="pl-s"><span class="pl-pds">"</span>io<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>netty<span class="pl-pds">"</span></span>, xs <span class="pl-k">@</span> _ <span class="pl-k">*</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.first
-  <span class="pl-k">case</span> meta(_)                           <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.discard
-  <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>BUILD<span class="pl-pds">"</span></span>                           <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.discard
-  <span class="pl-k">case</span> x <span class="pl-k">=&gt;</span>
-    <span class="pl-k">val</span> <span class="pl-en">oldStrategy</span> <span class="pl-k">=</span> (assemblyMergeStrategy in assembly).value
-    oldStrategy(x)
-}
-
-test in assembly <span class="pl-k">:</span><span class="pl-k">=</span> {}
+     <pre><span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">yourProject</span> <span class="pl-k">=</span> (project in file(<span class="pl-s"><span class="pl-pds">"</span>your-project<span class="pl-pds">"</span></span>))
+  .settings(publishSettings)
+  .settings(
+    ...
+  )
 
 <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">meta</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"""</span>META.INF(.)*<span class="pl-pds">"""</span></span>.r
 
-assemblyJarName in assembly <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gatling-thrift-example.jar<span class="pl-pds">"</span></span>
-
-mainClass in assembly <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>simulation.ThriftSimulationMain<span class="pl-pds">"</span></span>)
-
-mappings in <span class="pl-en">Universal</span> <span class="pl-k">:</span><span class="pl-k">=</span> {
-  <span class="pl-k">val</span> <span class="pl-en">universalMappings</span> <span class="pl-k">=</span> (mappings in <span class="pl-en">Universal</span>).value
-  <span class="pl-k">val</span> <span class="pl-en">fatJar</span> <span class="pl-k">=</span> (assembly in <span class="pl-en">Compile</span>).value
-  <span class="pl-k">val</span> <span class="pl-en">filtered</span> <span class="pl-k">=</span> universalMappings.filter {
-    <span class="pl-k">case</span> (file, name) <span class="pl-k">=&gt;</span> <span class="pl-k">!</span>name.endsWith(<span class="pl-s"><span class="pl-pds">"</span>.jar<span class="pl-pds">"</span></span>)
-  }
-  filtered <span class="pl-k">:</span><span class="pl-k">+</span> (fatJar <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>lib/<span class="pl-pds">"</span></span> <span class="pl-k">+</span> fatJar.getName))
-}
-
-scriptClasspath <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>((assemblyJarName in assembly).value)
-
-publish <span class="pl-k">:</span><span class="pl-k">=</span> (publish in <span class="pl-en">Universal</span>).value  <span class="pl-c"><span class="pl-c">//</span> if you want to publish to local repository, add `publishLocal := (publish in Universal).value`</span></pre>
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">publishSettings</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  assemblyMergeStrategy in assembly <span class="pl-k">:</span><span class="pl-k">=</span> {
+    <span class="pl-k">case</span> <span class="pl-en">PathList</span>(<span class="pl-s"><span class="pl-pds">"</span>io<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>netty<span class="pl-pds">"</span></span>, xs <span class="pl-k">@</span> _ <span class="pl-k">*</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.first
+    <span class="pl-k">case</span> meta(_)                           <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.discard
+    <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>BUILD<span class="pl-pds">"</span></span>                           <span class="pl-k">=&gt;</span> <span class="pl-en">MergeStrategy</span>.discard
+    <span class="pl-k">case</span> x <span class="pl-k">=&gt;</span>
+      <span class="pl-k">val</span> <span class="pl-en">oldStrategy</span> <span class="pl-k">=</span> (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  },
+  test in assembly <span class="pl-k">:</span><span class="pl-k">=</span> {},
+  assemblyJarName in assembly <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gatling-thrift-example.jar<span class="pl-pds">"</span></span>,
+  mainClass in assembly <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-s"><span class="pl-pds">"</span>simulation.ThriftSimulationMain<span class="pl-pds">"</span></span>),
+  mappings in <span class="pl-en">Universal</span> <span class="pl-k">:</span><span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">universalMappings</span> <span class="pl-k">=</span> (mappings in <span class="pl-en">Universal</span>).value
+    <span class="pl-k">val</span> <span class="pl-en">fatJar</span> <span class="pl-k">=</span> (assembly in <span class="pl-en">Compile</span>).value
+    <span class="pl-k">val</span> <span class="pl-en">filtered</span> <span class="pl-k">=</span> universalMappings.filter {
+      <span class="pl-k">case</span> (file, name) <span class="pl-k">=&gt;</span> <span class="pl-k">!</span>name.endsWith(<span class="pl-s"><span class="pl-pds">"</span>.jar<span class="pl-pds">"</span></span>)
+    }
+    filtered <span class="pl-k">:</span><span class="pl-k">+</span> (fatJar <span class="pl-k">-</span><span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>lib/<span class="pl-pds">"</span></span> <span class="pl-k">+</span> fatJar.getName))
+  },
+  scriptClasspath <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>((assemblyJarName in assembly).value)
+  publish <span class="pl-k">:</span><span class="pl-k">=</span> (publish in <span class="pl-en">Universal</span>).value  <span class="pl-c"><span class="pl-c">//</span> if you want to publish to local repository, add `publishLocal := (publish in Universal).value`</span>
+)</pre>
     </div> </li> 
    <li> <p>Execute publish task</p> 
     <div class="highlight highlight-source-shell">
