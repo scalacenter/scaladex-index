@@ -35,7 +35,7 @@
           },
           {
             "number":299,
-            "title":"Run Zinc server in the background on a Windows environment",
+            "title":"Provide nailgun integration for Zinc",
             "bodyText":"Please add a built-in method to run Zinc server in the background on a Windows environment, preferably with an option to start the server on Windows login (say, a service).\nMy current workaround is quite messy; I have one .bat which runs the server via Git Bash (using the Unix command to start the server), and then another .bat which calls the first .bat from Windows startup directory, which leaves an open cmd window at the end (couldn't work around that).",
             "url":"https://github.com/sbt/zinc/issues/299"
           },
@@ -68,6 +68,36 @@
             "title":"Cached doc is not using Tracked.outputChanged",
             "bodyText":"Related to sbt/util#79\nI noticed that cached doc in https://github.com/sbt/zinc/blob/1.0/zinc-compile/src/main/scala/sbt/inc/Doc.scala is not using Tracked.outputChanged.\nThe fix could wait post RC-1",
             "url":"https://github.com/sbt/zinc/issues/369"
+          },
+          {
+            "number":395,
+            "title":"\"sbt '++ 2.13.0-M2!' compile\" does not work with sbt 1.0.0",
+            "bodyText":"Originally reported by @xuwei-k as sbt/sbt#3427\n/tmp/sbt_a4c7a1d5/xsbt/ConsoleInterface.scala:11: error: object ILoop is not a member of package scala.tools.nsc.interpreter\nimport scala.tools.nsc.interpreter.{ ILoop, IMain, InteractiveReader }\n       ^\n/tmp/sbt_a4c7a1d5/xsbt/ConsoleInterface.scala:41: error: not found: type ILoop\n    val loop = new ILoop {\n                   ^\nWe need a new compiler bridge for Scala 2.13.\n/cc @lrytz",
+            "url":"https://github.com/sbt/zinc/issues/395"
+          },
+          {
+            "number":400,
+            "title":"We should allow clients to overriding classpath hashing",
+            "bodyText":"Zinc has a lot hooks to improve incremental compilation performance in case of really big projects. However when we hash classpath we just do tons of IO operations without  any way to e.g. reuse libs hashed before.\nIn case of 100+ projects with 100+ libs and on slower IO (e.g. windows) it takes a while during each compilation (even no-op ones).\nI haven't found a way to do it  without breaking binary compatibility but simple proposal how it can be done is here: https://github.com/romanowski/zinc/tree/hashing-classpath-proposal\n@stuhood I think pants may also benefit from caching classpath hashes.",
+            "url":"https://github.com/sbt/zinc/issues/400"
+          },
+          {
+            "number":403,
+            "title":"Custom compiler-bridge module requires compiler-interface to be a compile time dependency",
+            "bodyText":"There has been a slight change in how a custom compiler-bridge module must declare its dependency on the sbt compiler-interface. With sbt 0.13, the interface dependency could be scoped as \"provided\", but that is no longer possible with sbt 1.0. In fact, if the compiler-interface is scoped to \"provided\", sbt 1.0 will produce compile time errors when attempting to compile the custom compiler-bridge source jar, because it can't find the types that are defined in the compiler-interface module.\nIn a nutshell, in sbt 0.13 I had the following declaration for my custom compiler-bridge:\nlazy val `custom-compiler-bridge` = (project in file(\"compiler-bridge\"))\n  .settings(\n    libraryDependencies += \"org.scala-sbt\" % \"interface\" % sbtVersion.value % \"provided\", // <-- note the provided scope.\n    ...\n  )\n\nWhile in sbt 1.0 it had to be changed to:\nlazy val `custom-compiler-bridge` = (project in file(\"compiler-bridge\"))\n  .settings(\n    libraryDependencies += \"org.scala-sbt\" % \"compiler-interface\" % ZincVersion, // <-- note the missing provided scope.\n    ...\n  )\n\nI'm opening a ticket as it was demanded by @eed3si9n (https://gitter.im/sbt/sbt-contrib?at=59a4348a76a757f808f0b870)",
+            "url":"https://github.com/sbt/zinc/issues/403"
+          },
+          {
+            "number":405,
+            "title":"Provide a thread-safe version of `AnalysisCallback`",
+            "bodyText":"AnalysisCallback is as of now not thread-safe. In @dragos's words:\n\nSince we run several workers at the same time, and each worker has its own Global and analysis extraction logic, they perform updates concurrently. We used to override the compileIncrementalTask and fork some parts of Sbt to get to call our own implementation, but I think there should be a cleaner way, especially since xscbti.AnalysisCallback is an interface so it would be nice to be able to provide a different implementation.\n\nThis feature enables future parallel Scala compilers (like Hydra) to use the incremental compiler out of the box.\nThe place where the implementation should be provided is https://github.com/sbt/zinc/blob/1.x/internal/zinc-core/src/main/scala/sbt/internal/inc/Compile.scala, probably in an independent file.\nThe tests can be added in the zincCore project.",
+            "url":"https://github.com/sbt/zinc/issues/405"
+          },
+          {
+            "number":406,
+            "title":"Add a hook to filter out Scala options in every compile",
+            "bodyText":"If scala options change from one run to the other one, Zinc recompiles the whole project conservatively.\nWith the advent of compilers like Dotty, Hydra and rsc, the current behaviour is too restrictive because some downstream users may want to filter out scalac options that are dependent to the way compilation should occur (like number of cores). This is safe to do because downstream users know which scala flags affect the compilation and which do not.\nYou can add this hook in ExternalHooks https://github.com/sbt/zinc/blob/1.x/internal/compiler-interface/src/main/java/xsbti/compile/ExternalHooks.java and https://github.com/sbt/zinc/blob/1.x/internal/compiler-interface/src/main/java/xsbti/compile/DefaultExternalHooks.java. The method compile in IncrementalCompilerImpl already takes an instance of IncOptions, which inside has an instance of ExternalHooks, so the last thing to do is to use the external hook we've just provided in the body of makeConfig, inside MixedAnalyzingCompiler: https://github.com/sbt/zinc/blob/1.x/zinc/src/main/scala/sbt/internal/inc/MixedAnalyzingCompiler.scala#L183-L214\n/cc @dragos",
+            "url":"https://github.com/sbt/zinc/issues/406"
           }
         ]
       }

@@ -4,18 +4,6 @@
       "issues":{
         "nodes":[
           {
-            "number":109,
-            "title":"Respect Content-Transfer-Encoding in BodyPartParser",
-            "bodyText":"Issue by kswmsw\nMonday Feb 23, 2015 at 17:15 GMT\nOriginally opened as akka/akka#16921\n\nakka.http.engine.parsing.BodyPartParser in akka-http-core-experimental 1.0-M3 ignores the Content-Transfer-Encoding header when parsing the entity. This means that currently if a client uploads a body part with Content-Transfer-Encoding quoted-printable or base64, the wrong data is passed to the application with no error or warning.\nInstead, Akka should respect this header, and use its value to decode the bytes of the incoming stream when constructing the bytes of the body part. The dataBytes of the parsed body part should be the decoded bytes of the body part, not the raw bytes of the multipart entity.\nThe relevant standards are RFC2046 section 5.1 and RFC2045 section 6. According to these, each part of a multipart entity may have a Content-Transfer-Encoding. If this has value quoted-printable or base64, then the content of the body part has been encoded with the named encoding. If it is 7bit, 8bit, binary, or omitted, then no encoding has been applied.\nApache Commons has Base64 and QuotedPrintableCodec which may be applicable in an implementation.",
-            "url":"https://github.com/akka/akka-http/issues/109"
-          },
-          {
-            "number":110,
-            "title":"document that HTTP route construction must not close over Actor state",
-            "bodyText":"Issue by rkuhn\nThursday Feb 12, 2015 at 20:01 GMT\nOriginally opened as akka/akka#16871\n\nThe pattern we show should be inspired by the Props recommendation: build the Route in a function within the companion object to make sure that nothing is pulled in accidentally, all captured values are explicit.",
-            "url":"https://github.com/akka/akka-http/issues/110"
-          },
-          {
             "number":112,
             "title":"Add support for OAuth authentication",
             "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:59 GMT\nOriginally opened as akka/akka#16857\n\nSee spray/spray#1007 and the previous unmerged PR spray/spray#372.\n/cc @sirthias",
@@ -146,12 +134,6 @@
             "title":"HttpEntity.toStrict should not collect unlimited amounts of data and piggy back on generic ByteString aggregation stage",
             "bodyText":"Issue by jrudolph\nTuesday Sep 29, 2015 at 13:04 GMT\nOriginally opened as akka/akka#18592\n\nI.e. it should get another parameter with the maximum number of bytes it should aggregate before failing.",
             "url":"https://github.com/akka/akka-http/issues/268"
-          },
-          {
-            "number":271,
-            "title":"How to cleanup after response in akka-http",
-            "bodyText":"Issue by adamretter\nSaturday Sep 26, 2015 at 22:10 GMT\nOriginally opened as akka/akka#18571\n\nI am using the routing DSL in Akka HTTP.\nI extract a file from a Multipart form upload request and write it to a temporary location on disk, I then process that file which creates a second temporary file.\nI return the second temporary file as my response to the user. However, once the response has been sent to the user, I would like to delete the two temporary files that I created.\nMy route contains something like this:\nencodeResponse {\n  complete(HttpResponse(OK, entity = HttpEntity(`application/pdf`, pdfResult.jfile: File)))\n}\n\nMy question is how do I know when the response has been fully sent to the client so that I can delete the temporary pdfResult file from disk?",
-            "url":"https://github.com/akka/akka-http/issues/271"
           },
           {
             "number":272,
@@ -508,12 +490,6 @@
             "url":"https://github.com/akka/akka-http/issues/1271"
           },
           {
-            "number":1273,
-            "title":"fileUpload & uploadedFile directives don't support multiple files upload",
-            "bodyText":"At the moment, the mentioned directives (fileUpload and uploadedFile) support only single file uploads, so sth like:\ncurl -v -F \"file1=@file1\" httpbin.org/post\n\n*   Trying 54.227.244.176...\n* Connected to httpbin.org (54.227.244.176) port 80 (#0)\n> POST /post HTTP/1.1\n> Host: httpbin.org\n> User-Agent: curl/7.47.0\n> Accept: */*\n> Content-Length: 206\n> Expect: 100-continue\n> Content-Type: multipart/form-data; boundary=------------------------5f9b54e9aa8d5aff\n> \n* Done waiting for 100-continue\n< HTTP/1.1 100 Continue\n< HTTP/1.1 200 OK\n< Connection: keep-alive\n< Server: meinheld/0.6.1\n< Date: Fri, 07 Jul 2017 18:53:28 GMT\n< Content-Type: application/json\n< Access-Control-Allow-Origin: *\n< Access-Control-Allow-Credentials: true\n< X-Powered-By: Flask\n< X-Processed-Time: 0.00159978866577\n< Content-Length: 463\n< Via: 1.1 vegur\n< \n{\n  \"args\": {}, \n  \"data\": \"\", \n  \"files\": {\n    \"file1\": \"Hello \\n\\n\"\n  }, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Connection\": \"close\", \n    \"Content-Length\": \"206\", \n    \"Content-Type\": \"multipart/form-data; boundary=------------------------5f9b54e9aa8d5aff\", \n    \"Expect\": \"100-continue\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"curl/7.47.0\"\n  }, \n  \"json\": null, \n  \"origin\": \"89.79.154.104\", \n  \"url\": \"http://httpbin.org/post\"\n}\n* Connection #0 to host httpbin.org left intact\n\nBut, the multi-file upload is not currently supported, so you cannot do sth like:\ncurl -v -F \"file1=@file1\" -F \"file2=@file2\" -F \"file3=@file3\" httpbin.org/post\n\n*   Trying 54.243.246.56...\n* Connected to httpbin.org (54.243.246.56) port 80 (#0)\n> POST /post HTTP/1.1\n> Host: httpbin.org\n> User-Agent: curl/7.47.0\n> Accept: */*\n> Content-Length: 519\n> Expect: 100-continue\n> Content-Type: multipart/form-data; boundary=------------------------8db1604fa6d38907\n> \n* Done waiting for 100-continue\n< HTTP/1.1 100 Continue\n< HTTP/1.1 200 OK\n< Connection: keep-alive\n< Server: meinheld/0.6.1\n< Date: Fri, 07 Jul 2017 18:57:26 GMT\n< Content-Type: application/json\n< Access-Control-Allow-Origin: *\n< Access-Control-Allow-Credentials: true\n< X-Powered-By: Flask\n< X-Processed-Time: 0.00107789039612\n< Content-Length: 510\n< Via: 1.1 vegur\n< \n{\n  \"args\": {}, \n  \"data\": \"\", \n  \"files\": {\n    \"file1\": \"Hello \\n\\n\", \n    \"file2\": \"World \\n\", \n    \"file3\": \"!\\n\"\n  }, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Connection\": \"close\", \n    \"Content-Length\": \"519\", \n    \"Content-Type\": \"multipart/form-data; boundary=------------------------8db1604fa6d38907\", \n    \"Expect\": \"100-continue\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"curl/7.47.0\"\n  }, \n  \"json\": null, \n  \"origin\": \"89.79.154.104\", \n  \"url\": \"http://httpbin.org/post\"\n}\n* Connection #0 to host httpbin.org left intact\n\nMy initial idea is to provide alternative directives, which would use the files map available in the request :\n  \"files\": {\n    \"file1\": \"Hello \\n\\n\", \n    \"file2\": \"World \\n\", \n    \"file3\": \"!\\n\"\n  }\n\nand which would provide means to operate on all files which were uploaded in a given http request.\nIs it a reasonable approach ? Do you see any issues with this approach ?",
-            "url":"https://github.com/akka/akka-http/issues/1273"
-          },
-          {
             "number":1278,
             "title":"Allow configuration of client infrastructure dispatcher",
             "bodyText":"Stream parts of the pool run with the dispatcher defined in the passed Materializer. Actor parts of the pool, however, run with the dispatcher given to the PoolMasterActor. We should allow customizing the dispatcher used there.\nOriginal request on the ML: https://groups.google.com/d/topic/akka-user/E_PEnXSBM1I/discussion",
@@ -602,6 +578,30 @@
             "title":"Thread loops infinitely consuming CPU with non-zero `akka.http.host-connection-pool.min-connections` setting",
             "bodyText":"This issue created as followup for 2-months-old thread in google groups: https://groups.google.com/forum/#!topic/akka-user/062Op2fyD-E\nSorry for absent of minimal example, only text description here.\nHow to reproduce:\n\nCreate temporary DNS record (we were doing this with Amazon Route53 service)\nSpin up Actor System with akka.http.host-connection-pool.min-connections set to non-zero value\nMake request (from the ActorSystem) to the temp. DNS name\nDelete DNS record\n(Optional) Make any http request\n\nAs a result - one of threads\\actors starts to consume all available CPU by processing some inner-state actor messages.",
             "url":"https://github.com/akka/akka-http/issues/1391"
+          },
+          {
+            "number":1393,
+            "title":"Cannot set status code and prevent content negotiation when the entity is empty",
+            "bodyText":"This is somewhat related to #366 and I lifted the test case from that issue and modified below.\nWhen a route completes with a status code but provides no content, the marshaling will fail with StatusCode.NotAcceptable if the request doesn't accept text/plain.\nimport akka.http.scaladsl.model.headers.Accept\nimport akka.http.scaladsl.model.{ MediaTypes, StatusCodes }\nimport akka.http.scaladsl.server.{ Directives, Route }\nimport akka.http.scaladsl.testkit.ScalatestRouteTest\nimport org.scalatest.{ Matchers, WordSpecLike }\n\nclass NoContentSpec extends WordSpecLike with Matchers with ScalatestRouteTest with Directives {\n    // note returning custom code but do not want the standard akka \"OK\" response for example\n    val noContentRoute: Route = complete(StatusCodes.OK, HttpEntity.Empty)\n\n    \"The noContentRoute\" should {\n        \"return HTTP NoContent for accept header `application/json`\" in {\n            Get(\"/\").withHeaders(Accept(MediaTypes.`application/json`)) ~> noContentRoute ~> check {\n                status shouldBe StatusCodes.OK\n                response.entity shouldBe HttpEntity.Empty\n            }\n        }\n    }\n}\nRun starting. Expected test count is: 1\nNoContentSpec:\nThe noContentRoute\n- should return HTTP NoContent for accept header `application/json` *** FAILED ***\n  Request was rejected with rejection UnacceptedResponseContentTypeRejection(Set(ContentType(none/none)))",
+            "url":"https://github.com/akka/akka-http/issues/1393"
+          },
+          {
+            "number":1417,
+            "title":"Use akka-http to build an HTTP/HTTPs  proxy server",
+            "bodyText":"In #1316, akka-http would gracefully reject CONNECT request.\nIf an option that accepts CONNECT is added, users can easily use Http().serverLayer  to implement their http proxy.",
+            "url":"https://github.com/akka/akka-http/issues/1417"
+          },
+          {
+            "number":1430,
+            "title":"HttpEntity.discardBytes Scaladoc",
+            "bodyText":"I am trying to figure something out and either I am misunderstanding the documentation or it is wrong.\nEither way, I would appreciate some clarification :)\nMy question will be about HttpEntity.discardBytes and HttpMessage.discardEntityBytes (which is essentially the same thing)\n\n  \n    \n      akka-http/akka-http-core/src/main/scala/akka/http/scaladsl/model/HttpEntity.scala\n    \n    \n         Line 96\n      in\n      c3b6705\n    \n    \n    \n    \n\n        \n          \n           override def discardBytes(mat: Materializer): HttpMessage.DiscardedEntity = \n        \n    \n  \n\n\nThe Scaladoc says this:\nIf the dataBytes source is materialized a second time, it will fail with an \"stream can cannot be materialized more than once\" exception.\n\nI have this code:\nimplicit val system = ActorSystem(name = \"Playground\")\nval materializer = ActorMaterializer() // Non-implicit by choice\n\nval entity = HttpEntity(ContentTypes.`application/json`, \"Hello world\")\nval request = HttpRequest(entity = entity)\n\nval blubb1 = Await.result(request.discardEntityBytes()(materializer).future, 10.seconds)\nval blubb2 = Await.result(request.discardEntityBytes()(materializer).future, 10.seconds)\n\nprintln(blubb1)\nprintln(blubb2)\nShould I not see an exception as per Scaladoc? Or am I misunderstanding?\nI do not, both blubb{1,2} are printed out...\nI even found this test: \n  \n    \n      akka-http/akka-http-core/src/test/scala/akka/http/scaladsl/model/EntityDiscardingSpec.scala\n    \n    \n         Line 58\n      in\n      74302ef\n    \n    \n    \n    \n\n        \n          \n           \"should not allow draining a second time\" in { \n        \n    \n  \n\n\nAm I brain-farting here or is the test not doing essentially the same I am trying?!",
+            "url":"https://github.com/akka/akka-http/issues/1430"
+          },
+          {
+            "number":1432,
+            "title":"Http2 provide Tls Session Info header",
+            "bodyText":"I tried out http2 and found that the Tls Session Info header was not being provided. This works fine if I don't use the Java agent which makes the negotiation fall back to using http/1.1.",
+            "url":"https://github.com/akka/akka-http/issues/1432"
           }
         ]
       }
