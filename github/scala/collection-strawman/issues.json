@@ -4,22 +4,34 @@
       "issues":{
         "nodes":[
           {
+            "number":42,
+            "title":"A more sensible `groupBy` API?",
+            "bodyText":"This is the result of some personal experimentations. Please let me know if it's not appropriate to post that here.\nIntroduction\nThe groupBy method is very powerful and pretty useful, but it often suffers from inefficiencies because of the way its API is specified:\n\n\nIt is supposed to return an immutable Map. While sometimes useful, it's often not what one needs. Many uses of groupBy end up mapping or simply iterating on the result, in which case having a Map early is counter-productive.\nNotice that the standard implementation of groupBy constructs a mutable.Map and then rebuilds it into an immutable.Map, a final step that is often redundant.\nProposal: Make the method return an Iterable of the same type as the current collection, and let the user decide whether to call toMap on it or not. One can also write something like xs.view.groupBy(f) which returns an immutable view into the internal mutable.Map used by groupBy, avoiding any unnecessary intermediate container (note that the call to groupBy is still strict nonetheless).\n\n\nA very common use-case of groupBy involves transforming the values after having grouped them. Doing this as a second step as in xs.groupBy(_.a).mapValues(_.map(_.b)) is wasteful as it creates needless intermediate collections.\nProposal: Have an optional parameter to specify the value mapping to perform while grouping values. As long as this parameter has a default value, it should not even break the current API, as both groupBy(f) and groupBy(f,g) would be valid.\nNote: after implementing this, I discovered that user @balefrost had already mentioned the problem, and that it turns out that's how it's already done in C#.\n\n\nWith the new design based on the Iterable hierarchy, it is currently not possible to directly build the buckets of the grouped elements because there is no way to obtain a builder of the current collection. Although it should be possible eventually, I'm not even sure it makes much sense to have the buckets mirror the original collection type anyway. In this proposal groupBy simply returns buckets as View[V].\n\n\nImplementation\nI have implemented the traditional groupBy API (but it's currently suboptimal because of the lack of newBuilder), along with my proposal for a modified API called viewBy, the signature of which is:\ndef viewBy[K,V](fk: A => K, fv: A => V = (a:A) => a): C[(K, View[V])]\nBenchmark\nTo show an example where one only wants to iterate over the result of groupBy, I implemented the following equivalent algorithms (where xs:Iterable[(Int,java.lang.String)]):\ndef groupBy(): Any = {\n  var sum = 0\n  xs.groupBy(_._1).mapValues(_.map(_._2)).foreach {\n    case (k,v) => sum += k * v.foldLeft(0)(_ + _.length)\n  }}\ndef groupBy_sensible(): Any = {\n  var sum = 0\n  xs.viewBy(_._1,_._2).foreach {\n    case (k,v) => sum += k * v.foldLeft(0)(_ + _.length)\n  }}\ndef groupBy_sensView(): Any = {\n  var sum = 0\n  xs.view.viewBy(_._1,_._2).foreach {\n    case (k,v) => sum += k * v.foldLeft(0)(_ + _.length)\n  }}\nMy results are as follows:\n\ngroupBy_sensible and groupBy_sensView are often significantly faster than the other implementations, up to twice faster for smaller collections.",
+            "url":"https://github.com/scala/collection-strawman/issues/42"
+          },
+          {
+            "number":71,
+            "title":"Map functional combinators",
+            "bodyText":"Last year I opened a PR to Scala 2.12 aimed to include a join like operation subset within Map operations set:\nscala/scala#5353\nAfter some discussion it was clear that a more functional interface would fit better with the current map collections interface as join methods belong to the foreign (and not so abstract) realm of databases operations.\nThat was thoroughly syntetized by @szeiger 's  comment, who proposed the following operation set:\ndef zipByKeyWith[W, X](that: Map[K, W])(f: (V, W) => X): Map[K, X]\ndef zipByKey[W](that: Map[K, W]): Map[K, (V, W)] = zipByKeyWith(that)(_ -> _)\nAnd, to be able to handle non matching - in both maps - keys:\ndef mergeByKeyWith[W, X](that: Map[K, W](f: PartialFunction[(Option[V], Option[W]), X]: Map[K, X]\ndef mergeByKey[W](that: Map[K, W]): Map[K, (Option[V], Option[W])] = mergeByKeyWith(that)(PartialFunction(identity))\nmerge* would then be the way to provide left/right/full-outer join logical operations.\nHow could join operations be expressed using this API?\n(NOTE:  This is an application example, not part of the requested functionality)\n\nInner join:\n\ndef join[K, VA, VB](a: Map[K, VA], b: Map[K, VB]): Map[K, (VA, VB)] =\n    a zipByKey b\n\nLeft outer join:\n\ndef leftOuterJoin[K, VA, VB](a: Map[K, VA], b: Map[K, VB]): Map[K, (VA, Option[VB])] =\n    a.mergeByKeyWith(b) { case (Some(va), optVb) => va -> optVb }\n\nRight outer join:\n\ndef rightOuterJoin[K, VA, VB](a: Map[K, VA], b: Map[K, VB]): Map[K, (Option[VA], VB)] = \n    a.mergeByKeyWith(b) { case (optVa, Some(vb)) => optVa -> vb }\n\nFull outer join:\n\ndef fullOuterJoin[K, VA, VB](a: Map[K, VA], b: Map[K, VB]): Map[K, (Option[VA], Option[VB])] = \n    a.mergeByKey(b)\nI think mergeByKey* operations are important as they cover all outer cases. In fact, zipByKeyWith implementation could be:\ndef zipByKeyWith[W, X](that: Map[K, W])(f: (V, W) => X): Map[K, X] = \n    mergeByKeyWith(that) { case (Some(va), Some(vb)) => f(va, vb) }\nBut I wouldn't use that implementation since, provided you're zipping only matching keys, you could avoid scrutinising that key set.",
+            "url":"https://github.com/scala/collection-strawman/issues/71"
+          },
+          {
+            "number":107,
+            "title":"FoldWhile",
+            "bodyText":"Recently I came across this code:\n  implicit class GenTraversableOnceExtensions[A](val coll: GenTraversableOnce[A]) extends AnyVal{\n    /**\n    Fold while accumulation function returns Some. Stops on first None.\n    @param initial initual element to start the accumulation on\n    @param accumulate accumulation function\n    */\n    def foldWhile[A1 >: A](initial: A1)\n      (accumulate: (A1, A1) => Option[A1]): A1\n      = foldLeftWhile[A1](initial)(accumulate)\n\n    /**\n    Fold while accumulation function returns Some. Stops on first None.\n    @param initial initual element to start the accumulation on\n    @param accumulate accumulation function\n    */\n    def foldLeftWhile[B](initial: B)\n      (accumulate: (B, A) => Option[B]): B = {\n      @tailrec\n      def loop(it: Iterator[A], prev: B): B = {\n        if(it.hasNext){\n          val next = it.next\n          val current = accumulate(prev,next)\n          if (current.isEmpty) prev\n          else loop(it,current.get)\n        } else prev\n      }\n      loop(coll.toIterator, initial)\n    }\n  }\nI'm written multiple variations of an abort early fold like this one.\nI think it is a sufficiently common use case with collections that should merit its inclusion the new redesign. Unfortunately I have no data to prove it is in fact a common use case.",
+            "url":"https://github.com/scala/collection-strawman/issues/107"
+          },
+          {
             "number":143,
             "title":"Fix scaladoc",
             "bodyText":"The scaladoc comments have been mostly copied from the current collections. They sometimes contains references to undefined variables.",
             "url":"https://github.com/scala/collection-strawman/issues/143"
           },
           {
-            "number":163,
-            "title":"Incorrect benchmarks charts",
-            "bodyText":"The horizontal scale messes with zero:",
-            "url":"https://github.com/scala/collection-strawman/issues/163"
-          },
-          {
-            "number":170,
-            "title":"Specialize for small number of elements",
-            "bodyText":"Set and Map, for instance.",
-            "url":"https://github.com/scala/collection-strawman/issues/170"
+            "number":155,
+            "title":"Scaladoc with images",
+            "bodyText":"The documentation of ReactiveX Observable uses images for a lot of the methods, things like:\nMap:\n\nFlatten:\n\nDistinct:\n\nI find these diagrams very useful to explain the functions on collections for people that are learning Scala for the first time.\nI suggest including them in the scaladocs of the new collections as it would be extremely helpful for the newcomers.\nReactiveX uses the Apache2 license and makes the stencils used to create them available.",
+            "url":"https://github.com/scala/collection-strawman/issues/155"
           },
           {
             "number":171,
@@ -28,10 +40,40 @@
             "url":"https://github.com/scala/collection-strawman/issues/171"
           },
           {
-            "number":195,
-            "title":"Add TrieMap collection type",
-            "bodyText":"We should adapt the code of the current collection\u2019s TrieMap to the strawman design.",
-            "url":"https://github.com/scala/collection-strawman/issues/195"
+            "number":186,
+            "title":"Consider adding a lazyFoldRight method on LazyList",
+            "bodyText":"",
+            "url":"https://github.com/scala/collection-strawman/issues/186"
+          },
+          {
+            "number":208,
+            "title":"join/intersperse method",
+            "bodyText":"Right now collections have a .mkString method, but it's really just a degenerate case of a more useful and general operation, coupled together with some other operations.\nxs.mkString(\", \") can be seen as doing three things:\n\nval ys: C[String] = xs.map(_.toString) -- This operation already exists\nInterpolate \", \", a String, between the existing String values -- There is currently no way to do this alone!\nSeq[String].flatten yields a Seq[Char] so it's not exactly that, but it's basically doing a flatten with the result collection type of String. -- Not sure if there is a way to do this but there should be (well the problem is really only with String and for that there is the no-arg .mkString...)\n\nIt's nice to have a convenience method like .mkString but we should be able to interpolate with other types than String, and without flattening the result.",
+            "url":"https://github.com/scala/collection-strawman/issues/208"
+          },
+          {
+            "number":214,
+            "title":"Backport work that has been made on scala/scala",
+            "bodyText":"For instance: scala/scala#5972\nHere is the history of the collections: https://github.com/scala/scala/commits/2.13.x/src/library/scala/collection\nHere is the history of the JUnit tests: https://github.com/scala/scala/commits/2.13.x/test/junit/scala/collection",
+            "url":"https://github.com/scala/collection-strawman/issues/214"
+          },
+          {
+            "number":221,
+            "title":"Add zipWith operation",
+            "bodyText":"It\u2019s a generalization of zip, its signature would be the following:\ntrait IterableOps[A, CC[_], C] {\n  def zipWith[B, R](that: Iterable[B])(f: (A, B) => R): CC[R]\n}\nSemantically speaking, (xs zip ys) map f is equivalent to xs.zipWith(ys)(f).",
+            "url":"https://github.com/scala/collection-strawman/issues/221"
+          },
+          {
+            "number":233,
+            "title":"List.fill performance problem",
+            "bodyText":"#232 shows that List.fill has a severe performance problem for large values of n. I suspect other builder functions have the same problem.\n[info] Benchmark                 (size)  Mode  Cnt           Score            Error  Units\n[info] ListBenchmark.fill       7312102  avgt   10  1016141204.700 ± 3015303989.604  ns/op\n[info] ScalaListBenchmark.fill  7312102  avgt   10    72150762.767 ±    8988583.569  ns/op",
+            "url":"https://github.com/scala/collection-strawman/issues/233"
+          },
+          {
+            "number":240,
+            "title":"Consider adding a `merged` or `mergedWith` operation on `Map`",
+            "bodyText":"As described here: https://github.com/jozic/scalax-collection#mergedwith\nNote: in collection.immutable.HashMap we already have it and it is named merged. We could just pull it up to collection.Map.",
+            "url":"https://github.com/scala/collection-strawman/issues/240"
           }
         ]
       }
