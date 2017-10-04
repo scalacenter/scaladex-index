@@ -1,0 +1,70 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/raquo/laminar#laminar" aria-hidden="true" class="anchor" id="user-content-laminar" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Laminar</h1> 
+  <p><em>Laminar</em> is a small reactive UI library for Scala.js, allowing you to interact with the DOM using reactive streams. I'm building <em>Laminar</em> because I believe that UI logic is best expressed with functional reactive programming patterns in a type-safe environment.</p> 
+  <pre><code>"com.raquo" %%% "laminar" % "0.1"
+</code></pre> 
+  <p>We have no concept of components because we don't need the conceptual overhead. Write your own functions or classes or anything that somehow provides a reference to a <code>ReactiveNode</code>, and you're good.</p> 
+  <p><em>Laminar</em> uses <a href="https://github.com/raquo/scala-dom-builder" target="_blank">Scala DOM Builder</a> under the hood, and is very efficient. Instead of using a virtual DOM, it makes precision updates to the real DOM. For example, if you say you need to update an attribute of a node, that's exactly what will happen. There is nothing else happening, no diffing of virtual DOM trees, no redundant re-evaluation of your component. Laminar's API lets you express what exactly needs to happen when without the inefficiency and under-the-hood complexity of virtual DOM.</p> 
+  <h2><a href="https://github.com/raquo/laminar#example-laminar-component" aria-hidden="true" class="anchor" id="user-content-example-laminar-component" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Example Laminar "Component"</h2> 
+  <p>Here's <code>Counter.apply</code>, a contrived example function that produces a Counter "component" that exposes a <code>node</code> that should be provided to Laminar, and <code>$count</code>, a stream of counts generated from user clicks that you do whatever you want with.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Counter</span> <span class="pl-k">private</span> (
+  <span class="pl-k">val</span> <span class="pl-en">$count</span><span class="pl-k">:</span> <span class="pl-en">XStream</span>[<span class="pl-k">Int</span>],
+  <span class="pl-k">val</span> <span class="pl-en">node</span><span class="pl-k">:</span> <span class="pl-en">RNode</span>
+)
+ 
+<span class="pl-k">object</span> <span class="pl-en">Counter</span> {
+  <span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">label</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Counter</span> <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">$incClick</span> <span class="pl-k">=</span> <span class="pl-en">XStream</span>.create[<span class="pl-en">MouseEvent</span>]()
+    <span class="pl-k">val</span> <span class="pl-en">$decClick</span> <span class="pl-k">=</span> <span class="pl-en">XStream</span>.create[<span class="pl-en">MouseEvent</span>]()
+    
+    <span class="pl-k">val</span> <span class="pl-en">$count</span> <span class="pl-k">=</span> <span class="pl-en">XStream</span>
+      .merge($incClick.mapTo(<span class="pl-c1">1</span>), $decClick.mapTo(<span class="pl-k">-</span><span class="pl-c1">1</span>))
+      .fold((<span class="pl-v">a</span>: <span class="pl-k">Int</span>, <span class="pl-v">b</span>: <span class="pl-k">Int</span>) <span class="pl-k">=&gt;</span> a <span class="pl-k">+</span> b, seed <span class="pl-k">=</span> <span class="pl-c1">0</span>)
+ 
+    <span class="pl-k">val</span> <span class="pl-en">node</span> <span class="pl-k">=</span> div(
+      cls <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Counter<span class="pl-pds">"</span></span> <span class="pl-c"><span class="pl-c">//</span> this does not need to be in a separate .apply() call, just for aesthetics</span>
+    )(
+      button(onClick <span class="pl-k">--</span><span class="pl-k">&gt;</span> $decClick, <span class="pl-s"><span class="pl-pds">"</span>–<span class="pl-pds">"</span></span>),
+      child <span class="pl-k">&lt;</span><span class="pl-k">--</span> $count.map(count <span class="pl-k">=&gt;</span> span(s<span class="pl-s"><span class="pl-pds">"</span> :: $count ($label) :: <span class="pl-pds">"</span></span>)),
+      button(onClick <span class="pl-k">--</span><span class="pl-k">&gt;</span> $incClick, <span class="pl-s"><span class="pl-pds">"</span>+<span class="pl-pds">"</span></span>)
+    )
+ 
+    <span class="pl-k">new</span> <span class="pl-en">Counter</span>($count, node)
+  }
+}</pre>
+  </div> 
+  <p>Cosmetically, this looks similar to <a href="https://github.com/OutWatch/outwatch" target="_blank">Outwatch</a>, however Laminar is implemented very differently – instead of a virtual DOM it uses <a href="https://github.com/raquo/scala-dom-builder" target="_blank">Scala DOM Builder</a>, which is a simpler foundation for the kind of API that we provide.</p> 
+  <p>There are more <em>Laminar</em> examples in the <a href="https://github.com/raquo/laminar/tree/master/src/main/scala/com/raquo/laminar/example" target="_blank"><code>example</code></a> directory. If you clone this project, you can run the examples locally by running <code>fastOptJS::webpack</code> and opening the <code>index-fastopt.html</code> file in your browser.</p> 
+  <p>I will eventually write up a detailed <em>"Laminar vs the World"</em> post to compare it to other solutions and explain why Laminar exists.</p> 
+  <h2><a href="https://github.com/raquo/laminar#my-related-projects" aria-hidden="true" class="anchor" id="user-content-my-related-projects" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>My Related Projects</h2> 
+  <ul> 
+   <li><a href="https://github.com/raquo/scala-dom-types" target="_blank">Scala DOM Types</a> – Type definitions that we use for all the HTML tags, attributes, properties, and styles</li> 
+   <li><a href="https://github.com/raquo/scala-dom-builder" target="_blank">Scala DOM Builder</a> – Low-level Scala &amp; Scala.js library for building and manipulating DOM trees</li> 
+   <li><a href="https://github.com/raquo/scala-dom-testutils" target="_blank">Scala DOM TestUtils</a> – Test that your Javascript DOM nodes match your expectations</li> 
+   <li><a href="https://github.com/raquo/Snabbdom.scala" target="_blank">Snabbdom.scala</a> – Scala.js interface to a popular JS virtual DOM library</li> 
+   <li><a href="https://github.com/raquo/XStream.scala" target="_blank">XStream.scala</a> – Scala.js interface to a simple JS reactive streams library</li> 
+   <li><a href="https://github.com/raquo/Cycle.scala" target="_blank">Cycle.scala</a> – Scala.js interface to a popular JS functional reactive library</li> 
+  </ul> 
+  <h2><a href="https://github.com/raquo/laminar#author" aria-hidden="true" class="anchor" id="user-content-author" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Author</h2> 
+  <p>Nikita Gazarov – <a href="http://raquo.com" target="_blank">raquo.com</a></p> 
+  <h2><a href="https://github.com/raquo/laminar#license" aria-hidden="true" class="anchor" id="user-content-license" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p><em>Laminar</em> is provided under the <a href="https://github.com/raquo/laminar/blob/master/LICENSE.md" target="_blank">MIT license</a>.</p> 
+ </article>
+</div>
