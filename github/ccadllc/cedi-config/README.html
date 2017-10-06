@@ -1,0 +1,197 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/ccadllc/cedi-config#cedi-config" aria-hidden="true" class="anchor" id="user-content-cedi-config" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Cedi Config</h1> 
+  <p>Quick links:</p> 
+  <ul> 
+   <li><a href="https://github.com/ccadllc/cedi-config#about" target="_blank">About the library</a></li> 
+   <li><a href="https://github.com/ccadllc/cedi-config#getit" target="_blank">How to get latest version</a></li> 
+   <li><a href="https://oss.sonatype.org/service/local/repositories/releases/archive/com/ccadllc/cedi/config_2.12/1.1.0/config_2.12-1.1.0-javadoc.jar/!/com/ccadllc/cedi/config/index.html" target="_blank">API Docs</a></li> 
+  </ul> 
+  <h3><a href="https://github.com/ccadllc/cedi-config#about-the-library" aria-hidden="true" class="anchor" id="user-content-about-the-library" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a id="user-content-about" target="_blank" href=""></a>About the library</h3> 
+  <p>Cedi Config is a purely functional, scodec-style combinator library for converting <a href="https://github.com/typesafehub/config" target="_blank">Typesafe <code>Config</code></a> objects to application specific types. The differentiating features of this library are:</p> 
+  <ul> 
+   <li>errors in the configuration are returned as values -- exceptions are never thrown</li> 
+   <li>all errors present in the configuration are reported, not just the first error that is encountered</li> 
+   <li>configuration parsers can be built manually or derived automatically from the structure of application specific types</li> 
+   <li>limited dependencies -- only Typesafe Config and Shapeless</li> 
+  </ul> 
+  <p>Example of usage:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">scala.concurrent.duration.</span><span class="pl-v">FiniteDuration</span>
+<span class="pl-c"><span class="pl-c">//</span> import scala.concurrent.duration.FiniteDuration</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.ccadllc.cedi.config.</span>{ <span class="pl-v">ConfigParser</span>, <span class="pl-v">ConfigErrors</span> }
+<span class="pl-c"><span class="pl-c">//</span> import com.ccadllc.cedi.config.{ConfigParser, ConfigErrors}</span>
+
+<span class="pl-k">import</span> <span class="pl-v">com.typesafe.config.</span><span class="pl-v">ConfigFactory</span>
+<span class="pl-c"><span class="pl-c">//</span> import com.typesafe.config.ConfigFactory</span>
+
+<span class="pl-c"><span class="pl-c">//</span> First, let's create an application specific settings class</span>
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">CacheSettings</span>(<span class="pl-v">maxEntries</span>: <span class="pl-k">Int</span>, <span class="pl-v">ttl</span>: <span class="pl-en">Option</span>[<span class="pl-en">FiniteDuration</span>], <span class="pl-v">log</span>: <span class="pl-k">Boolean</span>)
+<span class="pl-c"><span class="pl-c">//</span> defined class CacheSettings</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Let's derive a parser from the settings class. The generated parser looks for a</span>
+<span class="pl-c"><span class="pl-c">//</span> config value for each field of the CacheSettings class.</span>
+<span class="pl-k">val</span> <span class="pl-en">derivedParser</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.derived[<span class="pl-en">CacheSettings</span>]
+<span class="pl-c"><span class="pl-c">//</span> derivedParser: com.ccadllc.cedi.config.ConfigParser[CacheSettings] = (int("max-entries") :: (duration("ttl").optional :: (boolean("log") :: HNil))).as[CacheSettings]</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Let's create a new parser by placing the derived parser in the "com.myapp"</span>
+<span class="pl-c"><span class="pl-c">//</span> config namespace.</span>
+<span class="pl-k">val</span> <span class="pl-en">appParser</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span> derivedParser.under(<span class="pl-s"><span class="pl-pds">"</span>com.myapp<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span> appParser: com.ccadllc.cedi.config.ConfigParser[CacheSettings] = subconfig("com.myapp", false)((int("max-entries") :: (duration("ttl").optional :: (boolean("log") :: HNil))).as[CacheSettings])</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Sweet parsing!</span>
+<span class="pl-k">val</span> <span class="pl-en">settings</span><span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">ConfigErrors</span>, <span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span>
+  appParser.parse(<span class="pl-en">ConfigFactory</span>.parseString(
+    <span class="pl-s"><span class="pl-pds">"""</span>|com.myapp {</span>
+<span class="pl-s">       |  max-entries: 1000</span>
+<span class="pl-s">       |  ttl: 10 seconds</span>
+<span class="pl-s">       |  log: false</span>
+<span class="pl-s">       |}<span class="pl-pds">"""</span></span>.stripMargin))
+<span class="pl-c"><span class="pl-c">//</span> settings: Either[com.ccadllc.cedi.config.ConfigErrors,CacheSettings] = Right(CacheSettings(1000,Some(10000000000 nanoseconds),false))</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Sweet error reporting!</span>
+<span class="pl-k">val</span> <span class="pl-en">empty</span><span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">ConfigErrors</span>, <span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span>
+  appParser.parse(<span class="pl-en">ConfigFactory</span>.parseString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> empty: Either[com.ccadllc.cedi.config.ConfigErrors,CacheSettings] = Left(ConfigErrors(Missing(com.myapp.max-entries), Missing(com.myapp.log)))</span></pre>
+  </div> 
+  <p>Here, we used the <code>ConfigParser.derived</code> method to generate a parser for the application specific <code>CacheSettings</code> class. We then used the <code>under</code> method to place the derived parser under the <code>com.myapp</code> config key.</p> 
+  <p>The <code>ConfigParser</code> type provides the main API of this library. A <code>ConfigParser[A]</code> converts a Typesafe <code>Config</code> object to an <code>Either[ConfigErrors, A]</code> via the <code>parse</code> method. In this example, we created a <code>ConfigParser[CacheSettings]</code> by calling the <code>derived</code> method on the <code>ConfigParser</code> companion, which did some compile time reflection on the structure of the case class to generate the parser. It returned a parser that parses a value for each field of the case class based on the field name -- e.g., the <code>maxEntries</code> field was parsed via <code>config.getInt("max-entries")</code>.</p> 
+  <p>The <code>parse</code> method returns an <code>Either[ConfigErrors, A]</code> with a <code>Right(a)</code> if the value was parsed successfully and a <code>Left(errs)</code> if parsing failed due to one or more errors. The <code>ConfigErrors</code> type provides a non-empty list of errors that occurred when parsing, where each error is a subtype of <code>ConfigError</code>. The <code>ConfigErrors</code> type also provides a nicely formatted message via the <code>description</code> method:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">errMsg</span><span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span>
+  appParser.parse(<span class="pl-en">ConfigFactory</span>.parseString(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>)).left.toOption.map(_.description)
+<span class="pl-c"><span class="pl-c">//</span> errMsg: Option[String] =</span>
+<span class="pl-c"><span class="pl-c">//</span> Some(Failed to parse configuration.</span>
+<span class="pl-c"><span class="pl-c">//</span>   No value for required key com.myapp.max-entries.</span>
+<span class="pl-c"><span class="pl-c">//</span>   No value for required key com.myapp.log.)</span></pre>
+  </div> 
+  <h4><a href="https://github.com/ccadllc/cedi-config#manually-creating-parsers" aria-hidden="true" class="anchor" id="user-content-manually-creating-parsers" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Manually creating parsers</h4> 
+  <p>In the last example, we derived a <code>ConfigParser</code> for the <code>CacheSettings</code> class using <code>ConfigParser.derived</code>. Instead, we could have manually created a parser using the constructors in the <code>ConfigParser</code> companion object and the combinators on the <code>ConfigParser</code> class.</p> 
+  <p>Let's start by creating a parser for each value type in the <code>CacheSettings</code> case class. We can do this by using constructors on the <code>ConfigParser</code> companion, each of which takes the key to read from config as an argument.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">maxEntries</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-k">Int</span>] <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.int(<span class="pl-s"><span class="pl-pds">"</span>max-entries<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span> maxEntries: com.ccadllc.cedi.config.ConfigParser[Int] = int("max-entries")</span>
+
+<span class="pl-k">val</span> <span class="pl-en">ttl</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">FiniteDuration</span>] <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.duration(<span class="pl-s"><span class="pl-pds">"</span>ttl<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span> ttl: com.ccadllc.cedi.config.ConfigParser[scala.concurrent.duration.FiniteDuration] = duration("ttl")</span>
+
+<span class="pl-k">val</span> <span class="pl-en">log</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-k">Boolean</span>] <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.bool(<span class="pl-s"><span class="pl-pds">"</span>log<span class="pl-pds">"</span></span>)
+<span class="pl-c"><span class="pl-c">//</span> log: com.ccadllc.cedi.config.ConfigParser[Boolean] = boolean("log")</span></pre>
+  </div> 
+  <p>Now we need to make the <code>ttl</code> parser succeed with a <code>None</code> if the key doesn't exist in the configuration when parsing. We can do this with the <code>optional</code> combinator:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">ottl</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">Option</span>[<span class="pl-en">FiniteDuration</span>]] <span class="pl-k">=</span> ttl.optional
+<span class="pl-c"><span class="pl-c">//</span> ottl: com.ccadllc.cedi.config.ConfigParser[Option[scala.concurrent.duration.FiniteDuration]] = duration("ttl").optional</span></pre>
+  </div> 
+  <p>Finally, we need to put the individual parsers together in to a parser for the case class.</p> 
+  <p>One way to do this is by first creating a tuple parser using the <code>~</code> combinator and then mapping over the result to convert the tuple to a <code>CacheSettings</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">triple</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[(<span class="pl-k">Int</span>, <span class="pl-en">Option</span>[<span class="pl-en">FiniteDuration</span>], <span class="pl-k">Boolean</span>)] <span class="pl-k">=</span>
+  maxEntries <span class="pl-k">~</span> ottl <span class="pl-k">~</span> log
+<span class="pl-c"><span class="pl-c">//</span> triple: com.ccadllc.cedi.config.ConfigParser[(Int, Option[scala.concurrent.duration.FiniteDuration], Boolean)] = ((int("max-entries") ~ duration("ttl").optional) ~ boolean("log"))</span>
+
+<span class="pl-k">val</span> <span class="pl-en">viaTupleMap</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span>
+  triple.map { <span class="pl-k">case</span> (maxEntries, ttl, log) <span class="pl-k">=&gt;</span> <span class="pl-en">CacheSettings</span>(maxEntries, ttl, log) }
+<span class="pl-c"><span class="pl-c">//</span> viaTupleMap: com.ccadllc.cedi.config.ConfigParser[CacheSettings] = ((int("max-entries") ~ duration("ttl").optional) ~ boolean("log")).map(&lt;function&gt;)</span></pre>
+  </div> 
+  <p>Alternatively, we can use <code>::</code> instead of <code>~</code> along with the <code>as[CacheSettings]</code> combinator to build a parser of the generic representation of <code>CacheSettings</code> and then convert that generic representation to the case class via <code>as</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">viaAs</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">CacheSettings</span>] <span class="pl-k">=</span>
+  (maxEntries <span class="pl-k">::</span> ottl <span class="pl-k">::</span> log).as[<span class="pl-en">CacheSettings</span>]
+<span class="pl-c"><span class="pl-c">//</span> viaAs: com.ccadllc.cedi.config.ConfigParser[CacheSettings] = (int("max-entries") :: (duration("ttl").optional :: boolean("log"))).as[CacheSettings]</span></pre>
+  </div> 
+  <p>There are a lot more constructors and combinators -- take a look at the ScalaDoc for <code>ConfigParser</code> to see them.</p> 
+  <h4><a href="https://github.com/ccadllc/cedi-config#deriving-parsers" aria-hidden="true" class="anchor" id="user-content-deriving-parsers" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Deriving parsers</h4> 
+  <p>Often it is more convenient to derive parsers using <code>ConfigParser.derived</code>, like in the original example. The <code>derived</code> constructor works by doing compile-time reflection on the structure of the case class, looking at each component. For each component, a number of things happen:</p> 
+  <ul> 
+   <li>an implicit <code>DerivedConfigFieldParser[X]</code> is resolved, where <code>X</code> is the type of the component</li> 
+   <li>a config key is calculated by taking the component name and converting it from camelCase to lowercase with dashes</li> 
+   <li>the computed config key is passed to the <code>apply</code> method on the resolved <code>DerivedConfigFieldParser</code>, yielding a <code>ConfigParser[X]</code> for the specified key After that's occurred for every component, all the generated parsers are combined with something that approximates <code>(c0 :: c1 :: ... :: cN).as[CaseClass]</code>.</li> 
+  </ul> 
+  <p>There are implicit <code>DerivedConfigFieldParser</code> instances for the supported scalar types (e.g., <code>Int</code>, <code>String</code>, <code>FiniteDuration</code>), optional types, and <code>List</code>/<code>Vector</code>. Additional instances can be provided implicitly. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">AddressAndPort</span>(<span class="pl-v">address</span>: <span class="pl-k">String</span>, <span class="pl-v">port</span>: <span class="pl-k">Int</span>)
+
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">addressAndPortFieldParser</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>.<span class="pl-en">DerivedConfigFieldParser</span>[<span class="pl-en">AddressAndPort</span>] <span class="pl-k">=</span>
+  <span class="pl-en">ConfigParser</span>.<span class="pl-en">DerivedConfigFieldParser</span> { key <span class="pl-k">=&gt;</span>
+    <span class="pl-en">ConfigParser</span>.fromString(key) { value <span class="pl-k">=&gt;</span>
+      value.split(<span class="pl-s"><span class="pl-pds">"</span>:<span class="pl-pds">"</span></span>).toList <span class="pl-k">match</span> {
+        <span class="pl-k">case</span> addr <span class="pl-k">::</span> portStr <span class="pl-k">::</span> <span class="pl-c1">Nil</span> <span class="pl-k">=&gt;</span>
+          <span class="pl-k">val</span> <span class="pl-en">port</span> <span class="pl-k">=</span>
+            <span class="pl-k">try</span> <span class="pl-en">Right</span>(portStr.toInt)
+            <span class="pl-k">catch</span> { <span class="pl-k">case</span> <span class="pl-v">_</span>: <span class="pl-en">NumberFormatException</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Left</span>(<span class="pl-s"><span class="pl-pds">"</span>port must be a number<span class="pl-pds">"</span></span>)}
+          port.right.flatMap { p <span class="pl-k">=&gt;</span>
+            <span class="pl-k">if</span> (p <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span>) <span class="pl-en">Right</span>(<span class="pl-k">new</span> <span class="pl-en">AddressAndPort</span>(addr, p))
+            <span class="pl-k">else</span> <span class="pl-en">Left</span>(<span class="pl-s"><span class="pl-pds">"</span>port must be &gt;= 0<span class="pl-pds">"</span></span>)
+          }
+        <span class="pl-k">case</span> other <span class="pl-k">=&gt;</span>
+          <span class="pl-en">Left</span>(<span class="pl-s"><span class="pl-pds">"</span>must be address:port<span class="pl-pds">"</span></span>)
+      }
+    }
+  }
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">ServerSettings</span>(<span class="pl-v">endpoint</span>: <span class="pl-en">AddressAndPort</span>)</pre>
+  </div> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">serverSettingsParser</span> <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.derived[<span class="pl-en">ServerSettings</span>]
+<span class="pl-c"><span class="pl-c">//</span> serverSettingsParser: com.ccadllc.cedi.config.ConfigParser[ServerSettings] = (fromConfigValue(endpoint) :: HNil).as[ServerSettings]</span>
+
+<span class="pl-k">val</span> <span class="pl-en">successful</span> <span class="pl-k">=</span> serverSettingsParser.parse(<span class="pl-en">ConfigFactory</span>.parseString(<span class="pl-s"><span class="pl-pds">"""</span>endpoint: "google.com:80" <span class="pl-pds">"""</span></span>))
+<span class="pl-c"><span class="pl-c">//</span> successful: Either[com.ccadllc.cedi.config.ConfigErrors,ServerSettings] = Right(ServerSettings(AddressAndPort(google.com,80)))</span>
+
+<span class="pl-k">val</span> <span class="pl-en">failed</span> <span class="pl-k">=</span> serverSettingsParser.parse(<span class="pl-en">ConfigFactory</span>.parseString(<span class="pl-s"><span class="pl-pds">"""</span>endpoint: "google.com" <span class="pl-pds">"""</span></span>)).left.toOption.get.description
+<span class="pl-c"><span class="pl-c">//</span> failed: String =</span>
+<span class="pl-c"><span class="pl-c">//</span> Failed to parse configuration.</span>
+<span class="pl-c"><span class="pl-c">//</span>   Bad value for key endpoint - must be address:port (String: 1).</span></pre>
+  </div> 
+  <p>Configuration parsers can be derived for abstract data types as well. Consider this example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">sealed</span> <span class="pl-k">trait</span> <span class="pl-en">Connector</span> { <span class="pl-k">def</span> <span class="pl-en">port</span><span class="pl-k">:</span> <span class="pl-k">Int</span> }
+<span class="pl-c"><span class="pl-c">//</span> defined trait Connector</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">HttpConnector</span>(<span class="pl-v">port</span>: <span class="pl-k">Int</span>) <span class="pl-k">extends</span> <span class="pl-e">Connector</span>
+<span class="pl-c"><span class="pl-c">//</span> defined class HttpConnector</span>
+
+<span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">HttpsConnector</span>(<span class="pl-v">port</span>: <span class="pl-k">Int</span>, <span class="pl-v">sslContextName</span>: <span class="pl-k">String</span>) <span class="pl-k">extends</span> <span class="pl-e">Connector</span>
+<span class="pl-c"><span class="pl-c">//</span> defined class HttpsConnector</span>
+
+<span class="pl-k">val</span> <span class="pl-en">connectorParser</span><span class="pl-k">:</span> <span class="pl-en">ConfigParser</span>[<span class="pl-en">Connector</span>] <span class="pl-k">=</span> <span class="pl-en">ConfigParser</span>.derived[<span class="pl-en">Connector</span>]
+<span class="pl-c"><span class="pl-c">//</span> connectorParser: com.ccadllc.cedi.config.ConfigParser[Connector] = string("type").optional.bind(&lt;function&gt;)</span>
+
+parser.parse(<span class="pl-en">ConfigFactory</span>.parseString(
+  <span class="pl-s"><span class="pl-pds">"""</span>|type: https-connector</span>
+<span class="pl-s">     |port: 8080</span>
+<span class="pl-s">     |ssl-context-name: default</span>
+<span class="pl-s">     |<span class="pl-pds">"""</span></span>.stripMargin)</pre>
+  </div> 
+  <p>The <code>Connector</code> ADT has two data constructors -- <code>HttpConnector</code> and <code>HttpsConnector</code>. The derived parser first reads the <code>type</code> key to determine how the rest of the configuration should be parsed. The valid values for the <code>type</code> key are the names of the data constructors converted to <code>lower-case-with-dashes</code> format.</p> 
+  <p>If the <code>type</code> key is omitted, the parser for each data constructor is attempted in turn until one succeeds. If no parsers succeed, an error is returned indicating the <code>type</code> key is missing.</p> 
+  <p>The <code>type</code> field acts as a <em>discriminator</em> -- a value used to determine which data constructor should be parsed. If necessary, the name of the discriminator can be changed from <code>type</code> to something else by defining an implicit <code>DiscriminatorKey[X]</code> for ADT <code>X</code>. Similarly, to customize the <em>values</em> of the discriminator field, an implicit <code>DiscriminatorValue[Y]</code> can be defined for each data constructor <code>Y</code>.</p> 
+  <h3><a href="https://github.com/ccadllc/cedi-config#how-to-get-latest-version" aria-hidden="true" class="anchor" id="user-content-how-to-get-latest-version" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><a id="user-content-getit" target="_blank" href=""></a>How to get latest Version</h3> 
+  <p>Cedi Config supports Scala 2.11 and 2.12. It is published to Maven Central.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.ccadllc.cedi<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>config<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.1.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a href="https://github.com/ccadllc/cedi-config#copyright-and-license" aria-hidden="true" class="anchor" id="user-content-copyright-and-license" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Copyright and License</h2> 
+  <p>This project is made available under the <a href="https://github.com/ccadllc/cedi-config/blob/master/LICENSE" target="_blank">Apache License, Version 2.0</a>. Copyright information can be found in <a href="https://github.com/ccadllc/cedi-config/blob/master/NOTICE" target="_blank">NOTICE</a>.</p> 
+ </article>
+</div>

@@ -1,0 +1,65 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/nadavwr/libffi-scala-native#libffi-bindings-for-scala-native" aria-hidden="true" class="anchor" id="user-content-libffi-bindings-for-scala-native" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a><code>libffi</code> Bindings for Scala Native</h1> 
+  <p><a href="https://camo.githubusercontent.com/a79be4b4db7d65a822b0cd1a0b33eab2e627d8d0/68747470733a2f2f636972636c6563692e636f6d2f67682f6e6164617677722f6c69626666692d7363616c612d6e61746976652e706e673f7374796c653d736869656c6426636972636c652d746f6b656e3d30356537633061356237303733343237303139303232373763666331356462306538313736633837" target="_blank"><img src="https://camo.githubusercontent.com/a79be4b4db7d65a822b0cd1a0b33eab2e627d8d0/68747470733a2f2f636972636c6563692e636f6d2f67682f6e6164617677722f6c69626666692d7363616c612d6e61746976652e706e673f7374796c653d736869656c6426636972636c652d746f6b656e3d30356537633061356237303733343237303139303232373763666331356462306538313736633837" alt="circleci shield" data-canonical-src="https://circleci.com/gh/nadavwr/libffi-scala-native.png?style=shield&amp;circle-token=05e7c0a5b707342701902277cfc15db0e8176c87" style="max-width:100%;"></a></p> 
+  <p>Scala Native's C foreign function interface, while very simple to use, still lacks a few key features. This library provides an alternative to the built-in FFI by using <a href="https://sourceware.org/libffi/" target="_blank">libffi</a> — the same underlying library used by JNA.</p> 
+  <p>The only reason you might want to use this is if you need to bind to library functions that receive <code>struct</code> arguments by value, or return a <code>struct</code> by value. Presumably, the need for this library will eventually go away.</p> 
+  <h2><a href="https://github.com/nadavwr/libffi-scala-native#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>In a Scala Native project, add a resolver to the repository where this library is published, and add a <code>%%%</code> dependency:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>nadavwr<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>maven<span class="pl-pds">"</span></span>),
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.nadavwr<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>libffi-scala-native<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.4.0<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>Every parameter type must have an instance of <code>FfiType[_]</code> in implicit scope. Primitive instances are already defined, so in practice you will only need to do this for <code>struct</code>s.</p> 
+  <p>For example, to match <code>libc</code>'s <code>div_t</code> <code>struct</code></p> 
+  <div class="highlight highlight-source-c">
+   <pre><span class="pl-k">typedef</span> <span class="pl-k">struct</span> {
+	<span class="pl-k">int</span> quot;		<span class="pl-c"><span class="pl-c">/*</span> quotient <span class="pl-c">*/</span></span>
+	<span class="pl-k">int</span> rem;		<span class="pl-c"><span class="pl-c">/*</span> remainder <span class="pl-c">*/</span></span>
+} <span class="pl-c1">div_t</span>;</pre>
+  </div> 
+  <p>we will need to define <code>FfiType[DivT]</code> as follows:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.nadavwr.ffi.</span><span class="pl-v">_</span>
+  
+<span class="pl-k">type</span> <span class="pl-en">DivT</span> <span class="pl-k">=</span> <span class="pl-en">CStruct2</span>[<span class="pl-en">CInt</span>, <span class="pl-en">CInt</span>]
+<span class="pl-k">implicit</span> <span class="pl-k">class</span> <span class="pl-en">DivOps</span>(<span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">ptr</span><span class="pl-k">:</span> <span class="pl-en">Ptr</span>[<span class="pl-en">DivT</span>]) <span class="pl-k">extends</span> <span class="pl-e">AnyVal</span> {
+  <span class="pl-k">def</span> <span class="pl-en">quot</span><span class="pl-k">:</span> <span class="pl-en">CInt</span> <span class="pl-k">=</span> <span class="pl-k">!</span>ptr._1
+  <span class="pl-k">def</span> <span class="pl-en">rem</span><span class="pl-k">:</span> <span class="pl-en">CInt</span> <span class="pl-k">=</span> <span class="pl-k">!</span>ptr._2
+}
+  
+<span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">ffiTypeOfDivT</span> <span class="pl-k">=</span> <span class="pl-en">FfiType</span>.struct[<span class="pl-en">DivT</span>](<span class="pl-s"><span class="pl-pds">"</span>div_t<span class="pl-pds">"</span></span>, <span class="pl-en">FfiType</span>[<span class="pl-en">CInt</span>], <span class="pl-en">FfiType</span>[<span class="pl-en">CInt</span>])</pre>
+  </div> 
+  <p>We can then define bindings for <code>libc</code>'s <code>div</code> function, which returns a <code>struct</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">libc</span> <span class="pl-k">=</span> <span class="pl-en">Module</span>.open(<span class="pl-s"><span class="pl-pds">"</span>libc.dylib<span class="pl-pds">"</span></span>) <span class="pl-c"><span class="pl-c">//</span> "libc.so" for Linux</span>
+<span class="pl-k">val</span> <span class="pl-en">div</span> <span class="pl-k">=</span> libc.prepare[<span class="pl-en">CInt</span>, <span class="pl-en">CInt</span>, <span class="pl-en">DivT</span>](<span class="pl-s"><span class="pl-pds">"</span>div<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">num</span> <span class="pl-k">=</span> stackalloc[<span class="pl-en">CInt</span>]; <span class="pl-k">!</span>num <span class="pl-k">=</span> <span class="pl-c1">10</span>
+<span class="pl-k">val</span> <span class="pl-en">denom</span> <span class="pl-k">=</span> stackalloc[<span class="pl-en">CInt</span>]; <span class="pl-k">!</span>denom <span class="pl-k">=</span> <span class="pl-c1">4</span>
+<span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> stackalloc[<span class="pl-en">DivT</span>]
+div(num, denom)(result) <span class="pl-c"><span class="pl-c">//</span> last argument points to result</span>
+  
+println(s<span class="pl-s"><span class="pl-pds">"</span>div(10, 4) = ${result.quot} (${result.rem})<span class="pl-pds">"</span></span>)
+assert(result.quot <span class="pl-k">==</span> <span class="pl-c1">2</span>)
+assert(result.rem <span class="pl-k">==</span> <span class="pl-c1">2</span>)
+  
+<span class="pl-c"><span class="pl-c">//</span> alternative "inline" allocation style</span>
+<span class="pl-k">val</span> <span class="pl-en">result2</span> <span class="pl-k">=</span> div(num, denom)(stackalloc[<span class="pl-en">DivT</span>])</pre>
+  </div> 
+  <h2><a href="https://github.com/nadavwr/libffi-scala-native#limitations" aria-hidden="true" class="anchor" id="user-content-limitations" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Limitations</h2> 
+  <ul> 
+   <li>The return value and all arguments must be preallocated, and provided to bound functions as pointers.</li> 
+   <li>There is no facility to unload shared libraries once they've been loaded.</li> 
+   <li>Expect a performance drop typical of <code>libffi</code>. Depending on your needs, this may be negligible.</li> 
+  </ul> 
+ </article>
+</div>

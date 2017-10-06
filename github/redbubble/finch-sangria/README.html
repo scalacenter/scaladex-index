@@ -1,0 +1,269 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/redbubble/finch-sangria" target="_blank"><img src="https://camo.githubusercontent.com/2b63b829138d1eef3acc010e217ec7a70a7b2b14/68747470733a2f2f696d672e736869656c64732e696f2f7472617669732f726564627562626c652f66696e63682d73616e677269612f6d61737465722e737667" alt="Build status" data-canonical-src="https://img.shields.io/travis/redbubble/finch-sangria/master.svg" style="max-width:100%;"></a></p> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#finch-graphql-support" aria-hidden="true" class="anchor" id="user-content-finch-graphql-support" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Finch GraphQL support</h1> 
+  <p>Some simple wrappers around <a href="http://sangria-graphql.org" target="_blank">Sangria</a> to support its use in <a href="https://github.com/finagle/finch" target="_blank">Finch</a>.</p> 
+  <p>It is a small layer, that is reasonably opininated, which may not be to your liking. In particular:</p> 
+  <ul> 
+   <li>We transport GraphQL queries as JSON, over HTTP. This necessitates some nasties from time to time.</li> 
+   <li>We use Twitter classes instead of the standard library, for things like <code>Future</code> and <code>Try</code>.</li> 
+   <li>We use <code>Future</code>s containing <code>Option</code>s or <code>Either</code>s instead a failing <code>Future</code>. Failing <code>Future</code>s are only used for things that we'd not reasonably expect a client to be able to handle (i.e. something catastrophic).</li> 
+   <li>We handle variables in the form of a JSON encoded string (for example from GraphiQL), as well as a straight JSON object.</li> 
+   <li>We do our best to give back semi-sane HTTP status codes.</li> 
+   <li>We expect that you want strong types for things.</li> 
+  </ul> 
+  <p>There are some things that need improvement, including:</p> 
+  <ul> 
+   <li>We are hard coded to Circe, it should be fairly easy to decouple it should you so wish.</li> 
+   <li>In the same vein, the executor returns <code>Json</code>, mainly because of the <code>CirceResultMarshaller</code>. Ideally both of these would use some form of class that represented the variables/results, and defined an <code>InputUnmarshaller</code> and a <code>ResultMarshaller</code> for them respectively. In particular, this leads to the unpleasantness with the re-parsing of the JSON returned from the underlying executor to find the status of the result.</li> 
+  </ul> 
+  <p>If you like this, you might like other open source code from Redbubble:</p> 
+  <ul> 
+   <li><a href="https://github.com/redbubble/rb-scala-utils" target="_blank">rb-scala-utils</a> - Miscellaneous utilities (common code) for building Scala-based services, using Finch (on which this project depends).</li> 
+   <li><a href="https://github.com/redbubble/finch-template" target="_blank">finch-template</a> - A template project for Finch-based services.</li> 
+   <li><a href="https://github.com/redbubble/rb-graphql-template" target="_blank">rb-graphql-template</a> - A template for Scala HTTP GraphQL services.</li> 
+   <li><a href="https://github.com/redbubble/finagle-hawk" target="_blank">finagle-hawk</a> - HTTP Holder-Of-Key Authentication Scheme for Finagle.</li> 
+  </ul> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#setup" aria-hidden="true" class="anchor" id="user-content-setup" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h1> 
+  <p>You will need to add something like the following to your <code>build.sbt</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.jcenterRepo
+
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.redbubble<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>finch-sangria<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.3.2<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <ol> 
+   <li> <p>Configure the executor:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">val</span> <span class="pl-en">schema</span> <span class="pl-k">=</span> ...           <span class="pl-c"><span class="pl-c">//</span> your Sangria schema</span>
+<span class="pl-k">val</span> <span class="pl-en">context</span> <span class="pl-k">=</span> ...          <span class="pl-c"><span class="pl-c">//</span> your root context</span>
+<span class="pl-k">val</span> <span class="pl-en">errorReporter</span> <span class="pl-k">=</span> ...    <span class="pl-c"><span class="pl-c">//</span> a way to log errors, e.g. Rollbar</span>
+<span class="pl-k">val</span> <span class="pl-en">serverMetrics</span> <span class="pl-k">=</span> ...    <span class="pl-c"><span class="pl-c">//</span> your stats receiver</span>
+<span class="pl-k">val</span> <span class="pl-en">logger</span> <span class="pl-k">=</span> ...           <span class="pl-c"><span class="pl-c">//</span> a logger</span>
+
+<span class="pl-k">val</span> <span class="pl-en">executor</span> <span class="pl-k">=</span> <span class="pl-en">GraphQlQueryExecutor</span>.executor(
+  schema, context, maxQueryDepth <span class="pl-k">=</span> <span class="pl-c1">10</span>)(errorReporter, serverMetrics, logger)</pre>
+    </div> </li> 
+  </ol> 
+  <p>Set the max depth to whatever suits your schema (you'll likely need &gt;= 10 for the introspection query).</p> 
+  <ol> 
+   <li> <p>Write your endpoint:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">import</span> <span class="pl-v">com.redbubble.graphql.GraphQlRequestDecoders.</span><span class="pl-v">graphQlQueryDecode</span>
+
+<span class="pl-k">object</span> <span class="pl-en">GraphQlApi</span> {
+  <span class="pl-k">val</span> <span class="pl-en">stats</span> <span class="pl-k">=</span> <span class="pl-en">StatsReceiver</span>.stats
+
+  <span class="pl-k">def</span> <span class="pl-en">graphQlGet</span><span class="pl-k">:</span> <span class="pl-en">Endpoint</span>[<span class="pl-en">Json</span>] <span class="pl-k">=</span>
+    get(<span class="pl-s"><span class="pl-pds">"</span>graphql<span class="pl-pds">"</span></span> <span class="pl-k">::</span> graphqlQuery) { <span class="pl-v">query</span>: <span class="pl-en">GraphQlQuery</span> <span class="pl-k">=&gt;</span>
+      executeQuery(query)
+    }
+
+  <span class="pl-k">def</span> <span class="pl-en">graphQlPost</span><span class="pl-k">:</span> <span class="pl-en">Endpoint</span>[<span class="pl-en">Json</span>] <span class="pl-k">=</span>
+    post(<span class="pl-s"><span class="pl-pds">"</span>graphql<span class="pl-pds">"</span></span> <span class="pl-k">::</span> jsonBody[<span class="pl-en">GraphQlQuery</span>]) { <span class="pl-v">query</span>: <span class="pl-en">GraphQlQuery</span> <span class="pl-k">=&gt;</span>
+      executeQuery(query)
+    }
+
+  <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">executeQuery</span>(<span class="pl-v">query</span>: <span class="pl-en">GraphQlQuery</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Output</span>[<span class="pl-en">Json</span>]] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">operationName</span> <span class="pl-k">=</span> query.operationName.getOrElse(<span class="pl-s"><span class="pl-pds">"</span>unnamed_operation<span class="pl-pds">"</span></span>)
+    stats.counter(<span class="pl-s"><span class="pl-pds">"</span>count<span class="pl-pds">"</span></span>, operationName).incr()
+    <span class="pl-en">Stat</span>.timeFuture(stats.stat(<span class="pl-s"><span class="pl-pds">"</span>execution_time<span class="pl-pds">"</span></span>, operationName)) {
+      runQuery(query)
+    }
+  }
+
+  <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">runQuery</span>(<span class="pl-v">query</span>: <span class="pl-en">GraphQlQuery</span>)<span class="pl-k">:</span> <span class="pl-en">Future</span>[<span class="pl-en">Output</span>[<span class="pl-en">Json</span>]] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">result</span> <span class="pl-k">=</span> executor.execute(query)(globalAsyncExecutionContext)
+
+    <span class="pl-c"><span class="pl-c">//</span> Do our best to map the type of error back to a HTTP status code</span>
+    result.map {
+      <span class="pl-k">case</span> <span class="pl-en">SuccessfulGraphQlResult</span>(json) <span class="pl-k">=&gt;</span> <span class="pl-en">Output</span>.payload(json, <span class="pl-en">Status</span>.<span class="pl-en">Ok</span>)
+      <span class="pl-k">case</span> <span class="pl-en">ClientErrorGraphQlResult</span>(json, _) <span class="pl-k">=&gt;</span> <span class="pl-en">Output</span>.payload(json, <span class="pl-en">Status</span>.<span class="pl-en">BadRequest</span>)
+      <span class="pl-k">case</span> <span class="pl-en">BackendErrorGraphQlResult</span>(json, _) <span class="pl-k">=&gt;</span> <span class="pl-en">Output</span>.payload(json, <span class="pl-en">Status</span>.<span class="pl-en">InternalServerError</span>)
+    }
+  }
+}</pre>
+    </div> </li> 
+   <li> <p>Bring the response encoder into scope when you create your <code>Service</code>:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">import</span> <span class="pl-v">com.redbubble.graphql.GraphQlEncoders.</span><span class="pl-v">graphQlResultEncode</span>
+
+<span class="pl-k">val</span> <span class="pl-en">api</span> <span class="pl-k">=</span> <span class="pl-en">GraphQlApi</span>.graphQlGet <span class="pl-k">:</span><span class="pl-k">+</span><span class="pl-k">:</span> <span class="pl-en">GraphQlApi</span>.graphQlPost
+<span class="pl-k">val</span> <span class="pl-en">service</span> <span class="pl-k">=</span> api.toServiceAs[<span class="pl-en">Application</span>.<span class="pl-en">Json</span>]
+<span class="pl-en">Http</span>.server.serve(<span class="pl-s"><span class="pl-pds">"</span>:8080<span class="pl-pds">"</span></span>, service)</pre>
+    </div> </li> 
+  </ol> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#graphiql" aria-hidden="true" class="anchor" id="user-content-graphiql" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>GraphiQL</h1> 
+  <p>If you want to integrate <a href="https://github.com/graphql/graphiql" target="_blank">GraphiQL</a> (you should), it's pretty easy.</p> 
+  <ol> 
+   <li> <p>Pull down the latest <a href="https://github.com/graphql/graphiql/blob/master/example/index.html" target="_blank">GraphiQL file</a>.</p> </li> 
+   <li> <p>You may need to adjust the paths within the GraphiQL file if you're using versioned paths, etc.</p> </li> 
+   <li> <p>Stick it somewhere in your classpath.</p> </li> 
+   <li> <p>Write an endpoint for it:</p> 
+    <div class="highlight highlight-source-scala">
+     <pre><span class="pl-k">object</span> <span class="pl-en">ExploreApi</span> {
+  <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">graphiQlPath</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>/graphiql.html<span class="pl-pds">"</span></span>
+
+  <span class="pl-k">def</span> <span class="pl-en">explore</span><span class="pl-k">:</span> <span class="pl-en">Endpoint</span>[<span class="pl-en">Response</span>] <span class="pl-k">=</span> get(<span class="pl-s"><span class="pl-pds">"</span>explore<span class="pl-pds">"</span></span>) {
+    classpathResource(graphiQlPath).map(fromStream) <span class="pl-k">match</span> {
+      <span class="pl-k">case</span> <span class="pl-en">Some</span>(content) <span class="pl-k">=&gt;</span> asyncHtmlResponse(<span class="pl-en">Status</span>.<span class="pl-en">Ok</span>, <span class="pl-en">AsyncStream</span>.fromReader(content, chunkSize <span class="pl-k">=</span> <span class="pl-c1">512.</span>kilobytes.inBytes.toInt))
+      <span class="pl-k">case</span> <span class="pl-c1">None</span> <span class="pl-k">=&gt;</span> textResponse(<span class="pl-en">Status</span>.<span class="pl-en">InternalServerError</span>, <span class="pl-en">Buf</span>.<span class="pl-en">Utf8</span>(s<span class="pl-s"><span class="pl-pds">"</span>Unable to find GraphiQL at '$graphiQlPath'<span class="pl-pds">"</span></span>))
+    }
+  }
+
+    <span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">classpathResource</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Option</span>[<span class="pl-en">InputStream</span>] <span class="pl-k">=</span> <span class="pl-en">Option</span>(getClass.getResourceAsStream(name))
+}</pre>
+    </div> </li> 
+  </ol> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#other-fun-bits" aria-hidden="true" class="anchor" id="user-content-other-fun-bits" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Other Fun Bits</h1> 
+  <p>We've added some other bits &amp; pieces to make using Sangria easier.</p> 
+  <h2><a href="https://github.com/redbubble/finch-sangria#scalar-types" aria-hidden="true" class="anchor" id="user-content-scalar-types" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scalar types</h2> 
+  <p>There are various helpers that can help you define Scalar types. For example to add support for a tagged type:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span></span>
+<span class="pl-c"><span class="pl-c">//</span> Set up a tagged type</span>
+<span class="pl-c"><span class="pl-c">//</span></span>
+
+<span class="pl-k">import</span> <span class="pl-v">shapeless.</span><span class="pl-v">tag</span>
+<span class="pl-k">import</span> <span class="pl-v">shapeless.tag.</span><span class="pl-v">_</span>
+
+<span class="pl-k">trait</span> <span class="pl-en">PixelWidthTag</span>
+<span class="pl-k">type</span> <span class="pl-en">PixelWidth</span> <span class="pl-k">=</span> <span class="pl-k">Int</span> <span class="pl-k">@@</span> <span class="pl-en">PixelWidthTag</span>
+<span class="pl-k">def</span> <span class="pl-en">PixelWidth</span>(<span class="pl-v">w</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-k">@@</span>[<span class="pl-k">Int</span>, <span class="pl-en">PixelWidthTag</span>] <span class="pl-k">=</span> tag[<span class="pl-en">PixelWidthTag</span>](w)
+
+<span class="pl-c"><span class="pl-c">//</span></span>
+<span class="pl-c"><span class="pl-c">//</span> Define your GraphQL type for the tagged type</span>
+<span class="pl-c"><span class="pl-c">//</span></span>
+
+<span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">widthRange</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> to <span class="pl-en">MaxImageDimension</span>
+<span class="pl-k">private</span> <span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">widthInput</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ScalarToInput</span>[<span class="pl-en">PixelWidth</span>]
+
+<span class="pl-k">private</span> <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">WidthCoercionViolation</span>
+    <span class="pl-k">extends</span> <span class="pl-e">ValueCoercionViolation</span>(s<span class="pl-s"><span class="pl-pds">"</span>Width in pixels, between ${widthRange.start} and ${widthRange.end}<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">parseWidth</span>(<span class="pl-v">i</span>: <span class="pl-k">Int</span>) <span class="pl-k">=</span> intValueFromInt(i, widthRange, <span class="pl-en">PixelWidth</span>, () <span class="pl-k">=&gt;</span> <span class="pl-en">WidthCoercionViolation</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">WidthType</span> <span class="pl-k">=</span> intScalarType(
+  <span class="pl-s"><span class="pl-pds">"</span>width<span class="pl-pds">"</span></span>,
+  s<span class="pl-s"><span class="pl-pds">"</span>The width of an image, in pixels, between ${widthRange.start} and ${widthRange.end} (default $DefaultImageWidth).<span class="pl-pds">"</span></span>,
+  parseWidth, () <span class="pl-k">=&gt;</span> <span class="pl-en">WidthCoercionViolation</span>)
+
+<span class="pl-k">val</span> <span class="pl-en">WidthArg</span><span class="pl-k">:</span> <span class="pl-en">Argument</span>[<span class="pl-en">PixelWidth</span>] <span class="pl-k">=</span> <span class="pl-en">Argument</span>(
+  name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>width<span class="pl-pds">"</span></span>,
+  argumentType <span class="pl-k">=</span> <span class="pl-en">OptionInputType</span>(<span class="pl-en">WidthType</span>),
+  description <span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"</span>The width of an image, in pixels, between ${widthRange.start} and ${widthRange.end} (default $DefaultImageWidth).<span class="pl-pds">"</span></span>, defaultValue <span class="pl-k">=</span> <span class="pl-en">DefaultImageWidth</span>)</pre>
+  </div> 
+  <h2><a href="https://github.com/redbubble/finch-sangria#input-types" aria-hidden="true" class="anchor" id="user-content-input-types" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Input types</h2> 
+  <p>We've also added support for input types, in a similar way to how other types are handled, they are typesafe.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-c"><span class="pl-c">//</span> Tagged type</span>
+<span class="pl-k">trait</span> <span class="pl-en">PushNotificationTokenTag</span>
+<span class="pl-k">type</span> <span class="pl-en">PushNotificationToken</span> <span class="pl-k">=</span> <span class="pl-k">String</span> <span class="pl-k">@@</span> <span class="pl-en">PushNotificationTokenTag</span>
+<span class="pl-k">def</span> <span class="pl-en">PushNotificationToken</span>(<span class="pl-v">t</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">@@</span>[<span class="pl-k">String</span>, <span class="pl-en">PushNotificationTokenTag</span>] <span class="pl-k">=</span> tag[<span class="pl-en">PushNotificationTokenTag</span>](t)
+
+<span class="pl-c"><span class="pl-c">//</span> GraphQL type</span>
+<span class="pl-k">private</span> <span class="pl-k">case</span> <span class="pl-k">object</span> <span class="pl-en">PushNotificationTokenCoercionViolation</span>
+    <span class="pl-k">extends</span> <span class="pl-e">ValueCoercionViolation</span>(s<span class="pl-s"><span class="pl-pds">"</span>Push notification token expected<span class="pl-pds">"</span></span>)
+
+<span class="pl-k">private</span> <span class="pl-k">def</span> <span class="pl-en">parseToken</span>(<span class="pl-v">s</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">Either</span>[<span class="pl-en">PushNotificationTokenCoercionViolation</span>.type, <span class="pl-en">PushNotificationToken</span>] <span class="pl-k">=</span>
+  <span class="pl-en">Right</span>(<span class="pl-en">PushNotificationToken</span>(s))
+
+<span class="pl-k">val</span> <span class="pl-en">PushNotificationTokenType</span> <span class="pl-k">=</span>
+  stringScalarType(
+    <span class="pl-s"><span class="pl-pds">"</span>PushNotificationToken<span class="pl-pds">"</span></span>, s<span class="pl-s"><span class="pl-pds">"</span>An iOS push notification token.<span class="pl-pds">"</span></span>,
+    parseToken, () <span class="pl-k">=&gt;</span> <span class="pl-en">PushNotificationTokenCoercionViolation</span>
+  )
+
+<span class="pl-k">val</span> <span class="pl-en">PushNotificationTokenArg</span> <span class="pl-k">=</span>
+  <span class="pl-en">Argument</span>(<span class="pl-s"><span class="pl-pds">"</span>token<span class="pl-pds">"</span></span>, <span class="pl-en">PushNotificationTokenType</span>, description <span class="pl-k">=</span> s<span class="pl-s"><span class="pl-pds">"</span>An iOS push notification token.<span class="pl-pds">"</span></span>)
+
+
+<span class="pl-c"><span class="pl-c">//</span></span>
+<span class="pl-c"><span class="pl-c">//</span> Input type for our type</span>
+<span class="pl-c"><span class="pl-c">//</span></span>
+<span class="pl-k">val</span> <span class="pl-en">FieldPushNotificationToken</span> <span class="pl-k">=</span> <span class="pl-en">InputField</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>token<span class="pl-pds">"</span></span>,
+  <span class="pl-en">OptionInputType</span>(<span class="pl-en">PushNotificationTokenType</span>),
+  <span class="pl-s"><span class="pl-pds">"</span>If available, the push notification token for the device. May be empty if the user has not given permission to send notifications.<span class="pl-pds">"</span></span>
+)
+
+<span class="pl-k">val</span> <span class="pl-en">RegisterDeviceType</span><span class="pl-k">:</span> <span class="pl-en">InputObjectType</span>[<span class="pl-en">DefaultInput</span>] <span class="pl-k">=</span>
+  <span class="pl-en">InputObjectType</span>(
+    name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>RegisterDevice<span class="pl-pds">"</span></span>,
+    description <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Register device fields.<span class="pl-pds">"</span></span>,
+    fields <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">FieldPushNotificationToken</span>, <span class="pl-en">FieldBundleId</span>, <span class="pl-en">FieldAppVersion</span>, <span class="pl-en">FieldOsVersion</span>)
+  )
+
+<span class="pl-k">val</span> <span class="pl-en">RegisterDeviceArg</span> <span class="pl-k">=</span> <span class="pl-en">Argument</span>(<span class="pl-en">InputFieldName</span>, <span class="pl-en">RegisterDeviceType</span>, <span class="pl-s"><span class="pl-pds">"</span>Register device fields.<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"><span class="pl-c">//</span></span>
+<span class="pl-c"><span class="pl-c">//</span> Let's use that type in a mutation</span>
+<span class="pl-c"><span class="pl-c">//</span></span>
+
+<span class="pl-k">object</span> <span class="pl-en">DeviceRegistration</span> <span class="pl-k">extends</span> <span class="pl-e">InputHelper</span> {
+  <span class="pl-k">def</span> <span class="pl-en">registerDevice</span>(<span class="pl-v">ctx</span>: <span class="pl-en">Context</span>[<span class="pl-en">RootContext</span>, <span class="pl-k">Unit</span>])<span class="pl-k">:</span> <span class="pl-en">Action</span>[<span class="pl-en">RootContext</span>, <span class="pl-en">RegisteredDevice</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">token</span> <span class="pl-k">=</span> ctx.inputArg(<span class="pl-en">FieldPushNotificationToken</span>).flatten
+    <span class="pl-k">val</span> <span class="pl-en">registeredDevice</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+      bundleId <span class="pl-k">&lt;</span><span class="pl-k">-</span> ctx.inputArg(<span class="pl-en">FieldBundleId</span>)
+      appVersion <span class="pl-k">&lt;</span><span class="pl-k">-</span> ctx.inputArg(<span class="pl-en">FieldAppVersion</span>).flatMap(fromRawVersion)
+      osVersion <span class="pl-k">&lt;</span><span class="pl-k">-</span> ctx.inputArg(<span class="pl-en">FieldOsVersion</span>).flatMap(fromRawVersion)
+    } <span class="pl-k">yield</span> {
+      <span class="pl-k">val</span> <span class="pl-en">device</span> <span class="pl-k">=</span> <span class="pl-en">Device</span>.device(token, <span class="pl-en">App</span>(bundleId, appVersion), osVersion)
+      ctx.ctx.registerDevice(device)
+    }
+    registeredDevice.getOrElse(<span class="pl-en">Future</span>.exception(graphQlError(<span class="pl-s"><span class="pl-pds">"</span>Unable to parse device input fields<span class="pl-pds">"</span></span>))).asScala
+  }
+}
+
+<span class="pl-k">val</span> <span class="pl-en">MutationType</span><span class="pl-k">:</span> <span class="pl-en">ObjectType</span>[<span class="pl-en">RootContext</span>, <span class="pl-k">Unit</span>] <span class="pl-k">=</span> <span class="pl-en">ObjectType</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>MutationAPI<span class="pl-pds">"</span></span>,
+  description <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>The Redbubble iOS Mutation API.<span class="pl-pds">"</span></span>,
+  fields[<span class="pl-en">RootContext</span>, <span class="pl-k">Unit</span>](
+    <span class="pl-en">Field</span>(
+      name <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>registerDevice<span class="pl-pds">"</span></span>,
+      arguments <span class="pl-k">=</span> <span class="pl-en">List</span>(<span class="pl-en">RegisterDeviceArg</span>),
+      fieldType <span class="pl-k">=</span> <span class="pl-en">OptionType</span>(<span class="pl-en">RegisteredDeviceType</span>),
+      resolve <span class="pl-k">=</span> registerDevice
+    )
+  )
+)</pre>
+  </div> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#release" aria-hidden="true" class="anchor" id="user-content-release" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Release</h1> 
+  <p>For contributors, a cheat sheet to making a new release:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>$ git commit -m <span class="pl-s"><span class="pl-pds">"</span>New things<span class="pl-pds">"</span></span> <span class="pl-k">&amp;&amp;</span> git push
+$ git tag -a v0.0.3 -m <span class="pl-s"><span class="pl-pds">"</span>v0.0.3<span class="pl-pds">"</span></span>
+$ git push --tags
+$ ./sbt publish</pre>
+  </div> 
+  <h1><a href="https://github.com/redbubble/finch-sangria#contributing" aria-hidden="true" class="anchor" id="user-content-contributing" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributing</h1> 
+  <p>Issues and pull requests are welcome. Code contributions should be aligned with the above scope to be included, and include unit tests.</p> 
+ </article>
+</div>

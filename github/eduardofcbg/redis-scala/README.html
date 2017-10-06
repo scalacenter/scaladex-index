@@ -1,0 +1,119 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>These are a set of utilities for easy interfacing with Redis. For now it's still incomplete, but more features will be added as they are needed.</p> 
+  <h1><a href="https://github.com/eduardofcbg/redis-scala#install" aria-hidden="true" class="anchor" id="user-content-install" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h1> 
+  <p>Using sbt, add the following resolver:</p> 
+  <p><code>resolvers += "eduardofcbg" at "http://dl.bintray.com/eduardofcbg/maven"</code></p> 
+  <p>The dependency is the following:</p> 
+  <p><code>libraryDependencies += "com.github.eduardofcbg" %% "redis-scala-utils" % "0.02"</code></p> 
+  <h1><a href="https://github.com/eduardofcbg/redis-scala#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <p>This is just a short guide. More detailed examples can be found on the tests.</p> 
+  <h2><a href="https://github.com/eduardofcbg/redis-scala#namespaces" aria-hidden="true" class="anchor" id="user-content-namespaces" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Namespaces</h2> 
+  <p>The library starts by introducing namespaces. For this we take advantage of partially applied functions. Bellow we define a new object where different counters are needed.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">object</span> <span class="pl-en">Person</span> {
+
+    <span class="pl-k">val</span> <span class="pl-en">counter</span> <span class="pl-k">=</span> <span class="pl-en">RedisCounter</span> (<span class="pl-s"><span class="pl-pds">"</span>person:<span class="pl-pds">"</span></span> <span class="pl-k">+</span> _) builder
+
+  }
+  
+  <span class="pl-k">object</span> <span class="pl-en">Student</span> {
+    
+    <span class="pl-k">val</span> <span class="pl-en">students</span> <span class="pl-k">=</span> <span class="pl-en">Person</span> counter <span class="pl-s"><span class="pl-pds">"</span>student<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">foreignStudents</span> <span class="pl-k">=</span> <span class="pl-en">Person</span> counter <span class="pl-s"><span class="pl-pds">"</span>foreignstudents<span class="pl-pds">"</span></span>
+  
+  }</pre>
+  </div> 
+  <p>The counter value inside the <code>Person</code> object is just a function. Such function needs to be applied to a desired key in the namespace. If no partial function is provided, the identity function is assumed and the namespace will just be a key.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">val</span> <span class="pl-en">simplerCounter</span> <span class="pl-k">=</span> <span class="pl-en">RedisCounter</span>() builder <span class="pl-s"><span class="pl-pds">"</span>students<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a href="https://github.com/eduardofcbg/redis-scala#counters" aria-hidden="true" class="anchor" id="user-content-counters" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Counters</h2> 
+  <p>Following the previous example, a counter can be used very simply:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">object</span> <span class="pl-en">Student</span> {
+    
+    <span class="pl-k">private</span> <span class="pl-k">val</span> <span class="pl-en">counter</span> <span class="pl-k">=</span> <span class="pl-en">Person</span> counter <span class="pl-s"><span class="pl-pds">"</span>student<span class="pl-pds">"</span></span>
+    
+    <span class="pl-k">def</span> <span class="pl-en">total</span> <span class="pl-k">=</span> counter.get
+    
+    <span class="pl-k">def</span> <span class="pl-en">incr</span> <span class="pl-k">=</span> counter.<span class="pl-k">++</span>
+    
+    <span class="pl-k">def</span> <span class="pl-en">dcr</span> <span class="pl-k">=</span> counter.<span class="pl-k">--</span>
+  
+  }</pre>
+  </div> 
+  <h2><a href="https://github.com/eduardofcbg/redis-scala#lists" aria-hidden="true" class="anchor" id="user-content-lists" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Lists</h2> 
+  <p>We extend the Redis Sorted Set with added functionality. Take a look at the following example.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.Defaults.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.json.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.</span>{<span class="pl-v">FastTypeTag</span>, <span class="pl-v">Pickler</span>, <span class="pl-v">Unpickler</span>}
+
+  <span class="pl-k">object</span> <span class="pl-en">Student</span> {
+    
+    <span class="pl-k">val</span> <span class="pl-en">students</span> <span class="pl-k">=</span> <span class="pl-en">RedisList</span>[<span class="pl-en">Student</span>] (<span class="pl-s"><span class="pl-pds">"</span>allstudents<span class="pl-pds">"</span></span>) builder
+    
+    <span class="pl-k">val</span> <span class="pl-en">class1</span> <span class="pl-k">=</span> students <span class="pl-s"><span class="pl-pds">"</span>class1<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">class2</span> <span class="pl-k">=</span> students <span class="pl-s"><span class="pl-pds">"</span>class2<span class="pl-pds">"</span></span>
+        
+    <span class="pl-k">def</span> <span class="pl-en">toClass1</span>(<span class="pl-v">student</span>: <span class="pl-en">Student</span>, <span class="pl-v">id</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> class1 <span class="pl-k">+</span> (student, id)
+    
+    <span class="pl-k">def</span> <span class="pl-en">toClass2</span>(<span class="pl-v">student</span>: <span class="pl-en">Student</span>, <span class="pl-v">id</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> class2 <span class="pl-k">+</span> (student, id)
+    
+    <span class="pl-k">def</span> <span class="pl-en">get</span>(<span class="pl-v">page</span>: <span class="pl-k">Long</span>) <span class="pl-k">=</span> class1.union(class2)(page)
+  
+  }
+  
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Student</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <p>Even though the example is incomplete, it is evident how straightforward such a data model can be implemented.</p> 
+  <h2><a href="https://github.com/eduardofcbg/redis-scala#many-to-many-relationships" aria-hidden="true" class="anchor" id="user-content-many-to-many-relationships" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Many-to-Many relationships</h2> 
+  <p>Bellow you find a another silly example, yet it shows how transparent relationships like these can become on the scala side.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.Defaults.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.json.</span><span class="pl-v">_</span>
+  <span class="pl-k">import</span> <span class="pl-v">scala.pickling.</span>{<span class="pl-v">FastTypeTag</span>, <span class="pl-v">Pickler</span>, <span class="pl-v">Unpickler</span>}
+
+  <span class="pl-k">object</span> <span class="pl-en">Student</span> {
+    
+    <span class="pl-k">val</span> <span class="pl-en">students</span> <span class="pl-k">=</span> <span class="pl-en">RedisManyToMany</span>[<span class="pl-en">Student</span>, <span class="pl-en">Class</span>] (_.of) builder (<span class="pl-s"><span class="pl-pds">"</span>allstudents<span class="pl-pds">"</span></span>)
+    
+    <span class="pl-k">def</span> <span class="pl-en">save</span>(<span class="pl-v">student</span>: <span class="pl-en">Student</span>, <span class="pl-v">id</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> students <span class="pl-k">+</span> (student, id)
+    
+    <span class="pl-k">def</span> <span class="pl-en">get</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> students get id
+    
+    <span class="pl-k">def</span> <span class="pl-en">getClasses</span>(<span class="pl-v">id</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> get(id) map (_.of)
+    
+    <span class="pl-k">def</span> <span class="pl-en">getForClass</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>) <span class="pl-k">=</span> students getFor <span class="pl-en">Class</span>(name)
+  
+  }
+  
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Student</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">of</span>: <span class="pl-en">List</span>[<span class="pl-en">Class</span>])
+  <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Class</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)</pre>
+  </div> 
+  <h2><a href="https://github.com/eduardofcbg/redis-scala#more" aria-hidden="true" class="anchor" id="user-content-more" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>More</h2> 
+  <p>More utilities like these will be added in the future. In the meanwhile fell free to submit a pull request.</p> 
+ </article>
+</div>

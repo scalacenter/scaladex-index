@@ -1,0 +1,94 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#sbt-fork-test-by-annotation-plugin" aria-hidden="true" class="anchor" id="user-content-sbt-fork-test-by-annotation-plugin" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-fork-test-by-annotation-plugin</h1> 
+  <p>A sbt plugin to provide curried function to filter test marked with specific annotations and fork them</p> 
+  <h1><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#installation" aria-hidden="true" class="anchor" id="user-content-installation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h1> 
+  <p>For sbt 0.13.6+ add sbt-assembly as a dependency in <code>project/plugins.sbt</code>. Once it is accepted in <code>sbt-plugin-releases</code>, we can skip the resolver portion</p> 
+  <pre><code>resolvers += Resolver.url("ForkTestByAnnotationRepo",
+                          url("https://dl.bintray.com/saikocat/sbt-plugins/"))
+                         (Resolver.ivyStylePatterns)
+
+addSbtPlugin("com.saikocat" % "sbt-fork-test-by-annotation-plugin" % "0.1.0")
+</code></pre> 
+  <h1><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h1> 
+  <p>In <code>build.sbt</code> or <code>Build.scala</code></p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.saikocat.sbtplugin.ForkTestByAnnotationPlugin.</span><span class="pl-v">_</span>
+
+<span class="pl-c"><span class="pl-c">//</span> Define a task key to find tests to fork</span>
+<span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">testsAnnotatedWithRequiresSpark</span><span class="pl-k">:</span> <span class="pl-en">TaskKey</span>[<span class="pl-en">Seq</span>[<span class="pl-k">String</span>]] <span class="pl-k">=</span>
+  taskKey[<span class="pl-en">Seq</span>[<span class="pl-k">String</span>]](<span class="pl-s"><span class="pl-pds">"</span>Returns list of FQCNs of tests annotated with RequiresSpark<span class="pl-pds">"</span></span>)
+
+testsAnnotatedWithRequiresSpark <span class="pl-k">:</span><span class="pl-k">=</span> {
+  <span class="pl-k">val</span> <span class="pl-en">analysis</span> <span class="pl-k">=</span> (compile in <span class="pl-en">Test</span>).value
+
+  <span class="pl-c"><span class="pl-c">//</span> Define a filter function that will match a predicate</span>
+  <span class="pl-c"><span class="pl-c">//</span> Full qualified path is required</span>
+  <span class="pl-c"><span class="pl-c">//</span> e.g: for a list of tags filtering</span>
+  <span class="pl-c"><span class="pl-c">//</span> List("tags.RequiresSpark", "tags.RequiresHive").contains(annotationFullName)</span>
+  <span class="pl-k">def</span> <span class="pl-en">filterDefinition</span>(<span class="pl-v">annotationFullName</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> {
+    annotationFullName <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>tags.RequiresSpark<span class="pl-pds">"</span></span>
+  }
+
+  <span class="pl-c"><span class="pl-c">//</span> Filter the Tests Definition</span>
+  <span class="pl-k">def</span> <span class="pl-en">isAnnotatedWithRequiresSpark</span>(<span class="pl-v">definition</span>: xsbti.api.<span class="pl-en">Definition</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span> <span class="pl-k">=</span> {
+    isAnnotatedWith(definition)(filterDefinition)
+  }
+
+  <span class="pl-c"><span class="pl-c">//</span> Trigger the source filtering</span>
+  sourcesAnnotatedWith(analysis)(isAnnotatedWithRequiresSpark)
+}
+
+<span class="pl-c"><span class="pl-c">//</span> Group the tests to non-forks and forks</span>
+<span class="pl-c"><span class="pl-c">//</span> Here you can define the fork options as well</span>
+testGrouping in <span class="pl-en">Test</span> <span class="pl-k">&lt;&lt;=</span> (definedTests in <span class="pl-en">Test</span>, testsAnnotatedWithRequiresSpark)
+  .map { (testDefs, testsToFork) <span class="pl-k">=&gt;</span>
+    groupTestsToInProcessAndForkedJvm(
+      testDefs, testsToFork,
+      <span class="pl-k">new</span> <span class="pl-en">sbt.ForkOptions</span>(runJVMOptions <span class="pl-k">=</span> <span class="pl-en">Seq</span>(s<span class="pl-s"><span class="pl-pds">"</span>-Dgroup.prefix=someProp<span class="pl-pds">"</span></span>)))
+  }</pre>
+  </div> 
+  <h2><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#imported-functions-signature" aria-hidden="true" class="anchor" id="user-content-imported-functions-signature" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Imported Functions Signature:</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">isAnnotatedWith</span>(<span class="pl-v">definition</span>: <span class="pl-en">Definition</span>)
+                   (<span class="pl-v">annotationFilterFn</span>: <span class="pl-k">String</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Boolean</span>)<span class="pl-k">:</span> <span class="pl-k">Boolean</span>
+
+<span class="pl-k">def</span> <span class="pl-en">sourcesAnnotatedWith</span>(<span class="pl-v">analysis</span>: <span class="pl-en">Analysis</span>)
+                        (<span class="pl-v">annotatedWithFn</span>: <span class="pl-en">Definition</span> <span class="pl-k">=&gt;</span> <span class="pl-k">Boolean</span>)<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-k">String</span>] 
+
+<span class="pl-k">def</span> <span class="pl-en">groupTestsToInProcessAndForkedJvm</span>(<span class="pl-v">testDefs</span>: <span class="pl-en">Seq</span>[<span class="pl-en">TestDefinition</span>],
+                                      <span class="pl-v">testsToFork</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>],
+                                      <span class="pl-v">forkOptions</span>: <span class="pl-en">ForkOptions</span> <span class="pl-k">=</span> <span class="pl-en">ForkOptions</span>())<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Group</span>]</pre>
+  </div> 
+  <h1><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#reference" aria-hidden="true" class="anchor" id="user-content-reference" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Reference</h1> 
+  <p>This project took a huge inspiration from this article <a href="http://chariotsolutions.com/blog/post/sbt-group-annotated-tests-run-forked-jvms" target="_blank">SBT: Group annotated tests to run in forked JVMs</a></p> 
+  <p>Sweetness that was absent in the article:</p> 
+  <ul> 
+   <li>Fully curried functions for any kind of source filtering</li> 
+   <li>Support fully qualified annotation class name to avoid class name conflict</li> 
+   <li>Configurable ForkOptions</li> 
+   <li>Tested (see <code>sbt-test</code> folder)</li> 
+   <li>Shareable with other projects (plugin itself)</li> 
+  </ul> 
+  <h1><a href="https://github.com/saikocat/sbt-fork-test-by-annotation-plugin#license" aria-hidden="true" class="anchor" id="user-content-license" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h1> 
+  <p>Published under The MIT License, see LICENSE</p> 
+ </article>
+</div>

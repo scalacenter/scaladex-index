@@ -1,6 +1,6 @@
 <div class="announce instapaper_body md" data-path="README.md" id="readme">
  <article class="markdown-body entry-content" itemprop="text">
-  <h1><a id="user-content-tranquil-" class="anchor" href="https://github.com/takezoe/tranquil#tranquil-" aria-hidden="true" target="_blank">
+  <h1><a href="https://github.com/takezoe/tranquil#tranquil-" aria-hidden="true" class="anchor" id="user-content-tranquil-" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Tranquil <a href="https://travis-ci.org/takezoe/tranquil" target="_blank"><img src="https://camo.githubusercontent.com/e16c9302b4067a0462253d124534e0701317be93/68747470733a2f2f7472617669732d63692e6f72672f74616b657a6f652f7472616e7175696c2e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/takezoe/tranquil.svg?branch=master" style="max-width:100%;"></a></h1> 
@@ -25,10 +25,6 @@
   }
 }
 
-<span class="pl-k">object</span> <span class="pl-en">Users</span> {
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Users</span>](<span class="pl-k">new</span> <span class="pl-en">Users</span>())
-}
-
 <span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Company</span>(<span class="pl-v">companyId</span>: <span class="pl-k">Int</span>, <span class="pl-v">companyName</span>: <span class="pl-k">String</span>)
 
 <span class="pl-k">class</span> <span class="pl-en">Companies</span> <span class="pl-k">extends</span> <span class="pl-e">TableDef</span>[<span class="pl-en">Company</span>](<span class="pl-s"><span class="pl-pds">"</span>COMPANIES<span class="pl-pds">"</span></span>) {
@@ -40,21 +36,23 @@
   }
 }
 
-<span class="pl-k">object</span> <span class="pl-en">Companies</span> {
-  <span class="pl-k">def</span> <span class="pl-en">apply</span>() <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Companies</span>](<span class="pl-k">new</span> <span class="pl-en">Companies</span>())
+<span class="pl-k">object</span> <span class="pl-en">Tables</span> {
+  <span class="pl-k">val</span> <span class="pl-en">Users</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Users</span>, <span class="pl-en">User</span>](<span class="pl-k">new</span> <span class="pl-en">Users</span>())
+  <span class="pl-k">val</span> <span class="pl-en">Companies</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SingleTableAction</span>[<span class="pl-en">Companies</span>, <span class="pl-en">Company</span>](<span class="pl-k">new</span> <span class="pl-en">Companies</span>())
 }</pre>
   </div> 
   <p>Then you can assemble SQL using type-safe DSL.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">import</span> <span class="pl-v">com.github.takezoe.tranquil.</span><span class="pl-v">_</span>
 <span class="pl-k">import</span> <span class="pl-v">com.github.takezoe.tranquil.Dialect.</span><span class="pl-v">generic</span>
+<span class="pl-k">import</span> <span class="pl-v">Tables.</span><span class="pl-v">_</span>
 
 <span class="pl-k">val</span> <span class="pl-en">conn</span><span class="pl-k">:</span> java.sql.<span class="pl-en">Connection</span> <span class="pl-k">=</span> ...
 
 <span class="pl-c"><span class="pl-c">//</span> SELECT</span>
 <span class="pl-k">val</span> <span class="pl-en">users</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">User</span>, <span class="pl-en">Option</span>[<span class="pl-en">Company</span>])] <span class="pl-k">=</span>
-  <span class="pl-en">Users</span>()
-    .leftJoin(<span class="pl-en">Companies</span>()){ <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.companyId eq c.companyId }
+  <span class="pl-en">Users</span>
+    .leftJoin(<span class="pl-en">Companies</span>){ <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.companyId eq c.companyId }
     .filter { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>) <span class="pl-k">||</span> (u.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoen<span class="pl-pds">"</span></span>) }
     .sortBy { <span class="pl-k">case</span> u <span class="pl-k">~</span> c <span class="pl-k">=&gt;</span> u.userId asc }
     .list(conn)</pre>
@@ -75,7 +73,7 @@
   <p>Grouping and aggregation are possible as follows:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">counts</span><span class="pl-k">:</span> <span class="pl-en">Seq</span>[(<span class="pl-en">Option</span>[<span class="pl-k">Int</span>], <span class="pl-k">Long</span>)] <span class="pl-k">=</span> 
-  <span class="pl-en">Users</span>()
+  <span class="pl-en">Users</span>
     .groupBy { t <span class="pl-k">=&gt;</span> t.companyId <span class="pl-k">~</span> t.userId.count }
     .filter  { <span class="pl-k">case</span> companyId <span class="pl-k">~</span> count <span class="pl-k">=&gt;</span> count ge <span class="pl-c1">10</span> }
     .list(conn)</pre>
@@ -83,7 +81,7 @@
   <p>Also you can assemble insert, update and delete SQL in the same way.</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-c"><span class="pl-c">//</span> INSERT</span>
-<span class="pl-en">Users</span>()
+<span class="pl-en">Users</span>
   .insert { u <span class="pl-k">=&gt;</span> 
     (u.userId <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>) <span class="pl-k">~</span> 
     (u.userName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Naoki Takezoe<span class="pl-pds">"</span></span>)
@@ -91,13 +89,13 @@
   .execute(conn)
 
 <span class="pl-c"><span class="pl-c">//</span> UPDATE</span>
-<span class="pl-en">Users</span>()
+<span class="pl-en">Users</span>
   .update(_.userName <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>N. Takezoe<span class="pl-pds">"</span></span>)
   .filter(_.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>)
   .execute(conn)
 
 <span class="pl-c"><span class="pl-c">//</span> DELETE</span>
-<span class="pl-en">Users</span>()
+<span class="pl-en">Users</span>
   .delete()
   .filter(_.userId eq <span class="pl-s"><span class="pl-pds">"</span>takezoe<span class="pl-pds">"</span></span>)
   .execute(conn)</pre>

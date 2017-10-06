@@ -4,24 +4,6 @@
       "issues":{
         "nodes":[
           {
-            "number":112,
-            "title":"Add support for OAuth authentication",
-            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:59 GMT\nOriginally opened as akka/akka#16857\n\nSee spray/spray#1007 and the previous unmerged PR spray/spray#372.\n/cc @sirthias",
-            "url":"https://github.com/akka/akka-http/issues/112"
-          },
-          {
-            "number":113,
-            "title":"High-level HTTP client support",
-            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:54 GMT\nOriginally opened as akka/akka#16856\n\nIt would be convenient if akka-http would provide common high-level HTTP functionality similar to what a browser supports in its backend. This is a collection of all the things that would belong into this category. This is a metaticket and each subfeature has its own ticket.\n\n connection pooling and configurable request queuing (provided by host-level API #15681)\n request-level API (#15906)\n automatic redirection (#15990)\n automatic retry attempts (#16852)\n try different IP addresses on retries (#16827)\n HTTP proxy support (for HTTP: #16853, for HTTPS: #16153)\n authentication data store (#16854)\n cookie store (#16855)\n response routing DSL (#15909)\n request building should be polished and documented (akka/akka#18550)\n optional: response decompression (akka/akka#16813)\n optional: Add support for OAuth authentication #16857",
-            "url":"https://github.com/akka/akka-http/issues/113"
-          },
-          {
-            "number":114,
-            "title":"Add cookie store for the HTTP client side",
-            "bodyText":"Issue by jrudolph\nWednesday Feb 11, 2015 at 13:53 GMT\nOriginally opened as akka/akka#16855\n\nIf configured, the store would automatically pick up cookies from responses and add them to requests. Also, it would make sure that the security rules about which cookies to apply in which situations would be applied.\nThis is part of the bigger initiative to support a high-level HTTP client interface as tracked as #16856.\n/cc @sirthias",
-            "url":"https://github.com/akka/akka-http/issues/114"
-          },
-          {
             "number":118,
             "title":"Akka HTTP: document / point to community / show CORS",
             "bodyText":"Issue by ktoso\nTuesday Sep 22, 2015 at 15:26 GMT\nOriginally opened as akka/akka#18530\n\nPatrick Ting has provided a snippet here: https://gist.github.com/pcting/2e65c36f868c5cee7d6a\nSee discussions:\n\nhttps://groups.google.com/forum/#!searchin/akka-user/cors/akka-user/msJfSkHDCxA/foDrnQPBx2gJ\nhttps://groups.google.com/forum/#!searchin/akka-user/cors/akka-user/5RCZIJt7jHo/lII0dUJhuIsJ",
@@ -564,7 +546,7 @@
           {
             "number":1377,
             "title":"Provide support for Forwarded Header",
-            "bodyText":"Currently, Akka HTTP doesn't support the standard header Forwarded, but only one of the de-facto standard X-Forwarded-For header that is only part of the standard Forwarded.\nIt would be good to add support for Forwarded header as described in https://tools.ietf.org/html/rfc7239\nAdditionally, it might be also good to implement X-Forwarded-Proto and X-Forwarded-Host:\n\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Proto",
+            "bodyText":"Currently, Akka HTTP doesn't support the standard header Forwarded, but only one of the de-facto standard X-Forwarded-For header that is only part of the standard Forwarded.\nIt would be good to add support for Forwarded header as described in https://tools.ietf.org/html/rfc7239\nAdditionally, it might be also good to implement X-Forwarded-Proto and X-Forwarded-Host:\n\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Proto\n\nHeaders added\n\n X-Forwarded-Proto and X-Forwarded-Host\n Forwarded",
             "url":"https://github.com/akka/akka-http/issues/1377"
           },
           {
@@ -586,6 +568,12 @@
             "url":"https://github.com/akka/akka-http/issues/1393"
           },
           {
+            "number":1408,
+            "title":"Add two more complete demos that is runnable in the Introduction docs",
+            "bodyText":"The demo in HTTP client API is a code snippet which can't run, I think it's better to provide a more complete one, just like the demos of HTTP servers, I add several lines to make it runnable, is that OK?\nobject Client {\n  def main(args: Array[String]): Unit = {\n    implicit val system = ActorSystem()\n    implicit val materializer = ActorMaterializer()\n    implicit val executionContext = system.dispatcher  // add\n\n    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = \"http://akka.io\"))\n\n    // add\n    responseFuture\n      .onComplete{\n        case Success(res) => println(res)\n        case Failure(_) => sys.error(\"something wrong\")\n      }\n  }\n}\n\nThe same to the second demo in Routing DSL for HTTP servers. It lacks the implementation of fetchItem & saveOrder, I implemented it in a simple way to make it runnable:\nobject WebServer {\n\n  var orders: List[Item] = Nil  // add\n\n  // domain model\n  case class Item(name: String, id: Long)\n  case class Order(items: List[Item])\n\n  // formats for unmarshalling and marshalling\n  implicit val itemFormat = jsonFormat2(Item)\n  implicit val orderFormat = jsonFormat1(Order)\n\n  // add\n  def fetchItem(itemId: Long): Future[Option[Item]] = Future {\n    orders.filter(o => o.id == itemId) match {\n      case Nil => None\n      case xs => Some(xs.head)\n    }\n  }\n  // add\n  def saveOrder(order: Order): Future[Done] = {\n    orders = order match {\n      case Order(items) => items ::: orders\n      case _ => orders\n    }\n    Future{Done}\n  }\n\n  def main(args: Array[String]): Unit = {\n\n    // needed to run the route\n    implicit val system = ActorSystem()\n    implicit val materializer = ActorMaterializer()\n    // needed for the future map/flatmap in the end\n    implicit val executionContext = system.dispatcher\n\n    val route: Route =\n      get {\n        pathPrefix(\"item\" / LongNumber) { id =>\n          // there might be no item for a given id\n          val maybeItem: Future[Option[Item]] = fetchItem(id)\n\n          onSuccess(maybeItem) {\n            case Some(item) => complete(item)\n            case None => complete(StatusCodes.NotFound)\n          }\n        }\n      } ~\n      post {\n        path(\"create-order\") {\n          entity(as[Order]) { order =>\n            val saved: Future[Done] = saveOrder(order)\n            onComplete(saved) { done =>\n              complete(\"order created\")\n            }\n          }\n        }\n      }\n\n    val bindingFuture = Http().bindAndHandle(route, \"localhost\", 8080)\n\n    println(\"listening on localhost 8080\")\n    StdIn.readLine()\n\n    bindingFuture\n        .flatMap(_.unbind())\n        .onComplete(_ => system.terminate())\n  }\n}",
+            "url":"https://github.com/akka/akka-http/issues/1408"
+          },
+          {
             "number":1417,
             "title":"Use akka-http to build an HTTP/HTTPs  proxy server",
             "bodyText":"In #1316, akka-http would gracefully reject CONNECT request.\nIf an option that accepts CONNECT is added, users can easily use Http().serverLayer  to implement their http proxy.",
@@ -602,6 +590,18 @@
             "title":"Http2 provide Tls Session Info header",
             "bodyText":"I tried out http2 and found that the Tls Session Info header was not being provided. This works fine if I don't use the Java agent which makes the negotiation fall back to using http/1.1.",
             "url":"https://github.com/akka/akka-http/issues/1432"
+          },
+          {
+            "number":1449,
+            "title":"Http server port in configuration file?",
+            "bodyText":"Hello,\nI was wondering if it was possible in akka-http server, a way to set the default port directly in the configuration.\nFor example akka.http.server.default-http-port and why not akka.http.server.default-https-port.\nCurrently in an application using akka-http, if we want to configure the port of our server in a configuration file, we must implement it ourselves. I think it would be practical to have a way to do it directly.",
+            "url":"https://github.com/akka/akka-http/issues/1449"
+          },
+          {
+            "number":1450,
+            "title":"Specs2 Test Interface 'afterAll' not calling super method",
+            "bodyText":"https://github.com/akka/akka-http/blob/master/akka-http-testkit/src/main/scala/akka/http/scaladsl/testkit/TestFrameworkInterface.scala\nThe ScalaTest impl calls their afterAll, but the Specs2 one does not.  This actually causes some pain in testing frameworks as we have to override the afterall and call the 'cleanup' directly.",
+            "url":"https://github.com/akka/akka-http/issues/1450"
           }
         ]
       }

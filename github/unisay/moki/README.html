@@ -1,0 +1,135 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/unisay/moki#moki-" aria-hidden="true" class="anchor" id="user-content-moki-" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Moki <a href="https://travis-ci.org/Unisay/moki" target="_blank"><img src="https://camo.githubusercontent.com/3a86825cae7d85b518f14148cc25314d10d3e695/68747470733a2f2f7472617669732d63692e6f72672f556e697361792f6d6f6b692e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/Unisay/moki.svg?branch=master" style="max-width:100%;"></a></h1> 
+  <h3><a href="https://github.com/unisay/moki#purely-functional-black-box-testing-toolkit-for-scala" aria-hidden="true" class="anchor" id="user-content-purely-functional-black-box-testing-toolkit-for-scala" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Purely functional black-box testing toolkit for Scala</h3> 
+  <p>Wikipedia defines <a href="https://en.wikipedia.org/wiki/Black-box_testing" target="_blank">black-box testing</a> as:</p> 
+  <blockquote> 
+   <p>Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings. This method of test can be applied virtually to every level of software testing: unit, integration, system and acceptance.</p> 
+  </blockquote> 
+  <p>The application (system) under test (further: <a href="https://en.wikipedia.org/wiki/System_under_test" target="_blank">SUT</a>) rarely lives in isolation. Very often there are multiple external components that SUT depends upon: databases, file-systems, micro-services or any external OS processes (local or remote). Such dependencies together comprise an application environment that has to be up and running during tests.</p> 
+  <p>Relying on real production instances of SUT dependencies managed by 3-rd parties comes with a disadvantages:</p> 
+  <ul> 
+   <li>External dependency might be still under development and not yet available (only its API contract).</li> 
+   <li>Its not guaranteed that dependency is running each time a black box test is executed because it is controlled by other dev team;</li> 
+   <li>Its hard to simulate failure modes using production systems 
+    <ol> 
+     <li>How would SUT behave if its dependency is being overloaded or shut down?</li> 
+     <li>Simulating slow responses in order to test timeouts.</li> 
+    </ol> </li> 
+   <li>Its hard to test functionality that modifies external data without such modifications being observable by end-users.</li> 
+  </ul> 
+  <p>In order to mitigate such drawbacks developer could use mocks that simulate relevant functions of real external dependencies. For example, its a common practice to use embedded databases (like HSQLDB and H2) instead of full-fledged DB servers, or mock servers like <a href="http://www.mock-server.com" target="_blank">www.mock-server.com</a> to simulate external REST services. One could also locally run a docker image of the dependency.</p> 
+  <p>Managing such dependencies can quickly become tedious and error-prone: Start before the test, make sure there are no TCP port conflicting, shut them down after test or in case of abrupt termination.</p> 
+  <p>Moki toolkit does exactly this: it defines a <code>TestService</code> monad and provides a way to compose many of them into an environment that is started before SUT and safely shut down after. It handles failures gracefully. Please consider the following scenario involving 3 test services - Database ("DB"), Micro-service providing REST API ("API") and Email server ("Email"):</p> 
+  <pre><code>Start DB (db port 5432)
+  Start EMAIL (email socket /var/sock/email)
+    Start API (exposed on URL http://localhost:12345)
+      Start SUT (depends on db port, email socket and API url, exposes http://localhost:8080)
+        Run test that uses SUT URL http://localhost:8080
+      Stop SUT
+    Stop API
+  Stop EMAIL
+Stop DB
+</code></pre> 
+  <p>Any step can fail; its important that no test service is left running after test:</p> 
+  <p>SUT failed on start:</p> 
+  <pre><code>Start DB
+  Start EMAIL
+    Start API
+      Start SUT  ---&gt; Exception thrown during start
+        Run test &lt;--- Skipped
+      Stop SUT &lt;-- Skipped
+    Stop API 
+  Stop EMAIL
+Stop DB
+</code></pre> 
+  <p>Test service failed on start:</p> 
+  <pre><code>Start DB
+  Start EMAIL
+    Start API --&gt; Exception thrown
+  Stop EMAIL
+Stop DB
+</code></pre> 
+  <p>Test service failed during shutdown:</p> 
+  <pre><code>Start DB
+  Start EMAIL
+    Start API
+      Start SUT
+        Run test
+      Stop SUT
+    Stop API &lt;--- throws Exception 
+  Stop EMAIL 
+Stop DB
+</code></pre> 
+  <p>In all this cases Moki guarantees that every test service is stopped and not abandoned.</p> 
+  <h2><a href="https://github.com/unisay/moki#installation" aria-hidden="true" class="anchor" id="user-content-installation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <pre><code>resolvers += "unisay-maven" at "https://dl.bintray.com/unisay/maven"
+libraryDependencies += "com.github.unisay" %% "moki" % "5.1.0" % "test,it"
+</code></pre> 
+  <h2><a href="https://github.com/unisay/moki#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Main concept is a <code>TestService[R]</code> that can be started and stopped; Type parameter <code>R</code> is a type of resource that is available to SUT while service is started. Examples are: URL, socket, TCP port, folder on FS.</p> 
+  <p>Its created like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">testService</span><span class="pl-k">:</span> <span class="pl-en">TestService</span>[<span class="pl-en">Resource</span>] <span class="pl-k">=</span> 
+  <span class="pl-en">TestService</span>(<span class="pl-v">start</span>: <span class="pl-en">Task</span>[<span class="pl-en">Resource</span>], <span class="pl-v">stop</span>: <span class="pl-en">Resource</span> <span class="pl-k">=&gt;</span> <span class="pl-en">Task</span>[<span class="pl-k">Unit</span>])</pre>
+  </div> 
+  <p>Moki uses <code>fs2.Task</code> from <a href="https://github.com/functional-streams-for-scala/fs2" target="_blank">functional streams for scala</a> to capture side-effectful computations.</p> 
+  <p>Given 3 or more test services they can be composed like monads:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">serviceA</span><span class="pl-k">:</span> <span class="pl-en">TestService</span>[<span class="pl-en">A</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">serviceB</span><span class="pl-k">:</span> <span class="pl-en">A</span> <span class="pl-k">=&gt;</span> <span class="pl-en">TestService</span>[<span class="pl-en">B</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+<span class="pl-k">val</span> <span class="pl-en">serviceC</span><span class="pl-k">:</span> (<span class="pl-en">A</span>, <span class="pl-en">B</span>) <span class="pl-k">=&gt;</span> <span class="pl-en">TestService</span>[<span class="pl-k">Unit</span>] <span class="pl-k">=</span> <span class="pl-k">???</span>
+
+<span class="pl-k">val</span> <span class="pl-en">environment</span> <span class="pl-k">=</span> <span class="pl-k">for</span> {
+  a <span class="pl-k">&lt;</span><span class="pl-k">-</span> serviceA
+  b <span class="pl-k">&lt;</span><span class="pl-k">-</span> serviceB(a)
+  _ <span class="pl-k">&lt;</span><span class="pl-k">-</span> serviceC(a, b)
+} <span class="pl-k">yield</span> (a, b)
+
+<span class="pl-c"><span class="pl-c">//</span> or with applicative syntax:</span>
+
+<span class="pl-k">val</span> <span class="pl-en">environment</span> <span class="pl-k">=</span> (serviceA <span class="pl-k">|@|</span> serviceB <span class="pl-k">|@|</span> serviceC)((<span class="pl-v">a</span>: <span class="pl-en">A</span>, <span class="pl-v">b</span>: <span class="pl-en">B</span>, _) <span class="pl-k">=&gt;</span> (a, b))</pre>
+  </div> 
+  <p>The environment, in turn, can run "around" the task that contains a test functionality like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">test</span><span class="pl-k">:</span> <span class="pl-en">Task</span>[<span class="pl-en">Assertion</span>] <span class="pl-k">=</span> environment run { <span class="pl-k">case</span> (a, b) <span class="pl-k">=&gt;</span> 
+  <span class="pl-c"><span class="pl-c">//</span> verify something using a and b</span>
+  httpGetFrom(a) mustEqual readFileFrom(b)
+}
+
+test.unsafeRun()</pre>
+  </div> 
+  <p>Moki runs it in the following order:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>    a <span class="pl-k">=</span> serviceA.start
+      b <span class="pl-k">=</span> serviceB.start
+        serviceC.start
+          assertion <span class="pl-k">=</span> httpGetFrom(a) mustEqual readFileFrom(b)
+        serviceC.stop
+      serviceB.stop
+    serviceA.stop</pre>
+  </div> 
+  <p>returning assertion to your test framework (ScalaTest or Specs2)</p> 
+  <h2><a href="https://github.com/unisay/moki#license" aria-hidden="true" class="anchor" id="user-content-license" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>The MIT License (MIT)</p> 
+  <p>Copyright (c) 2017</p> 
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p> 
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p> 
+  <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p> 
+ </article>
+</div>

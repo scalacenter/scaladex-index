@@ -1,0 +1,69 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/gregghz/json-macro#json-macro" aria-hidden="true" class="anchor" id="user-content-json-macro" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>json-macro</h1> 
+  <p>json-macro is an attempt at a scalameta macro for play-json that avoids the overhead of play-json's functional syntax. See <a href="https://www.lucidchart.com/techblog/2016/08/29/speeding-up-restful-services-in-play-framework/" target="_blank">this blog post</a> for details.</p> 
+  <p>Compatibility is currently tested against play-json 2.6.0-M1. That means it is compatible with play-json 2.5.x as well but that is mostly incidental. Once 2.6.x becomes final I plan to support the latest stable release of play-json moving forward. Any version that has the same Reads/Writes API should automatically be supported by json-macro.</p> 
+  <h2><a href="https://github.com/gregghz/json-macro#install" aria-hidden="true" class="anchor" id="user-content-install" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Install</h2> 
+  <p>Add the follow to your build.sbt:</p> 
+  <pre><code>resolvers += Resolver.bintrayRepo("gregghz", "gregghz")
+
+addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-beta4" cross CrossVersion.full)
+
+libraryDependencies += "com.gregghz" %% "json-macro" % "0.1.0"
+</code></pre> 
+  <h2><a href="https://github.com/gregghz/json-macro#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>In contrast with Play's <code>Json.format[A]</code> macro, json-macro has to use an annotation until <a href="https://github.com/scalameta/scalameta/issues/160" target="_blank">#160</a> is resolved:</p> 
+  <pre><code>import com.gregghz.json._
+
+@JsonRecord
+case class Thing(a: String)
+</code></pre> 
+  <p>This will expand into roughly the following code:</p> 
+  <pre><code>case class Thing(a: String)
+object Thing {
+  implicit val reads: Reads[Thing] = Reads[Thing] { json =&gt;
+    for {
+      a &lt;- (json \ "a").validate[String]
+    } yield Thing(a)
+  }
+
+  implicit val writes: Writes[Thing] = Writes[Thing] { obj =&gt;
+    Json.obj(
+      "a" -&gt; obj.a
+    )
+  }
+}
+</code></pre> 
+  <p>You can also override the keys used in the serialized json:</p> 
+  <pre><code>import com.gregghz.json._
+
+@JsonRecord
+case class Thing(a: String ~ hello)
+</code></pre> 
+  <p>This will expand into the following:</p> 
+  <pre><code>case class Thing(a: String)
+object Thing {
+  implicit val reads: Reads[Thing] = Reads[Thing] { json =&gt;
+    for {
+      a &lt;- (json \ "hello").validate[String]
+    } yield Thing(a)
+  }
+
+  implicit val writes: Writes[Thing] = Writes[Thing] { obj =&gt;
+    Json.obj(
+      "hello" -&gt; obj.a
+    )
+  }
+}
+</code></pre> 
+ </article>
+</div>

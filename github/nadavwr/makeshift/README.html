@@ -1,0 +1,69 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p>A unit testing library I quickly hacked together for personal use, until one of the established libraries becomes available for Scala Native.</p> 
+  <p>To use it:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-en">Resolver</span>.bintrayRepo(<span class="pl-s"><span class="pl-pds">"</span>nadavwr<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>maven<span class="pl-pds">"</span></span>)
+libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>com.github.nadavwr<span class="pl-pds">"</span></span> <span class="pl-k">%%%</span> <span class="pl-s"><span class="pl-pds">"</span>makeshift<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.1.1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <ul> 
+   <li>Unit tests are aggregated under <code>Spec</code> instances.</li> 
+   <li>Each unit test makes use of a <code>Fixture</code></li> 
+   <li>Using fixtures enables sharing code across test cases, as well as orderly resource initialization and cleanup.</li> 
+   <li>The method <code>assertThat()</code> provides some rudimentary papertrail for what specific checks pass/fail. Make sure your terminal can render 
+    <g-emoji alias="+1" fallback-src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f44d.png" ios-version="6.0">
+     👍
+    </g-emoji> and ❗.</li> 
+   <li>No effort is made by the library to aggregate specs into test suites. Having a <code>Spec</code> extend <code>App</code> has been a guilty pleasure for me so far.</li> 
+   <li>SBT test framework integration isn't there yet, so just place your specs in a separate module and plain-old <code>run</code> them.</li> 
+  </ul> 
+  <p>Given a heap-allocated buffer such as the following:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">class</span> <span class="pl-en">Buffer</span>(<span class="pl-k">val</span> <span class="pl-en">size</span><span class="pl-k">:</span> <span class="pl-k">Int</span>) {
+  <span class="pl-k">import</span> <span class="pl-v">scalanative.native.</span><span class="pl-v">_</span>
+  <span class="pl-k">val</span> <span class="pl-en">ptr</span><span class="pl-k">:</span> <span class="pl-en">Ptr</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> stdlib.malloc(<span class="pl-c1">1024</span>)
+  <span class="pl-k">def</span> <span class="pl-en">dispose</span>()<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span> stdlib.free(ptr)
+
+  <span class="pl-k">def</span> <span class="pl-en">put</span>(<span class="pl-v">bytes</span>: <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>])<span class="pl-k">:</span> <span class="pl-k">Unit</span> <span class="pl-k">=</span>
+    bytes.zipWithIndex.foreach { <span class="pl-k">case</span> (b, i) <span class="pl-k">=&gt;</span> <span class="pl-k">!</span>(ptr<span class="pl-k">+</span>i) <span class="pl-k">=</span> b }
+  <span class="pl-k">def</span> <span class="pl-en">get</span>(<span class="pl-v">size</span>: <span class="pl-k">Int</span>)<span class="pl-k">:</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>] <span class="pl-k">=</span> {
+    <span class="pl-k">val</span> <span class="pl-en">out</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Array</span>[<span class="pl-k">Byte</span>](size)
+    <span class="pl-k">for</span> (i <span class="pl-k">&lt;</span><span class="pl-k">-</span> <span class="pl-c1">0</span> until size) {
+      out(i) <span class="pl-k">=</span> <span class="pl-k">!</span>(ptr<span class="pl-k">+</span>i)
+    }
+    out
+  }
+}</pre>
+  </div> 
+  <p>It can be tested as seen below:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.github.nadavwr.makeshift.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">MySpec</span> <span class="pl-k">extends</span> <span class="pl-e">Spec</span> <span class="pl-k">with</span> <span class="pl-e">App</span> {
+
+  <span class="pl-k">trait</span> <span class="pl-en">BufferFixture</span> <span class="pl-k">extends</span> <span class="pl-e">Fixture</span> {
+    <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">buffer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Buffer</span>(<span class="pl-c1">1024</span>)
+      .withCleanup(<span class="pl-s"><span class="pl-pds">"</span>buffer<span class="pl-pds">"</span></span>) { _.dispose() }
+  }
+
+  test(<span class="pl-s"><span class="pl-pds">"</span>manipulate heap memory<span class="pl-pds">"</span></span>) runWith <span class="pl-k">new</span> <span class="pl-en">BufferFixture</span> {
+    <span class="pl-k">val</span> <span class="pl-en">message</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>hello<span class="pl-pds">"</span></span>
+    <span class="pl-k">val</span> <span class="pl-en">messageBytes</span> <span class="pl-k">=</span> message.toArray.map(_.toByte)
+    buffer.put(messageBytes)
+    <span class="pl-k">val</span> <span class="pl-en">output</span> <span class="pl-k">=</span> buffer.get(messageBytes.length)
+    assertThat(output sameElements messageBytes,
+      s<span class="pl-s"><span class="pl-pds">"</span>buffer should be assigned expected value '$message'<span class="pl-pds">"</span></span>)
+  }
+}</pre>
+  </div> 
+  <p>producing the following output:</p> 
+  <pre><code>_______________________
+▏manipulate heap memory
+bufer created
+👍 buffer should be assigned expected value 'hello'
+👍
+cleaning up bufer
+</code></pre> 
+  <p>See more usage examples in <a href="https://github.com/nadavwr/makeshift/blob/master/sample/src/main/scala/com/github/nadavwr/makeshift/SampleSpec.scala" target="_blank">SampleSpec</a></p> 
+ </article>
+</div>

@@ -1,0 +1,206 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/saurfang/sbt-spark-submit#sbt-spark-submit" aria-hidden="true" class="anchor" id="user-content-sbt-spark-submit" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-spark-submit</h1> 
+  <p><a href="https://gitter.im/saurfang/sbt-spark-submit?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Join the chat at https://gitter.im/saurfang/sbt-spark-submit" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a></p> 
+  <p><a href="https://travis-ci.org/saurfang/sbt-spark-submit" target="_blank"><img src="https://camo.githubusercontent.com/bc6321d213fed5793f693b38c9cfdf41d064de44/68747470733a2f2f7472617669732d63692e6f72672f7361757266616e672f7362742d737061726b2d7375626d69742e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/saurfang/sbt-spark-submit.svg?branch=master" style="max-width:100%;"></a></p> 
+  <p>This sbt plugin provides customizable sbt tasks to fire Spark jobs against local or remote Spark clusters. It allows you submit Spark applications without leaving your favorite development environment. The reactive nature of sbt makes it possible to integrate this with your Spark clusters whether it is a standalone cluster, <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples/sbt-assembly-on-yarn" target="_blank">YARN cluster</a>, <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples/sbt-assembly-on-ec2" target="_blank">clusters run on EC2</a> and etc.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#motivation" aria-hidden="true" class="anchor" id="user-content-motivation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Motivation</h2> 
+  <p>As an awesome Scala developer, your Spark development experience is probably as follows:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre><span class="pl-c"><span class="pl-c">#</span> create assembly jar upon code change</span>
+sbt assembly
+<span class="pl-c"><span class="pl-c">#</span> coffee break as Scala builds</span>
+<span class="pl-c"><span class="pl-c">#</span> transfer the jar to a cluster co-located host</span>
+scp target/scala-2.10/myproject-version-assembly.jar sparkcluster:myworkspace
+<span class="pl-c"><span class="pl-c">#</span> ssh into that launcher host</span>
+ssh sparkcluster
+<span class="pl-c1">cd</span> myworkspace
+<span class="pl-c"><span class="pl-c">#</span> fire spark-submit</span>
+<span class="pl-smi">$SPARK_HOME</span>/bin/spark-submit --class not.memorable.package.applicaiton.class --master yarn --num-executor 10 \
+  --conf some.crazy.config=xyz --executor-memory=lotsG \
+  myproject-version-assembly.jar \
+  <span class="pl-k">&lt;</span>glorious-application-arguments...<span class="pl-k">&gt;</span></pre>
+  </div> 
+  <p>But it doesn't have to be that hard. With this plugin you can reduce above steps into:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt <span class="pl-s"><span class="pl-pds">"</span>sparkSubmitMyClass &lt;additional custom app arguments...&gt;<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#feature" aria-hidden="true" class="anchor" id="user-content-feature" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Feature</h2> 
+  <p>This AutoPlugin automatically adds a <code>sparkSubmit</code> task to every project in your build, the usage is as follows:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt <span class="pl-s"><span class="pl-pds">"</span>sparkSubmit &lt;spark arguments&gt; -- &lt;application arguments&gt;<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>For example</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt <span class="pl-s"><span class="pl-pds">"</span>sparkSubmit --class SparkPi --<span class="pl-pds">"</span></span>
+sbt <span class="pl-s"><span class="pl-pds">"</span>sparkSubmit --class SparkPi -- 10<span class="pl-pds">"</span></span>
+sbt <span class="pl-s"><span class="pl-pds">"</span>sparkSubmit --master local[2] --class SparkPi --<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>You can also define specialized SparkSubmit task, we recommend create a <code>project/SparkSubmit.scala</code>:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">sbtsparksubmit.SparkSubmitPlugin.autoImport.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">SparkSubmit</span> {
+  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span>
+    <span class="pl-en">SparkSubmitSetting</span>(<span class="pl-s"><span class="pl-pds">"</span>sparkPi<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>--class<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>SparkPi<span class="pl-pds">"</span></span>)
+    )
+}</pre>
+  </div> 
+  <p>Then in the <code>build.sbt</code>, import the settings by:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-en">SparkSubmit</span>.settings</pre>
+  </div> 
+  <p>With that you just gained a new sbt task called <code>sparkPi</code> which you can run by <code>sbt sparkPi</code>. The task automatically recompiles and repackages the JAR as needed. It starts the SparkPi example in local mode. You can change the default Spark master by specifying <code>--master</code> as you would with <em>spark-submit</em>. You can embed default Spark and/or Application arguments in the sbt task to cover you most common use cases. Please see <a href="https://github.com/saurfang/sbt-spark-submit#define-custom-sparksubmit-task" target="_blank">below</a> for more details for custom spark-submit task.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#setup" aria-hidden="true" class="anchor" id="user-content-setup" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Setup</h2> 
+  <p>For sbt 0.13.6+ add sbt-spark-submit to your <code>project/plugins.sbt</code> or <code>~/.sbt/0.13/plugins/plugins.sbt</code> file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.github.saurfang<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-spark-submit<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.4<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>Naturally you will need to have spark dependency in your project itself such as:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.apache.spark<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>spark-core<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p><code>"provided"</code> is recommended as Spark is pretty huge and you don't need to include in your fat jar during deployment.</p> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#yarn" aria-hidden="true" class="anchor" id="user-content-yarn" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>YARN</h3> 
+  <p>If you are running on YARN, you also need to add <a href="http://mvnrepository.com/artifact/org.apache.spark/spark-yarn_2.10" target="_blank">spark-yarn</a>. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.apache.spark<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>spark-yarn<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>If you are submitting cross platform (e.g. from Windows to Linux), you need Hadoop 2.4+ which support platform neutral classpath separator. In those cases, you might need to exclude Hadoop dependencies from Spark first. For example:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>libraryDependencies <span class="pl-k">++</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-s"><span class="pl-pds">"</span>org.apache.spark<span class="pl-pds">"</span></span> <span class="pl-k">%%</span> <span class="pl-s"><span class="pl-pds">"</span>spark-yarn<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>1.4.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span> excludeAll <span class="pl-en">ExclusionRule</span>(organization <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>org.apache.hadoop<span class="pl-pds">"</span></span>),
+  <span class="pl-s"><span class="pl-pds">"</span>org.apache.hadoop<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>hadoop-client<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.4.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>org.apache.hadoop<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>hadoop-yarn-client<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>2.4.0<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>provided<span class="pl-pds">"</span></span>
+)</pre>
+  </div> 
+  <p>Finally you should use</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>enablePlugins(<span class="pl-en">SparkSubmitYARN</span>)</pre>
+  </div> 
+  <p>to enable default YARN settings. This defaults the master to <code>yarn-cluster</code> whenever appropriate and append <code>HADOOP_CONF_DIR/YARN_CONF_DIR</code> to launcher classpath so YARN resource manager can be correctly determined. See below for more details.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#define-custom-sparksubmit-tasks" aria-hidden="true" class="anchor" id="user-content-define-custom-sparksubmit-tasks" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Define Custom SparkSubmit Tasks</h2> 
+  <p>To create multiple tasks, you can wrap them with <code>SparkSubmitSetting</code> again like this:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>  <span class="pl-k">lazy</span> <span class="pl-k">val</span> <span class="pl-en">settings</span> <span class="pl-k">=</span> <span class="pl-en">SparkSubmitSetting</span>(
+    <span class="pl-en">SparkSubmitSetting</span>(<span class="pl-s"><span class="pl-pds">"</span>spark1<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>--class<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Main1<span class="pl-pds">"</span></span>)
+    ),
+    <span class="pl-en">SparkSubmitSetting</span>(<span class="pl-s"><span class="pl-pds">"</span>spark2<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>--class<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Main2<span class="pl-pds">"</span></span>)
+    ),
+    <span class="pl-en">SparkSubmitSetting</span>(<span class="pl-s"><span class="pl-pds">"</span>spark2Other<span class="pl-pds">"</span></span>,
+      <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>--class<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Main2<span class="pl-pds">"</span></span>),
+      <span class="pl-en">Seq</span>(<span class="pl-s"><span class="pl-pds">"</span>hello.txt<span class="pl-pds">"</span></span>)
+    )
+  )</pre>
+  </div> 
+  <p>Notice here are two differently named tasks run the same class but with different application arguments.</p> 
+  <p>Of course, you can still append additional arguments in this task. For example:</p> 
+  <div class="highlight highlight-source-shell">
+   <pre>sbt <span class="pl-s"><span class="pl-pds">"</span>spark2 hello.txt<span class="pl-pds">"</span></span>
+sbt spark2Other</pre>
+  </div> 
+  <p>would be equivalent.</p> 
+  <p><code>SparkSubmitSetting</code> has three <code>apply</code> functions:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>)<span class="pl-k">:</span> <span class="pl-en">SparkSubmitSetting</span>
+<span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">name</span>: <span class="pl-k">String</span>, <span class="pl-v">sparkArgs</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>(), <span class="pl-v">appArgs</span>: <span class="pl-en">Seq</span>[<span class="pl-k">String</span>] <span class="pl-k">=</span> <span class="pl-en">Seq</span>())<span class="pl-k">:</span> <span class="pl-en">SparkSubmitSetting</span>
+<span class="pl-k">def</span> <span class="pl-en">apply</span>(<span class="pl-v">sparkSubmitSettings</span>: <span class="pl-en">SparkSubmitSetting</span><span class="pl-k">*</span>)<span class="pl-k">:</span> <span class="pl-en">Seq</span>[<span class="pl-en">Def</span>.<span class="pl-en">Setting</span>[_]]</pre>
+  </div> 
+  <p>The first creates a simple <code>SparkSubmitSetting</code> object with a custom task name. The object itself has <code>setting</code> function that allows you to blend in additional settings that is specific to this task.</p> 
+  <p>Because the most common use case of custom task is to provide custom default Spark and Application arguments, the second variant allow you provide those directly.</p> 
+  <p>There is already an implicit conversion from <code>SparkSubmitSetting</code> to <code>Seq[Def.Setting[_]]</code> which allows you to append itself to your project. When there are multiple settings, the third variant allows you to aggregate all of them without additional type hinting for implicit to work.</p> 
+  <p>See <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/src/sbt-test/sbt-spark-submit/multi-main" target="_blank"><code>src/sbt-test/sbt-spark-submit/multi-main</code></a> for examples.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#multi-project-builds" aria-hidden="true" class="anchor" id="user-content-multi-project-builds" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Multi-project builds</h2> 
+  <p>If you are really awesome to have a multi-project builds, be careful that <code>sbt sparkSubmit</code> will trigger aggregation thus firing multiple instances each for every project. You can do <code>sbt projectA/sparkSubmit</code> to restrict the project scope.</p> 
+  <p>However if you define additional sparkSubmit tasks with unique names, this becomes very friendly. For example, say you have two projects <code>A</code> and <code>B</code>, for which you define <code>sparkA1</code>, <code>sparkA2</code> and <code>sparkB</code> tasks respectively. As long as you attach the <code>sparkA1</code> and <code>sparkA2</code> to project <code>A</code> and <code>sparkB</code> to project <code>B</code>, <code>sbt sparkA1</code> and <code>sbt sparkA2</code> will correctly trigger build on project A while <code>sparkB</code> will do the same for project <code>B</code> even though you didn't select any specific project.</p> 
+  <p>Of course, <code>sparkB</code> task won't even trigger a build on <code>A</code> unless <code>B</code> depends on <code>A</code> thanks to the magic of sbt.</p> 
+  <p>See <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/src/sbt-test/sbt-spark-submit/multi-project" target="_blank"><code>src/sbt-test/sbt-spark-submit/multi-project</code></a> for examples.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#customization" aria-hidden="true" class="anchor" id="user-content-customization" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Customization</h2> 
+  <p>Below we go into details about various keys that controls the default behavior of this task.</p> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#application-jar" aria-hidden="true" class="anchor" id="user-content-application-jar" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Application JAR</h3> 
+  <p><code>sparkSubmitJar</code> specifies the application JAR used in submission. By default this is simply the JAR created by <code>package</code> task. This will be sufficient to run in local mode.</p> 
+  <p>More advanced techniques include but not limited to:</p> 
+  <ol> 
+   <li>Use one-jar plugins such as <code>sbt-assembly</code> to create a fat jar for deployment.</li> 
+   <li>While YARN automatically uploads the application jar, it doesn't seem to be the case for Spark Standalone cluster. So you can inject a JAR uploading process inside this key and returns the uploaded JAR instead. See <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples/sbt-assembly-on-ec2" target="_blank">sbt-assembly-on-ec2</a> for an example.</li> 
+  </ol> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#spark-and-application-arguments" aria-hidden="true" class="anchor" id="user-content-spark-and-application-arguments" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spark and Application Arguments</h3> 
+  <p><code>sparkSubmitSparkArgs</code> and <code>sparkSubmitAppArgs</code> represents the arguments for Spark and Application respectively. Spark arguments are things like <code>--class</code>, <code>--conf</code> and etc. Application arguments are for the Spark application being submitted.</p> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#application-master" aria-hidden="true" class="anchor" id="user-content-application-master" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Application Master</h3> 
+  <p><code>sparkSubmitMaster</code> specifies the default master to use if <code>--master</code> is not already supplied. This takes a function of the form <code>(sparkArgs: Seq[String], appArgs: Seq[String]) =&gt; String</code>. By default it blindly maps to <code>local</code>.</p> 
+  <p>More interesting ones may be:</p> 
+  <ol> 
+   <li>If there is <code>--help</code> in <code>appArgs</code> you will want to run as <code>local</code> to see the usage information immediately.</li> 
+   <li>For YARN deployment, <code>yarn-cluster</code> is appropriate especially if you are submitting to a remote cluster from IDE.</li> 
+   <li>For EC2 deployment, you can use <code>spark-ec2</code> script to figure out the correct address of Spark master. See <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples/sbt-assembly-on-ec2" target="_blank">sbt-assembly-on-ec2</a> for an example.</li> 
+  </ol> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#default-properties-file" aria-hidden="true" class="anchor" id="user-content-default-properties-file" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Default Properties File</h3> 
+  <p><code>sparkSubmitPropertiesFile</code> specifies the default properties file to use if <code>--properties-file</code> is not already supplied.</p> 
+  <p>This can be especially useful for YARN deployment by pointing the Spark assembly to a JAR on HDFS via <code>spark.yarn.jar</code> property so as to avoid the overhead of uploading Spark assembly jar every time application is submitted. See <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples/sbt-assembly-on-yarn" target="_blank">sbt-assembly-on-ec2</a> for an example.</p> 
+  <p>Other interesting settings include driver/executor memory/cores, RDD compression/serialization and etc.</p> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#classpath" aria-hidden="true" class="anchor" id="user-content-classpath" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Classpath</h3> 
+  <p><code>sparkSubmitClassPath</code> sets the classpath to use for Spark application deployment. Currently this is only relevant for YARN deployment as I couldn't get <code>yarn-site.xml</code> correctly picked up even when <code>HADOOP_CONF_DIR</code> is properly set. In this case, you can add:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>sparkSubmitClasspath <span class="pl-k">:</span><span class="pl-k">=</span> {
+  <span class="pl-k">new</span> <span class="pl-en">File</span>(sys.env.getOrElse(<span class="pl-s"><span class="pl-pds">"</span>HADOOP_CONF_DIR<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>)) <span class="pl-k">+</span><span class="pl-k">:</span>
+    data((fullClasspath in <span class="pl-en">Compile</span>).value)
+}</pre>
+  </div> 
+  <p>Note: This is already automatically injected once you <code>enablePlugins(SparkSubmitYARN)</code></p> 
+  <h3><a href="https://github.com/saurfang/sbt-spark-submit#sparksubmit-inputkey" aria-hidden="true" class="anchor" id="user-content-sparksubmit-inputkey" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>SparkSubmit inputKey</h3> 
+  <p><code>sparkSubmit</code> is a generic <code>inputKey</code> and we will show you how to define additional tasks that have different default behavior in terms of parameters. As for the inputKey itself, it parses space delimited arguments. If <code>--</code> is present, the former part gets appended to <code>sparkSubmitSparkArgs</code> and the latter part gets appended to <code>sparkSubmitAppArgs</code>. If <code>--</code> is missing, then all arguments are assumed to be application arguments.</p> 
+  <p>If <code>--master</code> is missing in <code>sparkSubmitSparkArgs</code>, then <code>sparkSubmitMaster</code> is used to assign a default application master.</p> 
+  <p>If <code>--properties-file</code> is missing in <code>sparkSubmitSparkArgs</code> and <code>sparkSubmitPropertiesFile</code> is not <code>None</code>, then it will be included.</p> 
+  <p>Finally it runs the Spark application deploy process using the specified Classpath and specified JAR with above mentioned arguments.</p> 
+  <h2><a href="https://github.com/saurfang/sbt-spark-submit#resources" aria-hidden="true" class="anchor" id="user-content-resources" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Resources</h2> 
+  <p>For more information and working examples, see projects under <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/examples" target="_blank"><code>examples</code></a> and <a href="https://github.com/saurfang/sbt-spark-submit/blob/master/src/sbt-test" target="_blank"><code>src/sbt-test</code></a>.</p> 
+ </article>
+</div>

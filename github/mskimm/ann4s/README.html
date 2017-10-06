@@ -1,0 +1,102 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <p><a href="https://travis-ci.org/mskimm/ann4s" target="_blank"><img src="https://camo.githubusercontent.com/8f02a51fd0e7d7491b9e05dee2b56d042c1c5e15/68747470733a2f2f7472617669732d63692e6f72672f6d736b696d6d2f616e6e34732e7376673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/mskimm/ann4s.svg?branch=master" style="max-width:100%;"></a></p> 
+  <h1><a href="https://github.com/mskimm/ann4s#ann4s" aria-hidden="true" class="anchor" id="user-content-ann4s" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Ann4s</h1> 
+  <p>A Scala Implementation of <a href="https://github.com/spotify/annoy" target="_blank">Annoy</a> which searches nearest neighbors given query point.</p> 
+  <p>Ann4s also provides <a href="http://spark.apache.org/docs/latest/ml-guide.html" target="_blank">DataFrame-based API</a> for <a href="https://spark.apache.org/" target="_blank">Apache Spark</a>.</p> 
+  <h1><a href="https://github.com/mskimm/ann4s#scala-code-example" aria-hidden="true" class="anchor" id="user-content-scala-code-example" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Scala code example</h1> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">ann4s.</span><span class="pl-v">_</span>
+
+<span class="pl-k">object</span> <span class="pl-en">AnnoyExample</span> {
+
+  <span class="pl-k">def</span> <span class="pl-en">main</span>(<span class="pl-v">args</span>: <span class="pl-en">Array</span>[<span class="pl-k">String</span>]) {
+    <span class="pl-k">val</span> <span class="pl-en">f</span> <span class="pl-k">=</span> <span class="pl-c1">40</span>
+    <span class="pl-k">val</span> <span class="pl-en">metric</span><span class="pl-k">:</span> <span class="pl-en">Metric</span> <span class="pl-k">=</span> <span class="pl-en">Angular</span> <span class="pl-c"><span class="pl-c">//</span> or Euclidean</span>
+    <span class="pl-k">val</span> <span class="pl-en">t</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">AnnoyIndex</span>(f, metric)  <span class="pl-c"><span class="pl-c">//</span> Length of item vector that will be indexed</span>
+    (<span class="pl-c1">0</span> until <span class="pl-c1">1000</span>) foreach { i <span class="pl-k">=&gt;</span>
+      <span class="pl-k">val</span> <span class="pl-en">v</span> <span class="pl-k">=</span> <span class="pl-en">Array</span>.fill(f)(scala.util.<span class="pl-en">Random</span>.nextGaussian().toFloat)
+      t.addItem(i, v)
+    }
+    t.build(<span class="pl-c1">10</span>)
+
+    <span class="pl-c"><span class="pl-c">//</span> t.getNnsByItem(0, 1000) runs using HeapByteBuffer (memory)</span>
+
+    t.save(<span class="pl-s"><span class="pl-pds">"</span>test.ann<span class="pl-pds">"</span></span>) <span class="pl-c"><span class="pl-c">//</span> `test.ann` is compatible with the native Annoy</span>
+
+    <span class="pl-c"><span class="pl-c">//</span> after `save` t.getNnsByItem(0, 1000) runs using MappedFile (file-based)</span>
+
+    println(t.getNnsByItem(<span class="pl-c1">0</span>, <span class="pl-c1">1000</span>).mkString(<span class="pl-s"><span class="pl-pds">"</span>,<span class="pl-pds">"</span></span>)) <span class="pl-c"><span class="pl-c">//</span> will find the 1000 nearest neighbors</span>
+  }
+
+}
+</pre>
+  </div> 
+  <h1><a href="https://github.com/mskimm/ann4s#spark-code-example-with-dataframe-based-api" aria-hidden="true" class="anchor" id="user-content-spark-code-example-with-dataframe-based-api" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Spark code example (with DataFrame-based API)</h1> 
+  <h2><a href="https://github.com/mskimm/ann4s#item-similarity-computation" aria-hidden="true" class="anchor" id="user-content-item-similarity-computation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Item similarity computation</h2> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">dataset</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> <span class="pl-k">???</span> <span class="pl-c"><span class="pl-c">//</span> your dataset</span>
+
+<span class="pl-k">val</span> <span class="pl-en">alsModel</span><span class="pl-k">:</span> <span class="pl-en">ALSModel</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ALS</span>()
+  .fit(dataset)
+
+<span class="pl-k">val</span> <span class="pl-en">annoyModel</span><span class="pl-k">:</span> <span class="pl-en">AnnoyModel</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Annoy</span>()
+  .setDimension(alsModel.rank)
+  .fit(alsModel.itemFactors)
+
+<span class="pl-k">val</span> <span class="pl-en">result</span><span class="pl-k">:</span> <span class="pl-en">DataFrame</span> <span class="pl-k">=</span> annoyModel
+  .setK(<span class="pl-c1">10</span>) <span class="pl-c"><span class="pl-c">//</span> find 10 neighbors</span>
+  .transform(alsModel.itemFactors)
+
+result.show()</pre>
+  </div> 
+  <p>The <code>result.show()</code> shows</p> 
+  <pre><code>+---+--------+-----------+
+| id|neighbor|   distance|
++---+--------+-----------+
+|  0|       0|        0.0|
+|  0|      50|0.014339785|
+...
+|  1|       1|        0.0|
+|  1|      36|0.011467933|
+...
++---+--------+-----------+
+</code></pre> 
+  <ul> 
+   <li>For more information of ALS see this <a href="http://spark.apache.org/docs/2.0.0/ml-collaborative-filtering.html" target="_blank">link</a></li> 
+   <li>Working example is at 'src/test/scala/ann4s/spark/AnnoySparkSpec.scala'</li> 
+  </ul> 
+  <h1><a href="https://github.com/mskimm/ann4s#installation" aria-hidden="true" class="anchor" id="user-content-installation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h1> 
+  <pre><code>resolvers += Resolver.bintrayRepo("mskimm", "maven")
+
+libraryDependencies += "com.github.mskimm" %% "ann4s" % "0.0.6"
+</code></pre> 
+  <ul> 
+   <li><code>0.0.6</code> is built with Apache Spark 1.6.2</li> 
+  </ul> 
+  <h1><a href="https://github.com/mskimm/ann4s#references" aria-hidden="true" class="anchor" id="user-content-references" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>References</h1> 
+  <ul> 
+   <li><a href="https://github.com/spotify/annoy" target="_blank">https://github.com/spotify/annoy</a> : native implementation with serveral bindings like Python</li> 
+   <li><a href="https://github.com/pishen/annoy4s" target="_blank">https://github.com/pishen/annoy4s</a> : Scala wrapper using JNA</li> 
+   <li><a href="https://github.com/spotify/annoy-java" target="_blank">https://github.com/spotify/annoy-java</a> : Java implementation</li> 
+  </ul> 
+ </article>
+</div>

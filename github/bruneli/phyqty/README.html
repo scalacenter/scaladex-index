@@ -8,41 +8,48 @@
   <p>The objective is twofold</p> 
   <ul> 
    <li>group in a single class all physical quantities and their relationship (like speed is ratio of length by duration),</li> 
-   <li>perform at compilation time checks on dimensions (like impossibility to add a length and a speed)</li> 
+   <li>perform at compilation time checks on physical dimensions (like impossibility to add a length and a speed)</li> 
   </ul> 
   <h2><a href="https://github.com/bruneli/phyqty#examples" aria-hidden="true" class="anchor" id="user-content-examples" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Examples</h2> 
-  <p>Defining a quantity</p> 
-  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.Quantity._
+  <p>Defining a scalar or vector quantity</p> 
+  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.ScalarQuantity._
+&gt;&gt;&gt; import com.github.bruneli.phyqty.VectorQuantity._
 &gt;&gt;&gt; import com.github.bruneli.phyqty.PhyUnit._
-&gt;&gt;&gt; val position = 1.56(m)
-&gt;&gt;&gt; val time = 2(min)
-&gt;&gt;&gt; val newPosition = position + 76(cm) + 15(mm)
-&gt;&gt;&gt; val newTime = time * 2
-&gt;&gt;&gt; val distance = newPosition - position
-&gt;&gt;&gt; val duration = newTime - time
-&gt;&gt;&gt; val speed = distance / duration
+&gt;&gt;&gt; val x0 = vector(1.56(m), 2.5(cm))
+&gt;&gt;&gt; val t0 = 2(min) // scalar quantity
+&gt;&gt;&gt; val x1 = vector(20.8(m), -39.5(m))
+&gt;&gt;&gt; val t1 = t0 * 2
+&gt;&gt;&gt; val dx = x1 - x0
+&gt;&gt;&gt; dx.magnitude // distance
+&gt;&gt;&gt; val dt = t1 - t0
+&gt;&gt;&gt; val v = dx / dt
+&gt;&gt;&gt; val m = 50(kg)
+&gt;&gt;&gt; val Ekin = m * v * v / 2
 </code></pre> 
   <p>Creating custom units</p> 
-  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.Quantity._
+  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.ScalarQuantity._
 &gt;&gt;&gt; import com.github.bruneli.phyqty.PhyUnit._
 &gt;&gt;&gt; import com.github.bruneli.phyqty.DecimalMultiplier._
 &gt;&gt;&gt; val kW = kilo(watt)
 &gt;&gt;&gt; val kWh = kW * h
 &gt;&gt;&gt; 1(kWh).in(J)
 </code></pre> 
-  <p>Working with collection of quantities (measurements)</p> 
-  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.Quantity._
+  <p>Working with collection of scalar or vector quantities (measurements)</p> 
+  <pre><code>&gt;&gt;&gt; import com.github.bruneli.phyqty.ScalarQuantity._
 &gt;&gt;&gt; import com.github.bruneli.phyqty.PhyUnit._
-&gt;&gt;&gt; import import com.github.bruneli.phyqty.Quantities
-&gt;&gt;&gt; val measurementPeriod = 100(ms)
-&gt;&gt;&gt; val positions = Quantities(2(m), 3.5(m), 5(m), 10(m))
-&gt;&gt;&gt; val distances = positions.diff(1)
-&gt;&gt;&gt; val speeds = distances.dropna / measurementPeriod
-&gt;&gt;&gt; val meanSpeed = speeds.mean
-&gt;&gt;&gt; val averageSpeed = (positions.last - positions.head) / (positions.length - 1) / measurementPeriod
+&gt;&gt;&gt; import com.github.bruneli.phyqty.ScalarQuantities
+&gt;&gt;&gt; import com.github.bruneli.phyqty.VectorQuantities
+&gt;&gt;&gt; val dt = 100(ms)
+&gt;&gt;&gt; val x = ScalarQuantities(2(m), 3.5(m), 5(m), 10(m))
+&gt;&gt;&gt; val dx = x.diff(1)
+&gt;&gt;&gt; val y = ScalarQuantities(4(m), -2.5(m), -50(m), -25(m))
+&gt;&gt;&gt; val positions = VectorQuantities(x, y)
+&gt;&gt;&gt; val v = positions.diff(1).dropna / dt
+&gt;&gt;&gt; val meanSpeed = v.mean.magnitude
+&gt;&gt;&gt; val averageSpeed = (positions.last - positions.head) / (positions.length - 1) / dt
 </code></pre> 
   <h2><a href="https://github.com/bruneli/phyqty#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -53,7 +60,7 @@
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>SBT</h3> 
   <p>Add the following dependency to your <code>build.sbt</code></p> 
-  <pre><code>libraryDependencies += "com.github.bruneli.phyqty" %% "phyqty" % "0.1"
+  <pre><code>libraryDependencies += "com.github.bruneli.phyqty" %% "phyqty" % "1.0"
 </code></pre> 
   <h3><a href="https://github.com/bruneli/phyqty#maven" aria-hidden="true" class="anchor" id="user-content-maven" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
@@ -63,7 +70,7 @@
   <pre><code>&lt;dependency&gt;
     &lt;groupId&gt;com.github.bruneli.phyqty&lt;/groupId&gt;
     &lt;artifactId&gt;phyqty_2.11&lt;/artifactId&gt;
-    &lt;version&gt;0.1&lt;/version&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre> 
  </article>

@@ -1,0 +1,153 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#akka-cluster-custom-downing" aria-hidden="true" class="anchor" id="user-content-akka-cluster-custom-downing" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>akka-cluster-custom-downing</h1> 
+  <p><a href="https://circleci.com/gh/TanUkkii007/akka-cluster-custom-downing" target="_blank"><img src="https://camo.githubusercontent.com/1dcb73d67360febe4389f4aa64f43d2f7b817def/68747470733a2f2f636972636c6563692e636f6d2f67682f54616e556b6b69693030372f616b6b612d636c75737465722d637573746f6d2d646f776e696e672e7376673f7374796c653d737667" alt="CircleCI" data-canonical-src="https://circleci.com/gh/TanUkkii007/akka-cluster-custom-downing.svg?style=svg" style="max-width:100%;"></a></p> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#introduction" aria-hidden="true" class="anchor" id="user-content-introduction" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Introduction</h2> 
+  <p>Akka cluster has an <code>akka.cluster.auto-down-unreachable-after</code> configuration property. It enables marking unreachable nodes as DOWN automatically after a specified duration. As <a href="http://doc.akka.io/docs/akka/current/scala/cluster-usage.html#Automatic_vs__Manual_Downing" target="_blank">the Akka documentation</a> says, using the auto-down feature is dangerous because it may cause a split-brain scenario which leads to multiple clusters. The fundamental problem is that an actual down node and a temporary network partition cannot be distinguished from each other. You must realize that an auto-downed node may be actually alive and establishing its own cluster. One of the worst consequences is that resources that must not be shared are now accessible by multiple Cluster Singletons or duplicatively sharded by Cluster Sharding.</p> 
+  <p>akka-cluster-custom-downing provides a configurable auto-downing strategy that you can choose based on your distributed application design. It lets you configure which nodes can be downed automatically and who is responsible to execute a downing action.</p> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#theoretical-background" aria-hidden="true" class="anchor" id="user-content-theoretical-background" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Theoretical background</h2> 
+  <p>It is noteworthy that there exists <strong>no</strong> perfect split brain resolving strategy. According to so called "FLP impossibility result", no deterministic consensus can be made in an asynchronous system even if only one process fails. As you know, akka cluster is an asynchronous system and therefore cannot make a consensus about its view synchronised with gossip protocol if faulty processes exist.</p> 
+  <p>It is always beneficial to clarify what kind of failure a distributed algorithm handles. Akka cluster has a failure detector and a split brain resolver (and also auto-down) handles its failure. In this case the failure indicates the process crashes and does not differentiate a crash from the omission of a heartbeat. Actually the failure detector cannot differentiate a crash and the omission of a heartbeat. In the case of omission, i.e. when the process marked as faulty by the failure detector are actually alive, some algorithms go wrong. For example the auto-down feature of akka cluster is based on election of a leader which may diverge under an omission fault, so may result in a split-brain scenario.</p> 
+  <p>Note that leader election in Akka cluster is based on asynchronously replicated state. A leader is the first member selected from sorted members that are not unreachable. Under network partition some partition may have different view of unreachable members from the others so leader will diverge.</p> 
+  <p>The Split brain resolver included in akka-cluster-custom-downing basically resolves the problem in a way that,</p> 
+  <ol> 
+   <li>do not depends on a leader (or leader only)</li> 
+   <li>force some resolved processes to crash, i.e. omission fault is same as crash fault</li> 
+   <li>not perfect as indicated in FLP impossibility, but occurrence of the imperfection is pretty rare</li> 
+  </ol> 
+  <p>My slide may help you understand these things. I am sorry it is written in japanese. Let me know if there are better documents that explain the split brain problem. <a href="http://www.slideshare.net/TanUkkii/akka-cluster-66880662" target="_blank">http://www.slideshare.net/TanUkkii/akka-cluster-66880662</a></p> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#status" aria-hidden="true" class="anchor" id="user-content-status" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Status</h2> 
+  <p>akka-cluster-custom-downing is currently under development.</p> 
+  <p>akka-cluster-custom-downing is for general purpose. In some case you find it is better to implement your system specific strategy by yourself. akka-cluster-custom-downing shows how to implement split brain resolving strategies so may be your help.</p> 
+  <p>Distributed systems are challenging. Actually I do not use akka cluster or akka-cluster-custom-downing in production. I hope to know how you use them.</p> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#installation" aria-hidden="true" class="anchor" id="user-content-installation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Installation</h2> 
+  <p>For sbt, add following lines to build.sbt.</p> 
+  <pre><code>resolvers += Resolver.bintrayRepo("tanukkii007", "maven")
+
+libraryDependencies += "com.github.TanUkkii007" %% "akka-cluster-custom-downing" % "0.0.8"
+</code></pre> 
+  <p>Both Scala 2.11 and 2.12 are supported.</p> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#usage-of-split-brain-resolving-strategy" aria-hidden="true" class="anchor" id="user-content-usage-of-split-brain-resolving-strategy" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage of split brain resolving strategy</h2> 
+  <h3><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#oldestautodowning" aria-hidden="true" class="anchor" id="user-content-oldestautodowning" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>OldestAutoDowning</h3> 
+  <p><code>OldestAutoDowning</code> automatically downs unreachable members. A node responsible to down is the oldest member of a specified role. If <code>oldest-member-role</code> is not specified, the oldest member among all cluster members fulfills its duty.</p> 
+  <p>You can enable this strategy with following configuration.</p> 
+  <pre><code>akka.cluster.downing-provider-class = "tanukki.akka.cluster.autodown.OldestAutoDowning"
+
+custom-downing {
+  stable-after = 20s
+  
+  oldest-auto-downing {
+    oldest-member-role = ""
+    down-if-alone = true
+  }
+}
+</code></pre> 
+  <p>Unlike leader based downing strategy, the oldest based downing strategy is much safer. It is because the oldest member is uniquely determined by all members even if gossip is not converged, while different leader might be viewed by members under gossip unconvergence.</p> 
+  <p>Downside of the oldest based downing strategy is loss of downing functionality when the oldest member itself fails. If <code>down-if-alone</code> is set to be true, such scenario can be avoided because the secondary oldest member will down the oldest member if the oldest member get unreachable alone.</p> 
+  <p><a href="https://github.com/tanukkii007/akka-cluster-custom-downing/blob/master/img/keep_oldest.png" target="_blank"><img src="https://github.com/tanukkii007/akka-cluster-custom-downing/raw/master/img/keep_oldest.png" alt="OldestAutoDowning" style="max-width:100%;"></a></p> 
+  <h3><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#quorumleaderautodowning" aria-hidden="true" class="anchor" id="user-content-quorumleaderautodowning" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>QuorumLeaderAutoDowning</h3> 
+  <p><code>QuorumLeaderAutoDowning</code> automatically downs unreachable nodes after specified duration if the number of remaining members are larger than or equal to configured <code>quorum size</code>. This strategy is same as <a href="http://doc.akka.io/docs/akka/rp-15v09p02/scala/split-brain-resolver.html#Static_Quorum" target="_blank">static quorum</a> strategy of Split Brain Resolver from Typesafe reactive platform. If <code>down-if-out-of-quorum</code> is set to be true, remaining members which number is under quorum size will shutdown ActorSystem by themselves. If <code>role</code> is specified, the number of remaining members in the role is used to be compared with quorum size.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>akka.cluster.downing<span class="pl-k">-</span>provider<span class="pl-k">-</span><span class="pl-k">class</span> <span class="pl-en">=</span> <span class="pl-s"><span class="pl-pds">"</span>tanukki.akka.cluster.autodown.QuorumLeaderAutoDowning<span class="pl-pds">"</span></span>
+
+custom<span class="pl-k">-</span>downing {
+  stable<span class="pl-k">-</span>after <span class="pl-k">=</span> 20s
+  
+  quorum<span class="pl-k">-</span>leader<span class="pl-k">-</span>auto<span class="pl-k">-</span>downing {
+    role <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>
+    quorum<span class="pl-k">-</span>size <span class="pl-k">=</span> <span class="pl-c1">0</span>
+    down<span class="pl-k">-</span><span class="pl-k">if</span><span class="pl-k">-</span>out<span class="pl-k">-</span>of<span class="pl-k">-</span>quorum <span class="pl-k">=</span> <span class="pl-c1">true</span>
+  }
+}
+</pre>
+  </div> 
+  <p><a href="https://github.com/tanukkii007/akka-cluster-custom-downing/blob/master/img/static_quorum.png" target="_blank"><img src="https://github.com/tanukkii007/akka-cluster-custom-downing/raw/master/img/static_quorum.png" alt="QuorumLeaderAutoDowning" style="max-width:100%;"></a></p> 
+  <h3><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#majorityleaderautodowning" aria-hidden="true" class="anchor" id="user-content-majorityleaderautodowning" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>MajorityLeaderAutoDowning</h3> 
+  <p><code>MajorityLeaderAutoDowning</code> is similar to <code>QuorumLeaderAutoDowning</code>. However, instead of a static specified quorum size this strategy automatically keeps the partition with the largest amount of nodes. If the partitions are of equal size, the partition that contains the node with the globally lowest address is kept. The strategy is the same as the <a href="http://doc.akka.io/docs/akka/rp-15v09p02/scala/split-brain-resolver.html#Keep_Majority" target="_blank">keep majority</a> strategy of Split Brain Resolver from Typesafe reactive platform. If a role is set by <code>majority-member-role</code>, the strategy is only enforced to the nodes with the specified role.</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>akka.cluster.downing<span class="pl-k">-</span>provider<span class="pl-k">-</span><span class="pl-k">class</span> <span class="pl-en">=</span> <span class="pl-s"><span class="pl-pds">"</span>tanukki.akka.cluster.autodown.MajorityLeaderAutoDowning<span class="pl-pds">"</span></span>
+
+custom<span class="pl-k">-</span>downing {
+  stable<span class="pl-k">-</span>after <span class="pl-k">=</span> 20s
+
+  majority<span class="pl-k">-</span>auto<span class="pl-k">-</span>downing {
+    majority<span class="pl-k">-</span>member<span class="pl-k">-</span>role <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>
+    down<span class="pl-k">-</span><span class="pl-k">if</span><span class="pl-k">-</span>in<span class="pl-k">-</span>minority <span class="pl-k">=</span> <span class="pl-c1">true</span>
+  }
+}
+</pre>
+  </div> 
+  <h2><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#usage-of-leader-based-downing-strategies" aria-hidden="true" class="anchor" id="user-content-usage-of-leader-based-downing-strategies" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage of Leader based downing strategies</h2> 
+  <p>It is not recommended that your auto-down strategy depends on a leader.</p> 
+  <p>With careful consideration, however you may use auto-down feature safely for a specific design of distributed application.</p> 
+  <p>If following conditions are met, nodes can be safely down automatically.</p> 
+  <ol> 
+   <li>a node will be isolated from incoming requests if the node is detached from the other cluster members</li> 
+   <li>a node mutates shared resources only if it receives a request</li> 
+  </ol> 
+  <p>How this conditions are applied is vary according to application design.</p> 
+  <h3><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#leaderautodowningroles" aria-hidden="true" class="anchor" id="user-content-leaderautodowningroles" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>LeaderAutoDowningRoles</h3> 
+  <p><code>LeaderAutoDowningRoles</code> automatically downs nodes with specified roles. Like <code>akka.cluster.AutoDowning</code>, which is provided with Akka Cluster, a node responsible to down is the leader.</p> 
+  <p>You can enable this strategy with following configuration.</p> 
+  <pre><code>akka.cluster.downing-provider-class = "tanukki.akka.cluster.autodown.LeaderAutoDowningRoles"
+
+custom-downing {
+  stable-after = 20s
+
+  leader-auto-downing-roles {
+    target-roles = [worker]
+  }
+}
+</code></pre> 
+  <h3><a href="https://github.com/tanukkii007/akka-cluster-custom-downing#roleleaderautodowningroles" aria-hidden="true" class="anchor" id="user-content-roleleaderautodowningroles" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>RoleLeaderAutoDowningRoles</h3> 
+  <p><code>RoleLeaderAutoDowningRoles</code> automatically downs nodes with specified roles. A node responsible to down is the role leader of a specified role.</p> 
+  <p>You can enable this strategy with following configuration.</p> 
+  <pre><code>akka.cluster.downing-provider-class = "tanukki.akka.cluster.autodown.RoleLeaderAutoDowningRoles"
+
+custom-downing {
+  stable-after = 20s
+  
+  role-leader-auto-downing-roles {
+    leader-role = "master"
+    target-roles = [worker]
+  }
+}
+</code></pre> 
+ </article>
+</div>

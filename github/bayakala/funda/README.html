@@ -1,0 +1,562 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/bayakala/funda#funda-functional-data-access" aria-hidden="true" class="anchor" id="user-content-funda-functional-data-access" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FunDA (Functional Data Access)</h1> 
+  <p><em>FunDA</em> is a functional database access library designed to supplement <em>FRM</em> (<em>Functional-Relational-Mapper</em>) tools like <em>Slick</em>.<br> While <em>FRM</em> tools bring type safe <em>language-integrated-query</em> and flexible query composition as well as powerful functional programming paradigm to it's users, the main focus is on data object access and thus in ways short on strength for data persistence support such as data row traversal operations that are so common in <em>ORM</em>. This short-fall plus a brand new functional programming style also make many <em>OOP</em> programmers from the <em>ORM</em> world using <em>FRM</em> quite uncomfortable or even somewhat awkward. On top of bringing back the familiar recordset operations to support data row processing, <em>FunDA</em> also adds in explicit parallel data processing capabilities as well as a simple user-defined programming model to lower requirements for functional programming skills such that with little getting-used-to a traditional <em>OOP</em> programmer could handle <em>FRM</em> so to make <em>FunDA</em> as a much practically productive tool. The core of <em>FunDA</em> is implemented with <em>scalaz-streams-fs2</em>. <em>FunDA</em> can be depicted as a workflow pipe with a sequence of work-nodes where user-defined data processing tasks could be plugged in. <em>FunDA</em> is implemented as a forward-only stream of rows representing pure data or query actions. User-defined-tasks at a work-node can intercept rows and run some processes with the context of each row. And these user-defined-tasks can be run parallelly through <em>FunDA</em>'s Parallelism.<br> A typical <em>FunDA</em> program consists of a <strong>source</strong> and many <strong>user-defined-tasks</strong> as follows:</p> 
+  <pre><code>val streamSource = streamLoader.fda_typedStream(albumsInfo.result)(db)(512, 128)()
+
+streamSource.appendTask(transformData).appendTask(runActionQuery).appendTask(showResults).startRun
+</code></pre> 
+  <p>where "streamSource" is a <em>FunDA</em> stream <strong>source</strong> produced by loading data from database, and "transformData", "runActionQuery" and "showResults" are all user-defined-tasks each responsible to achieve some minimal distinctive effect. As the unique flavor of functional programming, these are functional combinators and can be composed in a specific order to perform a much bigger and complexed task. From the semantics of the <em>FunDA</em> program above we can make a wild guess that "transformData" would transform each data row to query actions and these query actions are executed by "runActionQuery" at the next work-node.</p> 
+  <h4><a href="https://github.com/bayakala/funda#how-to-use" aria-hidden="true" class="anchor" id="user-content-how-to-use" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>how to use</h4> 
+  <p><em>FunDA</em> artifacts are currently published on Bintray. Add following in your build.sbt:</p> 
+  <pre><code>resolvers +=  Resolver.bintrayRepo("bayakala","maven")
+libraryDependencies += "com.bayakala" %% "funda" % "1.0.0-RC-01" withSources() withJavadoc()
+
+
+</code></pre> 
+  <p>for your info, <em>FunDA</em> allready includes the following dependencies:</p> 
+  <pre><code>   libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % "3.2.0",
+      "com.h2database" % "h2" % "1.4.191",
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
+      "ch.qos.logback" % "logback-classic" % "1.1.7",
+      "co.fs2" %% "fs2-core" % "0.9.4",
+      "co.fs2" %% "fs2-io" % "0.9.4",
+      "com.typesafe.play" % "play-iteratees-reactive-streams_2.11" % "2.6.0"
+    )
+
+</code></pre> 
+  <p><strong>Remarks:</strong> users should set up their own <em>Slick</em> database configuration file application.conf in the resources directory.</p> 
+  <h4><a href="https://github.com/bayakala/funda#to-run-the-examples" aria-hidden="true" class="anchor" id="user-content-to-run-the-examples" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>to run the examples</h4> 
+  <p>There is a sample applicaion "funda-demo" located on github here: <a href="http://www.github.com/bayakala/funda-demo/" target="_blank">www.github.com/bayakala/funda-demo</a> . It includes sample data located under resources/testdata/ and it is a bare cvs file. Import this file in your database before you run the examples. The examples should be run in the following order:</p> 
+  <pre><code>1. StrongTypedRows.scala  
+2. UserDefinedTasks.scala
+3. ParallelLoading.scala
+4. ParallelTasks.scala
+5. ParallelExecution.scala
+6. ExceptionsAndFinalizers.scala
+</code></pre> 
+  <p><em>download and try it. good luck and have fun!</em></p> 
+  <h2><a href="https://github.com/bayakala/funda#the-principles" aria-hidden="true" class="anchor" id="user-content-the-principles" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>The Principles</h2> 
+  <p><em>FunDA</em>'s workflow <em>FDAPipeLine</em> is a <em>scalaz-streams-fs2</em> and therefore is a <em>free-monad</em>. It is highly composable:</p> 
+  <pre><code>val streamLoader = FDAStreamLoader(slick.jdbc.H2Profile)(toTypedRow _)      
+val source = streamLoader.fda_typedStream(aqmQuery.result)(db)(512,512)()
+val stream = source.filter{r =&gt; r.year &gt; "1999"}.take(3).appendTask(showRecord)
+
+stream.startRun
+</code></pre> 
+  <p>as demonstrated above, we can compose stream anyway we want before <strong>startRun</strong></p> 
+  <h3><a href="https://github.com/bayakala/funda#funda-stream-the-program" aria-hidden="true" class="anchor" id="user-content-funda-stream-the-program" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>FunDA stream (The program)</h3> 
+  <h5><a href="https://github.com/bayakala/funda#strong-typed-rows" aria-hidden="true" class="anchor" id="user-content-strong-typed-rows" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>strong-typed rows</h5> 
+  <p>As mentioned above, FunDA programs are just composition of a <strong>source</strong> and a string of <strong>user-defined-tasks</strong> as a stream with data produced by <strong>source</strong> as rows. To facilitate stream operations we must convert data loaded from database into strong-typed rows. A practical case is that <em>Slick</em> usually returns query results in a collection of tuples. Thus we must take an extra step to convert them into user defined strong-typed case classes. The following code snippet demonstrates such conversion:</p> 
+  <pre><code>// aqmQuery.result returns Seq[(String,String,String,String)]
+  val aqmQuery = aqmraw.map {r =&gt; (r.year,r.state,r.county,r.value)}
+// user designed strong typed resultset type. must extend FDAROW
+  case class TypedRow(year: String, state: String, county: String, value: String) extends FDAROW
+// strong typed resultset conversion function. declared implicit to remind during compilation
+  implicit def toTypedRow(row: (String,String,String,String)): TypedRow =
+    TypedRow(row._1,row._2,row._3,row._4)  
+
+// loader to read from database and convert result collection to strong typed collection
+  val viewLoader = FDAViewLoader(slick.jdbc.H2Profile)(toTypedRow _)
+  val dataSeq = viewLoader.fda_typedRows(aqmQuery.result)(db).toSeq
+// turn Seq collection into FunDA stream with strong-typed rows
+  val aqmStream: FDAPipeLine[TypedRow] =  fda_staticSource(dataSeq)()    
+    
+</code></pre> 
+  <h5><a href="https://github.com/bayakala/funda#static-view-and-dynamic-streaming-sources" aria-hidden="true" class="anchor" id="user-content-static-view-and-dynamic-streaming-sources" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>static view and dynamic streaming sources</h5> 
+  <p>Static sources or views are data structures completely loaded into memory after returning from running a query. Stream sources are data streams as returned query results that are <em>reactive-streams</em> conformant. In other words stream sources are backend cached and motivated by back-pressure. <em>FunDA</em> provides functions to produce sources. The following is a demonstration of static view producing:</p> 
+  <pre><code>// loader to read from database and convert result collection to strong typed collection
+  val viewLoader = FDAViewLoader(slick.jdbc.H2Profile)(toTypedRow _)
+  val dataSeq = viewLoader.fda_typedRows(aqmQuery.result)(db).toSeq
+// turn Seq collection into FunDA stream with strong-typed rows
+  val aqmView: FDAPipeLine[TypedRow] =  fda_staticSource(dataSeq)()    
+
+</code></pre> 
+  <p>stream source can be constructed as follows:</p> 
+  <pre><code>// strong typed source is also possible with Slick data streaming
+  val streamLoader = FDAStreamLoader(slick.jdbc.H2Profile)(toTypedRow _)      
+  val aqmStream: FDAPipeLine[TypedRow] = streamLoader.fda_typedStream(aqmQuery.result)(db)(512,512)()
+</code></pre> 
+  <p>as demonstrated above, both static collections and dynamic data streams can be transform into strong-typed-row sources.</p> 
+  <h3><a href="https://github.com/bayakala/funda#control-data-flow" aria-hidden="true" class="anchor" id="user-content-control-data-flow" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Control data flow</h3> 
+  <p>Flow of rows in <em>FunDA</em> streams are controlled inside user-defined-tasks, in which a row is received from upstream and zero or one or more rows could be passed downstream. This means additional new rows could be constructed instantly and passed downstream inside these user-defined-tasks which makes <em>FunDA</em> logics much more flexible and powerful. Passing no row in a receive-send-loop is represented by skip. User could also halt stream by passing an end-of-stream signal downstream inside these user-defined-tasks. The following are some code samples:</p> 
+  <pre><code>   user-defined-task type is defined as follows:
+   type FDAUserTask[ROW] = (ROW) =&gt; (Option[List[ROW]])
+    /* user define function to be performed at a FDAWorkNode
+    * given a row from upstream, return Option[List[ROW]] as follows:
+    *    fda_skip  -&gt; Some(Nil)           : skip sending the current row
+    *    fda_next  -&gt; Some(List(r1,r2...)): send r1,r2... downstream
+    *    fda_break -&gt; None                : halt stream, end of process
+    * @tparam ROW   type of row
+    */
+  
+// a example of user-defined-task  
+  def dancing: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case qmr: TypedRow =&gt;
+        qmr.year match {
+          case a if a &lt; 1960 =&gt;
+          // pass downstream untouched
+           fda_next(qmr)
+          case b if b &lt; 1970 =&gt; 
+          // transform row
+           fda_next(qmr.copy(year = 1970))
+          case c if c &lt; 1980 =&gt;
+          // pass alone with a new row. TypedRow is a case class
+           fda_next(List(qmr,TypedRow(qmr.stare,"countyQQ",0.3,1980)))
+          case d if d &lt; 2000 =&gt;
+          // do not process this row
+           fda_skip
+          case _ =&gt;
+          // stop stream 
+           fda_break    
+        }
+      // encounter unknown row type, break out  
+      case _ =&gt; fda_break
+    }
+  }
+</code></pre> 
+  <h3><a href="https://github.com/bayakala/funda#defining-user-defined-task" aria-hidden="true" class="anchor" id="user-content-defining-user-defined-task" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>defining user-defined-task</h3> 
+  <p>As a functional stream, It seems that some of the data access and processing in <em>FunDA</em> could be achieved in some pure functional ways like the following:</p> 
+  <pre><code>fdaStream.map(row =&gt; transformData(row)).map(action =&gt; runQueryAction(action))
+</code></pre> 
+  <p>unfortunately the fact is pure stream combinators lack powerful and flexible flow control abilities that are so crucial for processing stream elements, therefore <strong>user-defined-task</strong> is introduced as a programming model to deal with the situation. User-defined-tasks are functional combinators designed by users each to achieve a single minimal task, and a much more complexed final task could be assembled by composing many of these tiny tasks in a specific order and then <em><strong>startRun</strong></em>. The signature of <em>FDAUserTask[ROW]</em> is as follows:</p> 
+  <pre><code>  type FDAUserTask[ROW] = (ROW) =&gt; (Option[List[ROW]])
+
+</code></pre> 
+  <p>the above reads: an <strong>user-defined-task</strong> takes a row as input, use or transform it, and as a way of flow control, signify the state of next step of stream by returning <strong>Option[List[ROW]]</strong> as a result of execution of fda_next, fda_skip or fda_break. With the strong-typed-row requirement in place, the involved row types must extend from <strong>FDAROW</strong> and could be either a data-row or action-row.</p> 
+  <h5><a href="https://github.com/bayakala/funda#types-of-rows" aria-hidden="true" class="anchor" id="user-content-types-of-rows" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>types of rows</h5> 
+  <p><em>FunDA</em> streams are strong-typed, all rows must extend <strong>FDAROW</strong>. There are several categories of rows:</p> 
+  <ul> 
+   <li>data-row: any case class extending <strong>FDAROW</strong> with parameters representing fields:<br> <strong>case class TypedRow(year: Int, state: String, value: Int) extends FDAROW</strong></li> 
+   <li>action-row: case class extending <strong>FDAROW</strong> with a <strong>Slick DBIOAction</strong> wrapped inside the parameter as follows:<br> <strong>case class FDAActionRow(action: FDAAction) extends FDAROW</strong> sometimes we need to target an action row to be run in different database context. In that case we can just define any case class and extend <strong>FDAROW</strong>:<br> <strong>case class MyActionRow(action: FDAAction) extends FDAROW</strong></li> 
+   <li>error-row: case class extending <strong>FDAROW</strong> with a caught Exception object wrapped inside its parameter.<br> <strong>case class FDAErrorRow(e: Exception) extends FDAROW</strong><br> user can define their own error row for different exceptions as long as they extend <strong>FDAROW</strong>:<br> <strong>case class MyErrorRow(msg: String, e: Exception) extends FDAROW</strong></li> 
+   <li>null-row: a signal object used to represent EOS(end-of-stream):<br> <strong>case object FDANullRow extends FDAROW</strong></li> 
+  </ul> 
+  <h5><a href="https://github.com/bayakala/funda#standard-operation-procedures" aria-hidden="true" class="anchor" id="user-content-standard-operation-procedures" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>standard-operation-procedures</h5> 
+  <p>User-defined-tasks have standard operation procedures as the following:</p> 
+  <ol> 
+   <li>determine row type by pattern-matching</li> 
+   <li>use row fields to perform data processing and transformation</li> 
+   <li>control flow of rows downstream</li> 
+  </ol> 
+  <p>the following are samples of a few different purposed user-defined-tasks:</p> 
+  <pre><code>   //strong typed row type. must extend FDAROW 
+  case class StateRow(state: String) extends FDAROW
+  
+  //a logging task. show name and pass row untouched downstream
+  def showState: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case StateRow(sname) =&gt;  //this is my row
+        println(s"Name of state is：$sname")
+        fda_next(row)
+      case _ =&gt; fda_skip    //not my row, do not pass it
+    }
+  }
+</code></pre> 
+  <pre><code>//a filter and processing task.
+//filter out rows with inconvertible value strings and out of ranged value and year
+  def filterRows: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case r: AQMRaw =&gt; {  //this is the correct row
+        try {  //process this row and catch exceptions
+          val yr = r.year.toInt
+          val v = r.value.toInt
+          val vlu = if ( v &gt; 10  ) 10 else v  //max value allowed
+          //construct a new row 
+          val data = AQMRPTModel(0,r.mid.toInt,r.state,r.county,yr,vlu,0,true)
+          if ((yr &gt; 1960 &amp;&amp; yr &lt; 2018))  //filtering
+            fda_next(data)   //this row ok. pass downstream
+          else
+            fda_skip    //filter out this row
+        } catch {
+          case e: Exception =&gt;
+            fda_next(FDAErrorRow(e))   //pass the caught exception as a row downstream
+        }
+      }
+      case _ =&gt; fda_skip   //wrong type, skip
+    }
+  }
+</code></pre> 
+  <pre><code>//a row transformation task
+//transform data to action for later execution
+  def toAction: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case r: AQMRPTModel =&gt;  //this is my row
+        val queryAction = AQMRPTQuery += r  //slick action
+        fda_next(FDAActionRow(queryAction))
+      case _ =&gt; fda_skip
+    }
+  }
+</code></pre> 
+  <pre><code>//a query action runner task
+//get a query runner and an action task
+  val actionRunner = FDAActionRunner(slick.jdbc.H2Profile)
+  def runActionRow: FDAUserTask[FDAROW] = action =&gt; {
+    action match {
+      case FDAActionRow(q) =&gt;   //this is a query action row
+         actionRunner.fda_execAction(q)(db)  //run it
+         fda_skip
+      case other@_ =&gt; fda_next(other) //don't touch it, just pass down
+      //someone else downstream could process it
+    }
+  }
+
+</code></pre> 
+  <p>to run many task as a whole, we compose them and <strong>startRun</strong>:</p> 
+  <pre><code>//compose the program
+  val streamAllTasks =  streamAQMRaw.appendTask(filterRows)
+    .appendTask(toAction)
+    .appendTask(runActionRow)
+//run program
+  streamToRun.startRun
+    
+</code></pre> 
+  <h5><a href="https://github.com/bayakala/funda#aggregation" aria-hidden="true" class="anchor" id="user-content-aggregation" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>aggregation</h5> 
+  <p>In stream style processing, many times we need to aggregate over rows, this is where <strong>user-aggregate-task</strong> is designed to fit in. An <strong>user-aggregate-task</strong> has the following signature:</p> 
+  <pre><code> type FDAAggrTask[AGGR,ROW] = (AGGR,ROW) =&gt; (AGGR,Option[List[ROW]])
+</code></pre> 
+  <p><em>AGGR</em> could be any user defined type to represent the state of aggregation. From the above type signature, we can see it is a typical functional style function represented by input a state and output new state. The following is an example of <strong>user-aggregate-task</strong>:</p> 
+  <pre><code>//define a structure to represent aggregator type
+  case class Accu(state: String, county: String, year: Int, count: Int, sumOfValue: Int)
+
+//user defined aggregation task. only pass aggregated row downstream
+  def countingAverage: FDAAggrTask[Accu,FDAROW] = (accu,row) =&gt; {
+    row match {
+      case aqmr: AQMRPTModel =&gt;  //this is the target row type
+        if (accu.state == "" || (aqmr.state == accu.state &amp;&amp; aqmr.year == accu.year))
+          //same condition: inc count and add sum, no need to pass row downstream
+          (Accu(aqmr.state,aqmr.county,aqmr.year,accu.count+1, accu.sumOfValue+aqmr.value),fda_skip)
+        else
+          //reset accumulator, create a new aggregated row and pass downstream
+          (Accu(aqmr.state,aqmr.county,aqmr.year,1, aqmr.value)
+            ,fda_next(AQMRPTModel(0,9999,accu.state,accu.county,accu.year
+            ,accu.count,accu.sumOfValue/accu.count,true)))
+      case FDANullRow =&gt;
+          //last row encountered. create and pass new aggregated row
+        (Accu(accu.state,accu.county,accu.year,1, 0)
+          ,fda_next(AQMRPTModel(0,9999,accu.state,accu.county,accu.year
+          ,accu.count,accu.sumOfValue/accu.count,true)))
+         //incorrect row type, do nothing
+      case _ =&gt; (accu,fda_skip)
+    }
+  }
+
+</code></pre> 
+  <p>the following demonstrates how it is executed:</p> 
+  <pre><code>  aqmrStream.aggregateTask(Accu("","",0,0,0),countingAverage)
+    .appendTask(toAction)
+    .appendTask(runActionRow)
+    .startRun
+
+</code></pre> 
+  <p>"aqmrStream" is a <strong>source</strong> with rows to be aggregated.</p> 
+  <h3><a href="https://github.com/bayakala/funda#running-programs-inside-user-defined-task" aria-hidden="true" class="anchor" id="user-content-running-programs-inside-user-defined-task" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Running programs inside user-defined-task</h3> 
+  <p>A <em>FunDA</em> program consist of a <strong>source</strong> and multiple <strong>user-defined-tasks</strong>. It is possible to execute a <em>FunDA</em> program inside these <em>user_defined-tasks</em>. This means we have to call <strong>startRun</strong> inside the <em>user-defined-task</em> and some effect would inevitably be produced rending the calling <em>user-defined-task</em> impure. A complete example of <em>FunDA</em> program inside a <em>user-defined-task</em> is given below:</p> 
+  <pre><code> //getting id with corresponding name from STATES table
+  def getStateID(state: String): Int = {
+    //create a stream for state id with state name
+    implicit def toState(row:  StateTable#TableElementType) = StateModel(row.id,row.name)
+    val stateLoader = FDAViewLoader(slick.jdbc.H2Profile)(toState _)
+    val stateSeq = stateLoader.fda_typedRows(StateQuery.result)(db).toSeq
+    //constructed a Stream[Task,String]
+    val stateStream =  fda_staticSource(stateSeq)()
+    var id  = -1
+    def getid: FDAUserTask[FDAROW] = row =&gt; {
+      row match {
+        case StateModel(stid,stname) =&gt;   //target row type
+          if (stname.contains(state)) {
+            id = stid
+            fda_break      //exit
+          }
+          else fda_skip   //take next row
+        case _ =&gt; fda_skip
+      }
+    }
+    stateStream.appendTask(getid).startRun
+    id
+  }
+ 
+</code></pre> 
+  <p>"getStateID" is a <em>user-defined-function</em> in which function "getid" is physically executed. Because "getid" is local, we are still confident to use the calling <em>user-defined-function</em> in composition with other combinators as following:</p> 
+  <pre><code> //process input row and produce action row to insert into NORMAQM
+  def getIdsThenInsertAction: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case aqm: AQMRPTModel =&gt;
+        if (aqm.valid) {
+          val stateId = getStateID(aqm.state)
+          val countyId = getCountyID(aqm.state,aqm.county)
+          val action = NORMAQMQuery += NORMAQMModel(0,aqm.mid, stateId, countyId, aqm.year,aqm.value,aqm.total)
+          fda_next(FDAActionRow(action))
+        }
+        else fda_skip
+      case _ =&gt; fda_skip
+    }
+  }
+</code></pre> 
+  <p>in this case "getStateID" is called within another <em>user-defined-task</em>.</p> 
+  <h3><a href="https://github.com/bayakala/funda#parallel-processing" aria-hidden="true" class="anchor" id="user-content-parallel-processing" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Parallel Processing</h3> 
+  <p><em>FunDA</em> borrows its parallelism capabilities from <em>scalaz-streams-fs2</em>. There are two areas of parallel data processing application:</p> 
+  <ul> 
+   <li>parallel loading of multiple <strong>sources</strong></li> 
+   <li>parallel execution of a single <strong>user-defined-task</strong></li> 
+  </ul> 
+  <h5><a href="https://github.com/bayakala/funda#parallel-loading" aria-hidden="true" class="anchor" id="user-content-parallel-loading" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>parallel loading</h5> 
+  <p>Parallel loading of many sources is achieved by calling function <strong>fda-par-load</strong> provided in <em>FunDA</em>. These sources could be constructed from tables on many separate database-servers or by spliting huge data tables into smaller un-repeated data chunks like the following:</p> 
+  <pre><code>  //define query for extracting State names from AQMRPT
+  val qryStates = AQMRPTQuery.map(_.state).distinct.sorted  
+  case class States(name: String) extends FDAROW
+  implicit def toStates(row: String) = States(row)
+  val stateLoader = FDAStreamLoader(slick.jdbc.H2Profile)(toStates _)
+  val statesStream = stateLoader.fda_typedStream(qryStates.result)(db_a)(64,64)()
+
+
+  //define query for extracting County names from AQMRPT in separate chunks
+  //query with state name &gt;A and &lt;K
+  val qryCountiesA_K = AQMRPTQuery.filter(r =&gt; (r.state.toUpperCase &gt; "A" &amp;&amp;
+    r.state.toUpperCase &lt; "K")).map(r =&gt; (r.state,r.county))
+    .distinctOn(r =&gt; (r._1,r._2))
+    .sortBy(r =&gt; (r._1,r._2))
+
+  //query with state name &gt;K and &lt;P
+  val qryCountiesK_P = AQMRPTQuery.filter(r =&gt; (r.state.toUpperCase &gt; "K" &amp;&amp;
+    r.state.toUpperCase &lt; "P")).map(r =&gt; (r.state,r.county))
+    .distinctOn(r =&gt; (r._1,r._2))
+    .sortBy(r =&gt; (r._1,r._2))
+
+  //query with state name &gt;P
+  val qryCountiesP_Z = AQMRPTQuery.filter(r =&gt; r.state.toUpperCase &gt; "P")
+    .map(r =&gt; (r.state,r.county))
+    .distinctOn(r =&gt; (r._1,r._2))
+    .sortBy(r =&gt; (r._1,r._2))
+
+  case class Counties(state: String, name: String) extends FDAROW
+  implicit def toCounties(row: (String,String)) = Counties(row._1,row._2)
+  val countyLoader = FDAStreamLoader(slick.jdbc.H2Profile)(toCounties _)
+  //3 separate streams to extract county names from the same database table AQMRPT
+  val countiesA_KStream: FDAPipeLine[County] = countyLoader.fda_typedStream(qryCountiesA_K.result)(db_b)(64,64)()
+  val countiesK_PStream: FDAPipeLine[County] = countyLoader.fda_typedStream(qryCountiesK_P.result)(db_b)(64,64)()
+  val countiesP_ZStream: FDAPipeLine[County] = countyLoader.fda_typedStream(qryCountiesP_Z.result)(db_b)(64,64)()
+
+</code></pre> 
+  <p>once these <strong>sources</strong> are all constructed, we then load them parallelly:</p> 
+  <pre><code>  //obtain a combined stream with parallel loading with max of 4 open computation
+  val combinedStream: FDAPipeLine[FDAROW] = fda_par_load(statesStream,countiesA_KStream,countiesK_PStream,countiesP_ZStream)(4)
+
+</code></pre> 
+  <p>doing parallel loading would most likely to produce a stream with multiple types of rows, in the above case <strong>States</strong> and <strong>Counties</strong> represent two different types of rows respectively. Therefore <em>user-defined-tasks</em> each targeting different type of row are designed to handle rows of its target type, like the following:</p> 
+  <pre><code>  //user-task to catch rows of States type and transform them into db insert actions
+  def processStates: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+        //catch states row and transform it into insert action
+      case States(stateName) =&gt;  //target row type
+        println(s"State name: ${stateName}")
+        val action = StateQuery += StateModel(0,stateName)
+        fda_next(StateActionRow(action))
+      case others@ _ =&gt; //pass other types to next user-defined-tasks
+        fda_next(others)
+    }
+  }
+  //user-task to catch rows of Counties type and transform them into db insert actions
+  def processCounties: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      //catch counties row and transform it into insert action
+      case Counties(stateName,countyName) =&gt;  //target row type
+        println(s"County ${countyName} of ${stateName}")
+        val action = CountyQuery += CountyModel(0,countyName+ " of "+stateName)
+        fda_next(CountyActionRow(action))
+      case others@ _ =&gt; //pass other types to next user-defined-tasks
+        fda_next(others)
+    }
+  }
+</code></pre> 
+  <h6><a href="https://github.com/bayakala/funda#parallel-loading-a-stream-of-sources" aria-hidden="true" class="anchor" id="user-content-parallel-loading-a-stream-of-sources" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>parallel loading a stream of sources</h6> 
+  <p>The above demonstration of parallel loading started with known number of sources. This is especially convenient for users to manually arrange sources of different row types in a parallel loading operation. But, when a list of sources is itself a stream, then to parallelly load the stream of sources we need to first convert the stream into <strong>FDAParSource</strong> over a <strong>FDASourceLoader</strong> function as follows:</p> 
+  <pre><code> //loading rows with year yr
+  def loadRowsInYear(yr: Int) = {
+    //a new query
+    val query = AQMRPTQuery.filter(row =&gt; row.year === yr)
+    //reuse same loader
+    AQMRPTLoader.fda_typedStream(query.result)(db)(256, 256)(println(s"End of stream ${yr}!!!!!!"))
+  }
+
+  //loading rows by year
+  def loadRowsByYear: FDASourceLoader = row =&gt; {
+    row match {
+      case Years(y) =&gt; loadRowsInYear(y) //produce stream of the year
+      case _ =&gt; fda_appendRow(FDANullRow)
+    }
+  }  
+  
+  //get parallel source constructor
+  val parSource: FDAParSource = yearStream.toParSource(loadRowsByYear)
+  
+</code></pre> 
+  <p>the following demonstrates loading of this parallel source:</p> 
+  <pre><code>  //produce a stream from parallel source
+  val stream: FDAPipeLine[FDAROW] = fda_par_source(parSource)(4)
+</code></pre> 
+  <p><strong>fda_par_source</strong> is actually a parallel execution function analogous to <strong>fda_runPar</strong> which is described in the following section.</p> 
+  <h5><a href="https://github.com/bayakala/funda#parallel-execution" aria-hidden="true" class="anchor" id="user-content-parallel-execution" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>parallel execution</h5> 
+  <p><em>FunDA</em> provides a function <strong>fda_runPar</strong> as a parallel task runner. A parallel task has the following signature:</p> 
+  <pre><code>/** Parallel task type
+    * stream of streams type for parallel running user action
+    * use stream.toPar to convert from FDAUserTask
+    */
+  type FDAParTask = Stream[Task,Stream[Task,Option[List[FDAROW]]]]
+
+</code></pre> 
+  <p>and a <strong>FDAUserTask</strong> can be converted to <strong>FDAParTask</strong> as bellow:</p> 
+  <pre><code>AQMRPTStream.toPar(getIdsThenInsertAction)
+</code></pre> 
+  <p>where "AQMRPTStream" is a <em>FunDA</em> <strong>source</strong> and <strong>toPar</strong> is its method to turn "getIdsThenInsertAction" into a parallel task of many instances running in different threads. The principle of parallel execution is by scrambling rows in a single input stream into several un-ordered streams as inputs to many instances of a single task running parallelly in different threads. A <strong>FDAParTask</strong> requires a special runner to be carried out as shown below:</p> 
+  <pre><code>fda_runPar(AQMRPTStream.toPar(getIdsThenInsertAction))(8)
+</code></pre> 
+  <p><strong>fda_runPar</strong> has a signature as follows:</p> 
+  <pre><code>def fda_runPar(parTask: FDAParTask)(maxOpen: Int): FDAPipleLine[FDAROW]
+
+</code></pre> 
+  <p><strong>maxOpen</strong> designates the maximum number of open computations or degree of parallelism and the actual number of open computations depends on a number of factors including CPU cores, size of thread-pool and no more than user suggested maximum number of open computations. Thread-pool can be adjusted from default values by declaring implicit instance of Strategy:</p> 
+  <pre><code>      implicit val strategy = Strategy.fromCachedDaemonPool("cachedPool")
+//      implicit val strategy = Strategy.fromFixedDaemonPool(6)
+
+</code></pre> 
+  <p>the actual performance of parallelism requires thorough tuning of thread-pool strategies with respect to number of CPU cores. For whatever configurations, the performance gain through parallelism over single-thread task demonstrates great significance. A complete composition of parallel loading and parallel execution has the following model:</p> 
+  <pre><code>//get parallel source constructor
+  val parSource = yearStream.toParSource(loadRowsByYear)
+  //implicit val strategy = Strategy.fromCachedDaemonPool("cachedPool")
+  //produce a stream from parallel sources
+  val source = fda_par_source(parSource)(4)
+  //turn getIdsThenInsertAction into parallel task
+  val parTasks = source.toPar(getIdsThenInsertAction)
+  //runPar to produce a new stream
+  val actionStream =fda_runPar(parTasks)(4)
+  //turn runInsertAction into parallel task
+  val parRun = actionStream.toPar(runInsertAction)
+  //runPar and carry out by startRun
+  fda_runPar(parRun)(2).startRun
+
+</code></pre> 
+  <h5><a href="https://github.com/bayakala/funda#remarks-when-writing-parallel-processing-programs" aria-hidden="true" class="anchor" id="user-content-remarks-when-writing-parallel-processing-programs" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>remarks when writing parallel processing programs</h5> 
+  <p>According to experiments, <strong>FunDA</strong> concurrent combinators are quite sensitive to thread management. The <strong>maxOpen</strong> parameters of both <strong>fda_runPar</strong> and <strong>fda_par_source</strong> in the examples given above had to be tuned to avoid thread contention and process-hang. The example used <strong>HikariCP</strong> with parameters set below:</p> 
+  <pre><code>h2db {
+    url = "jdbc:h2:tcp://localhost/~/slickdemo;mv_store=false"
+    driver = "org.h2.Driver"
+    connectionPool = HikariCP
+    numThreads = 48
+    maxConnections = 48
+    minConnections = 12
+    keepAliveConnection = true
+}
+
+</code></pre> 
+  <h3><a href="https://github.com/bayakala/funda#exceptions-handling-and-finalizers" aria-hidden="true" class="anchor" id="user-content-exceptions-handling-and-finalizers" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Exceptions handling and Finalizers</h3> 
+  <p><strong>FunDA</strong> provides a mechanism that guarantees a <strong>finalizer</strong> be called upon termination of the stream, no matter if it is naturally end of stream or break-out caused by interruptions or exceptions. <strong>Finalizers</strong> are in fact call-back-functions hooked-up to a <em>FunDA</em> program during source construction, like the following:</p> 
+  <pre><code>  val view = fda_staticSource(stateSeq)(println("***Finally*** the end of view!!!"))
+  val stream = streamLoader.fda_typedStream(StateQuery.result)(db)(64,64)(println("***Finally*** the end of stream!!!"))
+
+</code></pre> 
+  <p>exceptions can be caught by <strong>onError</strong> call-backs that are hooked-up at the <strong>very end</strong> of <strong>FunDA</strong> stream in order to catch exceptions from all work-nodes as follows:</p> 
+  <pre><code>   val v = viewState.appendTask(errorRow).appendTask(trackRows)
+   val v1 = v.onError {case e: Exception =&gt; println(s"Caught Error in viewState!!![${e.getMessage}]"); fda_appendRow(FDANullRow)}
+   v1.startRun
+
+   val s = streamState.appendTask(errorRow).appendTask(trackRows)
+   val s1 = s.onError {case e: Exception =&gt; println(s"Caught Error in streamState!!![${e.getMessage}]"); fda_appendRow(FDANullRow)}
+   s1.startRun
+
+</code></pre> 
+  <p>#####user defined exceptions<br> Sometimes we wish to watch some particular events and take corresponding actions when they take place. This can be achieved by user-defined-exceptions. User-defined-exceptions are special rows extending from <strong>FDAROW</strong> that can be caught by pattern matching. The following is an example of user-defined-exception and its handling:</p> 
+  <pre><code>  case class DivideZeroError(msg: String, e: Exception) extends FDAROW
+  def catchError: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case StateModel(id,name) =&gt;
+        try {
+          val idx = id / (id - 3)
+          fda_next(StateModel(idx, name))
+        } catch {
+          case e: Exception =&gt; //pass an error row
+            fda_next(DivideZeroError(s"Divide by zero exception at ${id}",e))
+        }
+      case m@_ =&gt; fda_next(m)
+    }
+  }
+  
+  def trackRows: FDAUserTask[FDAROW] = row =&gt; {
+    row match {
+      case m@StateModel(id,name) =&gt;
+        println(s"State: $id $name")
+        println( "----------------")
+        fda_next(m)
+      case DivideZeroError(msg, e) =&gt; //error row
+        println(s"***Error:$msg***")
+        fda_skip
+      case m@_ =&gt; fda_next(m)
+    }
+  }
+
+  val s = streamState.take(5).appendTask(catchError).appendTask(trackRows)
+  val s1 = s.onError {case e: Exception =&gt; println(s"Caught Error in streamState!!![${e.getMessage}]"); fda_appendRow(FDANullRow)}
+  s1.startRun
+
+</code></pre> 
+ </article>
+</div>

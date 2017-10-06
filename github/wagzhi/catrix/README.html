@@ -1,17 +1,58 @@
 <div class="announce instapaper_body md" data-path="README.md" id="readme">
  <article class="markdown-body entry-content" itemprop="text">
-  <h1><a id="user-content-catrix" class="anchor" href="https://github.com/wagzhi/catrix#catrix" aria-hidden="true" target="_blank">
+  <h1><a href="https://github.com/wagzhi/catrix#catrix" aria-hidden="true" class="anchor" id="user-content-catrix" target="_blank">
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>catrix</h1> 
-  <p>example :</p> 
-  <div class="highlight highlight-source-sql">
-   <pre>    create keyspace catrix WITH replication <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">'</span>class<span class="pl-pds">'</span></span>: <span class="pl-s"><span class="pl-pds">'</span>SimpleStrategy<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>replication_factor<span class="pl-pds">'</span></span>: <span class="pl-s"><span class="pl-pds">'</span>1<span class="pl-pds">'</span></span>}  <span class="pl-k">AND</span> durable_writes <span class="pl-k">=</span> true;
-    <span class="pl-k">create</span> <span class="pl-k">table</span> <span class="pl-en">book</span> (id <span class="pl-k">int</span>, name <span class="pl-k">text</span>, price double ,published_at <span class="pl-k">timestamp</span> ,<span class="pl-k">primary key</span>(id));
-    <span class="pl-k">create</span> <span class="pl-k">table</span> <span class="pl-en">page</span>(domain <span class="pl-k">text</span>,url <span class="pl-k">text</span>,content <span class="pl-k">text</span>,created_at <span class="pl-k">TIMESTAMP</span>, <span class="pl-k">PRIMARY KEY</span> (domain,created_at,url));
-    <span class="pl-k">create</span> <span class="pl-k">index</span> <span class="pl-en">page_url</span> <span class="pl-k">on</span> page (url);
-    <span class="pl-k">create</span> <span class="pl-k">table</span> <span class="pl-en">attachment</span> (code <span class="pl-k">text</span> <span class="pl-k">primary key</span>, url <span class="pl-k">text</span>, referer <span class="pl-k">set</span><span class="pl-k">&lt;</span><span class="pl-k">text</span><span class="pl-k">&gt;</span> ,data blob) ;
-    <span class="pl-k">create</span> <span class="pl-k">index</span> <span class="pl-en">attachment_referer</span> <span class="pl-k">on</span> attachment (referer);</pre>
+  <p>Catrix是一个使用Scala语言封装的的，基于cassandra-driver-core实现的Cassandra数据库访问库。 期实现方式参考了Slick，使用Catrix你可以像使用Scala collections那样访问Cassandra,而不需要写Cql。 另外，通过定义Table，你还可以直接通过Table生成对应的建表Cql语句，提升开发效率。 当然，Cassandra建模和查询非常复杂，在用于真实的产品中，还是需要你对Cassandra数据库和Cql及相关性能优化有深入的了解。</p> 
+  <p>###定义表和访问接口</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">case</span> <span class="pl-k">class</span> <span class="pl-en">Coffee</span>(name<span class="pl-k">:</span><span class="pl-k">String</span>, prices<span class="pl-k">:</span><span class="pl-k">Int</span>)
+<span class="pl-k">class</span> <span class="pl-en">Coffees</span>(<span class="pl-k">implicit</span> conn<span class="pl-k">:</span><span class="pl-en">Connection</span>) <span class="pl-k">extends</span> <span class="pl-e">Table</span>[<span class="pl-en">Coffee</span>](<span class="pl-s"><span class="pl-pds">"</span>coffee<span class="pl-pds">"</span></span>) {
+    <span class="pl-k">val</span> <span class="pl-en">name</span> <span class="pl-k">=</span> column[<span class="pl-k">String</span>](<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>)
+    <span class="pl-k">val</span> <span class="pl-en">price</span> <span class="pl-k">=</span> column[<span class="pl-k">Int</span>](<span class="pl-s"><span class="pl-pds">"</span>price<span class="pl-pds">"</span></span>).index
+    <span class="pl-k">val</span> <span class="pl-en">primaryKey</span> <span class="pl-k">=</span> partitionKeys(name).clusteringKeys(price).orderBy(price <span class="pl-en">Asc</span>)
+    <span class="pl-k">val</span> <span class="pl-en">parser</span> <span class="pl-k">=</span> (name <span class="pl-k">~</span> parser) <span class="pl-k">&lt;&gt;</span> (<span class="pl-en">Coffee</span>.tupled , <span class="pl-en">Coffee</span>.unapply)
+    
+    <span class="pl-k">def</span> <span class="pl-en">save</span>(coffee<span class="pl-k">:</span><span class="pl-en">Coffee</span>)<span class="pl-k">=</span>
+        insert(coffee).execute
+    
+    <span class="pl-k">def</span> <span class="pl-en">getByName</span>(name<span class="pl-k">:</span><span class="pl-k">String</span>)<span class="pl-k">:</span><span class="pl-en">ResultPage</span>[<span class="pl-en">Coffee</span>] <span class="pl-k">=</span>
+        select(<span class="pl-k">*</span>).filter(<span class="pl-c1">this</span>.name <span class="pl-k">==</span> name).execute.resultPage
+    
+    <span class="pl-c"><span class="pl-c">//</span>if pagingState is empty string, get first page and next pagingState included in result</span>
+    <span class="pl-k">def</span> <span class="pl-en">getPage</span>(pagingState<span class="pl-k">:</span><span class="pl-k">String</span>,pageSize<span class="pl-k">:</span><span class="pl-k">Int</span>) <span class="pl-k">=</span>
+        select(<span class="pl-k">*</span>).page(pagingState,pageSize).execute.resultPage
+}</pre>
+  </div> 
+  <h3><a href="https://github.com/wagzhi/catrix#获取表结构或直接生成表" aria-hidden="true" class="anchor" id="user-content-获取表结构或直接生成表" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>获取表结构，或直接生成表</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> <span class="pl-en">Catrix</span>.connect(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>keyspace_name<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">coffees</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Coffees</span>
+<span class="pl-c"><span class="pl-c">//</span>打印建表语句，包括索引</span>
+coffees.createCqls.foreach(println)
+<span class="pl-c"><span class="pl-c">//</span>删除表，dropCql语句包含if exits</span>
+conn.session.execute(<span class="pl-k">new</span> <span class="pl-en">SimpleStatement</span>(table.dropCql))
+<span class="pl-c"><span class="pl-c">//</span>新建表</span>
+coffees.createCqls.
+      map(_<span class="pl-k">=&gt;</span><span class="pl-k">new</span> <span class="pl-en">SimpleStatement</span>(table,_)).
+      foreach(conn.session.execute)</pre>
+  </div> 
+  <h3><a href="https://github.com/wagzhi/catrix#使用表接口访问数据" aria-hidden="true" class="anchor" id="user-content-使用表接口访问数据" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>使用表接口访问数据</h3> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">implicit</span> <span class="pl-k">val</span> <span class="pl-en">conn</span> <span class="pl-k">=</span> <span class="pl-en">Catrix</span>.connect(<span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>keyspace_name<span class="pl-pds">"</span></span>)
+<span class="pl-k">val</span> <span class="pl-en">coffees</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Coffees</span>
+<span class="pl-k">val</span> <span class="pl-en">coffee</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Coffees</span>(<span class="pl-s"><span class="pl-pds">"</span>Blue Mountain Coffee<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>97<span class="pl-pds">"</span></span>)
+coffees.save(coffee)
+<span class="pl-k">val</span> <span class="pl-en">coffeePage</span> <span class="pl-k">=</span> coffees.getPage(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,<span class="pl-c1">20</span>)
+coffeePage.results.foreach(pringln)
+<span class="pl-k">val</span> <span class="pl-en">nextPage</span> <span class="pl-k">=</span> coffees.getPage(coffeePage.pagingState,<span class="pl-c1">20</span>)</pre>
   </div> 
  </article>
 </div>

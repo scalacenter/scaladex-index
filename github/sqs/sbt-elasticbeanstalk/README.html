@@ -1,0 +1,143 @@
+<div class="announce instapaper_body md" data-path="README.md" id="readme">
+ <article class="markdown-body entry-content" itemprop="text">
+  <h1><a href="https://github.com/sqs/sbt-elasticbeanstalk#sbt-elasticbeanstalk" aria-hidden="true" class="anchor" id="user-content-sbt-elasticbeanstalk" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>sbt-elasticbeanstalk</h1> 
+  <p><a href="https://sourcegraph.com/github.com/sqs/sbt-elasticbeanstalk" target="_blank"><img src="https://camo.githubusercontent.com/0848675507c9c84d0694f353ae68e8d880ef0cb6/68747470733a2f2f736f7572636567726170682e636f6d2f6170692f7265706f732f6769746875622e636f6d2f7371732f7362742d656c61737469636265616e7374616c6b2f636f756e746572732f76696577732d3234682e706e67" alt="Views in the last 24 hours" data-canonical-src="https://sourcegraph.com/api/repos/github.com/sqs/sbt-elasticbeanstalk/counters/views-24h.png" style="max-width:100%;"></a></p> 
+  <p>This sbt plugin allows easy deployment of web archive (.war) application files to <a href="http://aws.amazon.com/elasticbeanstalk/" target="_blank">Amazon Elastic Beanstalk</a>.</p> 
+  <p>Once configured, running <code>sbt eb-deploy</code> uploads your application's WAR file to S3 and deploys it to your Elastic Beanstalk environment.</p> 
+  <p>A sample using Play 2.1-RC1 is included.</p> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#configuration-for-play" aria-hidden="true" class="anchor" id="user-content-configuration-for-play" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration for Play</h2> 
+  <p>In <code>project/plugins.sbt</code>, add:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>resolvers <span class="pl-k">+</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Play2war plugins release<span class="pl-pds">"</span></span> at <span class="pl-s"><span class="pl-pds">"</span>http://repository-play-war.forge.cloudbees.com/release/<span class="pl-pds">"</span></span>
+
+addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.github.play2war<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>play2-war-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.9-RC1<span class="pl-pds">"</span></span>)
+
+addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.joescii<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-elasticbeanstalk-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.7<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>(Note: You need the 0.9-SNAPSHOT build of <a href="https://github.com/dlecan/play2-war-plugin" target="_blank">play2-war-plugin</a>, which supports Play 2.1 and is built from git master. For convenience, is hosted on the SQS Ivy repository included above.)</p> 
+  <p>In <code>project/Build.scala</code>, add the following at the top of the file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.joescii.sbtelasticbeanstalk.</span>{ <span class="pl-v">ElasticBeanstalk</span>, <span class="pl-v">Deployment</span> }
+<span class="pl-k">import</span> <span class="pl-v">com.joescii.sbtelasticbeanstalk.ElasticBeanstalkKeys.</span><span class="pl-v">_</span>
+<span class="pl-k">import</span> <span class="pl-v">com.github.play2war.plugin.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>Add the following settings to your project:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">val</span> <span class="pl-en">main</span> <span class="pl-k">=</span> play.<span class="pl-en">Project</span>(appName, appVersion, appDependencies).settings(
+  <span class="pl-en">Play2WarKeys</span>.servletVersion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>3.0<span class="pl-pds">"</span></span>,
+  ebAppBundle <span class="pl-k">&lt;&lt;=</span> <span class="pl-en">Play2WarKeys</span>.war,
+  ebS3BucketName <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-bucket-name<span class="pl-pds">"</span></span>,
+  ebDeployments <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+    <span class="pl-en">Deployment</span>(
+      appName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-app-name<span class="pl-pds">"</span></span>,
+      envBaseName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-environment-name<span class="pl-pds">"</span></span>,
+      templateName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my-template<span class="pl-pds">"</span></span>,
+      cname <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my-cname<span class="pl-pds">"</span></span>,
+      environmentVariables <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>MyFavoriteColor<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>blue<span class="pl-pds">"</span></span>)
+    )
+  ),
+  ebRegion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>us-west-1<span class="pl-pds">"</span></span>
+)
+  .settings(<span class="pl-en">Play2WarPlugin</span>.play2WarSettings<span class="pl-k">:</span> _<span class="pl-k">*</span>)
+  .settings(<span class="pl-en">ElasticBeanstalk</span>.elasticBeanstalkSettings<span class="pl-k">:</span> _<span class="pl-k">*</span>)</pre>
+  </div> 
+  <p>You must create the S3 bucket and Elastic Beanstalk app and environment specified in this file. You can specify your preferred AWS region.</p> 
+  <p>Either create a file in <code>$HOME/.aws-credentials</code> with your AWS credentials in the following format:</p> 
+  <pre><code>accessKey = &lt;your AWS access key&gt;
+secretKey = &lt;your AWS secret key&gt;
+</code></pre> 
+  <p>... or pass these two values as properties to <code>sbt</code>:</p> 
+  <pre><code>sbt -DaccessKey=your_AWS_access_key -DsecretKey=your_AWS_secret_key
+</code></pre> 
+  <p>Note that the <code>.aws-credentials</code> file takes precedence over the <code>System</code> properties.</p> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#configuration-for-non-play" aria-hidden="true" class="anchor" id="user-content-configuration-for-non-play" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Configuration for non-Play</h2> 
+  <p>In <code>project/plugins.sbt</code>, add:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>addSbtPlugin(<span class="pl-s"><span class="pl-pds">"</span>com.joescii<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>sbt-elasticbeanstalk-plugin<span class="pl-pds">"</span></span> <span class="pl-k">%</span> <span class="pl-s"><span class="pl-pds">"</span>0.0.7<span class="pl-pds">"</span></span>)</pre>
+  </div> 
+  <p>In <code>build.sbt</code>, add the following at the top of the file:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre><span class="pl-k">import</span> <span class="pl-v">com.joescii.sbtelasticbeanstalk.</span>{ <span class="pl-v">ElasticBeanstalk</span>, <span class="pl-v">Deployment</span> }
+<span class="pl-k">import</span> <span class="pl-v">com.joescii.sbtelasticbeanstalk.ElasticBeanstalkKeys.</span><span class="pl-v">_</span></pre>
+  </div> 
+  <p>Add the following settings to your project:</p> 
+  <div class="highlight highlight-source-scala">
+   <pre>seq(<span class="pl-en">ElasticBeanstalk</span>.elasticBeanstalkSettings<span class="pl-k">:</span> _<span class="pl-k">*</span>)
+
+ebAppBundle <span class="pl-k">&lt;&lt;=</span> <span class="pl-en">Keys</span>.`package` in <span class="pl-en">Compile</span>
+
+ebS3BucketName <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-bucket-name<span class="pl-pds">"</span></span>
+
+ebDeployments <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-en">Seq</span>(
+  <span class="pl-en">Deployment</span>(
+    appName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-app-name<span class="pl-pds">"</span></span>,
+    envBaseName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>some-environment-name<span class="pl-pds">"</span></span>,
+    templateName <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my-template<span class="pl-pds">"</span></span>,
+    cname <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>my-cname<span class="pl-pds">"</span></span>,
+    environmentVariables <span class="pl-k">=</span> <span class="pl-en">Map</span>(<span class="pl-s"><span class="pl-pds">"</span>MyFavoriteColor<span class="pl-pds">"</span></span> <span class="pl-k">-</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>blue<span class="pl-pds">"</span></span>)
+  )
+)
+
+ebRegion <span class="pl-k">:</span><span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>us-west-1<span class="pl-pds">"</span></span></pre>
+  </div> 
+  <p>You must create the S3 bucket and Elastic Beanstalk app and environment specified in this file. You can specify your preferred AWS region. Note that this assumes the web application plugin you are utilizing produces a war file with the compile:package key. This is the case for Lift, for instance.</p> 
+  <p>Create a file in <code>$HOME/.aws-credentials</code> with your AWS credentials in the following format:</p> 
+  <pre><code>accessKey = &lt;your AWS access key&gt;
+secretKey = &lt;your AWS secret key&gt;
+</code></pre> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#usage" aria-hidden="true" class="anchor" id="user-content-usage" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Usage</h2> 
+  <p>Once you've configured sbt-elasticbeanstalk as described above, run the sbt <code>eb-deploy</code> task. This will:</p> 
+  <ol> 
+   <li>Create a WAR file for your application;</li> 
+   <li>Upload the WAR to S3 in the bucket you specified; and</li> 
+   <li>Update your Elastic Beanstalk environment to use the new WAR.</li> 
+  </ol> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#features" aria-hidden="true" class="anchor" id="user-content-features" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Features</h2> 
+  <p><strong>Configuration pull</strong>: Run <code>eb-config-pull</code> at the sbt console to download environment configuration into <code>eb-deploy/&lt;app&gt;/&lt;env&gt;.env.conf</code> and <code>eb-deploy/&lt;app&gt;&lt;tmpl&gt;.tmpl.conf</code> files.</p> 
+  <p><strong>Quick update</strong>: Run <code>eb-quick-update</code> at the sbt console to perform a quick update (an in-place swap of the WAR and a Tomcat7 restart).</p> 
+  <p><strong>Configuration push</strong>: Run <code>eb-config-push</code> at the sbt console to push local environment configurations to Elastic Beanstalk.</p> 
+  <p><strong>Wait until deployed</strong>: Run <code>eb-wait</code> to wait until all project environments are deployed (i.e., Ready status and Green health).</p> 
+  <p><strong>Cleaning</strong>: Run <code>eb-clean</code> to terminate old, inactive environments; run <code>eb-clean-app-versions</code> to delete old and, unused app versions.</p> 
+  <p><strong>.ebextensions</strong>: <a href="https://github.com/dlecan/play2-war-plugin" target="_blank">Play2-war-plugin</a>'s <code>webappResource</code> sbt key is set to <code>war</code> by default, so any directories or files in the <code>war/</code> directory will be added to the generated WAR file. The included Play2 sample app has an example <code>war/.ebextensions</code> directory that sets some Elastic Beanstalk configuration settings.</p> 
+  <p><strong>Environment variables</strong>: You can specify an <code>environmentVariables</code> map in each <code>Deployment</code> that gets passed to your EB environments as environment variables.</p> 
+  <p><strong>API actions</strong>: Tasks prefixed with <code>eb-api-</code> map directly to the corresponding EB API commands. Try <code>eb-api-describe-applications</code>, <code>eb-api-describe-environments</code>, and <code>eb-api-restart-app-server &lt;env&gt;</code>.</p> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#changelog" aria-hidden="true" class="anchor" id="user-content-changelog" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Changelog</h2> 
+  <ul> 
+   <li>0.0.7: Windows support. Decoupled from Play to support Lift, etc. Added <code>eb-update-version</code>. Reads System properties when <code>~/.aws-credentials</code> cannot be found.</li> 
+   <li>0.0.6: Better, template-aware <code>eb-config-push</code> and <code>eb-config-pull</code>; added <code>eb-quick-update</code></li> 
+   <li>0.0.5: Add configuration pushing <code>eb-config-push</code> and validation <code>eb-local-config-validate</code>.</li> 
+   <li>0.0.4: Add configuration pulling <code>eb-config-pull</code>; add <code>eb-wait</code> to wait until deployed; add <code>eb-api-describe-applications</code>, <code>eb-api-describe-environments</code>, and <code>eb-api-restart-app-server</code> tasks.</li> 
+   <li>0.0.3: Can set environment variables for each deployment; added Java6 check</li> 
+   <li>0.0.2: Added support for deployment to multiple apps and environments</li> 
+   <li>0.0.1: Initial release</li> 
+  </ul> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#contributors" aria-hidden="true" class="anchor" id="user-content-contributors" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>Contributors</h2> 
+  <p>Quinn Slack (<a href="https://github.com/sqs" target="_blank">sqs</a>) Joe Barnes (<a href="https://github.com/joescii" target="_blank">joescii</a>)</p> 
+  <h2><a href="https://github.com/sqs/sbt-elasticbeanstalk#license" aria-hidden="true" class="anchor" id="user-content-license" target="_blank">
+    <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
+     <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </svg></a>License</h2> 
+  <p>This code is open source software licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html" target="_blank">Apache 2.0 License</a>.</p> 
+ </article>
+</div>

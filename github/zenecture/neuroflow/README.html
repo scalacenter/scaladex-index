@@ -48,9 +48,11 @@ resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="p
   <p>In NeuroFlow, network architectures are expressed as <a href="https://github.com/milessabin/shapeless" target="_blank">HLists</a>. They give type-safety and a humble ability to compose groups of layers. For instance, a little deeper net, with some rates and rules defined through a <code>Settings</code> instance, could look like this:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> (e, f) <span class="pl-k">=</span> (<span class="pl-en">Linear</span>, <span class="pl-en">Sigmoid</span>)
+
 <span class="pl-k">val</span> <span class="pl-en">bottleNeck</span> <span class="pl-k">=</span>
   <span class="pl-en">Input</span>  (<span class="pl-c1">50</span>)               <span class="pl-k">::</span>
   <span class="pl-en">Focus</span>  (<span class="pl-en">Dense</span>(<span class="pl-c1">10</span>, e))     <span class="pl-k">::</span> <span class="pl-en">HNil</span>
+
 <span class="pl-k">val</span> <span class="pl-en">fullies</span>    <span class="pl-k">=</span>
   <span class="pl-en">Dense</span>  (<span class="pl-c1">20</span>,  f)           <span class="pl-k">::</span>
   <span class="pl-en">Dense</span>  (<span class="pl-c1">30</span>,  f)           <span class="pl-k">::</span>
@@ -59,9 +61,11 @@ resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="p
   <span class="pl-en">Dense</span>  (<span class="pl-c1">40</span>,  f)           <span class="pl-k">::</span>
   <span class="pl-en">Dense</span>  (<span class="pl-c1">30</span>,  f)           <span class="pl-k">::</span> 
   <span class="pl-en">Output</span> (<span class="pl-c1">20</span>,  f)           <span class="pl-k">::</span> <span class="pl-en">HNil</span>
+
 <span class="pl-k">val</span> <span class="pl-en">deeperNet</span> <span class="pl-k">=</span> <span class="pl-en">Network</span>(
   bottleNeck <span class="pl-k">:::</span> fullies, 
-  <span class="pl-en">Settings</span>[<span class="pl-k">Double</span>](precision <span class="pl-k">=</span> <span class="pl-c1">1E-5</span>, iterations <span class="pl-k">=</span> <span class="pl-c1">250</span>, 
+  <span class="pl-en">Settings</span>[<span class="pl-k">Double</span>](
+    lossFunction <span class="pl-k">=</span> <span class="pl-en">SquaredMeanError</span>(), precision <span class="pl-k">=</span> <span class="pl-c1">1E-5</span>, iterations <span class="pl-k">=</span> <span class="pl-c1">250</span>, 
     learningRate { <span class="pl-k">case</span> (iter, _) <span class="pl-k">if</span> iter <span class="pl-k">&lt;</span> <span class="pl-c1">100</span> <span class="pl-k">=&gt;</span> <span class="pl-c1">1E-4</span> <span class="pl-k">case</span> (_, _) <span class="pl-k">=&gt;</span> <span class="pl-c1">1E-5</span> },
     regularization <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-en">KeepBest</span>), batchSize <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">8</span>), parallelism <span class="pl-k">=</span> <span class="pl-en">Some</span>(<span class="pl-c1">8</span>)
   )
@@ -73,13 +77,20 @@ resolvers <span class="pl-k">++</span><span class="pl-k">=</span> <span class="p
     <svg aria-hidden="true" class="octicon octicon-link" height="16" version="1.1" viewbox="0 0 16 16" width="16">
      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
     </svg></a>Training</h1> 
-  <p>Let's train our <code>net</code> with the <code>train</code> method. It expects the inputs <code>xs</code> and, since it is supervised training, their desired outputs <code>ys</code>. In NeuroFlow, you work with Breeze vectors and matrices (<code>DenseMatrix[V]</code>, <code>DenseVector[V]</code>). Let's quickly define the training data using the vector notation:</p> 
+  <p>We want to map from a two-dimensional vector <code>x</code> to a one-dimensional vector <code>y</code> with our architecture. There are many functions out there of this kind; here we use the XOR-Function. It is linearily not separable, so we can check whether our net can capture this non-linearity.</p> 
+  <p>Let's train our <code>net</code> with the <code>train</code> method. In NeuroFlow, you work with Breeze vectors and matrices (<code>DenseMatrix[V]</code>, <code>DenseVector[V]</code>). To define the training data we use the built-in vector notation:</p> 
   <div class="highlight highlight-source-scala">
    <pre><span class="pl-k">val</span> <span class="pl-en">xs</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">0.0</span>, <span class="pl-c1">0.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">0.0</span>, <span class="pl-c1">1.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">1.0</span>, <span class="pl-c1">0.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">1.0</span>, <span class="pl-c1">1.0</span>))
 <span class="pl-k">val</span> <span class="pl-en">ys</span> <span class="pl-k">=</span> <span class="pl-en">Seq</span>(<span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">0.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">1.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">1.0</span>), <span class="pl-k">-</span><span class="pl-k">&gt;</span>(<span class="pl-c1">0.0</span>))
-net.train(xs, ys) <span class="pl-c"><span class="pl-c">//</span> it's the XOR-Function :-)</span></pre>
+
+<span class="pl-c"><span class="pl-c">/*</span></span>
+<span class="pl-c">  It's the XOR-Function :-).</span>
+<span class="pl-c">  Or: the net learns to add binary digits modulo 2.</span>
+<span class="pl-c"><span class="pl-c">*/</span></span>
+
+net.train(xs, ys)</pre>
   </div> 
-  <p>For feed-forward nets, the loss function can be defined as follows:</p> 
+  <p>For our XOR-feed-forward net, the loss function is defined as follows:</p> 
   <pre><code>E(W) = Σ1/2(t - net(x))²
 </code></pre> 
   <p>Where <code>W</code> are the weights, <code>t</code> is the target and <code>net(x)</code> the prediction. The sum <code>Σ</code> is taken over all samples and the square <code>²</code> gives a convex functional form, which is convenient for gradient descent.</p> 
