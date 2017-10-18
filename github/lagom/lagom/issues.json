@@ -136,6 +136,12 @@
             "url":"https://github.com/lagom/lagom/issues/871"
           },
           {
+            "number":902,
+            "title":"runAll does not work on a default Fedora installation",
+            "bodyText":"A Lagom user has reported difficulty running the hello-world and online auction example application on Fedora 25-26 due to a default firefall configuration that blocks Kafka from binding to port 9092.\nSee thread at https://groups.google.com/d/topic/lagom-framework/kpNCDCQgQp8/discussion\nWe should implement a workaround if we can find one, or otherwise document the known issue in the getting started instructions.\nLagom Version\n<= 1.4.0-M1\nAPI (Scala / Java / Neither / Both)\nBoth\nOperating System (Ubuntu 15.10 / MacOS 10.10 / Windows 10)\nReported on Fedora 25-26",
+            "url":"https://github.com/lagom/lagom/issues/902"
+          },
+          {
             "number":908,
             "title":"scalaVersion of lagom-internal-meta-* projects is hard coded to 2.11.7",
             "bodyText":"Lagom Version - 1.3.6\nThis is an issue with the Lagom SBT plugin\nAPI : SBT/Scala\nOperating System (Centos 7)\n\nuname -a\nLinux sherpavm 3.10.0-327.10.1.el7.x86_64 #1 SMP Tue Feb 16 17:03:50 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux\n\nJDK (Oracle 1.8.0_112, OpenJDK 1.8.x, Azul Zing)\n\njava -version\nopenjdk version \"1.8.0_77\"\nOpenJDK Runtime Environment (build 1.8.0_77-b03)\nOpenJDK 64-Bit Server VM (build 25.77-b03, mixed mode)\n\nLibrary Dependencies\nThis is an issue when using ensime.  The ensime plugin only supports a single version of scala for a project and it's dependencies.  Since the internal-meta projects are dynamic, it doesn't look like you can change the scalaVersion setting in your build.sbt.  Adding ensimeIgnoreScalaMismatch in ThisBuild := true interacts very badly with the dynamic projects.  Enumerating the projects that you want ensime to use on the ensimeConfig command line, without listing the dynamic projects is a workaround, but quite cumbersome.\nI'll be happy to submit a PR if we can agree that this should be addressed, and where to get the scalaVersion for the dynamic projects.\nExpected Behavior\nPlease describe the expected behavior of the issue, starting from the first action.\n\nscalaVersion in ThisBuild := \"2.11.8\"\nshow scalaVersion  - should displays 2.11.8 for all projects defined in build.sbt\nshow show lagom-internal-meta-project-cassandra/scalaVersion - should display 2.11.8\n\nActual Behavior\nPlease provide a description of what actually happens, working from the same starting point.\nBe descriptive: \"it doesn't work\" does not describe what the behavior actually is -- instead, say \"the page renders a 500 error code with no body content.\"  Copy and paste logs, and include any URLs.\n\nscalaVersion in ThisBuild := \"2.11.8\"\nshow scalaVersion  - should displays 2.11.8 for all projects defined in build.sbt\n\n\nshow scalaVersion\n[info]  itemImpl/:scalaVersion\n[info] \t2.11.8\n[info] searchImpl/:scalaVersion\n[info] \t2.11.8\n[info] searchApi/:scalaVersion\n[info] \t2.11.8\n[info] userApi/:scalaVersion\n[info] \t2.11.8\n[info] biddingImpl/:scalaVersion\n[info] \t2.11.8\n[info] webGateway/:scalaVersion\n[info] \t2.11.8\n[info] biddingApi/:scalaVersion\n[info] \t2.11.8\n[info] itemApi/:scalaVersion\n[info] \t2.11.8\n[info] userImpl/:scalaVersion\n[info] \t2.11.8\n[info] root/:scalaVersion\n[info] \t2.11.8\n\n\nshow show lagom-internal-meta-project-cassandra/scalaVersion\n\n\nshow lagom-internal-meta-project-cassandra/scalaVersion\n[info] 2.11.7\n\nFrom LagomPlugin.scala:\n  private val kafkaServerProject = Project(\"lagom-internal-meta-project-kafka\", file(\".\"),\n    configurations = Configurations.default,\n    settings = CorePlugin.projectSettings ++ IvyPlugin.projectSettings ++ JvmPlugin.projectSettings ++ Seq(\n    scalaVersion := \"2.11.7\",\n    libraryDependencies += LagomImport.component(\"lagom-kafka-server\"),\n    lagomKafkaStart in ThisBuild := startKafkaServerTask.value,\n    lagomKafkaStop in ThisBuild := Servers.KafkaServer.tryStop(new SbtLoggerProxy(state.value.log))\n  ))\n`\n\n### Reproducible Test Case\n\nAn unchanged https://github.com/lagom/online-auction-scala demonstrates this.  I believe that any lagom project can reproduce, given the hard-coded version numbers in LagomPlugin.scala.",
@@ -154,12 +160,6 @@
             "url":"https://github.com/lagom/lagom/issues/941"
           },
           {
-            "number":996,
-            "title":"Document ReadSide.register in the Cassandra/RDBMS read-side documentation",
-            "bodyText":"The documentation on persistent read-sides has a section on registering read-side processors using ReadSide.register:\nhttps://www.lagomframework.com/documentation/1.3.x/java/ReadSide.html#Registering-your-read-side-processor\nThe documentation for CassandraReadSide, JdbcReadSide, etc. do not mention this, so someone reading one of those pages without also referring to the overview page might not know that these also need to be registered.",
-            "url":"https://github.com/lagom/lagom/issues/996"
-          },
-          {
             "number":1001,
             "title":"Support Apache Ignite as a persistence back end",
             "bodyText":"https://ignite.apache.org/\nIgnite is a distributed in-memory database with SQL support.",
@@ -170,12 +170,6 @@
             "title":"Document stream service specific behavior",
             "bodyText":"The behavior of streaming service call should be more documented.\nThe fact that the websocket closes immediately when the client Source completes, without waiting for all responses being send downstream, is rather counter-intuitive when we reason at an abstract stream level.\nCurrently, to my knowledge, the only mention of this is through the following comments in the section about stream service testing:\n    // Use a source that never terminates (concat Source.maybe) so we\n    // don't close the upstream, which would close the downstream\n\nAlthough such situations happen mainly in test scenarios, where we provide finite Source, this could also happen in real world usage. Hence, I would say that it would worth some explicit mention, similarly to what has been added in the akka-http doc about this specific issue.",
             "url":"https://github.com/lagom/lagom/issues/1007"
-          },
-          {
-            "number":1018,
-            "title":"Lagom always returns binary data via websocket to Firefox whereas should return text message when expected",
-            "bodyText":"This behvaiour could only be observed with Firefox browser (e.g. v55.0.3). I tried it on Windows10 and macOS Sierra. Everything works fine (text data is returned) with Chrome on both Windows and mac and on Safari on mac. With Firefox on both OSs binary data is returned.\nThis is how an example endpoint looks like:\n def startLoadTest: ServiceCall[LoadTestParameters, Source[String, NotUsed]]\n\nI narrowed down the issue to ServiceRouter. It appeared that messageProtocolIsText returns false. It seems like when Firefox makes a connection it doesn't send charset (which is used by messageProtocolIsText to determine whether it is a text data or binary data):\noverride def messageProtocolIsText(mp: MessageProtocol): Boolean = mp.isText\n\ndef isText: Boolean = charset.isDefined || contentType.contains(\"application/json\")\n\nThis is how MessageProtocol instance looks like in runtime:\nMessageProtocolImpl(Some(text/plain),None,None)",
-            "url":"https://github.com/lagom/lagom/issues/1018"
           }
         ]
       }

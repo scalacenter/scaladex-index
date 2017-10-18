@@ -3,72 +3,7 @@
     "repository":{
       "issues":{
         "nodes":[
-          {
-            "number":2581,
-            "title":"Support SLF4J Mapped Diagnostic Context (MDC) on internal server error",
-            "bodyText":"On this code the internal server errors are logged, before displaying an html error page (that is customizable)\nplay.api.Application#handleError\n  /**\n   * Handle a runtime error during the execution of an action\n   */\n  private[play] def handleError(request: RequestHeader, e: Throwable): Future[SimpleResult] = try {\n    e match {\n      case e: UsefulException => throw e\n      case e: Throwable => {\n\n        val source = sources.flatMap(_.sourceFor(e))\n\n        throw new PlayException.ExceptionSource(\n          \"Execution exception\",\n          \"[%s: %s]\".format(e.getClass.getSimpleName, e.getMessage),\n          e) {\n          def line = source.flatMap(_._2).map(_.asInstanceOf[java.lang.Integer]).orNull\n          def position = null\n          def input = source.map(_._1).map(scalax.file.Path(_).string).orNull\n          def sourceName = source.map(_._1.getAbsolutePath).orNull\n        }\n      }\n    }\n  } catch {\n    case NonFatal(e) => try {\n      Logger.error(\n        \"\"\"\n        |\n        |! %sInternal server error, for (%s) [%s] ->\n        |\"\"\".stripMargin.format(e match {\n          case p: PlayException => \"@\" + p.id + \" - \"\n          case _ => \"\"\n        }, request.method, request.uri),\n        e\n      )\n      global.onError(request, e)\n    } catch {\n      case NonFatal(e) => DefaultGlobal.onError(request, e)\n    }\n  }\nThe matter is that it seems impossible to me to be able to attach an MDC value to this log statement.\nTypically I want to be able to attach each technical error to a given user if the request is bound to an applicative user.\nThis forces me to log the same error another time in the Global callback:\n  override def onError(request: RequestHeader, ex: Throwable): Future[SimpleResult] = {\n    val mdcUser: Option[User] = ex match {\n      case RuntimeExceptionForStampleUser.InCausalChainExtractor(user, cause) => Some(user)\n      case _ => None\n    }\n\n    mdcUser.foreach(u => MDC.put(\"username\", u.username))\n    Logger.error(\"Internal server error:\", ex)\n    mdcUser.foreach(u => MDC.remove(\"username\"))\n\n    super.onError(request, ex)\n  }\nIs there any alternative?",
-            "url":"https://github.com/playframework/playframework/issues/2581"
-          },
-          {
-            "number":5172,
-            "title":"Improve field constructor documentation",
-            "bodyText":"The custom field constructor documentation neglects to say where you should (or can) put the field constructor template.  The answer is of course anywhere, but I think it would be good if the documentation suggested a filename relative to the project directory, both for the field constructor and the MyHelpers object, and a little explanation around choosing the location of the file and what would need to change if you used a different location would be good.",
-            "url":"https://github.com/playframework/playframework/issues/5172"
-          },
-          {
-            "number":5275,
-            "title":"Provide helper method to parse json requests",
-            "bodyText":"Right now to get the value of a JSON request you need to do:\nJson.fromJson(request().body().asJson(), Pet.class)\n\nIt seems like it'd be simpler to have a method that was something a bit more like:\nrequest().body().asJson(Pet.class)",
-            "url":"https://github.com/playframework/playframework/issues/5275"
-          },
-          {
-            "number":5546,
-            "title":"[feature] Create JUnit matchers for CompletionStage, Future, Optional",
-            "bodyText":"It would help with writing Java tests to have some matchers for Java 8 types. I don't think they're in JUnit or Hamcrest yet.\nE.g.\nassertThat(completionStage, futureValue(is(3)));\nassertThat(future, futureValue(is(3)));\nassertThat(optional, isEmpty());\nassertThat(optional, hasValue(\"x\"));",
-            "url":"https://github.com/playframework/playframework/issues/5546"
-          },
-          {
-            "number":5957,
-            "title":"Mention scala-guice helpers in docs",
-            "bodyText":"There are a few libraries with Scala DSLs for guice like https://github.com/codingwell/scala-guice. Would be good to mention some or all of them in the docs.",
-            "url":"https://github.com/playframework/playframework/issues/5957"
-          },
-          {
-            "number":6573,
-            "title":"[doc] Include examples of implicit request in Action documentation",
-            "bodyText":"Play Version (2.5.x / etc)\ncurrent\nExpected Behavior\nThe Play documentation does not go far enough in pushing the importance of an implicit request in an action.  See #6428 for CSRF for example, and likewise Form processing and template handling is impractical without an implicit request.\nThe following pages should include references to implicit request:\n\nScalaActions\nScalaAsync\nScalaTemplates\nJavaTemplates",
-            "url":"https://github.com/playframework/playframework/issues/6573"
-          },
-          {
-            "number":7105,
-            "title":"Stop exposing implementation data on 404 errors",
-            "bodyText":"When no route matches, you get a page with play logo displayed.\nExposing the site was built using play framework is not ideal form the security standpoint.",
-            "url":"https://github.com/playframework/playframework/issues/7105"
-          },
-          {
-            "number":7788,
-            "title":"Document usage of List in routes",
-            "bodyText":"The docs mention offhand that List[String] is a valid parameter type, but don't say how to use it. I was trying a bunch of stuff like param=a,b,c,d that wasn't working. I finally saw somewhere that suggested the usage might be param=a&param=b&param=c&param=d (note I haven't tried that syntax, so am not 100% certain it works)",
-            "url":"https://github.com/playframework/playframework/issues/7788"
-          },
-          {
-            "number":7866,
-            "title":"Useful error message when result is null",
-            "bodyText":"Are you looking for help?\nNo.\nPlay Version (2.5.x / etc)\n2.6.3\nAPI (Scala / Java / Neither / Both)\nJava\nBehavior\nIf a controller method returns null (for a Result) the error message is not useful.  See below.  The exceptions don't contain any info about my own code.  The web page also just shows \"NullPointerException: null\"\nplay.api.http.HttpErrorHandlerExceptions$$anon$1: Execution exception[[NullPointerException: null]]\n        at play.api.http.HttpErrorHandlerExceptions$.throwableToUsefulException(HttpErrorHandler.scala:255)\n        at play.api.http.DefaultHttpErrorHandler.onServerError(HttpErrorHandler.scala:182)\n        at play.core.server.AkkaHttpServer$$anonfun$$nestedInanonfun$executeHandler$1$1.applyOrElse(AkkaHttpServer.scala:251)\n        at play.core.server.AkkaHttpServer$$anonfun$$nestedInanonfun$executeHandler$1$1.applyOrElse(AkkaHttpServer.scala:250)\n        at scala.concurrent.Future.$anonfun$recoverWith$1(Future.scala:412)\n        at scala.concurrent.impl.Promise.$anonfun$transformWith$1(Promise.scala:37)\n        at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60)\n        at play.api.libs.streams.Execution$trampoline$.execute(Execution.scala:70)\n        at scala.concurrent.impl.CallbackRunnable.executeWithValue(Promise.scala:68)\n        at scala.concurrent.impl.Promise$DefaultPromise.dispatchOrAddCallback(Promise.scala:312)\nCaused by: java.lang.NullPointerException: null\n        at play.core.j.JavaHelpers.createResult(JavaHelpers.scala:134)\n        at play.core.j.JavaHelpers.createResult$(JavaHelpers.scala:133)\n        at play.core.j.JavaAction.createResult(JavaAction.scala:59)\n        at play.core.j.JavaAction.$anonfun$apply$4(JavaAction.scala:115)\n        at scala.util.Success.$anonfun$map$1(Try.scala:251)\n        at scala.util.Success.map(Try.scala:209)\n        at scala.concurrent.Future.$anonfun$map$1(Future.scala:287)\n        at scala.concurrent.impl.Promise.liftedTree1$1(Promise.scala:29)\n        at scala.concurrent.impl.Promise.$anonfun$transform$1(Promise.scala:29)\n        at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60)",
-            "url":"https://github.com/playframework/playframework/issues/7866"
-          },
-          {
-            "number":7878,
-            "title":"Feature request: assign application/json content type",
-            "bodyText":"Are you looking for help?\nNo\nPlay Version\n2.6.5\nAPI\nScala\nOperating System\nMacOS:\nDarwin ***.local 17.0.0 Darwin Kernel Version 17.0.0: Thu Aug 24 21:48:19 PDT 2017; root:xnu-4570.1.46~2/RELEASE_X86_64 x86_64\n\nJDK (Oracle 1.8.0_72, OpenJDK 1.8.x, Azul Zing)\njava version \"1.8.0_144\"\nJava(TM) SE Runtime Environment (build 1.8.0_144-b01)\nJava HotSpot(TM) 64-Bit Server VM (build 25.144-b01, mixed mode)\n\nLibrary Dependencies\nscalaVersion := \"2.12.3\"\n\"org.scalatestplus.play\" %% \"scalatestplus-play\" % \"3.1.1\"\n\nFeature request\nI would like (even expect) that application/json content type is automatically assigned to FakeRequest when withJsonBody method is called.\nI understand that there are some test cases when user tests unsupported content type but it is far rare cases. Do you agree?\nThis feature implementation can brake some of existing test cases described above.\nExpected Behavior\n\napplication/json content type is automatically assigned for FakeRequest\n\nActual Behavior\n\nContent type stays unassigned and user gets the following exception while testing scenarios with JSON:\n\n\nFor request 'GET /' [Expecting text/json or application/json body]\n\nReproducible Test Case\n  val homeController = inject[HomeController]\n\n  val request = FakeRequest()\n    .withJsonBody(Json.toJson(person))\n    .withHeaders(CONTENT_TYPE -> JSON)\n\n  val response = homeController.accept.apply(request)",
-            "url":"https://github.com/playframework/playframework/issues/7878"
-          },
-          {
-            "number":7892,
-            "title":"Common tests for Akka HTTP and standard Headers implementations",
-            "bodyText":"We currently have the play.core.server.akkahttp.AkkaHeadersWrapper in the akka-http-server implementation and play.api.mvc.Headers. We should add tests for both and if possible share some of the specification. This could be done by creating a new integration test or having the akka-http-server tests depend on the core play tests.",
-            "url":"https://github.com/playframework/playframework/issues/7892"
-          }
+          
         ]
       }
     }
